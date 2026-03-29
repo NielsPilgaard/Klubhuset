@@ -50,6 +50,17 @@ Never bypass this filter. Never trust a slug string as an authorization signal �
 - Style and naming conventions (indentation, casing, imports) are enforced by `.editorconfig` and the project linting setup. Do not duplicate those rules here.
 - Afdeling = one sport. One club has many afdelinger. Each afdeling has many teams (hold).
 
+## Testing
+
+See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. Summary of rules agents must follow:
+
+- **Two layers only**: API integration tests (tUnit + WebApplicationFactory + Testcontainers) and Playwright e2e for critical flows. Nothing else.
+- **Never mock `DbContext` or `ITenantContext`** — use a real PostgreSQL test database via Testcontainers. Mocks bypass the global query filter.
+- **Never test private or internal methods** — only via public HTTP endpoints or rendered UI.
+- **Playwright selectors use `data-testid` only** — never CSS classes or DOM structure.
+- **One test file per feature flow**, not per class.
+- When in doubt whether something needs a test: does a silent break block Kirsten? If yes, test it.
+
 ## What agents must never do
 
 - Write database queries without tenant scoping
