@@ -25,6 +25,8 @@ Members of the forening. Range from 3-year-old children (parents acting on their
 
 ## Design principles
 
+See [docs/PERSONAS.md](PERSONAS.md) for the concrete users these principles are written for.
+
 **Mobile-first**: the primary end users are parents registering children, preteens, and the elderly. All member-facing screens must work fully on a phone. Admin screens must work on tablet and desktop. No feature may require a wide screen to operate.
 
 **No surprises**: UI must be predictable and obvious. Prefer one clear action over multiple options. Never use jargon the user has not seen before without an immediate explanation.

@@ -59,6 +59,7 @@ See [docs/PRICING.md](docs/PRICING.md) for full details.
 ## Documentation
 
 - [PRD](docs/PRD.md) — product requirements and feature spec
+- [Personas](docs/PERSONAS.md) — the real users every design decision is measured against
 - [Decisions](docs/DECISIONS.md) — product and architecture decisions
 - [Team features](docs/team-features.md) — team management detail
 - [Tasks](docs/TASKS.md) — phased implementation plan

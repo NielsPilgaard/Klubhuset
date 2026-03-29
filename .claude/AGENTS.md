@@ -8,6 +8,8 @@ Klubhuset is a multi-tenant, white-label SaaS for Danish sports societies (foren
 
 Reference club profile: ~1100 members, 8 sports, mid-sized Danish town — use this as the mental model for a typical Forening tier customer.
 
+**Simplicity is a core product value.** The users are a 67-year-old sekretær, a busy parent on a phone at the football pitch, a 14-year-old gymnast, and a 55-year-old volunteer formand. See [docs/PERSONAS.md](../docs/PERSONAS.md). Every UI decision must pass: can Kirsten (the sekretær) complete this without calling her grandchild?
+
 ## Architecture principles
 
 **Multi-tenancy**: every database query must be scoped to a tenant. Never leak data across tenants. Tenant ID must be present on every query that touches member, team, afdeling, or payment data. Enforced via EF Core global query filter:
