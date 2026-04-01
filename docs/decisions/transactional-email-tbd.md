@@ -10,9 +10,9 @@ Integrate via **MailKit** over SMTP (port 587, STARTTLS). No provider SDK requir
 
 ## Context
 
-Klubhuset sends transactional emails on behalf of clubs: membership confirmations, payment receipts, password resets. These emails contain personal member data, so the provider must be EU-hosted. The platform is white-label — no third-party branding may appear in member-facing emails.
+{{PRODUCT_NAME}} sends transactional emails on behalf of the platform: staff invitation emails, password resets, trial expiry reminders, billing notifications. These emails contain personal data, so the provider must be EU-hosted.
 
-Volume at launch is low: likely well under 1,000 emails/month for the first tenants, growing to ~5,000/month at scale. Cost-efficiency and operational simplicity are the primary drivers.
+Volume at launch is low: likely well under 1,000 emails/month for the first schools, growing to ~5,000/month at scale. Cost-efficiency and operational simplicity are the primary drivers.
 
 ## Evaluation
 
@@ -35,7 +35,7 @@ Switching providers is a config change — one connection string swap. No applic
 - **EU data residency**: Yes — French cloud provider (Iliad group), data never leaves the EU.
 - **Free tier**: 300 emails/month permanently included.
 - **Cost**: €0.25 per 1,000 emails beyond the free 300. At 5,000/month: **~€1.18/month**. At 10,000/month: **~€2.43/month**. No monthly minimum, no fixed fee.
-- **Branding**: none — clean white-label output on all plans.
+- **Branding**: none — clean output on all plans.
 - **SMTP**: `smtp.tem.scaleway.com:587`
 - **Caveat**: new accounts have a default rate limit of ~300 emails/hour; raiseable via support request.
 
@@ -64,7 +64,7 @@ Scaleway TEM is the single provider for all environments. The 300 free emails/mo
 - Abstract sends behind `IEmailSender` — one implementation, provider is injected via config.
 - Store SMTP credentials in user secrets locally, environment variables in production.
 - Configure SPF, DKIM, and DMARC on the sending domain before any production send.
-- All email templates must carry the club's branding (name, logo) — never Klubhuset branding.
+- All email templates carry {{PRODUCT_NAME}} branding.
 - Do not route bulk/marketing sends through this integration. Transactional only.
 
 ## Consequences

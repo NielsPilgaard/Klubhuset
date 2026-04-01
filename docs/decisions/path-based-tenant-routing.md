@@ -1,19 +1,19 @@
-# Path-based tenant routing at MVP; slug rules and immutability
+# Path-based tenant routing; slug rules and immutability
 
 **Status**: Accepted
 
 ## Decision
 
-At MVP, clubs are served at `klubhuset.dk/{slug}` (path-based routing). Subdomain routing is deferred to Forening+ (custom domain feature).
+Schools are served at `{{PRODUCT_NAME}}.dk/{slug}` (path-based routing). Subdomain routing is deferred to a future premium tier.
 
 ### Slug rules
 
-- Chosen by the club admin at signup
+- Chosen by the school admin at signup
 - Format: lowercase letters (`a-z`), digits (`0-9`), hyphens (`-`) only
 - Length: 3–40 characters
 - Must be globally unique across all tenants
 - Reserved words are blocked: `api`, `admin`, `www`, `static`, `health`, `app`, `dashboard`, `login`, `logout`, `signup`, and others as needed
-- **Immutable immediately after creation** — no self-serve rename. Slug corrections require contacting Klubhuset support.
+- **Immutable immediately after creation** — no self-serve rename. Slug corrections require contacting {{PRODUCT_NAME}} support.
 
 ### Security
 

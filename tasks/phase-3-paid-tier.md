@@ -1,44 +1,41 @@
-# Phase 3 — Paid tier features
+# Phase 3 — Billing, file explorer, and reporting
 
 ## Goal
-Implement platform-mediated payments, automated invoicing, white-label UI, and expanded admin capabilities for Forening and Forening+ tiers.
 
-## Prerequisites
-- Verify MobilePay Subscriptions API is available for new integrations before starting payment work
-- Stripe Connect account and platform setup
+Implement self-serve billing via Stripe Checkout, the file explorer, and exportable reporting.
 
 ---
 
 ## Tasks
 
-### Payments
+### Stripe Checkout billing
 
-- [ ] Stripe Connect integration (platform-mediated payments)
-- [ ] MobilePay Subscriptions integration
-- [ ] Transaction fee pass-through: 2.5% + 2 kr added transparently at checkout, charged to member
-- [ ] Automated kontingent invoicing: generate and send invoices per season/period
-- [ ] Payment status dashboard: who has paid, who hasn't, overdue
-- [ ] Automatic payment reminders: configurable schedule, sent by email
+- [ ] Stripe product and price configuration for Basis tier (299 kr/month)
+- [ ] Signup flow: school completes trial → Stripe Checkout session → subscription created
+- [ ] Auto-renew monthly
+- [ ] Stripe billing portal link in admin settings (manage subscription, update card, cancel)
+- [ ] 14-day free trial: full access, no payment required during trial
+- [ ] Trial expiry handling: prompt to subscribe, read-only grace period if not converted
 
-### White-label UI
+### Billing lifecycle
 
-- [ ] Hide Klubhuset branding for Forening+ clubs (logo, colors, name)
-- [ ] Apply club logo and name across all member-facing pages
-- [ ] Tier gating: only paid tiers get white-label (free tier always shows Klubhuset branding)
+- [ ] Failed payment handling: email notification, retry, grace period, then feature restriction
+- [ ] Cancellation flow: access until end of billing period, then read-only
+- [ ] Webhook handler for Stripe events (payment succeeded, payment failed, subscription cancelled)
 
-### Admin roles
+### File explorer
 
-- [ ] Multi-admin role support: formand, kasserer, afdeling admin
-- [ ] Role-based permissions: kasserer sees payments, afdeling admin manages their own afdeling only
+- [ ] File upload (admin and teacher) → OVHCloud Object Storage
+- [ ] Link files to courses
+- [ ] Browse files by course
+- [ ] File list with name, upload date, uploader, linked course
+- [ ] Download file
+- [ ] Delete file (admin only)
+- [ ] Storage quota enforcement (100 GB for Basis, 1000 GB for Skole+ when available)
 
 ### Reporting and exports
 
-- [ ] Member list CSV export (admin)
-- [ ] DGI/DIF statistics export (aldersgrupperet membertal report, required for kommunal tilskud)
-- [ ] Payment report export
-
-### Season management
-
-- [ ] Seasons for teams (start date, end date)
-- [ ] Kontingent tied to season
-- [ ] Season rollover workflow for admin
+- [ ] Course hour summary: hours per course per class (exportable CSV / PDF)
+- [ ] Teacher hour summary: total teaching hours per teacher (exportable)
+- [ ] Schema export: full weekly schema as CSV or PDF
+- [ ] Stats visible on admin dashboard

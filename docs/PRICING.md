@@ -1,72 +1,67 @@
-# PRICING.md — Klubhuset Pricing Tiers
+# PRICING.md — {{PRODUCT_NAME}} Pricing
 
-## Tiers
+## Model
 
-### Starter (Gratis)
+Simple flat monthly fee per school. 14-day free trial with full access. Self-serve billing via Stripe Checkout.
 
-**0 kr/month** · Up to 150 members · Up to 5 afdelinger
+Pricing is transparent and listed on the website. No sales calls, no hidden fees, no per-student pricing.
+
+---
+
+## V1 tier
+
+### Basis
+
+**299 kr/month** · All features · 100 GB file storage
 
 Included:
-- Member register
-- Self-registration form
-- Team creation and self-signup
-- Basic admin dashboard
-- Direct MobilePay link (club's own account, platform bypassed)
-
-Not included:
-- White-labelling (Klubhuset branding visible)
-- Automated invoicing or payment dashboard
-- Automatic payment reminders
-- Member import from competitors
-- Reporting and exports
-- Multi-admin roles
-- DGI/DIF statistics export
-- Season management
-- Custom domain
+- Schema planner with conflict detection
+- Time slot wizard and per-class overrides
+- Staff management (teachers, aides, substitutes)
+- Class and course management
+- File explorer (linked to courses)
+- Stats and reporting (hours per course, hours per teacher/aide)
+- Printable weekly schemas (per class, per teacher, per room)
+- Admin dashboard
+- Staff invitation and onboarding
+- Email notifications
 
 ---
 
-### Forening (Standard)
+## Future tier (not v1)
 
-**299 kr/month** · Up to 600 members · Unlimited afdelinger
+### Skole+
 
-Everything in Starter, plus:
-- Full white-label (club logo and name, no Klubhuset branding)
-- Platform-mediated payments (Stripe + MobilePay Subscriptions)
-- Automated kontingent invoicing
-- Payment status dashboard
-- Automatic payment reminders
-- Holdsport and MinForening member import
-- Invitation-based onboarding flow
-- Reporting and member exports
-- Multi-admin roles (formand, kasserer, afdeling admins)
-- DGI/DIF statistics export
-- Season management
+**499 kr/month** · All Basis features · 1000 GB file storage
 
-Not included:
-- Custom domain
-
----
-
-### Forening+ (Large)
-
-**599 kr/month** · 600+ members (unlimited) · Unlimited afdelinger
-
-Everything in Forening, plus:
-- Custom domain (manual setup)
-- Custom member fields
+Everything in Basis, plus:
 - Priority support
+- Custom fields on staff/class records
+- UVM reporting (when available)
+- Extended storage (1000 GB)
 
 ---
 
-## Payment model
+## Tier differentiation philosophy
 
-- Monthly billing, flat fee
-- Transaction fees for payment processing are passed to members (approx 2.5% + 2 kr on top of kontingent)
-- Free tier clubs are never in the payment path — they use their own MobilePay Business account directly
-- Paid tier clubs use Stripe Connect for payout to club accounts
+Tiers are differentiated by **what costs us more to provide** — storage, support burden, advanced reporting — NOT by student count or school size. A school with 80 students and a school with 400 students pay the same for Basis. Per-student pricing is unpredictable and schools dislike it.
+
+## Trial
+
+- **14-day free trial** with full Basis access
+- No credit card required to start the trial
+- Trial converts to paid via Stripe Checkout at the end of the 14 days
+- Schools that don't convert lose access (read-only grace period TBD)
+
+## Payment
+
+- Monthly billing via Stripe Checkout
+- Auto-renew
+- Schools manage their subscription (upgrade, downgrade, cancel) via Stripe billing portal
+- All billing is self-serve — no manual invoicing
 
 ## Notes
 
-- Clubs on free tier who grow beyond 150 members are prompted to upgrade, but are not cut off immediately (grace period TBD)
 - Pricing is in DKK, targeting the Danish market only
+- No free tier — the 14-day trial replaces it
+- Scandinavian expansion may require pricing adjustments (SEK, NOK) in the future

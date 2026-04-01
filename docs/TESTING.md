@@ -4,8 +4,8 @@
 
 Test behavior, not implementation. A test should break when product behavior breaks — not when a method is renamed or a service is extracted. This keeps tests maintainable and makes the 30-minutes-fixing-tests-per-PR problem go away.
 
-- **Don't test**: "does `MemberService.UpdateMember()` call `_repo.Save()`"
-- **Do test**: "when an admin updates a member's email, the API returns 200 and the record is updated"
+- **Don't test**: "does `SchemaService.AssignLesson()` call `_repo.Save()`"
+- **Do test**: "when an admin assigns a teacher to a time slot that conflicts, the API returns 409 with conflict details"
 
 ---
 
@@ -24,7 +24,7 @@ The primary and highest-value test layer. Spin up the full ASP.NET Core pipeline
 
 **Critical footgun**: tUnit assertions do not execute until awaited. `Assert.That(x).IsEqualTo(1)` without `await` silently passes. Always `await Assert.That(...)`.
 
-**Snapshot testing**: use [Verify.TUnit](https://github.com/VerifyTests/Verify) for stable, happy-path API responses where catching unintended contract drift matters (e.g. the member registration response shape, the team list payload). Verify auto-sanitizes GUIDs and timestamps to deterministic placeholders. `.verified.txt` files are committed and reviewed in PRs like code — a snapshot diff is a contract change.
+**Snapshot testing**: use [Verify.TUnit](https://github.com/VerifyTests/Verify) for stable, happy-path API responses where catching unintended contract drift matters (e.g. the schema assignment response shape, the staff list payload). Verify auto-sanitizes GUIDs and timestamps to deterministic placeholders. `.verified.txt` files are committed and reviewed in PRs like code — a snapshot diff is a contract change.
 
 Do **not** use Verify for:
 - Error/ProblemDetails responses (dynamic traceIds, correlationIds make sanitization noisy — assert manually)
@@ -34,21 +34,23 @@ Do **not** use Verify for:
 **Why this layer catches what matters most:**
 - Tenant scoping correctness — the single most critical invariant in the system
 - Auth/JWT enforcement
+- Schema conflict detection logic
 - EF Core query behavior (global query filters, includes, projections)
 - Serialization and ProblemDetails error shape
 
-**Location**: `api/tests/Klubhuset.Api.IntegrationTests/`
+**Location**: `api/tests/{{PRODUCT_NAME}}.Api.IntegrationTests/`
 
-**Example scope**: one test class per feature area (`MemberRegistrationTests`, `TeamSignupTests`, `PaymentFlowTests`), not one per controller or service.
+**Example scope**: one test class per feature area (`SchemaBuilderTests`, `ConflictDetectionTests`, `StaffInvitationTests`), not one per controller or service.
 
 ### 2. Playwright e2e tests (critical flows only)
 
 For user flows that span frontend + backend and where a broken UI is a broken product. Target the flows a non-technical user would hit and not know how to recover from.
 
 **Covered flows:**
-- Member self-registration
-- Free-tier MobilePay display (admin configures, member sees it)
-- Team self-signup
+- Schema creation and lesson assignment
+- Staff login and schedule view
+- Printable schema generation
+- School setup wizard
 
 **Location**: `web/tests/e2e/`
 
@@ -73,7 +75,7 @@ These rules are what keep tests from becoming a maintenance burden:
 1. **No mocking `DbContext` or `ITenantContext`** — always use a real test DB via Testcontainers. Spin-up takes ~5s and is worth it.
 2. **No testing private or internal methods** — only test via public HTTP endpoints (API) or rendered UI (Playwright).
 3. **Playwright selectors must use `data-testid` attributes** — never CSS classes or DOM structure. Tailwind class names change; `data-testid` values are stable contracts.
-4. **One test file per feature flow**, not per class — `member-registration.test.ts`, not `MemberController.Tests.cs`.
+4. **One test file per feature flow**, not per class — `schema-builder.test.ts`, not `SchemaController.Tests.cs`.
 5. **Arrange test data via the API**, not by inserting directly into the DB — this keeps tests resilient to schema changes.
 
 ---
@@ -81,8 +83,8 @@ These rules are what keep tests from becoming a maintenance burden:
 ## What warrants a test
 
 Write a test when:
-- The feature involves a flow a user would be blocked on if it broke silently (registration, payment, login)
-- The feature has a correctness invariant that is non-obvious (tenant isolation, payment tier separation, auth enforcement)
+- The feature involves a flow a user would be blocked on if it broke silently (schema creation, login, billing)
+- The feature has a correctness invariant that is non-obvious (tenant isolation, conflict detection, billing state)
 - The feature has failed before or is known to be fragile
 
 Do not write a test for:

@@ -1,15 +1,17 @@
-# Klubhuset
+# {{PRODUCT_NAME}}
 
-White-label, multi-tenant SaaS for Danish sports societies (foreninger). Clubs get their own branded space — end users never see the Klubhuset name. Built for volunteer-run, multi-sport clubs with 150–2000 members.
+SaaS schema planner for Danish friskoler and private/independent schools. Schools build, manage, and print their weekly class schedules — with real-time conflict detection for teachers, rooms, and aides.
 
 ## What it does
 
-- **Membership management** — self-registration, member register, multi-afdeling structure (one afdeling = one sport)
-- **Team management** — training schedules with weekly recurrence and exception support, team messaging, self-signup
-- **Payments** — free tier uses the club's own MobilePay; paid tiers get platform-mediated payments via Stripe + MobilePay Subscriptions
-- **Onboarding** — invitation flow, Holdsport importer, MinForening importer
-- **White-labelling** — club logo and name on all member-facing screens; custom domain on Forening+ tier
-- **Admin dashboard** — member overview, payment status, DGI/DIF statistics export (paid tiers)
+- **Schema planner** — weekly grid per class, assign course + teacher + room to each time slot
+- **Conflict detection** — real-time validation: no double-booked teachers, rooms, or aides
+- **Time slot wizard** — school defines default lesson structure (durations, breaks); classes inherit with optional overrides
+- **Staff management** — teachers, aides, substitutes; invitation-based onboarding
+- **File explorer** — upload files linked to courses for easy reference
+- **Stats** — hours per course, hours per teacher/aide, unassigned slots
+- **Printable schemas** — per class, per teacher, per room; designed for A4 print
+- **Billing** — self-serve via Stripe Checkout, 14-day free trial, auto-renew monthly
 
 ## Tech stack
 
@@ -36,23 +38,20 @@ White-label, multi-tenant SaaS for Danish sports societies (foreninger). Clubs g
 
 ## Key architecture rules
 
-**Multi-tenancy**: every query that touches member, team, afdeling, or payment data must be scoped to a tenant via EF Core global query filters. Never bypass them. Never trust a URL slug as an authorization signal — always resolve to a `TenantId` at the middleware boundary.
+**Multi-tenancy**: every query that touches school, staff, class, course, schema, or file data must be scoped to a tenant via EF Core global query filters. Never bypass them. Never trust a URL slug as an authorization signal — always resolve to a `TenantId` at the middleware boundary.
 
-**White-label**: branding (logo, club name, colors) is tenant-specific and applied at the UI layer. No values may be hard-coded.
+**Responsive UI**: admin UI (schema builder) is laptop-first. Staff schedule views must work on phones and tablets.
 
-**Payment tier separation**:
-- Free tier — club's own MobilePay Business account; Klubhuset never touches their money
-- Forening / Forening+ — platform-mediated via Stripe Connect + MobilePay Subscriptions; transaction fees are charged to the member, not the club
+**Simplicity first**: the primary admin user is a school secretary with limited time. Every feature must be operable without training.
 
-**Simplicity first**: the primary admin user is a non-technical volunteer. Every feature must be operable without training.
+## Pricing
 
-## Pricing tiers
-
-| Tier | Members | Monthly |
+| Tier | Storage | Monthly |
 |---|---|---|
-| Gratis | Up to 100 | Free |
-| Forening | Up to 500 | ~199 kr |
-| Forening+ | Unlimited | ~399 kr |
+| Basis | 100 GB | 299 kr |
+| Skole+ (future) | 1000 GB | 499 kr |
+
+14-day free trial with full access. No per-student pricing.
 
 See [docs/PRICING.md](docs/PRICING.md) for full details.
 
@@ -60,8 +59,9 @@ See [docs/PRICING.md](docs/PRICING.md) for full details.
 
 - [PRD](docs/PRD.md) — product requirements and feature spec
 - [Personas](docs/PERSONAS.md) — the real users every design decision is measured against
+- [Schema features](docs/schema-features.md) — schema planner detail
 - [Decisions](docs/DECISIONS.md) — product and architecture decisions
-- [Team features](docs/team-features.md) — team management detail
 - [Tasks](docs/TASKS.md) — phased implementation plan
 - [Pricing](docs/PRICING.md) — tier breakdown
-- [Contacts](docs/CONTACTS.md) — key contacts
+- [Testing](docs/TESTING.md) — testing strategy
+- [Contacts](media/CONTACTS.md) — discovery interview contacts

@@ -1,25 +1,24 @@
-# PRD.md — Klubhuset Product Requirements
+# PRD.md — {{PRODUCT_NAME}} Product Requirements
 
 ## Product overview
 
-Klubhuset is a white-label, multi-tenant SaaS platform for Danish sports societies. It is sold B2B to clubs (foreninger), not to end users. The typical customer is a volunteer-run, multi-sport club with 150–2000 members.
+{{PRODUCT_NAME}} is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. It is sold B2B to schools, not to end users. The typical customer is a small-to-medium friskole with 50–500 students, run by a small team of administrators and teachers.
 
 ## Problem being solved
 
-Danish sports societies are drowning in spreadsheets, email threads, and manual bank transfers. Volunteer board members (often non-technical, often older) spend disproportionate time on administration instead of running the club. Existing tools either lack white-labelling (Holdsport) or are complex and expensive to set up (MinForening white label).
+Danish friskoler and private schools plan their weekly schedules (skemaer) using spreadsheets, whiteboards, or paper. Conflict detection — double-booked teachers, rooms, or aides — is entirely manual. No single tool handles teacher/aide assignment, room allocation, and course-hour tracking in one place at a price point that makes sense for small schools. Existing tools are either expensive (Docendo, Skoleintra), opaque in pricing (Skoleplan), or built for the public school system (Aula).
 
 ## Target customer
 
-- Multi-sport Danish forening (flerstrenget idrætsforening)
-- 150–2000 members
-- Volunteer-run board: formand, kasserer, sekretær
-- Low technical sophistication
-- Already affiliated with DGI or DIF
-- Currently using: Holdsport, MinForening, WinKAS, or just Excel/paper
+- Danish friskole or private/independent school (NOT folkeskole, NOT gymnasium)
+- 50–500 students
+- Small admin staff: skoleleder, skolesekretær, possibly a viceskoleleder
+- Low technical sophistication among admin users
+- Currently using: Excel, paper, Skoleplan, or Docendo
 
 ## Target end user
 
-Members of the forening. Range from 3-year-old children (parents acting on their behalf) to pensioners. Must be able to self-register and pay without assistance. Primary devices are phones and tablets — see [Design principles](#design-principles).
+Staff at the school. Range from school secretaries managing the full schema to substitute teachers who just need to know where to be. Primary devices are laptops (admin) and phones (teachers checking schedules) — see [Design principles](#design-principles).
 
 ---
 
@@ -27,60 +26,74 @@ Members of the forening. Range from 3-year-old children (parents acting on their
 
 See [docs/PERSONAS.md](PERSONAS.md) for the concrete users these principles are written for.
 
-**Mobile-first**: the primary end users are parents registering children, preteens, and the elderly. All member-facing screens must work fully on a phone. Admin screens must work on tablet and desktop. No feature may require a wide screen to operate.
+**Laptop-first for admin, responsive for all**: the primary admin user builds schemas on a laptop. The schema builder must work well on a laptop-sized screen. Teachers and aides view their schedules on phones and tablets. No feature may require a specific screen size to operate — but the schema builder is optimised for laptop use.
 
 **No surprises**: UI must be predictable and obvious. Prefer one clear action over multiple options. Never use jargon the user has not seen before without an immediate explanation.
 
-**Simplicity over features**: the admin user is often a 60-year-old volunteer formand with low technical sophistication. Every feature must be operable without training. Prefer fewer options over configurability.
+**Simplicity over features**: the admin user is often a school secretary with limited time and low technical sophistication. Every feature must be operable without training. Prefer fewer options over configurability.
 
 ---
 
-## Core features (MVP)
+## Core features (v1)
 
-### Membership management
+### Schema planner
 
-- Member register with basic fields (name, email, phone, birthdate, address)
-- Self-registration flow: member visits club URL, fills form, gets confirmed
-- Afdeling structure: clubs have multiple afdelinger — one afdeling = one sport (e.g. fodbold, badminton, gymnastik). The term "afdeling" is used throughout the UI and introduced with a short subtitle on first encounter.
-- Members can belong to multiple afdelinger
+The core product. Each class (klasse) has its own weekly schema (skema). The school defines a default time slot template — lesson durations and breaks — and each class inherits it. Classes can override individual time slots. See [docs/schema-features.md](schema-features.md) for full detail.
 
-### Team management
+- Weekly grid view per class
+- Assign course (fag) + teacher (lærer) + room (lokale) to each time slot
+- Real-time conflict detection: teacher double-booked, room double-booked, aide double-booked
+- Per-class time slot overrides (classes are not forced to align)
 
-See [docs/team-features.md](team-features.md) for full detail.
+### Time slot wizard
 
-- Teams (hold) within each afdeling
-- Each team has a primary træner and optional extra trænere
-- Training schedule: weekly recurrence pattern (day + time + location) with exception support (cancel or reschedule individual sessions)
-- Session changes trigger email notifications to all team members
-- Team self-signup: members browse available teams and register themselves
-- Season management (paid tiers only)
-- Team messages: admins can message any team; trænere can message their own teams if the club enables this permission
+On school setup, admin defines the default lesson structure via a guided wizard:
+- Default lesson duration (e.g. 45 min)
+- Breaks between lessons (optional — some schools have fixed breaks, others don't)
+- Generates the school's default weekly time slot grid
+- Per-class overrides allowed after initial setup
 
-### Payments
+### Staff management
 
-- **Free tier**: club admin configures their MobilePay Betalingslink and QR code in the dashboard. The platform displays it — money never touches Klubhuset. Admin manually marks members as paid. See [free-tier-payment-bypass](decisions/free-tier-payment-bypass.md).
-- **Paid tiers**: platform-mediated payments via Stripe + MobilePay Subscriptions. Automated kontingent invoicing, payment status dashboard, automatic reminders for unpaid members. Transaction fee (approx 2.5% + 2 kr) added on top of kontingent and charged to the member, not the club. See [transaction-fees-to-members](decisions/transaction-fees-to-members.md).
+- Staff register: teachers (lærere), aides (pædagoger), substitutes (vikarer)
+- Each staff member has a role, contact info, and assigned courses
+- Staff onboarding via invitation flow (email invite → Keycloak account)
 
-### Onboarding / member import
+### Class and course management
 
-- **Invitation flow** (primary): admin pastes email addresses, system sends branded invite emails, members self-register. Works for all clubs regardless of prior system.
-- **Holdsport import**: club downloads their Holdsport member export, uploads to Klubhuset, system maps fields automatically. No CSV knowledge required.
-- **MinForening import**: same pattern as Holdsport import.
+- CRUD for classes (klasser): e.g. 2.b, 5.a, 9.a
+- CRUD for courses (fag): e.g. dansk, matematik, idræt
+- Courses are linked to classes via the schema
+
+### File explorer
+
+- Upload files (PDFs, documents) to the platform
+- Link files to courses for easy reference
+- Browse files by course
+- Storage: OVHCloud Object Storage (S3-compatible, EU)
+
+### Stats and reporting
+
+- Hours per course per class (towards minimumstimetal)
+- Hours per teacher / aide
+- Exportable summaries
+
+### Printable schema
+
+- Print-friendly weekly schema views: per class, per teacher, per room
+- Schools print and physically post schedules — this must work without the app
 
 ### Admin dashboard
 
-- Overview: member count, payment status, recent signups
-- Paid tiers: reporting, exports, multi-admin roles, DGI/DIF statistics export (required for kommunal tilskud)
+- School overview: class count, staff count, schema status
+- Quick access to schema builder, staff list, course list
 
-### White-labelling
+### Payments and billing
 
-- **Free tier**: club gets a path on klubhuset.dk (e.g. `klubhuset.dk/minforening`). Klubhuset branding visible.
-- **Paid tiers**: full white-label. Club uploads logo, sets name. Members see only club branding.
-- **Forening+ tier**: custom domain support (manual DNS + automatic SSL via Caddy).
-
-### Tenant routing
-
-Clubs are identified by a short slug chosen at signup (e.g. `minforening`). At MVP, clubs are served at `klubhuset.dk/{slug}`. Slugs are immutable after creation. See [path-based-tenant-routing](decisions/path-based-tenant-routing.md).
+- **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly
+- **14-day free trial**: full access, no payment required upfront
+- **Single tier (v1)**: 299 kr/month — all features included
+- Schools are never invoiced manually — everything is self-serve
 
 ---
 
@@ -88,12 +101,13 @@ Clubs are identified by a short slug chosen at signup (e.g. `minforening`). At M
 
 See [docs/decisions/](decisions/) for full rationale. Summary:
 
-- **API**: ASP.NET Core Web API (C# 12 / .NET 9)
+- **API**: ASP.NET Core Web API (C# / .NET 9)
 - **ORM**: Entity Framework Core + PostgreSQL (self-hosted)
 - **Frontend**: React + Vite + TypeScript + Tailwind CSS
 - **Auth**: Keycloak (Docker Compose)
 - **Hosting**: OVHCloud VPS + Dokploy + Docker Compose
 - **Object storage**: OVHCloud Object Storage (S3-compatible, EU)
+- **Email**: Scaleway TEM via SMTP (MailKit)
 
 ---
 
@@ -101,24 +115,33 @@ See [docs/decisions/](decisions/) for full rationale. Summary:
 
 | Competitor | Strengths | Weaknesses |
 |---|---|---|
-| Holdsport | Free, feature-rich, large user base | Not white-label, per-transaction fees, complex UX |
-| MinForening | White-label option | Expensive, slow setup (billed by dev hours) |
-| goMember, ForeningsAdministrator, VoresForening | Niche players | Less relevant |
+| Skoleplan | Established, known in friskole market | Pricing not public, unclear feature set |
+| Docendo | Feature-rich | Expensive, complex |
+| Skoleintra | Solid product, good reputation | High price, heavy for small schools |
+| Aula | Large user base, government-backed | Public schools only — not available to friskoler |
 
 ## Differentiators
 
-1. Genuinely invisible platform — end users only see the club's brand
-2. Simple enough for a 60-year-old volunteer to run without training
-3. Flat monthly pricing — predictable, no per-transaction fees for the club
-4. Multi-afdeling structure built in from day one, not bolted on
-5. One-step migration from Holdsport
-6. Mobile-first — designed for parents and members on phones
+1. Transparent pricing — listed on the website, no sales calls required
+2. Simple enough for a school secretary to run without training
+3. Real-time conflict detection built into the schema builder
+4. Clean, modern UI — no bloat, no legacy design
+5. EU-only data storage (OVHCloud, Scaleway)
+6. 14-day free trial with full access
 
-## Out of scope (for now)
+## Future features (not v1)
 
-- Booking systems (courts, halls)
-- Webshop / merchandise
+- UVM reporting (course hour reporting to the ministry)
+- Parent/student logins
+- Homework upload (linked to courses)
+- UVM course hour integration (minimumstimetal tracking against official requirements)
+- Parent communication (v2 candidate)
+
+## Out of scope
+
+- Student grading
+- LMS / learning management
 - SMS notifications
-- Access control / door systems
-- Accounting software integration
 - Native mobile app
+- Folkeskole / Aula integration
+- Accounting software integration

@@ -1,109 +1,115 @@
 # PERSONAS.md — User Personas
 
-These personas represent the real people who use Klubhuset. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**
+These personas represent the real people who use {{PRODUCT_NAME}}. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**
 
 ---
 
-## Kirsten, 67 — Sekretær, badminton og gymnastik
+## Hanne, 58 — Skolesekretær
 
-Kirsten has been secretary of the club for 11 years. She keeps the member register running, chases unpaid kontingent, and makes sure nothing falls through the cracks — all as a volunteer, on top of everyday life. She currently manages everything in an Excel spreadsheet and collects payments by bank transfer. She has a smartphone and uses it daily for calls, SMS, and Facebook.
+Hanne has been the school secretary for 12 years. She runs the daily administration: answers the phone, handles enrollment, coordinates with teachers, and builds the weekly schema every term. She currently does this in an Excel spreadsheet — moving cells around, checking for conflicts by eye, printing the result and posting it in the teachers' lounge. She is not a technical person, but she is thorough and careful.
 
-**Device**: Samsung Galaxy A-series. Occasionally uses a laptop for email.
+**Device**: Laptop at work (Windows). Samsung phone for quick checks at home.
 
-**Comfort level**: Facebook yes. Email yes. Excel reluctantly. A new login or unfamiliar interface takes a moment — she prefers to get it right the first time rather than experiment.
+**Comfort level**: Email and Excel yes. Online banking yes. New software takes her a moment — she prefers to understand what a button does before pressing it. She does not experiment; she follows a path that works.
 
 **Goals**:
-- Know who has paid and who hasn't, without cross-referencing a spreadsheet
-- Send a message to all badminton parents when training is cancelled
-- Add a new member confidently, on her own
+- Build next term's schema without double-booking teachers or rooms
+- See at a glance if a teacher has too many or too few hours
+- Print a clean weekly schema for each class and for the teachers' lounge
 
 **Fears**:
 - "Deleting something by accident"
-- Forms with many fields
+- A change that silently affects another class's schema
+- Forms with too many fields
 - Anything that says "error" without explaining what to do
 
 **Design implications**:
 - Every action must have one obvious button, not a menu
+- Conflicts must be shown immediately and in plain Danish — not after saving
 - Destructive actions (delete, remove) must require confirmation with plain-language explanation
 - Success states must be explicit: "Gemt!" not just a silent page reload
-- Never use technical terms (slug, tenant, API, sync) in member-facing or admin UI
+- The schema builder must work well on a laptop screen — this is where Hanne works
+- Never use technical terms (slug, tenant, API, sync) in any user-facing UI
 
 ---
 
-## Mads, 41 — Fodboldforælder
+## Thomas, 44 — Lærer
 
-Mads has two kids in the club — one in U10 fodbold, one just starting gymnastics. He works full-time and handles most school and club admin on his phone while commuting or waiting at the side of the pitch. He is comfortable with technology and moves fast.
+Thomas teaches dansk and historie across four classes — from 3. klasse to 7. klasse. He has been at the school for 8 years. He is comfortable with technology and uses his phone constantly. He checks his schedule between classes, during breaks, and sometimes from home in the evening to plan the next day.
 
-**Device**: iPhone. Uses apps constantly.
+**Device**: iPhone. Laptop at school for preparing lessons.
 
-**Comfort level**: High. Uses MobilePay, MitID, Rejseplanen, and calendar apps daily.
+**Comfort level**: High. Uses MitID, e-Boks, MobilePay, and calendar apps daily.
 
 **Goals**:
-- Register both kids quickly and pay the kontingent in one go
-- See when and where training is — immediately, without digging
-- Know if training is cancelled before anyone has left the house
+- See his own weekly schedule at a glance — which classes, which rooms, what time
+- Know immediately if a room or time has changed
+- Not have to ask Hanne for information he should be able to find himself
 
 **Fears**:
-- Having to re-enter the same information twice (once per child)
-- Missing a cancellation notification
-- Paying the wrong amount or to the wrong place
+- Missing a schedule change and showing up to the wrong room
+- Having to dig through menus to find basic information
+- Being asked to do admin tasks that aren't his job
 
 **Design implications**:
-- Registration flow must handle multiple children cleanly
-- Training schedule must be the first thing visible after login — not buried in a menu
-- Cancellation notifications must be sent immediately on change
-- MobilePay must be the obvious payment method, not an afterthought
+- Personal schedule view must be the first thing visible after login — not buried in a menu
+- Schedule changes must be clearly marked (visual indicator, notification)
+- Teacher view must be clean and read-only — no admin controls visible
+- Must work perfectly on a phone screen
 
 ---
 
-## Sofie, 14 — Gymnast
+## Birgitte, 51 — Skoleleder
 
-Sofie has been in gymnastics since she was 5. She has her own phone and handles more club-related things herself now — checking training times, letting her træner know when she'll be absent. She knows exactly what a well-designed app looks like and has no patience for one that isn't.
+Birgitte is the school principal. She oversees everything — staffing, budgets, parent communication, and long-term planning. She is the one who approves the schema and makes sure UVM requirements are met. She is capable with technology but has no patience for tools that waste her time. She needs overview, not detail.
 
-**Device**: iPhone. Never uses a laptop for anything club-related.
+**Device**: Laptop at school. iPad at home. iPhone.
 
-**Comfort level**: Native smartphone user. High standards for apps — if something takes too long or feels clunky, she'll find another way.
+**Comfort level**: Moderate to high. Comfortable with email, online banking, and school administration tools. Prefers dashboards and summaries over raw data.
 
 **Goals**:
-- Check when and where training is this week
-- See who else is on her team
-- Message the team without having to call anyone
+- See the state of the schema at a glance: is it complete? Are all classes covered?
+- Check total course hours against UVM minimumstimetal
+- Identify staffing gaps: which courses need a teacher assigned?
+- Export a summary for the school board or UVM reporting
 
 **Fears**:
-- UI that looks like it was built for a desktop
-- Being redirected to a non-mobile experience
-- Having to ask someone else to do something she should be able to do herself
+- Approving a schema that doesn't meet UVM requirements
+- Not noticing a staffing gap until it's too late
+- Needing to learn a complex new tool when the old one "works fine"
 
 **Design implications**:
-- Member-facing UI must look clean and modern — not like a government form
-- Everything must work on a small screen with one thumb
-- Team roster and schedule are the two most-accessed screens — they must load fast and require no navigation depth
+- Dashboard must lead with summary numbers — classes with complete schemas, unassigned slots, total hours
+- Stats and exports must be accessible in one or two clicks — not hidden in settings
+- UVM hour tracking must be clear: are we above or below the requirement per course?
+- Inline help text must be in plain Danish, written for a capable adult encountering something for the first time
 
 ---
 
-## Erik, 55 — Formand (chairman)
+## Mikkel, 29 — Vikar / pædagog
 
-Erik took over as formand three years ago. He runs a small business and is used to taking responsibility — for the club, for his team, for the finances. He is not a software person, but he is capable and methodical. He uses email and online banking without trouble. He wants to understand what he's doing before he does it.
+Mikkel is a part-time substitute teacher and pedagogue. He works across multiple classes throughout the week, filling in wherever needed. His schedule changes more often than anyone else's. He checks his phone in the morning to see where he needs to be. He does not care about the admin side of the tool — he just needs his schedule.
 
-**Device**: iPad at home. Laptop at work. Android phone.
+**Device**: iPhone. Never uses a laptop for anything school-related.
 
-**Comfort level**: Moderate. Comfortable with email, banking, and MobilePay. Prefers clear labels and one step at a time over clever interfaces that assume prior knowledge.
+**Comfort level**: Native smartphone user. High standards for apps — if something takes too long or feels clunky, he'll just text Hanne instead.
 
 **Goals**:
-- See the state of the club at a glance: how many members, who hasn't paid
-- Handle new member applications without reading a manual
-- Export the DGI statistics report once a year, independently
+- Check where he needs to be today and this week
+- See if anything changed since yesterday
+- Not have to log in through a complicated process
 
 **Fears**:
-- Making a change that affects something he didn't intend to touch
-- Not understanding what a button does before pressing it
-- Needing to ask for help with a routine task
+- Showing up to the wrong room because the schedule changed and he wasn't told
+- UI that looks like it was built for desktop and squeezed onto a phone
+- Having admin features cluttering his view
 
 **Design implications**:
-- Admin dashboard must lead with a simple summary view — numbers, not tables
-- Every admin action must be reversible or at minimum explained before it executes
-- The DGI export must be one button with a clear label — not hidden in settings
-- Tooltips and inline help text must be in plain Danish, written for a capable adult encountering something for the first time
+- Schedule view must be the default screen — no navigation required
+- Must work on a phone with one thumb
+- Changes since last visit should be visually highlighted
+- No admin controls, no editing — pure read-only for this role
+- Login must be fast (saved session, biometric if possible via Keycloak)
 
 ---
 
@@ -111,10 +117,10 @@ Erik took over as formand three years ago. He runs a small business and is used 
 
 When designing a screen or feature, ask:
 
-1. **Can Kirsten complete this on her own, confidently?**
-2. **Can Mads do this in 60 seconds on a phone while standing at the football pitch?**
-3. **Would Sofie consider this app well-made?**
-4. **Does Erik know what will happen before he clicks?**
+1. **Can Hanne build the schema on her own, confidently, on her laptop?**
+2. **Can Thomas find his schedule in 10 seconds on his phone?**
+3. **Does Birgitte get the overview she needs without digging?**
+4. **Does Mikkel see only what he needs — nothing more?**
 
 If the answer to any of these is no, simplify. Remove a step. Rewrite the label. Make the primary action more obvious.
 

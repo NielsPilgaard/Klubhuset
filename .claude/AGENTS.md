@@ -4,30 +4,25 @@ This file defines how AI agents should work in this codebase.
 
 ## Project context
 
-Klubhuset is a multi-tenant, white-label SaaS for Danish sports societies (foreninger). Each tenant has their own branded space. End users never see the Klubhuset brand — they see their club's logo and name. The platform is Danish-language only, targeting the Danish market.
+{{PRODUCT_NAME}} is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. Each tenant is a school. The platform helps schools build, manage, and print their weekly class schedules with real-time conflict detection. The platform is Danish-language only, targeting the Danish market.
 
-Reference club profile: ~1100 members, 8 sports, mid-sized Danish town — use this as the mental model for a typical Forening tier customer.
+Reference school profile: ~300 students, 25 staff, friskole in a small Danish town — use this as the mental model for a typical customer.
 
-**Simplicity is a core product value.** The users are a 67-year-old sekretær, a busy parent on a phone at the football pitch, a 14-year-old gymnast, and a 55-year-old volunteer formand. See [docs/PERSONAS.md](../docs/PERSONAS.md). Every UI decision must pass: can Kirsten (the sekretær) complete this without calling her grandchild?
+**Simplicity is a core product value.** The users are a 58-year-old school secretary, a teacher checking his schedule between classes, a principal who needs overview, and a part-time substitute who just needs to know where to be. See [docs/PERSONAS.md](../docs/PERSONAS.md). Every UI decision must pass: can Hanne (the school secretary) complete this without asking for help?
 
 ## Architecture principles
 
-**Multi-tenancy**: every database query must be scoped to a tenant. Never leak data across tenants. Tenant ID must be present on every query that touches member, team, afdeling, or payment data. Enforced via EF Core global query filter:
+**Multi-tenancy**: every database query must be scoped to a tenant. Never leak data across tenants. Tenant ID must be present on every query that touches school, staff, class, course, schema, room, or file data. Enforced via EF Core global query filter:
 ```csharp
 HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)
 ```
 Never bypass this filter. Never trust a slug string as an authorization signal — always resolve to a TenantId at the middleware boundary.
 
-**White-label**: branding (logo, club name, colors) is tenant-specific and must be applied at the UI layer. No branding values may be hard-coded anywhere.
+**Responsive UI**: the schema builder (admin) is laptop-first — it needs screen space. Staff schedule views must work fully on a phone. No feature may be unusable at any screen size.
 
-**Simplicity first**: the primary user is a 60-year-old volunteer chairman (formand) with low technical sophistication. Every feature must be operable without technical knowledge. Prefer fewer options over more. Prefer obvious over clever.
+**Simplicity first**: the primary user is a school secretary with limited time and low technical sophistication. Every feature must be operable without training. Prefer fewer options over more. Prefer obvious over clever.
 
-**Mobile-first**: all member-facing UI must work fully on a phone. Admin UI must work on tablet and desktop.
-
-**Payment tier separation**:
-
-- Free tier: clubs use their own MobilePay Business account. The platform is bypassed entirely — Klubhuset never touches their money and has no role in the payment flow.
-- Paid tiers (Forening, Forening+): payments go through platform infrastructure (Stripe Connect + MobilePay Subscriptions). Transaction fees are passed to members, not clubs.
+**Billing via Stripe Checkout**: all billing is self-serve. 14-day free trial, then monthly Stripe Checkout. No manual invoicing. No MobilePay.
 
 ## Coding conventions
 
@@ -48,7 +43,7 @@ Never bypass this filter. Never trust a slug string as an authorization signal �
 ### General
 
 - Style and naming conventions (indentation, casing, imports) are enforced by `.editorconfig` and the project linting setup. Do not duplicate those rules here.
-- Afdeling = one sport. One club has many afdelinger. Each afdeling has many teams (hold).
+- Danish domain terms: klasse (class), fag (course), lokale (room), lektion (time slot), lærer (teacher), pædagog (aide), vikar (substitute), skema (schema/schedule).
 
 ## Testing
 
@@ -59,15 +54,15 @@ See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. Summary of rule
 - **Never test private or internal methods** — only via public HTTP endpoints or rendered UI.
 - **Playwright selectors use `data-testid` only** — never CSS classes or DOM structure.
 - **One test file per feature flow**, not per class.
-- When in doubt whether something needs a test: does a silent break block Kirsten? If yes, test it.
+- When in doubt whether something needs a test: does a silent break block Hanne? If yes, test it.
 
 ## What agents must never do
 
 - Write database queries without tenant scoping
-- Hard-code branding, colors, club names, or any tenant-specific values
+- Hard-code school names, branding, or any tenant-specific values
 - Add features not described in [PRD.md](../docs/PRD.md) without explicit instruction from the developer
-- Break the payment tier separation (free = direct MobilePay, paid = platform-mediated via Stripe)
-- Introduce complexity that a non-technical volunteer would not be able to operate
-- Implement out-of-scope features (booking, webshop, SMS, access control, accounting integration, native mobile app)
+- Introduce complexity that a school secretary would not be able to operate
+- Implement out-of-scope features (grading, LMS, SMS, native app, folkeskole/Aula integration, accounting)
 - Modify existing EF Core migration files
 - Trust a URL slug as an authorization token — always resolve to TenantId first
+- Bypass Stripe Checkout for billing (no manual invoicing, no MobilePay)

@@ -17,4 +17,4 @@
 
 ## Reason
 
-The developer has strong existing C# expertise (ASP.NET Core, EF Core). Using the primary language of expertise reduces risk and development time for an MVP. React + TypeScript is widely known and pairs well with an OpenAPI-generated typed client from the ASP.NET API. Tailwind keeps styling simple and consistent without a design system overhead. Keycloak provides battle-tested multi-tenant auth with OIDC/JWT support. OVHCloud is EU-based and co-locates VPS and object storage to minimize vendor count and latency.
+The developer has strong existing C# expertise (ASP.NET Core, EF Core). Using the primary language of expertise reduces risk and development time for a v1. React + TypeScript is widely known and pairs well with an OpenAPI-generated typed client from the ASP.NET API. Tailwind keeps styling simple and consistent without a design system overhead. Keycloak provides battle-tested multi-tenant auth with OIDC/JWT support — and opens the door for UniLogin integration later. OVHCloud is EU-based and co-locates VPS and object storage to minimize vendor count and latency.
