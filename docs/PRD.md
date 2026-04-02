@@ -58,7 +58,6 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 - Staff register: teachers (lærere), aides (pædagoger), substitutes (vikarer)
 - Each staff member has a role, contact info, and assigned courses
 - Staff onboarding via invitation flow (email invite → Keycloak account)
-- **Multi-school accounts**: a single Keycloak identity can be linked to multiple tenants (e.g. a teacher working at two schools, or a shared admin). The auth model must support this from day one — retrofitting is costly. The UI can be minimal in v1 (school switcher in the header), but the data model and token claims must handle it.
 
 ### Class and course management
 

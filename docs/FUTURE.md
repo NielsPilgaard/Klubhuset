@@ -12,7 +12,7 @@ These features are **out of scope for MVP** but worth exploring post-launch. Not
 ## Parent Module
 
 - **Kontaktbog**: log of events/notes per child, visible to parents and teachers.
-- **Multi-child support**: parents with multiple children see all in one view.
+- **Multi-child support**: dropdown switcher to select which child to view. Default to the first/only child.
 - **Fraværsregistrering**: register absence, with integration to [Netprotokollen / Karakternet](https://netprotokollen.karakternet.dk/parents).
 - **Kontakter**: directory of other parents (address, phone, etc.) — privacy/GDPR considerations apply.
 - **Adressebeskyttelse**: parents with navne- og adressebeskyttelse (CPR-lovens §28) must have their address, phone, and other contact info hidden from other parents, the parent directory, and any exports. Must be a flag on the parent account that suppresses contact info everywhere except for school admin. This is a legal requirement — not optional.
