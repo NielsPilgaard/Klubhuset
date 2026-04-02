@@ -1,3 +1,5 @@
 {
-  "path": "infrastructure/aspire/Skoleplanen.AppHost/Skoleplanen.AppHost.csproj"
+  "appHost": {
+    "path": "infrastructure/aspire/Skoleplanen.AppHost/Skoleplanen.AppHost.csproj"
+  }
 }

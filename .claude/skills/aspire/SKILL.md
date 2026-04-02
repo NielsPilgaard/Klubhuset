@@ -40,12 +40,12 @@ Every container resource in the AppHost must carry the project label so all cont
 
 Apply it with:
 ```csharp
-.WithContainerRuntimeArgs("--label", $"project={label}")
+.WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
 ```
 
 For child containers created via callbacks (like pgAdmin), apply inside the callback:
 ```csharp
-.WithPgAdmin(pgAdmin => pgAdmin.WithContainerRuntimeArgs("--label", $"project={label}"))
+.WithPgAdmin(pgAdmin => pgAdmin.WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}"))
 ```
 
 ## Adding a new service
@@ -53,7 +53,7 @@ For child containers created via callbacks (like pgAdmin), apply inside the call
 When adding any new container or resource to the AppHost, always include:
 
 1. **Persistent lifetime** — `.WithLifetime(ContainerLifetime.Persistent)` so the container survives AppHost restarts during development
-2. **Project label** — `.WithContainerRuntimeArgs("--label", $"project={label}")` for grouping
+2. **Project label** — `.WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")` for grouping in Docker Desktop
 3. **Named endpoint** — `.WithHttpEndpoint(port: ..., targetPort: ..., name: "...")` so other resources can reference it
 4. **WaitFor dependencies** — `.WaitFor(dependency)` if the service depends on another being ready first
 
@@ -62,7 +62,7 @@ Example pattern:
 var myService = builder.AddContainer("myservice", "image/name", "tag")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(port: 1234, targetPort: 1234, name: "http")
-    .WithContainerRuntimeArgs("--label", $"project={label}")
+    .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
     .WaitFor(postgres);
 ```
 
