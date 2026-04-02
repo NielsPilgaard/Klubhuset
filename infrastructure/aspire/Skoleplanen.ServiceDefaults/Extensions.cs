@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Skoleplanen.ServiceDefaults;
@@ -37,18 +38,34 @@ public static class Extensions
         });
 
         builder.Services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource
+                .AddService(builder.Environment.ApplicationName)
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["environment"] = builder.Environment.EnvironmentName
+                }))
             .WithMetrics(metrics =>
             {
                 metrics
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddMeter("Microsoft.EntityFrameworkCore");
             })
             .WithTracing(tracing =>
             {
                 tracing
                     .AddSource(builder.Environment.ApplicationName)
-                    .AddAspNetCoreInstrumentation()
+                    .AddSource("Microsoft.EntityFrameworkCore")
+                    .AddAspNetCoreInstrumentation(options =>
+                    {
+                        options.Filter = httpContext =>
+                        {
+                            var path = httpContext.Request.Path.Value;
+                            return path is not (null or "/health" or "/alive");
+                        };
+                        options.RecordException = true;
+                    })
                     .AddHttpClientInstrumentation();
             });
 
