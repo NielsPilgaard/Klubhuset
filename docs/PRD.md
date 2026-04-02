@@ -58,6 +58,7 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 - Staff register: teachers (lærere), aides (pædagoger), substitutes (vikarer)
 - Each staff member has a role, contact info, and assigned courses
 - Staff onboarding via invitation flow (email invite → Keycloak account)
+- **Multi-school accounts**: a single Keycloak identity can be linked to multiple tenants (e.g. a teacher working at two schools, or a shared admin). The auth model must support this from day one — retrofitting is costly. The UI can be minimal in v1 (school switcher in the header), but the data model and token claims must handle it.
 
 ### Class and course management
 
@@ -99,7 +100,7 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 
 ## Tech stack
 
-See [docs/decisions/](decisions/) for full rationale. Summary:
+See [docs/adr/](adr/) for full rationale. Summary:
 
 - **API**: ASP.NET Core Web API (C# / .NET 9)
 - **ORM**: Entity Framework Core + PostgreSQL (self-hosted)

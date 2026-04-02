@@ -27,10 +27,11 @@ Establish the project skeleton, local dev environment, CI, and hosting infrastru
 - [ ] Configure EF Core with PostgreSQL connection
 - [ ] Write base `AppDbContext` with tenant scoping global query filter (`HasQueryFilter` on all tenant-scoped entities)
 - [ ] Write and apply initial migration (empty schema baseline)
-- [ ] Self-hosted PostgreSQL backup strategy:
-  - `pg_dump` on daily cron → gzip → upload to OVHCloud Object Storage
-  - Retain last 30 daily backups
-  - Alert on backup failure
+- [ ] Configure Dokploy built-in database backup:
+  - Daily schedule via cron expression in Dokploy dashboard
+  - Destination: OVHCloud Object Storage (S3-compatible)
+  - Retention: 30 backups
+  - Verify backup appears in Dokploy dashboard
 
 ### Auth
 
@@ -62,4 +63,12 @@ Establish the project skeleton, local dev environment, CI, and hosting infrastru
   - Free dev tier available
   - Affordable at ~5000 emails/month in production
 - [x] Candidates: Brevo, Mailersend, Postal (self-hosted), Infobip EU
-- [x] Document decision in ADR (see [transactional-email-tbd](../docs/decisions/transactional-email-tbd.md))
+- [x] Document decision in ADR (see [transactional-email](../docs/adr/transactional-email.md))
+
+### Transactional email infrastructure
+
+- [ ] Add MailKit NuGet dependency
+- [ ] Implement `IEmailSender` abstraction with MailKit SMTP implementation (Scaleway TEM)
+- [ ] Store SMTP credentials in user secrets (local) / environment variables (production)
+- [ ] Configure SPF, DKIM, and DMARC on the sending domain
+- [ ] Verify email sending works in dev (Scaleway 300 free emails/month covers this)
