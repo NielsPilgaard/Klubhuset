@@ -86,11 +86,13 @@ if ($aspireInstalled) {
 else {
     Write-Step "Installing Aspire CLI..."
     Invoke-RestMethod -Uri "https://aspire.dev/install.ps1" | Invoke-Expression
-    if ($LASTEXITCODE -ne 0) {
+    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    $aspireCheck = $null
+    try { $aspireCheck = (aspire --version 2>$null) } catch {}
+    if (-not $aspireCheck) {
         Write-Fail "Failed to install Aspire CLI. Run manually: irm https://aspire.dev/install.ps1 | iex"
         exit 1
     }
-    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
     Write-Ok "Aspire CLI installed"
 }
 
