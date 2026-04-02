@@ -14,4 +14,8 @@
         <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.2.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\api\Skoleplanen.Api\Skoleplanen.Api.csproj" />
+    </ItemGroup>
+
 </Project>
