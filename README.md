@@ -17,7 +17,7 @@ SaaS schema planner for Danish friskoler and private/independent schools. School
 
 | Layer          | Choice                                              |
 | -------------- | --------------------------------------------------- |
-| API            | ASP.NET Core Web API, C# / .NET 9                   |
+| API            | ASP.NET Core Web API, C# / .NET 10                  |
 | ORM            | Entity Framework Core                               |
 | Database       | PostgreSQL (Docker Compose, self-hosted on OVH VPS) |
 | Frontend       | React + Vite + TypeScript + Tailwind CSS            |

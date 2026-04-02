@@ -10,7 +10,7 @@ Establish the project skeleton, local dev environment, CI, and hosting infrastru
 
 ### Repo and scaffold
 
-- [ ] Scaffold monorepo: `/api` (ASP.NET Core WebAPI, .NET 9) + `/web` (React + Vite + TypeScript + Tailwind)
+- [ ] Scaffold monorepo: `/api` (ASP.NET Core WebAPI, .NET 10) + `/web` (React + Vite + TypeScript + Tailwind)
 - [ ] Write `.editorconfig` covering C# and TypeScript formatting rules
 - [ ] Add `.gitignore` covering both stacks
 

@@ -102,7 +102,7 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 
 See [docs/adr/](adr/) for full rationale. Summary:
 
-- **API**: ASP.NET Core Web API (C# / .NET 9)
+- **API**: ASP.NET Core Web API (C# / .NET 10)
 - **ORM**: Entity Framework Core + PostgreSQL (self-hosted)
 - **Frontend**: React + Vite + TypeScript + Tailwind CSS
 - **Auth**: Keycloak (Docker Compose)
