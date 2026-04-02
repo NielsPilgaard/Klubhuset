@@ -19,14 +19,15 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http")
     .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
-    .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
+    .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", builder.AddParameter("keycloak-admin-password", secret: true))
     .WithEnvironment("KC_DB", "postgres")
     .WithEnvironment("KC_DB_USERNAME", pgUsername)
     .WithEnvironment("KC_DB_PASSWORD", pgPassword)
     .WithEnvironment("KC_DB_URL", ReferenceExpression.Create(
         $"jdbc:postgresql://{postgres.Resource.Host}:{postgres.Resource.Port}/keycloak-db"))
+    .WithBindMount("../../../infrastructure/keycloak/realms", "/opt/keycloak/data/import", isReadOnly: true)
     .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
-    .WithArgs("start-dev")
+    .WithArgs("start-dev", "--import-realm")
     .WaitFor(postgres);
 
 // LocalStack (S3-compatible local emulation for OVHCloud Object Storage)
@@ -35,17 +36,17 @@ builder.AddContainer("localstack", "localstack/localstack", "3")
     .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "gateway")
     .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
 
-// API — will be wired up when the API project is created
-// var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
-//     .WithReference(db)
-//     .WithReference(keycloak)
-//     .WaitFor(db)
-//     .WaitFor(keycloak);
+// API
+var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
+    .WithReference(db)
+    .WithReference(keycloak)
+    .WaitFor(db)
+    .WaitFor(keycloak);
 
-// React + Vite frontend — will be wired up when the web project is created
-// var web = builder.AddNpmApp("web", workingDirectory: "../../../web", scriptName: "dev")
-//     .WithHttpEndpoint(port: 5173, env: "PORT")
-//     .WithExternalHttpEndpoints()
-//     .WithReference(api);
+// React + Vite frontend
+builder.AddNpmApp("web", workingDirectory: "../../../web", scriptName: "dev")
+    .WithHttpEndpoint(port: 5173, env: "PORT")
+    .WithExternalHttpEndpoints()
+    .WithReference(api);
 
 builder.Build().Run();
