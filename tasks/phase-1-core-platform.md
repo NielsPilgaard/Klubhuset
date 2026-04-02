@@ -96,3 +96,9 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 - [ ] School overview: class count, staff count, course count
 - [ ] Schema completeness: how many classes have a complete schema
 - [ ] Quick links to schema builder, staff list, course list
+
+### Responsive UI validation
+
+- [ ] Schema builder and admin views usable on laptop-size screens (1280px+)
+- [ ] Teacher/aide schedule views fully functional on phone (375px+)
+- [ ] No feature unusable at any screen size (per responsive-ui ADR)
