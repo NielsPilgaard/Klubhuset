@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/infrastructure/aspire/">
+    <Project Path="infrastructure/aspire/Skoleplanen.AppHost/Skoleplanen.AppHost.csproj" />
+    <Project Path="infrastructure/aspire/Skoleplanen.ServiceDefaults/Skoleplanen.ServiceDefaults.csproj" />
+  </Folder>
+</Solution>
