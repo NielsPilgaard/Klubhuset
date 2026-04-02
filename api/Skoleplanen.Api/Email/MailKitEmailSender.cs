@@ -2,12 +2,13 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Skoleplanen.Api.Email;
 
-public sealed class MailKitEmailSender(IOptions<SmtpOptions> options) : IEmailSender
+public sealed class MailKitEmailSender(IOptionsMonitor<SmtpOptions> options) : IEmailSender
 {
-    private readonly SmtpOptions _options = options.Value;
+    private readonly SmtpOptions _options = options.CurrentValue;
 
     public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {

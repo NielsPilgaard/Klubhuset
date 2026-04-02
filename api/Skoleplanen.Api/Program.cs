@@ -52,7 +52,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Email
-builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddOptions<SmtpOptions>()
+    .BindConfiguration(SmtpOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 
 // Controllers
