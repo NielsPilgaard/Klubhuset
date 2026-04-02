@@ -1,0 +1,105 @@
+# Production docker-compose for deployment on OVH VPS via Dokploy.
+#
+# Dokploy provides Traefik as the reverse proxy — no separate proxy container needed.
+# HTTPS certificates are managed by Dokploy/Traefik automatically.
+#
+# All secrets are injected via environment variables — never stored in this file.
+# See the security checklist in tasks/phase-0-foundation.md before going live.
+#
+# Required environment variables (set in Dokploy dashboard):
+#   POSTGRES_PASSWORD        — strong random secret (openssl rand -base64 32)
+#   KEYCLOAK_ADMIN_PASSWORD  — strong random secret
+#   SMTP_USERNAME            — Scaleway TEM SMTP username
+#   SMTP_PASSWORD            — Scaleway TEM SMTP API key
+#
+# Optional overrides:
+#   API_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-api:latest
+#   WEB_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-web:latest
+
+name: skoleplanen
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    # No published port — only reachable inside the internal network.
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    restart: unless-stopped
+    command: start --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: https://auth.skoleplanen.dk
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ../keycloak/realms:/opt/keycloak/data/import:ro
+    networks:
+      - internal
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      # Expose only /realms and /resources — block /admin at the proxy level.
+      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleplanen.dk`) && !PathPrefix(`/admin`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__skoleplanen-db: Host=postgres;Port=5432;Database=skoleplanen;Username=postgres;Password=${POSTGRES_PASSWORD}
+      Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
+      Keycloak__Audience: skoleplanen-api
+      # Reach Keycloak internally for JWKS; issuer still validated against public URL.
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/Skoleplanen/.well-known/openid-configuration
+      Smtp__Username: ${SMTP_USERNAME}
+      Smtp__Password: ${SMTP_PASSWORD}
+    networks:
+      - internal
+    depends_on:
+      - postgres
+      - keycloak
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`skoleplanen.dk`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
+    restart: unless-stopped
+    networks:
+      - internal
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`skoleplanen.dk`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web.loadbalancer.server.port=80"
+
+volumes:
+  postgres_data:
+
+networks:
+  internal:
+    driver: bridge

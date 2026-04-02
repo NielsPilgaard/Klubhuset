@@ -22,18 +22,23 @@ SaaS schema planner for Danish friskoler and private/independent schools. School
 | Database       | PostgreSQL (Docker Compose, self-hosted on OVH VPS) |
 | Frontend       | React + Vite + TypeScript + Tailwind CSS            |
 | Auth           | Keycloak (Docker Compose)                           |
-| API client     | Generated from OpenAPI spec (Kiota / NSwag)         |
+| API client     | Generated from OpenAPI spec (`openapi-typescript`)  |
 | Email          | Scaleway TEM via SMTP (MailKit)                     |
 | Object storage | OVHCloud Object Storage (S3-compatible, EU)         |
+| Reverse proxy  | Traefik (managed by Dokploy)                        |
 | Hosting        | OVHCloud VPS + Dokploy + Docker Compose             |
 
 ## Repository layout
 
 ```
-/api      ASP.NET Core Web API
-/web      React + Vite frontend
-/docs     PRD, pricing, decisions, and other documentation
-/tasks    Phase-by-phase implementation tasks
+/api                    ASP.NET Core Web API
+/web                    React + Vite frontend
+/infrastructure/aspire  .NET Aspire local orchestration
+/infrastructure/docker  Production docker-compose + Caddyfile
+/infrastructure/keycloak  Keycloak realm export
+/scripts                Developer scripts
+/docs                   PRD, pricing, decisions, and other documentation
+/tasks                  Phase-by-phase implementation tasks
 ```
 
 ## Key architecture rules
@@ -54,6 +59,78 @@ SaaS schema planner for Danish friskoler and private/independent schools. School
 14-day free trial with full access. No per-student pricing.
 
 See [docs/PRICING.md](docs/PRICING.md) for full details.
+
+## Local development
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dot.net/download)
+- [Node.js 20 LTS](https://nodejs.org)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+Run the setup script (Windows) to install prerequisites automatically:
+
+```powershell
+.\scripts\setup.ps1
+```
+
+### Start the dev stack
+
+The local dev environment runs via [.NET Aspire](https://learn.microsoft.com/aspire), which orchestrates all containers (PostgreSQL, Keycloak, LocalStack, API, web).
+
+```powershell
+aspire run
+```
+
+This starts:
+| Service | URL |
+| ---------- | ---------------------------- |
+| Web app | http://localhost:5173 |
+| API | http://localhost:5000 |
+| Swagger UI | http://localhost:5000/api/v1/openapi |
+| Keycloak | http://localhost:8080 |
+| PgAdmin | http://localhost:5050 |
+| LocalStack | http://localhost:4566 |
+
+The Keycloak realm (`Skoleplanen`) is imported automatically from `infrastructure/keycloak/realms/Skoleplanen-realm.json` on first startup.
+
+### Aspire parameters
+
+Aspire uses parameter secrets for local dev. On first run, set:
+
+```powershell
+# PostgreSQL password
+dotnet user-secrets set "Parameters:postgres-password" "your-dev-password" --project infrastructure/aspire/Skoleplanen.AppHost
+
+# Keycloak admin password
+dotnet user-secrets set "Parameters:keycloak-admin-password" "your-dev-password" --project infrastructure/aspire/Skoleplanen.AppHost
+
+# Scaleway TEM (Email)
+dotnet user-secrets set "Smtp:Username" "your-scaleway-username" --project api/Skoleplanen.Api
+dotnet user-secrets set "Smtp:Password" "your-scaleway-api-key" --project api/Skoleplanen.Api
+```
+
+### Database migrations
+
+Add a new EF Core migration from the repo root:
+
+```powershell
+.\scripts\add-migration.ps1 -MigrationName YourMigrationName
+```
+
+Migrations live in `api/Skoleplanen.Api/Data/Migrations/`. Never edit an existing migration file — always add a new one.
+
+### API client codegen
+
+When the API has changed, regenerate the typed TypeScript client:
+
+```powershell
+# 1. Build the API (emits openapi spec to web/openapi/v1.json)
+dotnet build api/Skoleplanen.Api/Skoleplanen.Api.csproj
+
+# 2. Run codegen
+cd web && npm run codegen
+```
 
 ## Documentation
 
