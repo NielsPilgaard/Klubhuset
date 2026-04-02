@@ -360,3 +360,4 @@ MigrationBackup/
 .env
 
 media/**/*.png
+media/
