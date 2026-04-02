@@ -1,4 +1,4 @@
-# PRICING.md — {{PRODUCT_NAME}} Pricing
+# PRICING.md — Skoleplanen Pricing
 
 ## Model
 
@@ -15,6 +15,7 @@ Pricing is transparent and listed on the website. No sales calls, no hidden fees
 **299 kr/month** · All features · 100 GB file storage
 
 Included:
+
 - Schema planner with conflict detection
 - Time slot wizard and per-class overrides
 - Staff management (teachers, aides, substitutes)
@@ -35,6 +36,7 @@ Included:
 **499 kr/month** · All Basis features · 1000 GB file storage
 
 Everything in Basis, plus:
+
 - Priority support
 - Custom fields on staff/class records
 - UVM reporting (when available)

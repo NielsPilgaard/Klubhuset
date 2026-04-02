@@ -39,7 +39,7 @@ Prepare the platform for growth features beyond v1: UVM reporting, parent/studen
 ### Custom domain support
 
 - [ ] Admin enters custom domain in dashboard
-- [ ] DNS instruction: add CNAME pointing to `{{PRODUCT_NAME}}.dk`
+- [ ] DNS instruction: add CNAME pointing to `Skoleplanen.dk`
 - [ ] Automatic SSL provisioning (Caddy on-demand TLS or similar)
 - [ ] Custom domain routes to correct tenant
 

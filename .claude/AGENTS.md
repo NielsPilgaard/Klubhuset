@@ -4,7 +4,7 @@ This file defines how AI agents should work in this codebase.
 
 ## Project context
 
-{{PRODUCT_NAME}} is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. Each tenant is a school. The platform helps schools build, manage, and print their weekly class schedules with real-time conflict detection. The platform is Danish-language only, targeting the Danish market.
+Skoleplanen is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. Each tenant is a school. The platform helps schools build, manage, and print their weekly class schedules with real-time conflict detection. The platform is Danish-language only, targeting the Danish market.
 
 Reference school profile: ~300 students, 25 staff, friskole in a small Danish town — use this as the mental model for a typical customer.
 
@@ -13,9 +13,11 @@ Reference school profile: ~300 students, 25 staff, friskole in a small Danish to
 ## Architecture principles
 
 **Multi-tenancy**: every database query must be scoped to a tenant. Never leak data across tenants. Tenant ID must be present on every query that touches school, staff, class, course, schema, room, or file data. Enforced via EF Core global query filter:
+
 ```csharp
 HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)
 ```
+
 Never bypass this filter. Never trust a slug string as an authorization signal — always resolve to a TenantId at the middleware boundary.
 
 **Responsive UI**: the schema builder (admin) is laptop-first — it needs screen space. Staff schedule views must work fully on a phone. No feature may be unusable at any screen size.

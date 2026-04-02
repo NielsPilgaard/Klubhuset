@@ -4,7 +4,7 @@
 
 ## Decision
 
-Schools are served at `{{PRODUCT_NAME}}.dk/{slug}` (path-based routing). Subdomain routing is deferred to a future premium tier.
+Schools are served at `Skoleplanen.dk/{slug}` (path-based routing). Subdomain routing is deferred to a future premium tier.
 
 ### Slug rules
 
@@ -13,7 +13,7 @@ Schools are served at `{{PRODUCT_NAME}}.dk/{slug}` (path-based routing). Subdoma
 - Length: 3–40 characters
 - Must be globally unique across all tenants
 - Reserved words are blocked: `api`, `admin`, `www`, `static`, `health`, `app`, `dashboard`, `login`, `logout`, `signup`, and others as needed
-- **Immutable immediately after creation** — no self-serve rename. Slug corrections require contacting {{PRODUCT_NAME}} support.
+- **Immutable immediately after creation** — no self-serve rename. Slug corrections require contacting Skoleplanen support.
 
 ### Security
 

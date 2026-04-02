@@ -1,4 +1,4 @@
-# {{PRODUCT_NAME}}
+# Skoleplanen
 
 SaaS schema planner for Danish friskoler and private/independent schools. Schools build, manage, and print their weekly class schedules — with real-time conflict detection for teachers, rooms, and aides.
 
@@ -15,17 +15,17 @@ SaaS schema planner for Danish friskoler and private/independent schools. School
 
 ## Tech stack
 
-| Layer | Choice |
-|---|---|
-| API | ASP.NET Core Web API, C# / .NET 9 |
-| ORM | Entity Framework Core |
-| Database | PostgreSQL (Docker Compose, self-hosted on OVH VPS) |
-| Frontend | React + Vite + TypeScript + Tailwind CSS |
-| Auth | Keycloak (Docker Compose) |
-| API client | Generated from OpenAPI spec (Kiota / NSwag) |
-| Email | Scaleway TEM via SMTP (MailKit) |
-| Object storage | OVHCloud Object Storage (S3-compatible, EU) |
-| Hosting | OVHCloud VPS + Dokploy + Docker Compose |
+| Layer          | Choice                                              |
+| -------------- | --------------------------------------------------- |
+| API            | ASP.NET Core Web API, C# / .NET 9                   |
+| ORM            | Entity Framework Core                               |
+| Database       | PostgreSQL (Docker Compose, self-hosted on OVH VPS) |
+| Frontend       | React + Vite + TypeScript + Tailwind CSS            |
+| Auth           | Keycloak (Docker Compose)                           |
+| API client     | Generated from OpenAPI spec (Kiota / NSwag)         |
+| Email          | Scaleway TEM via SMTP (MailKit)                     |
+| Object storage | OVHCloud Object Storage (S3-compatible, EU)         |
+| Hosting        | OVHCloud VPS + Dokploy + Docker Compose             |
 
 ## Repository layout
 
@@ -46,10 +46,10 @@ SaaS schema planner for Danish friskoler and private/independent schools. School
 
 ## Pricing
 
-| Tier | Storage | Monthly |
-|---|---|---|
-| Basis | 100 GB | 299 kr |
-| Skole+ (future) | 1000 GB | 499 kr |
+| Tier            | Storage | Monthly |
+| --------------- | ------- | ------- |
+| Basis           | 100 GB  | 299 kr  |
+| Skole+ (future) | 1000 GB | 499 kr  |
 
 14-day free trial with full access. No per-student pricing.
 

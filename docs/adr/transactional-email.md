@@ -10,7 +10,7 @@ Integrate via **MailKit** over SMTP (port 587, STARTTLS). No provider SDK requir
 
 ## Context
 
-{{PRODUCT_NAME}} sends transactional emails on behalf of the platform: staff invitation emails, password resets, trial expiry reminders, billing notifications. These emails contain personal data, so the provider must be EU-hosted.
+Skoleplanen sends transactional emails on behalf of the platform: staff invitation emails, password resets, trial expiry reminders, billing notifications. These emails contain personal data, so the provider must be EU-hosted.
 
 Volume at launch is low: likely well under 1,000 emails/month for the first schools, growing to ~5,000/month at scale. Cost-efficiency and operational simplicity are the primary drivers.
 
@@ -64,7 +64,7 @@ Scaleway TEM is the single provider for all environments. The 300 free emails/mo
 - Abstract sends behind `IEmailSender` — one implementation, provider is injected via config.
 - Store SMTP credentials in user secrets locally, environment variables in production.
 - Configure SPF, DKIM, and DMARC on the sending domain before any production send.
-- All email templates carry {{PRODUCT_NAME}} branding.
+- All email templates carry Skoleplanen branding.
 - Do not route bulk/marketing sends through this integration. Transactional only.
 
 ## Consequences

@@ -1,8 +1,8 @@
-# PRD.md — {{PRODUCT_NAME}} Product Requirements
+# PRD.md — Skoleplanen Product Requirements
 
 ## Product overview
 
-{{PRODUCT_NAME}} is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. It is sold B2B to schools, not to end users. The typical customer is a small-to-medium friskole with 50–500 students, run by a small team of administrators and teachers.
+Skoleplanen is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. It is sold B2B to schools, not to end users. The typical customer is a small-to-medium friskole with 50–500 students, run by a small team of administrators and teachers.
 
 ## Problem being solved
 
@@ -48,6 +48,7 @@ The core product. Each class (klasse) has its own weekly schema (skema). The sch
 ### Time slot wizard
 
 On school setup, admin defines the default lesson structure via a guided wizard:
+
 - Default lesson duration (e.g. 45 min)
 - Breaks between lessons (optional — some schools have fixed breaks, others don't)
 - Generates the school's default weekly time slot grid
@@ -113,12 +114,12 @@ See [docs/adr/](adr/) for full rationale. Summary:
 
 ## Competitive context
 
-| Competitor | Strengths | Weaknesses |
-|---|---|---|
-| Skoleplan | Established, known in friskole market | Pricing not public, unclear feature set |
-| Docendo | Feature-rich | Expensive, complex |
-| Skoleintra | Solid product, good reputation | High price, heavy for small schools |
-| Aula | Large user base, government-backed | Public schools only — not available to friskoler |
+| Competitor | Strengths                             | Weaknesses                                       |
+| ---------- | ------------------------------------- | ------------------------------------------------ |
+| Skoleplan  | Established, known in friskole market | Pricing not public, unclear feature set          |
+| Docendo    | Feature-rich                          | Expensive, complex                               |
+| Skoleintra | Solid product, good reputation        | High price, heavy for small schools              |
+| Aula       | Large user base, government-backed    | Public schools only — not available to friskoler |
 
 ## Differentiators
 

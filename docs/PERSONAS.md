@@ -1,6 +1,6 @@
 # PERSONAS.md — User Personas
 
-These personas represent the real people who use {{PRODUCT_NAME}}. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**
+These personas represent the real people who use Skoleplanen. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**
 
 ---
 
@@ -13,17 +13,20 @@ Hanne has been the school secretary for 12 years. She runs the daily administrat
 **Comfort level**: Email and Excel yes. Online banking yes. New software takes her a moment — she prefers to understand what a button does before pressing it. She does not experiment; she follows a path that works.
 
 **Goals**:
+
 - Build next term's schema without double-booking teachers or rooms
 - See at a glance if a teacher has too many or too few hours
 - Print a clean weekly schema for each class and for the teachers' lounge
 
 **Fears**:
+
 - "Deleting something by accident"
 - A change that silently affects another class's schema
 - Forms with too many fields
 - Anything that says "error" without explaining what to do
 
 **Design implications**:
+
 - Every action must have one obvious button, not a menu
 - Conflicts must be shown immediately and in plain Danish — not after saving
 - Destructive actions (delete, remove) must require confirmation with plain-language explanation
@@ -42,16 +45,19 @@ Thomas teaches dansk and historie across four classes — from 3. klasse to 7. k
 **Comfort level**: High. Uses MitID, e-Boks, MobilePay, and calendar apps daily.
 
 **Goals**:
+
 - See his own weekly schedule at a glance — which classes, which rooms, what time
 - Know immediately if a room or time has changed
 - Not have to ask Hanne for information he should be able to find himself
 
 **Fears**:
+
 - Missing a schedule change and showing up to the wrong room
 - Having to dig through menus to find basic information
 - Being asked to do admin tasks that aren't his job
 
 **Design implications**:
+
 - Personal schedule view must be the first thing visible after login — not buried in a menu
 - Schedule changes must be clearly marked (visual indicator, notification)
 - Teacher view must be clean and read-only — no admin controls visible
@@ -68,17 +74,20 @@ Birgitte is the school principal. She oversees everything — staffing, budgets,
 **Comfort level**: Moderate to high. Comfortable with email, online banking, and school administration tools. Prefers dashboards and summaries over raw data.
 
 **Goals**:
+
 - See the state of the schema at a glance: is it complete? Are all classes covered?
 - Check total course hours against UVM minimumstimetal
 - Identify staffing gaps: which courses need a teacher assigned?
 - Export a summary for the school board or UVM reporting
 
 **Fears**:
+
 - Approving a schema that doesn't meet UVM requirements
 - Not noticing a staffing gap until it's too late
 - Needing to learn a complex new tool when the old one "works fine"
 
 **Design implications**:
+
 - Dashboard must lead with summary numbers — classes with complete schemas, unassigned slots, total hours
 - Stats and exports must be accessible in one or two clicks — not hidden in settings
 - UVM hour tracking must be clear: are we above or below the requirement per course?
@@ -95,16 +104,19 @@ Mikkel is a part-time substitute teacher and pedagogue. He works across multiple
 **Comfort level**: Native smartphone user. High standards for apps — if something takes too long or feels clunky, he'll just text Hanne instead.
 
 **Goals**:
+
 - Check where he needs to be today and this week
 - See if anything changed since yesterday
 - Not have to log in through a complicated process
 
 **Fears**:
+
 - Showing up to the wrong room because the schedule changed and he wasn't told
 - UI that looks like it was built for desktop and squeezed onto a phone
 - Having admin features cluttering his view
 
 **Design implications**:
+
 - Schedule view must be the default screen — no navigation required
 - Must work on a phone with one thumb
 - Changes since last visit should be visually highlighted
