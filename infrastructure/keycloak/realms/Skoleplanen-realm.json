@@ -1,0 +1,107 @@
+{
+  "realm": "Skoleplanen",
+  "enabled": true,
+  "displayName": "Skoleplanen",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "School administrator — full access to schema builder, staff, billing, and settings"
+      },
+      {
+        "name": "teacher",
+        "description": "Teacher — read-only access to schedules; can view own schedule"
+      },
+      {
+        "name": "aide",
+        "description": "Pædagog / aide — read-only access to own schedule"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "skoleplanen-api",
+      "name": "Skoleplanen API",
+      "description": "Resource server — validates JWTs issued to the web app",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    },
+    {
+      "clientId": "skoleplanen-web",
+      "name": "Skoleplanen Web",
+      "description": "SPA public client — used by the React frontend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "https://skoleplanen.dk/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "https://skoleplanen.dk"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "tenant",
+      "description": "Tenant ID claim added via protocol mapper",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}
