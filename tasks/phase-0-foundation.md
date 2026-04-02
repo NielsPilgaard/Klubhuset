@@ -66,16 +66,6 @@ Establish the project skeleton, local dev environment, CI, and hosting infrastru
 - [ ] The API validates JWTs against Keycloak's JWKS endpoint. The issuer claim in the token will always be the **public** URL (`https://auth.Skoleplanen.dk`). The API can reach Keycloak internally (`http://keycloak:8080`) for JWKS fetching — configure `MetadataAddress` or pin the JWKS URI explicitly in `appsettings.Production.json` to avoid the browser vs. container URL mismatch.
 - [ ] Postgres should be on the internal Docker network only — no published port on the VPS.
 
-### Research spike — transactional email
-
-- [x] Evaluate EU transactional email providers against these criteria:
-  - EU data residency (GDPR, sovereignty, trust)
-  - C# SDK or clean REST API
-  - Free dev tier available
-  - Affordable at ~5000 emails/month in production
-- [x] Candidates: Brevo, Mailersend, Postal (self-hosted), Infobip EU
-- [x] Document decision in ADR (see [transactional-email](../docs/adr/transactional-email.md))
-
 ### Transactional email infrastructure
 
 - [ ] Add MailKit NuGet dependency
