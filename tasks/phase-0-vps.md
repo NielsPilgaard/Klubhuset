@@ -11,8 +11,12 @@ Remaining tasks before the first production deployment. Everything in [phase-0-f
 - [ ] Provision OVH VPS (Ubuntu 24.04 LTS recommended)
 - [ ] Install Dokploy (`curl -sSL https://dokploy.com/install.sh | sh`)
 - [ ] Add `docker-compose.prod.yml` as a Dokploy compose app
+- [ ] Create a Postgres Database resource in Dokploy for the API (`skoleplanen` database)
+- [ ] Create a Postgres Database resource in Dokploy for Keycloak (`keycloak` database)
 - [ ] Set environment variables in Dokploy dashboard:
-  - `POSTGRES_PASSWORD` — `openssl rand -base64 32`
+  - `DATABASE_URL` — connection string from Dokploy API Postgres resource (Npgsql format)
+  - `KEYCLOAK_DB_URL` — JDBC connection string from Dokploy Keycloak Postgres resource
+  - `KEYCLOAK_DB_USERNAME` / `KEYCLOAK_DB_PASSWORD` — from Dokploy Keycloak Postgres resource
   - `KEYCLOAK_ADMIN_PASSWORD` — `openssl rand -base64 32`
   - `SMTP_USERNAME` / `SMTP_PASSWORD` — Scaleway TEM credentials
 
@@ -25,7 +29,7 @@ Remaining tasks before the first production deployment. Everything in [phase-0-f
 
 ### Database backup
 
-- [ ] Enable Dokploy built-in database backup for the `postgres` service:
+- [ ] Enable Dokploy built-in database backup for both Postgres database resources:
   - Schedule: daily (`0 2 * * *`)
   - Destination: OVHCloud Object Storage (S3-compatible) — add S3 credentials in Dokploy
   - Retention: 30 backups

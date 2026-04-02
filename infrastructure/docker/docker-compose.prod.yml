@@ -7,7 +7,8 @@
 # See the security checklist in tasks/phase-0-foundation.md before going live.
 #
 # Required environment variables (set in Dokploy dashboard):
-#   POSTGRES_PASSWORD        — strong random secret (openssl rand -base64 32)
+#   DATABASE_URL             — connection string from Dokploy Postgres database resource
+#   KEYCLOAK_DB_URL          — connection string for Keycloak's Postgres database (JDBC format)
 #   KEYCLOAK_ADMIN_PASSWORD  — strong random secret
 #   SMTP_USERNAME            — Scaleway TEM SMTP username
 #   SMTP_PASSWORD            — Scaleway TEM SMTP API key
@@ -18,28 +19,20 @@
 
 name: skoleplanen
 
-services:
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - internal
-    # No published port — only reachable inside the internal network.
+  # Postgres is managed as a dedicated Database resource in Dokploy.
+  # Dokploy injects the connection strings below as environment variables.
+  # Do not add a postgres service here.
 
+services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.2
     restart: unless-stopped
     command: start --import-realm
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_DB_URL: ${KEYCLOAK_DB_URL}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USERNAME}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HOSTNAME: https://auth.skoleplanen.dk
@@ -49,8 +42,6 @@ services:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
     networks:
       - internal
-    depends_on:
-      - postgres
     labels:
       - "traefik.enable=true"
       # Expose only /realms and /resources — block /admin at the proxy level.
@@ -64,7 +55,7 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__skoleplanen-db: Host=postgres;Port=5432;Database=skoleplanen;Username=postgres;Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
       Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
       Keycloak__Audience: skoleplanen-api
       # Reach Keycloak internally for JWKS; issuer still validated against public URL.
@@ -74,7 +65,6 @@ services:
     networks:
       - internal
     depends_on:
-      - postgres
       - keycloak
     labels:
       - "traefik.enable=true"
@@ -96,9 +86,6 @@ services:
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls.certresolver=letsencrypt"
       - "traefik.http.services.web.loadbalancer.server.port=80"
-
-volumes:
-  postgres_data:
 
 networks:
   internal:
