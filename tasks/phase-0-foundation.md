@@ -55,6 +55,17 @@ Establish the project skeleton, local dev environment, CI, and hosting infrastru
 - [ ] Write production `docker-compose.yml` (or Dokploy config) for: `api`, `web`, `postgres`, `keycloak`, reverse proxy (Caddy or Traefik)
 - [ ] Configure Caddy/Traefik for HTTPS on `{{PRODUCT_NAME}}.dk`
 
+**Secrets and security checklist when moving from Aspire local → Docker Compose VPS:**
+
+- [ ] Replace hardcoded `KC_BOOTSTRAP_ADMIN_PASSWORD=admin` with a strong generated secret (e.g. `openssl rand -base64 32`). Store in Dokploy environment variables, never in the compose file.
+- [ ] Replace hardcoded `postgres-password` with a strong generated secret. Same rule — env var only, not in the file.
+- [ ] Switch Keycloak from `start-dev` to `start` (production mode). `start-dev` disables security hardening and is not safe on a public VPS.
+- [ ] Set `KC_PROXY=edge` and `KC_HOSTNAME=https://auth.{{PRODUCT_NAME}}.dk` so Keycloak trusts the reverse proxy's `X-Forwarded-Proto` header and issues tokens with the correct issuer URL.
+- [ ] Ensure the Keycloak admin console (`/admin`) is **not** publicly accessible — block it at the reverse proxy level or bind Keycloak to the internal Docker network only. Expose only `/realms` publicly.
+- [ ] Commit the Keycloak realm export JSON to the repo so realm config is reproducible. Import it at container startup via `--import-realm` — removes all manual UI steps on a new VPS.
+- [ ] The API validates JWTs against Keycloak's JWKS endpoint. The issuer claim in the token will always be the **public** URL (`https://auth.{{PRODUCT_NAME}}.dk`). The API can reach Keycloak internally (`http://keycloak:8080`) for JWKS fetching — configure `MetadataAddress` or pin the JWKS URI explicitly in `appsettings.Production.json` to avoid the browser vs. container URL mismatch.
+- [ ] Postgres should be on the internal Docker network only — no published port on the VPS.
+
 ### Research spike — transactional email
 
 - [x] Evaluate EU transactional email providers against these criteria:
