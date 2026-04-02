@@ -30,7 +30,7 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
     .WaitFor(postgres);
 
 // LocalStack (S3-compatible local emulation for OVHCloud Object Storage)
-var localstack = builder.AddContainer("localstack", "localstack/localstack", "3")
+builder.AddContainer("localstack", "localstack/localstack", "3")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "gateway")
     .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
