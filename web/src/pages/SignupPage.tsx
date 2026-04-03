@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface ValidationErrors {
@@ -10,12 +10,22 @@ interface ValidationErrors {
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const timeoutIdRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const [slug, setSlug] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [pending, setPending] = useState(false)
   const [errors, setErrors] = useState<ValidationErrors>({})
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current)
+      }
+    }
+  }, [])
 
   const slugPreview = slug || 'din-skole'
 
@@ -34,7 +44,8 @@ export default function SignupPage() {
       if (res.ok) {
         setSubmitted(true)
         // Redirect to setup wizard after a short delay so the success message is visible
-        setTimeout(() => navigate('/setup'), 1500)
+        if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current)
+        timeoutIdRef.current = setTimeout(() => navigate('/setup'), 1500)
         return
       }
 
@@ -42,7 +53,7 @@ export default function SignupPage() {
         const body = await res.json()
         const fieldErrors: ValidationErrors = {}
         for (const [field, msgs] of Object.entries(body.errors ?? {})) {
-          const key = field.toLowerCase() as keyof ValidationErrors
+          const key = (field.charAt(0).toLowerCase() + field.slice(1)) as keyof ValidationErrors
           fieldErrors[key] = (msgs as string[])[0]
         }
         setErrors(fieldErrors)

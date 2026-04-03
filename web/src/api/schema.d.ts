@@ -1391,7 +1391,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/staff-invitations/preview/{token}": {
+    "/api/v1/staff-invitations/preview": {
         parameters: {
             query?: never;
             header?: never;
@@ -1400,11 +1400,11 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    token: string;
+                query?: {
+                    token?: string;
                 };
+                header?: never;
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;

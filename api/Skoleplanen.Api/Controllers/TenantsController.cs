@@ -110,13 +110,7 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 		{
 			await db.SaveChangesAsync(ct);
 		}
-		catch (DbUpdateException ex) when (ex.InnerException != null &&
-										   (ex.InnerException.Message.Contains(
-												"Slug",
-												StringComparison.OrdinalIgnoreCase) ||
-											ex.InnerException.Message.Contains(
-												"duplicate key",
-												StringComparison.OrdinalIgnoreCase)))
+		catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
 		{
 			// Handle unique constraint violation from concurrent requests
 			return ValidationProblem(new ValidationProblemDetails
@@ -137,4 +131,25 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 		slug[^1] != '-' &&
 		!slug.Contains("--") &&
 		slug.All(c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c == '-');
+
+	// TODO: Use EFCore Exceptions instead
+	private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+	{
+		// Check for PostgreSQL unique constraint violation (error code 23505)
+		if (ex.InnerException is Npgsql.PostgresException pgEx)
+		{
+			return pgEx.SqlState == "23505";
+		}
+
+		// Fallback to message-based check for other databases or if inner exception details are unavailable
+		if (ex.InnerException != null)
+		{
+			var message = ex.InnerException.Message;
+			return message.Contains("Slug", StringComparison.OrdinalIgnoreCase) ||
+				   message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||
+				   message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase);
+		}
+
+		return false;
+	}
 }

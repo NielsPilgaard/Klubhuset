@@ -29,6 +29,10 @@ public sealed class StaffInvitation : ITenantScoped
     public DateTimeOffset? AcceptedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    /// <summary>Optimistic concurrency control token for preventing concurrent acceptance attempts.</summary>
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
+
     public InvitationStatus Status =>
         AcceptedAt.HasValue ? InvitationStatus.Accepted
         : DateTimeOffset.UtcNow > ExpiresAt ? InvitationStatus.Expired

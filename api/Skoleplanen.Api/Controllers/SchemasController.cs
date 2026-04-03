@@ -281,6 +281,17 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	public async Task<ActionResult<SlotsAndConflictsDto>> DeleteSlot(Guid classId, Guid schemaId, Guid timeSlotId,
 		int weekday, CancellationToken ct)
 	{
+		// Validate weekday is in valid range (0-6 for DayOfWeek enum)
+		if (weekday is < 0 or > 6)
+		{
+			return BadRequest(new ProblemDetails
+			{
+				Title = "Ugyldigt ugedag",
+				Detail = "Ugedagen skal være mellem 0 (søndag) og 6 (lørdag).",
+				Status = 400
+			});
+		}
+
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (!schemaExists)
 		{

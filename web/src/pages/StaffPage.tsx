@@ -158,6 +158,7 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
     mutationFn: () => api.post(`/staff-invitations/invite/${staff.id}`, {}),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['invitations', 'staff', staff.id] })
+      qc.invalidateQueries({ queryKey: ['invitations'] })
       setSent(true)
     },
     onError: async (err: unknown) => {

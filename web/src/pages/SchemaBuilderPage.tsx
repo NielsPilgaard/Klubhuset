@@ -334,8 +334,16 @@ export default function SchemaBuilderPage() {
   })
 
   // Derive current slots/conflicts — prefer local state (updated after PUT)
-  const slots: SlotDto[] = localSlots ?? detail?.slots ?? []
-  const conflicts: ConflictInfo[] = localConflicts ?? detail?.conflicts ?? []
+  const slots = useMemo(
+    () => localSlots ?? detail?.slots ?? [],
+    [localSlots, detail?.slots]
+  )
+
+  const conflicts = useMemo(
+    () => localConflicts ?? detail?.conflicts ?? [],
+    [localConflicts, detail?.conflicts]
+  )
+
   const schema = detail?.schema
 
   // Build lookup: [timeSlotId][weekday] → SlotDto

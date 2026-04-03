@@ -67,11 +67,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
 					continue;
 				}
 
-				// Only same weekday can conflict
-				if (a.Weekday != b.Weekday)
-				{
-					continue;
-				}
+
 
 				// Check clock-time overlap
 				if (!Overlaps(a.TimeSlot.StartTime, a.TimeSlot.EndTime, b.TimeSlot.StartTime, b.TimeSlot.EndTime))
@@ -101,7 +97,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
 									  a.Id,
 									  b.Id,
 									  a.RoomId.Value,
-									  a.Room!.Name,
+									  a.Room?.Name ?? $"Room #{a.RoomId}",
 									  a.Weekday,
 									  a.TimeSlot.StartTime,
 									  a.TimeSlot.EndTime));
@@ -115,7 +111,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
 									  a.Id,
 									  b.Id,
 									  a.AideId.Value,
-									  a.Aide!.Name,
+									  a.Aide?.Name ?? $"Aide #{a.AideId}",
 									  a.Weekday,
 									  a.TimeSlot.StartTime,
 									  a.TimeSlot.EndTime));

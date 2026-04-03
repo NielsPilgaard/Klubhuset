@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
+using Skoleplanen.Api.Models;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
@@ -61,7 +62,7 @@ builder.Services.AddSwaggerGen(options =>
 								  });
 
 	options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-									   { [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
+	{ [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
 });
 
 // Email
@@ -126,11 +127,12 @@ if (app.Environment.IsDevelopment() && !string.IsNullOrEmpty(connectionString))
 {
 	using var scope = app.Services.CreateScope();
 	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+	await db.Database.MigrateAsync();
 	var testSchoolId = new Guid("11111111-1111-1111-1111-111111111111");
 	var exists = await db.Schools.IgnoreQueryFilters().AnyAsync(s => s.Id == testSchoolId);
 	if (!exists)
 	{
-		db.Schools.Add(new Skoleplanen.Api.Models.School
+		db.Schools.Add(new School
 		{
 			Id = testSchoolId,
 			Name = "Testskole",

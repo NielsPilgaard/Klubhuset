@@ -89,13 +89,15 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
     try {
       const form = new FormData()
       form.append('file', file)
+      
+      // Get auth token from keycloak if available
+      const token = await getToken()
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      
       const res = await fetch('/api/v1/schools/logo', {
         method: 'POST',
         body: form,
-        headers: {
-          // token injected by the api client won't work here since we're using fetch directly;
-          // the auth header must be added. We skip for wizard simplicity and handle in settings.
-        },
+        headers,
       })
       if (res.ok) { onNext() }
       else { setError('Kunne ikke uploade logo. Prøv igen fra indstillinger.') }
@@ -471,4 +473,15 @@ export default function SchoolSetupWizardPage() {
       </div>
     </div>
   )
+}
+
+// Helper: get current Keycloak token without importing keycloak directly
+async function getToken(): Promise<string | undefined> {
+  try {
+    const { default: keycloak } = await import('../auth/keycloak')
+    await keycloak.updateToken(30).catch(() => keycloak.login())
+    return keycloak.token
+  } catch {
+    return undefined
+  }
 }

@@ -91,7 +91,7 @@
         {
           "type": "password",
           "value": "test",
-          "temporary": false
+          "temporary": true
         }
       ],
       "realmRoles": ["admin"],

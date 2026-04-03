@@ -1822,7 +1822,7 @@
         }
       }
     },
-    "/api/v1/staff-invitations/preview/{token}": {
+    "/api/v1/staff-invitations/preview": {
       "get": {
         "tags": [
           "StaffInvitations"
@@ -1830,8 +1830,7 @@
         "parameters": [
           {
             "name": "token",
-            "in": "path",
-            "required": true,
+            "in": "query",
             "schema": {
               "type": "string"
             }

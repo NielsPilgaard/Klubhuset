@@ -19,7 +19,12 @@ export default function InvitationAcceptPage() {
 
   useEffect(() => {
     if (!token) { setState('invalid'); return }
-    fetch(`/api/v1/staff-invitations/preview/${token}`)
+    
+    const controller = new AbortController()
+    
+    fetch(`/api/v1/staff-invitations/preview?token=${encodeURIComponent(token)}`, {
+      signal: controller.signal
+    })
       .then(async (res) => {
         if (res.ok) {
           setPreview(await res.json())
@@ -28,7 +33,12 @@ export default function InvitationAcceptPage() {
           setState('invalid')
         }
       })
-      .catch(() => setState('invalid'))
+      .catch((err) => {
+        if (err.name === 'AbortError') return
+        setState('invalid')
+      })
+    
+    return () => controller.abort()
   }, [token])
 
   async function handleAccept() {
@@ -61,7 +71,7 @@ export default function InvitationAcceptPage() {
   if (state === 'loading') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center" role="status" aria-live="polite" aria-busy="true">
           <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="mt-4 text-sm text-gray-500">Indlæser invitation…</p>
         </div>

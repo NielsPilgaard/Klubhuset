@@ -14,8 +14,6 @@ interface OnboardingStatus {
 }
 
 function OnboardingCard({ status }: { status: OnboardingStatus }) {
-  if (status.stepsCompleted >= status.stepsTotal) return null
-
   const steps = [
     { label: 'Logo uploadet', done: status.hasLogo },
     { label: 'Medarbejdere oprettet', done: status.staffCount > 0 },
@@ -24,17 +22,23 @@ function OnboardingCard({ status }: { status: OnboardingStatus }) {
     { label: 'Lokaler oprettet', done: status.roomCount > 0 },
   ]
 
+  const stepsCompleted = steps.filter(s => s.done).length
+  const stepsTotal = steps.length
+  const progressPercent = stepsTotal > 0 ? Math.round((stepsCompleted / stepsTotal) * 100) : 0
+
+  if (stepsCompleted >= stepsTotal) return null
+
   return (
     <div className="bg-white rounded-xl border border-brand-200 p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-semibold text-gray-900">
-            Kom godt i gang — {status.stepsCompleted} af {status.stepsTotal} trin fuldført
+            Kom godt i gang — {stepsCompleted} af {stepsTotal} trin fuldført
           </h2>
           <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-brand-500 rounded-full transition-all"
-              style={{ width: `${status.progressPercent}%` }}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
           <ul className="mt-3 space-y-1.5">

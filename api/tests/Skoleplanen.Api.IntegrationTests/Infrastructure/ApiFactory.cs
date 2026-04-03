@@ -17,62 +17,62 @@ namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 /// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .WithDatabase("skoleplanen_test")
-        .WithUsername("test")
-        .WithPassword("test")
-        .Build();
+	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+		.WithImage("postgres:16-alpine")
+		.WithDatabase("skoleplanen_test")
+		.WithUsername("test")
+		.WithPassword("test")
+		.Build();
 
-    public TestTenantContext TenantContext { get; } = new();
+	public TestTenantContext TenantContext { get; } = new();
 
-    public async Task StartAsync() => await _postgres.StartAsync();
+	public async Task StartAsync() => await _postgres.StartAsync();
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Testing");
+	protected override void ConfigureWebHost(IWebHostBuilder builder)
+	{
+		builder.UseEnvironment("Testing");
 
-        builder.ConfigureServices(services =>
-        {
-            // Replace DB with the Testcontainers instance
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor != null)
+		builder.ConfigureServices(services =>
+		{
+			// Replace DB with the Testcontainers instance
+			var descriptor = services.SingleOrDefault(
+				d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+			if (descriptor != null)
 			{
 				services.Remove(descriptor);
 			}
 
 			services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(_postgres.GetConnectionString()));
+				options.UseNpgsql(_postgres.GetConnectionString()));
 
-            // Replace tenant context — tests control TenantId directly
-            var tenantDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ITenantContext));
-            if (tenantDescriptor != null)
+			// Replace tenant context — tests control TenantId directly
+			var tenantDescriptor = services.SingleOrDefault(
+				d => d.ServiceType == typeof(ITenantContext));
+			if (tenantDescriptor != null)
 			{
 				services.Remove(tenantDescriptor);
 			}
 
 			services.AddScoped<ITenantContext>(_ => TenantContext);
 
-            // Replace JWT auth with a no-op test scheme so [Authorize] passes
-            services.AddAuthentication(TestAuthHandler.SchemeName)
-                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                        TestAuthHandler.SchemeName, _ => { });
-        });
+			// Replace JWT auth with a no-op test scheme so [Authorize] passes
+			services.AddAuthentication(TestAuthHandler.SchemeName)
+					.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+						TestAuthHandler.SchemeName, _ => { });
+		});
 
-        builder.ConfigureServices(services =>
-        {
-            // Run EF migrations on first boot
-            using var scope = services.BuildServiceProvider().CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.Migrate();
-        });
-    }
+		builder.ConfigureServices(services =>
+		{
+			// Run EF migrations on first boot
+			using var scope = services.BuildServiceProvider().CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+			db.Database.Migrate();
+		});
+	}
 
-    public async Task StopAsync()
-    {
-        await base.DisposeAsync();
-        await _postgres.DisposeAsync();
-    }
+	public async Task StopAsync()
+	{
+		await DisposeAsync();
+		await _postgres.DisposeAsync();
+	}
 }

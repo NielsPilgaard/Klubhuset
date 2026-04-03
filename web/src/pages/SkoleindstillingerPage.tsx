@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
 
@@ -24,12 +24,14 @@ export default function SkoleindstillingerPage() {
   const [initialized, setInitialized] = useState(false)
 
   // Pre-fill form once data arrives
-  if (data && !initialized) {
-    setName(data.name)
-    setEmail(data.contactEmail ?? '')
-    setPhone(data.contactPhone ?? '')
-    setInitialized(true)
-  }
+  useEffect(() => {
+    if (data && !initialized) {
+      setName(data.name)
+      setEmail(data.contactEmail ?? '')
+      setPhone(data.contactPhone ?? '')
+      setInitialized(true)
+    }
+  }, [data, initialized])
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [logoError, setLogoError] = useState<string | null>(null)
@@ -43,6 +45,7 @@ export default function SkoleindstillingerPage() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['school-settings'] })
+      setInitialized(false)
       setSaveError(null)
     },
     onError: (err) => {
@@ -64,7 +67,11 @@ export default function SkoleindstillingerPage() {
         const text = await res.text().catch(() => res.statusText)
         throw new ApiError(res.status, text)
       }
-      return res.json() as Promise<SchoolSettingsDto>
+      // Handle empty or non-JSON responses (e.g., 204 No Content)
+      if (res.status === 204 || !res.headers.get('content-length') || res.headers.get('content-type') === null) {
+        return undefined
+      }
+      return res.json() as Promise<SchoolSettingsDto | undefined>
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['school-settings'] })
@@ -177,6 +184,11 @@ export default function SkoleindstillingerPage() {
 // Helper: get current Keycloak token without importing keycloak directly
 async function getToken(): Promise<string | undefined> {
   const { default: keycloak } = await import('../auth/keycloak')
-  await keycloak.updateToken(30).catch(() => keycloak.login())
+  try {
+    await keycloak.updateToken(30)
+  } catch {
+    keycloak.login()
+    return undefined
+  }
   return keycloak.token
 }
