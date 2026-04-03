@@ -44,17 +44,15 @@ builder.AddContainer("localstack", "localstack/localstack", "3")
 
 // API
 var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
-				 .WithHttpEndpoint(port: 5000, name: "http")
 				 .WithReference(db)
 				 .WithReference(keycloak.GetEndpoint("http"))
 				 .WaitFor(db)
 				 .WaitFor(keycloak)
-				 .WithUrlForEndpoint("http",
-									 url =>
-									 {
-										 url.Url += "/api/v1/openapi";
-										 url.DisplayText = "Swagger UI";
-									 });
+				 .WithUrlForEndpoint("http", url =>
+			 {
+				 url.Url += "/api/v1/openapi";
+				 url.DisplayText = "Swagger UI";
+			 });
 
 // React + Vite frontend
 builder.AddViteApp("web", appDirectory: "../../../web", runScriptName: "dev")
