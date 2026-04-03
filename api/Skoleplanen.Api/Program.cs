@@ -115,7 +115,6 @@ if (app.Environment.IsDevelopment())
 	});
 }
 
-app.UseMiddleware<SlugResolutionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -136,7 +135,6 @@ if (app.Environment.IsDevelopment() && !string.IsNullOrEmpty(connectionString))
 		{
 			Id = testSchoolId,
 			Name = "Debugskolen",
-			Slug = "debugskolen",
 			ContactEmail = "admin@debugskolen.dk"
 		});
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import keycloak from './keycloak'
+import keycloak, { getInitPromise } from './keycloak'
 import { AuthContext } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -7,12 +7,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    keycloak
-      .init({
-        onLoad: 'login-required',
-        pkceMethod: 'S256',
-        checkLoginIframe: false,
-      })
+    getInitPromise()
       .then((auth) => {
         setAuthenticated(auth)
         setInitialized(true)

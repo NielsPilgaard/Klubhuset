@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface ValidationErrors {
-  slug?: string
   name?: string
   contactEmail?: string
   general?: string
@@ -11,7 +10,6 @@ interface ValidationErrors {
 export default function SignupPage() {
   const navigate = useNavigate()
   const timeoutIdRef = useRef<number | undefined>(undefined)
-  const [slug, setSlug] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -27,8 +25,6 @@ export default function SignupPage() {
     }
   }, [])
 
-  const slugPreview = slug || 'din-skole'
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrors({})
@@ -38,7 +34,7 @@ export default function SignupPage() {
       const res = await fetch('/api/v1/tenants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, name, contactEmail: email || null }),
+        body: JSON.stringify({ name, contactEmail: email || null }),
       })
 
       if (res.ok) {
@@ -110,40 +106,12 @@ export default function SignupPage() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Vildskud Friskole"
+              placeholder="Vores Friskole"
               required
               data-testid="signup-name"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
             {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
-          </div>
-
-          {/* Slug */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Skole-ID (URL) *
-            </label>
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent">
-              <span className="px-3 py-2 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 select-none whitespace-nowrap">
-                skoleplanen.dk/
-              </span>
-              <input
-                value={slug}
-                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                placeholder="vildskud-friskole"
-                required
-                minLength={3}
-                maxLength={40}
-                data-testid="signup-slug"
-                className="flex-1 px-3 py-2 text-sm focus:outline-none"
-              />
-            </div>
-            {errors.slug
-              ? <p className="mt-1 text-xs text-red-600">{errors.slug}</p>
-              : <p className="mt-1 text-xs text-gray-400">
-                  Din adresse: <span className="font-medium text-gray-600">skoleplanen.dk/{slugPreview}</span>
-                </p>
-            }
           </div>
 
           {/* Contact email */}
@@ -155,7 +123,7 @@ export default function SignupPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="rektor@vildskud.dk"
+              placeholder="rektor@vores-friskole.dk"
               data-testid="signup-email"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />

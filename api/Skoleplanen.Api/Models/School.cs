@@ -14,9 +14,6 @@ public sealed class School : ITenantScoped
 	[StringLength(200, MinimumLength = 1)]
 	public required string Name { get; set; }
 
-	[StringLength(128, MinimumLength = 1)]
-	public required string Slug { get; set; }
-
 	[StringLength(500)]
 	public string? ContactEmail { get; set; }
 

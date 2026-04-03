@@ -155,7 +155,7 @@ public sealed class StaffInvitationsController(
 		var school = await db.Schools
 							 .IgnoreQueryFilters()
 							 .Where(s => s.Id == invitation.TenantId)
-							 .Select(s => new { s.Name, s.Slug })
+							 .Select(s => new { s.Name })
 							 .FirstOrDefaultAsync(ct);
 
 		return Ok(new
@@ -163,7 +163,6 @@ public sealed class StaffInvitationsController(
 			staffName = invitation.Staff.Name,
 			email = invitation.Email,
 			schoolName = school?.Name ?? "Skoleplanen",
-			schoolSlug = school?.Slug,
 			expiresAt = invitation.ExpiresAt,
 		});
 	}

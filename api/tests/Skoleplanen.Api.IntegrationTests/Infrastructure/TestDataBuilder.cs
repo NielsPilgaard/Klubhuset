@@ -20,7 +20,6 @@ public static class TestDataBuilder
         {
             Id = tenantId,
             Name = name,
-            Slug = $"test-{tenantId:N}",
             ContactEmail = "test@skole.dk",
         };
         db.Schools.Add(school);

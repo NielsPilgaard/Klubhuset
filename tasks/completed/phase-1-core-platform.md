@@ -11,7 +11,7 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 ### Tenant routing and slug
 
 - [x] Tenant slug design and enforcement
-  - Admin picks slug at signup (e.g. `vildskud-friskole`)
+  - Admin picks slug at signup (e.g. `vores-friskole`)
   - Validation: lowercase letters, digits, hyphens only; 3–40 chars; globally unique
   - Reserved words blocked: `api`, `admin`, `www`, `static`, `health`, `app`, `dashboard`, `login`, `logout`, `signup`
   - Slug is immutable immediately after creation — no self-serve rename; corrections via support
@@ -73,7 +73,7 @@ Build the core product: tenant setup, schema planner with conflict detection, st
     - `DELETE /api/v1/classes/{classId}/time-slot-overrides/{overrideId}` — delete override (returns HTTP 200 or 404)
   - **Response shape:** `TimeSlotOverrideDto` with id, classId, daysOfWeek, startTime, endTime, dateRange, recurrenceRule, sortOrder, createdBy
   - **Authorization:** Admins only ([Authorize(Roles = "admin")])
-  - **UI components:** 
+  - **UI components:**
     - `ClassTimeSlotOverridesPage` — list, create, edit overrides for a class
     - `TimeSlotOverrideForm` — form to define override times and recurrence
     - Conflict validation: warning if override conflicts with existing assignments in active schema

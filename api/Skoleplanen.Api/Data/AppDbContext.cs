@@ -25,7 +25,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 
 		modelBuilder.Entity<School>(e =>
 		{
-			e.HasIndex(s => s.Slug).IsUnique();
 			e.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
 		});
 
