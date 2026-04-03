@@ -261,3 +261,154 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "TimeSlots" ALTER COLUMN "Label" TYPE character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "StaffInvitations" ADD "RowVersion" bytea;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Staff" ALTER COLUMN "Phone" TYPE character varying(50);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Staff" ALTER COLUMN "Name" TYPE character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Staff" ALTER COLUMN "KeycloakSubject" TYPE character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Staff" ALTER COLUMN "Email" TYPE character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schools" ALTER COLUMN "Slug" TYPE character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schools" ALTER COLUMN "Name" TYPE character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schools" ALTER COLUMN "LogoUrl" TYPE character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schools" ALTER COLUMN "CreatedAt" SET DEFAULT (now());
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schools" ALTER COLUMN "ContactPhone" TYPE character varying(50);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schools" ALTER COLUMN "ContactEmail" TYPE character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Schemas" ALTER COLUMN "Name" TYPE character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Rooms" ALTER COLUMN "Name" TYPE character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Rooms" ALTER COLUMN "Description" TYPE character varying(8000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Courses" ALTER COLUMN "Name" TYPE character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Courses" ALTER COLUMN "Description" TYPE character varying(8000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Courses" ALTER COLUMN "CreatedAt" SET DEFAULT (now());
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Classes" ALTER COLUMN "Name" TYPE character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    ALTER TABLE "Classes" ALTER COLUMN "Description" TYPE character varying(8000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403182930_Misc') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260403182930_Misc', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
