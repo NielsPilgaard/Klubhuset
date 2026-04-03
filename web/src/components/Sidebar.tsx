@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
 
 const navItems = [
   {
@@ -63,6 +64,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
+  const { logout } = useAuth()
+
   return (
     <>
       {/* Mobile overlay */}
@@ -121,8 +124,19 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-brand-700">
-          <p className="text-xs text-brand-400">v1.0 · Skoleplanen</p>
+        <div className="px-3 py-4 border-t border-brand-700 space-y-2">
+          <button
+            onClick={logout}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium text-brand-200 hover:bg-brand-800 hover:text-white transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Log ud
+          </button>
+          <p className="text-xs text-brand-400 px-3">v1.0 · Skoleplanen</p>
         </div>
       </aside>
     </>
