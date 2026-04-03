@@ -457,6 +457,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/{staffId}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    staffId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ScheduleSlotDto"][];
+                        "application/json": components["schemas"]["ScheduleSlotDto"][];
+                        "text/json": components["schemas"]["ScheduleSlotDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rooms/{roomId}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ScheduleSlotDto"][];
+                        "application/json": components["schemas"]["ScheduleSlotDto"][];
+                        "text/json": components["schemas"]["ScheduleSlotDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/classes/{classId}/schemas": {
         parameters: {
             query?: never;
@@ -645,6 +723,52 @@ export interface paths {
                 cookie?: never;
             };
             requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SchemaDto"];
+                        "application/json": components["schemas"]["SchemaDto"];
+                        "text/json": components["schemas"]["SchemaDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/classes/{classId}/schemas/{schemaId}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classId: string;
+                    schemaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CopySchemaRequest"];
+                    "text/json": components["schemas"]["CopySchemaRequest"];
+                    "application/*+json": components["schemas"]["CopySchemaRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -1005,6 +1129,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantDto"];
+                        "application/json": components["schemas"]["TenantDto"];
+                        "text/json": components["schemas"]["TenantDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTenantRequest"];
+                    "text/json": components["schemas"]["CreateTenantRequest"];
+                    "application/*+json": components["schemas"]["CreateTenantRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantDto"];
+                        "application/json": components["schemas"]["TenantDto"];
+                        "text/json": components["schemas"]["TenantDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/time-slot-template": {
         parameters: {
             query?: never;
@@ -1210,6 +1416,9 @@ export interface components {
         };
         /** @enum {string} */
         ConflictType: "TeacherDoubleBooked" | "RoomDoubleBooked" | "AideDoubleBooked";
+        CopySchemaRequest: {
+            name?: string | null;
+        };
         CourseDto: {
             /** Format: uuid */
             id?: string;
@@ -1218,6 +1427,11 @@ export interface components {
         };
         CreateSchemaRequest: {
             name?: string | null;
+        };
+        CreateTenantRequest: {
+            slug?: string | null;
+            name?: string | null;
+            contactEmail?: string | null;
         };
         DashboardStats: {
             /** Format: int32 */
@@ -1261,6 +1475,23 @@ export interface components {
             /** Format: int32 */
             capacity?: number | null;
             description?: string | null;
+        };
+        ScheduleSlotDto: {
+            /** Format: int32 */
+            weekday?: number;
+            startTime?: string | null;
+            endTime?: string | null;
+            courseName?: string | null;
+            className?: string | null;
+            /** Format: uuid */
+            roomId?: string | null;
+            roomName?: string | null;
+            /** Format: uuid */
+            aideId?: string | null;
+            aideName?: string | null;
+            /** Format: uuid */
+            teacherId?: string | null;
+            teacherName?: string | null;
         };
         SchemaDetailDto: {
             schema?: components["schemas"]["SchemaDto"];
@@ -1323,6 +1554,13 @@ export interface components {
             dayEndTime?: string;
             activeDays?: string | null;
             breaks?: components["schemas"]["BreakDto"][] | null;
+        };
+        TenantDto: {
+            /** Format: uuid */
+            id?: string;
+            slug?: string | null;
+            name?: string | null;
+            contactEmail?: string | null;
         };
         TimeSlotDto: {
             /** Format: uuid */

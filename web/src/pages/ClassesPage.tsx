@@ -3,6 +3,62 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api, ClassDto, SchemaDto, SchemaStatus } from '../api/client'
 
+interface CopySchemaModalProps {
+  classId: string
+  schemaId: string
+  sourceName: string
+  onClose: () => void
+  onSaved: () => void
+}
+
+function CopySchemaModal({ classId, schemaId, sourceName, onClose, onSaved }: CopySchemaModalProps) {
+  const qc = useQueryClient()
+  const [name, setName] = useState(`Kopi af ${sourceName}`)
+
+  const mutation = useMutation({
+    mutationFn: () => api.post(`/classes/${classId}/schemas/${schemaId}/copy`, { name }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['schemas', classId] })
+      onSaved()
+    },
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Kopiér skema</h2>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Navn på kopi *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          {mutation.isError && (
+            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Annuller
+          </button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!name.trim() || mutation.isPending}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {mutation.isPending ? 'Kopierer...' : 'Kopiér'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface ClassModalProps {
   initial?: ClassDto
   onClose: () => void
@@ -145,6 +201,7 @@ function SchemaList({ classId }: { classId: string }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
+  const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
 
   const { data: schemas, isLoading } = useQuery<SchemaDto[]>({
     queryKey: ['schemas', classId],
@@ -216,6 +273,16 @@ function SchemaList({ classId }: { classId: string }) {
               >
                 Rediger
               </button>
+              <button
+                onClick={() => setCopyingSchema(s)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                title="Kopiér skema"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
               {!s.isActive && (
                 <button
                   onClick={() => activateMutation.mutate(s.id)}
@@ -235,6 +302,15 @@ function SchemaList({ classId }: { classId: string }) {
           classId={classId}
           onClose={() => setShowCreate(false)}
           onSaved={() => setShowCreate(false)}
+        />
+      )}
+      {copyingSchema && (
+        <CopySchemaModal
+          classId={classId}
+          schemaId={copyingSchema.id!}
+          sourceName={copyingSchema.name!}
+          onClose={() => setCopyingSchema(null)}
+          onSaved={() => setCopyingSchema(null)}
         />
       )}
     </div>
@@ -271,13 +347,13 @@ export default function ClassesPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Opret klasse
+          <span className="hidden sm:inline">Opret klasse</span>
         </button>
       </div>
 

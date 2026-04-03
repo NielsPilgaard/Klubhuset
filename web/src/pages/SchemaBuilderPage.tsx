@@ -410,7 +410,7 @@ export default function SchemaBuilderPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Status bar */}
-      <div className="shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between gap-4">
+      <div className="shrink-0 bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <Link to="/klasser" className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -440,7 +440,20 @@ export default function SchemaBuilderPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <a
+            href={`/udskriv/klasse/${classId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+            title="Udskriv skema"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+          </a>
           {hasConflicts && (
             <span className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg border border-red-200">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -492,6 +505,7 @@ export default function SchemaBuilderPage() {
               ))}
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <div className="min-w-[640px]">
               {/* Grid header */}
               <div className="grid grid-cols-[100px_repeat(5,1fr)] gap-2 mb-2">
@@ -545,6 +559,7 @@ export default function SchemaBuilderPage() {
                   Ingen lektioner defineret endnu. Opsæt en lektionsstruktur for klassen.
                 </div>
               )}
+            </div>
             </div>
           )}
 
