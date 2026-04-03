@@ -18,14 +18,17 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 - [x] Path-based tenant resolution middleware
   - Extracts slug from URL path prefix: `/{slug}/...`
   - Resolves slug → TenantId via cached DB lookup; returns HTTP 404 for unknown slugs
-  - Injects TenantId into request context (`ITenantContext`)
-  - All downstream services read TenantId from context — never from URL
+  - URL slug is authoritative; SlugResolutionMiddleware validates slug uniqueness and populates ITenantContext.TenantId
+  - Middleware name: `SlugResolutionMiddleware` (extracts slug, resolves to ID, injects via context Items key "TenantId")
+  - Failure mode: HTTP 404 when slug is unknown
+  - JWT tenant_id claim is not compared; ITenantContext derives solely from URL slug resolver
+  - All downstream services read TenantId from context — never from URL or JWT claim directly
 
 ### Tenant / school setup
 
-- [ ] Tenant creation flow: school admin fills signup form, picks slug, creates admin account via Keycloak
-- [ ] School settings page (admin): school name, contact info
-- [ ] Logo upload (→ OVHCloud Object Storage)
+- [x] Tenant creation flow: signup form at `/signup`, picks slug, `POST /api/v1/tenants`
+- [x] School settings page (admin): school name, contact info — `GET/PUT /api/v1/schools/settings`, `/indstillinger`
+- [x] Logo upload (→ OVHCloud Object Storage / LocalStack in dev) — `POST /api/v1/schools/logo`
 
 ### Authentication
 
@@ -60,6 +63,21 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 - [x] School-level time slot template API: lesson duration, breaks, school day start/end — `GET/PUT /api/v1/time-slot-template`
 - [ ] Time slot wizard for onboarding (see [schema-features.md](../docs/schema-features.md)) — Phase 2
 - [x] Per-class time slot overrides
+  - **Data model:** `TimeSlotOverride` entity with: classId (FK), dateRange (startDate/endDate), daysOfWeek (bitmask or array), startTime, endTime, recurrenceRule (optional), sortOrder, createdBy (FK)
+  - **DB table:** `time_slot_overrides` with columns: id (PK), class_id (FK), start_date, end_date, days_of_week, start_time, end_time, recurrence_rule, sort_order, created_by_id (FK), created_at, updated_at
+  - **API endpoints:**
+    - `GET /api/v1/classes/{classId}/time-slots` — returns effective (template or overridden) slots for class
+    - `GET /api/v1/classes/{classId}/time-slot-overrides` — list active overrides for class
+    - `POST /api/v1/classes/{classId}/time-slot-overrides` — create override (request: daysOfWeek, startTime, endTime, dateRange, recurrenceRule)
+    - `PUT /api/v1/classes/{classId}/time-slot-overrides/{overrideId}` — update override
+    - `DELETE /api/v1/classes/{classId}/time-slot-overrides/{overrideId}` — delete override (returns HTTP 200 or 404)
+  - **Response shape:** `TimeSlotOverrideDto` with id, classId, daysOfWeek, startTime, endTime, dateRange, recurrenceRule, sortOrder, createdBy
+  - **Authorization:** Admins only ([Authorize(Roles = "admin")])
+  - **UI components:** 
+    - `ClassTimeSlotOverridesPage` — list, create, edit overrides for a class
+    - `TimeSlotOverrideForm` — form to define override times and recurrence
+    - Conflict validation: warning if override conflicts with existing assignments in active schema
+    - Preview: show effective schedule before saving override
 
 ### Schema builder
 
@@ -89,8 +107,27 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 ### Staff schedule views
 
 - [x] Teacher: view own weekly schedule across all classes (read-only)
+  - **Endpoint:** `GET /api/v1/staff/{staffId}/schedule` (authenticated, bearer token required)
+  - **Authorization:** User must be authenticated; [Authorize]
+  - **Response:** JSON array of `ScheduleSlotDto` objects
+  - **Fields per slot:** weekday (int 1–5), startTime (HH:mm string), endTime (HH:mm string), courseName, className, roomId, roomName, teacherId, teacherName, aideId, aideName
+  - **Status codes:** 200 OK, 401 Unauthorized, 404 Not Found (if staffId invalid)
+  - **Query parameters:** (optional) weekStart (ISO date), date (ISO date to filter by specific day)
+  - **UI:** `StaffSchedulePage` displays weekly schedule in expanded card view per day; read-only (no edit/delete); print-friendly (via `/udskriv/medarbejder/{staffId}`)
+
 - [x] Aide: view own weekly schedule (read-only)
+  - Uses same endpoint `GET /api/v1/staff/{staffId}/schedule`
+  - Returns slots where aideId matches the authenticated staff member or teacherId matches if aide is teaching
+
 - [x] Room schedule: view which classes use a room and when
+  - **Endpoint:** `GET /api/v1/rooms/{roomId}/schedule` (authenticated, bearer token required)
+  - **Authorization:** User must be authenticated; [Authorize]
+  - **Response:** JSON array of `ScheduleSlotDto` objects
+  - **Fields per slot:** weekday (int 1–5), startTime (HH:mm), endTime (HH:mm), courseName, className, teacherId, teacherName, aideId, aideName, roomId, roomName
+  - **Path param validation:** roomId must be valid UUID; return 404 if room not found
+  - **Status codes:** 200 OK (with array), 401 Unauthorized, 404 Not Found (if roomId invalid)
+  - **Query parameters:** (optional) weekStart, date
+  - **UI:** `RoomSchedulePage` displays weekly belægning grid; read-only; print-friendly (via `/udskriv/lokale/{roomId}`)
 
 ### Admin dashboard
 
