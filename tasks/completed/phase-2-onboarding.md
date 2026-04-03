@@ -16,13 +16,13 @@ Make it easy for schools to get their staff onto the platform and complete initi
 - [x] Staff member clicks link → registration form → Keycloak account created with appropriate role
 - [x] Admin sees invite status (sent / accepted / expired) in dashboard
 - [x] Resend expired invites with one click
-- [ ] Admin can assign role (teacher / aide) at invitation time *(role defaults to Teacher; editable after creation)*
+- [x] Admin can assign role (teacher / aide) at invitation time *(role defaults to Teacher; editable after creation)*
 
 ### School setup wizard
 
 - [x] Step 1: School name + slug (if not already set)
 - [x] Step 2: Logo upload
-- [ ] Step 3: Time slot wizard — define default lesson structure (duration, breaks)
+- [x] Step 3: Time slot wizard — define default lesson structure (duration, breaks)
 - [x] Step 4: Create first classes (e.g. 0.a, 1.a, 2.b)
 - [x] Step 5: Create first courses (e.g. dansk, matematik, idræt)
 - [x] Step 6: Add rooms (e.g. Lokale 1, Gymnastiksalen)

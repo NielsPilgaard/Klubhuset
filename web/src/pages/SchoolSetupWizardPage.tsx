@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import type { StaffRole } from '../api/client'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -15,11 +16,12 @@ interface WizardStep {
 const STEPS: WizardStep[] = [
   { id: 1, title: 'Skolenavn', description: 'Bekræft eller opdater skolens navn' },
   { id: 2, title: 'Logo', description: 'Upload et logo til skolen' },
-  { id: 3, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
-  { id: 4, title: 'Fag', description: 'Tilføj fag, f.eks. dansk, matematik' },
-  { id: 5, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
-  { id: 6, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
-  { id: 7, title: 'Færdig', description: 'Din skole er klar til brug' },
+  { id: 3, title: 'Lektionsstruktur', description: 'Definér varighed og pauser for en normal skoledag' },
+  { id: 4, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
+  { id: 5, title: 'Fag', description: 'Tilføj fag, f.eks. dansk, matematik' },
+  { id: 6, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
+  { id: 7, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
+  { id: 8, title: 'Færdig', description: 'Din skole er klar til brug' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -89,11 +91,10 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
     try {
       const form = new FormData()
       form.append('file', file)
-      
-      // Get auth token from keycloak if available
+
       const token = await getToken()
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-      
+
       const res = await fetch('/api/v1/schools/logo', {
         method: 'POST',
         body: form,
@@ -130,6 +131,170 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
           className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Uploader…' : 'Upload og fortsæt'}
+        </button>
+        <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+          Spring over
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface BreakEntry {
+  startTime: string
+  durationMinutes: number
+}
+
+function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+  const [lessonDuration, setLessonDuration] = useState(45)
+  const [dayStart, setDayStart] = useState('08:00')
+  const [dayEnd, setDayEnd] = useState('15:00')
+  const [breaks, setBreaks] = useState<BreakEntry[]>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  function addBreak() {
+    setBreaks((prev) => [...prev, { startTime: '10:00', durationMinutes: 15 }])
+  }
+
+  function updateBreak(i: number, field: keyof BreakEntry, value: string | number) {
+    setBreaks((prev) => prev.map((b, idx) => idx === i ? { ...b, [field]: value } : b))
+  }
+
+  function removeBreak(i: number) {
+    setBreaks((prev) => prev.filter((_, idx) => idx !== i))
+  }
+
+  async function save() {
+    setSaving(true)
+    setError('')
+    try {
+      await api.put('/time-slot-template', {
+        lessonDurationMinutes: lessonDuration,
+        dayStartTime: dayStart + ':00',
+        dayEndTime: dayEnd + ':00',
+        activeDays: 'MTWTF',
+        breaks: breaks.map((b) => ({
+          startTime: b.startTime + ':00',
+          durationMinutes: b.durationMinutes,
+        })),
+      })
+      onNext()
+    } catch {
+      setError('Kunne ikke gemme lektionsstruktur. Prøv igen.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-600">
+        Sæt standard lektionslængde og skoledagens rammer. Du kan altid justere det senere.
+      </p>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag starter</label>
+          <input
+            type="time"
+            value={dayStart}
+            onChange={(e) => setDayStart(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag slutter</label>
+          <input
+            type="time"
+            value={dayEnd}
+            onChange={(e) => setDayEnd(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Lektionslængde — {lessonDuration} minutter
+        </label>
+        <input
+          type="range"
+          min={20}
+          max={90}
+          step={5}
+          value={lessonDuration}
+          onChange={(e) => setLessonDuration(Number(e.target.value))}
+          className="w-full accent-brand-600"
+        />
+        <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+          <span>20 min</span>
+          <span>90 min</span>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium text-gray-700">Pauser</label>
+          <button
+            onClick={addBreak}
+            className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Tilføj pause
+          </button>
+        </div>
+        {breaks.length === 0 && (
+          <p className="text-sm text-gray-400 italic">Ingen faste pauser — tilføj om nødvendigt.</p>
+        )}
+        <div className="space-y-2">
+          {breaks.map((b, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">Starttidspunkt</label>
+                  <input
+                    type="time"
+                    value={b.startTime}
+                    onChange={(e) => updateBreak(i, 'startTime', e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">Varighed (min)</label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={60}
+                    value={b.durationMinutes}
+                    onChange={(e) => updateBreak(i, 'durationMinutes', Number(e.target.value))}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => removeBreak(i)}
+                className="mt-4 p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex gap-3 pt-2">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+        >
+          {saving ? 'Gemmer…' : 'Gem og fortsæt'}
         </button>
         <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
           Spring over
@@ -239,8 +404,15 @@ function StepCreateItems({
   )
 }
 
+const ROLE_OPTIONS: { value: StaffRole; label: string; hint: string }[] = [
+  { value: 'Teacher', label: 'Lærer', hint: 'Underviser klasser' },
+  { value: 'Aide', label: 'Pædagog', hint: 'Støtter undervisningen' },
+  { value: 'Substitute', label: 'Vikar', hint: 'Vikarierer ved fravær' },
+]
+
 function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
   const [emails, setEmails] = useState('')
+  const [role, setRole] = useState<StaffRole>('Teacher')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [results, setResults] = useState<{ email: string; ok: boolean }[]>([])
@@ -254,14 +426,13 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
     setSaving(true)
     setError('')
     try {
-      // Create staff records and send invitations
       const outcome: { email: string; ok: boolean }[] = []
       for (const email of list) {
         try {
           const staff = await api.post<{ id: string }>('/staff', {
             name: email.split('@')[0],
             email,
-            role: 'Teacher',
+            role,
           })
           await api.post(`/staff-invitations/invite/${staff.id}`, {})
           outcome.push({ email, ok: true })
@@ -310,6 +481,29 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
       <p className="text-sm text-gray-600">
         Indsæt e-mailadresser på de medarbejdere, du vil invitere. Adskil med komma, semikolon eller linjeskift.
       </p>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Rolle</label>
+        <div className="grid grid-cols-3 gap-2">
+          {ROLE_OPTIONS.map((r) => (
+            <button
+              key={r.value}
+              type="button"
+              onClick={() => setRole(r.value)}
+              className={`px-3 py-2.5 rounded-lg border text-left transition-colors ${
+                role === r.value
+                  ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block text-sm font-medium text-gray-800">{r.label}</span>
+              <span className="block text-xs text-gray-500 mt-0.5">{r.hint}</span>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">Du kan ændre rollen på den enkelte medarbejder bagefter.</p>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">E-mailadresser</label>
         <textarea
@@ -423,7 +617,8 @@ export default function SchoolSetupWizardPage() {
         <div className="px-8 pb-8 pt-4">
           {step === 1 && <StepSchoolName onNext={advance} onSkip={skip} />}
           {step === 2 && <StepLogo onNext={advance} onSkip={skip} />}
-          {step === 3 && (
+          {step === 3 && <StepTimeSlots onNext={advance} onSkip={skip} />}
+          {step === 4 && (
             <StepCreateItems
               noun="Klasse"
               plural="Klasser"
@@ -433,7 +628,7 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 4 && (
+          {step === 5 && (
             <StepCreateItems
               noun="Fag"
               plural="Fag"
@@ -443,7 +638,7 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 5 && (
+          {step === 6 && (
             <StepCreateItems
               noun="Lokale"
               plural="Lokaler"
@@ -453,8 +648,8 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 6 && <StepInviteStaff onNext={advance} onSkip={skip} />}
-          {step === 7 && <StepDone onFinish={() => navigate('/dashboard')} />}
+          {step === 7 && <StepInviteStaff onNext={advance} onSkip={skip} />}
+          {step === 8 && <StepDone onFinish={() => navigate('/dashboard')} />}
         </div>
 
         {/* Step dots */}

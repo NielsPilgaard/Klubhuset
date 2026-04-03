@@ -136,7 +136,7 @@ function ClassPrintPage({ classId }: { classId: string }) {
 
   const activeSchemaId = schemas?.find((s) => s.isActive)?.id
 
-  const { data: detail, isLoading } = useQuery<{
+  const { data: detail } = useQuery<{
     slots?: { weekday: number; timeSlotId: string; courseName?: string | null; teacherName?: string | null; roomName?: string | null; aideName?: string | null }[]
   }>({
     queryKey: ['schema', classId, activeSchemaId],
