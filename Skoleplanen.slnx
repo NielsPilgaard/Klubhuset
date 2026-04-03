@@ -2,6 +2,10 @@
   <Folder Name="/api/">
     <Project Path="api/Skoleplanen.Api/Skoleplanen.Api.csproj" />
   </Folder>
+  <Folder Name="/api/tests/">
+    <Project Path="api/tests/Skoleplanen.Api.IntegrationTests/Skoleplanen.Api.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/infrastructure/" />
   <Folder Name="/infrastructure/aspire/">
     <Project Path="infrastructure/aspire/Skoleplanen.AppHost/Skoleplanen.AppHost.csproj" />
     <Project Path="infrastructure/aspire/Skoleplanen.ServiceDefaults/Skoleplanen.ServiceDefaults.csproj" />
