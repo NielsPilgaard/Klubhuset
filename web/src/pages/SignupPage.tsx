@@ -10,7 +10,7 @@ interface ValidationErrors {
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const timeoutIdRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const timeoutIdRef = useRef<number | undefined>(undefined)
   const [slug, setSlug] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
