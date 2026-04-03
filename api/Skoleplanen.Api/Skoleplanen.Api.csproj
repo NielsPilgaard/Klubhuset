@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <Target Name="GenerateOpenApiSpec" AfterTargets="Build">
-    <Exec Command="dotnet swagger tofile --output &quot;$(MSBuildProjectDirectory)/../../web/openapi/v1.json&quot; &quot;$(TargetPath)&quot; v1"
+    <Exec Command="dotnet swagger tofile --output &quot;$(MSBuildProjectDirectory)/../../openapi/v1.json&quot; &quot;$(TargetPath)&quot; v1"
           WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
   </Target>
 
