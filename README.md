@@ -110,6 +110,21 @@ dotnet user-secrets set "Smtp:Username" "your-scaleway-username" --project api/S
 dotnet user-secrets set "Smtp:Password" "your-scaleway-api-key" --project api/Skoleplanen.Api
 ```
 
+### Dev login credentials
+
+A test school and admin user are seeded automatically in development:
+
+| Field    | Value                   |
+| -------- | ----------------------- |
+| URL      | http://localhost:5173   |
+| Username | `admin@testskole.dk`    |
+| Password | `test`                  |
+| School   | Testskole (`testskole`) |
+
+The Keycloak user is imported from the realm JSON. The school row is seeded by the API on startup.
+
+> **First run only:** Keycloak imports the realm only when its database is empty. If Keycloak was already running before these credentials were added, delete the `keycloak-db` Docker volume and restart the stack so the realm is re-imported.
+
 ### Database migrations
 
 Add a new EF Core migration from the repo root:
