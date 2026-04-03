@@ -1872,45 +1872,6 @@
         }
       }
     },
-    "/api/v1/tenants/{slug}": {
-      "get": {
-        "tags": [
-          "Tenants"
-        ],
-        "parameters": [
-          {
-            "name": "slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TenantDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TenantDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TenantDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/tenants": {
       "post": {
         "tags": [
@@ -2334,10 +2295,6 @@
       "CreateTenantRequest": {
         "type": "object",
         "properties": {
-          "slug": {
-            "type": "string",
-            "nullable": true
-          },
           "name": {
             "type": "string",
             "nullable": true
@@ -2825,10 +2782,6 @@
           "id": {
             "type": "string",
             "format": "uuid"
-          },
-          "slug": {
-            "type": "string",
-            "nullable": true
           },
           "name": {
             "type": "string",
