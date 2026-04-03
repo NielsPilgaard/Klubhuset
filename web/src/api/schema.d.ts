@@ -1463,45 +1463,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/tenants/{slug}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    slug: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["TenantDto"];
-                        "application/json": components["schemas"]["TenantDto"];
-                        "text/json": components["schemas"]["TenantDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/tenants": {
         parameters: {
             query?: never;
@@ -1766,7 +1727,6 @@ export interface components {
             name?: string | null;
         };
         CreateTenantRequest: {
-            slug?: string | null;
             name?: string | null;
             contactEmail?: string | null;
         };
@@ -1931,7 +1891,6 @@ export interface components {
         TenantDto: {
             /** Format: uuid */
             id?: string;
-            slug?: string | null;
             name?: string | null;
             contactEmail?: string | null;
         };

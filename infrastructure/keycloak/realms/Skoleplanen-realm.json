@@ -95,10 +95,15 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["admin"],
+      "realmRoles": [
+        "admin"
+      ],
       "attributes": {
-        "tenant_id": ["11111111-1111-1111-1111-111111111111"]
-      }
+        "tenant_id": [
+          "11111111-1111-1111-1111-111111111111"
+        ]
+      },
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     }
   ],
   "clientScopes": [

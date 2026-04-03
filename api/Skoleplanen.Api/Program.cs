@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
-using Skoleplanen.Api.Models;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
@@ -119,27 +118,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Dev seed — insert the test school if it doesn't exist yet.
+// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
 // Skip when no connection string is present (e.g. swagger CLI running at build time).
-var connectionString = app.Configuration.GetConnectionString("skoleplanen-db");
-if (app.Environment.IsDevelopment() && !string.IsNullOrEmpty(connectionString))
+if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
 {
-	using var scope = app.Services.CreateScope();
-	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	await db.Database.MigrateAsync();
-	var testSchoolId = new Guid("11111111-1111-1111-1111-111111111111");
-	var exists = await db.Schools.IgnoreQueryFilters().AnyAsync(s => s.Id == testSchoolId);
-	if (!exists)
-	{
-		db.Schools.Add(new School
-		{
-			Id = testSchoolId,
-			Name = "Debugskolen",
-			ContactEmail = "admin@debugskolen.dk"
-		});
-
-		await db.SaveChangesAsync();
-	}
+	await app.Services.SeedAsync();
 }
 
 app.Run();
