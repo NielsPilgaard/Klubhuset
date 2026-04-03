@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
 using Skoleplanen.Api.Tenancy;
@@ -39,22 +39,21 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+	const string schemeId = "Bearer";
+
 	options.SwaggerDoc("v1", new OpenApiInfo { Title = "Skoleplanen API", Version = "v1" });
-	options.AddSecurityDefinition("Bearer",
+	options.AddSecurityDefinition(schemeId,
 								  new OpenApiSecurityScheme
 								  {
 									  Name = "Authorization",
 									  Type = SecuritySchemeType.Http,
-									  Scheme = "Bearer",
+									  Scheme = schemeId,
 									  BearerFormat = "JWT",
 									  In = ParameterLocation.Header,
 								  });
 
-	options.AddSecurityRequirement(new OpenApiSecurityRequirement
-	{
-		[new OpenApiSecurityScheme
-			 { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }] = [],
-	});
+	options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+									   { [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
 });
 
 // Email
