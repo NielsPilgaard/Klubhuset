@@ -25,6 +25,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
         modelBuilder.Entity<School>(e =>
         {
             e.HasIndex(s => s.Slug).IsUnique();
+            e.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
+        });
+
+        modelBuilder.Entity<Course>(e =>
+        {
+            e.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
         });
 
         // SchemaSlot has two FK to Staff (Teacher and Aide) — configure explicitly

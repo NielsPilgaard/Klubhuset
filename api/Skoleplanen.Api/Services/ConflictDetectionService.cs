@@ -67,7 +67,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
                     conflicts.Add(new ConflictInfo(
                         ConflictType.TeacherDoubleBooked,
                         a.Id, b.Id,
-                        a.TeacherId, a.Teacher.Name,
+                        a.TeacherId, a.Teacher?.Name ?? string.Empty,
                         a.Weekday, a.TimeSlot.StartTime, a.TimeSlot.EndTime));
                 }
 
@@ -93,15 +93,15 @@ public sealed class ConflictDetectionService(AppDbContext db)
             }
         }
 
-        // Deduplicate: (A,B) and (B,A) are the same conflict
-        var seen = new HashSet<(Guid, Guid)>();
+        // Deduplicate: (A,B) and (B,A) with the same ConflictType are the same conflict
+        var seen = new HashSet<(Guid, Guid, ConflictType)>();
         var deduped = new List<ConflictInfo>();
         foreach (var c in conflicts)
         {
-            var key = c.SlotAId.CompareTo(c.SlotBId) <= 0
+            var (slot1, slot2) = c.SlotAId.CompareTo(c.SlotBId) <= 0
                 ? (c.SlotAId, c.SlotBId)
                 : (c.SlotBId, c.SlotAId);
-            if (seen.Add((key.Item1, key.Item2)))
+            if (seen.Add((slot1, slot2, c.Type)))
                 deduped.Add(c);
         }
 

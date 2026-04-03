@@ -16,5 +16,5 @@ public sealed class School : ITenantScoped
     public string? ContactPhone { get; set; }
     public string? LogoUrl { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; init; }
 }
