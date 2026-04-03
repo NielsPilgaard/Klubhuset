@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   api,
   SchemaDetailDto,
+  SlotsAndConflictsDto,
   TimeSlotDto,
   CourseDto,
   StaffDto,
@@ -12,11 +13,7 @@ import {
   ConflictInfo,
 } from '../api/client'
 
-// ── Constants ────────────────────────────────────────────────────────────────
-
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
-
-// Deterministic course colors by index
 const COURSE_COLORS = [
   'bg-blue-100 text-blue-800 border-blue-200',
   'bg-purple-100 text-purple-800 border-purple-200',
@@ -35,8 +32,6 @@ function getCourseColor(courseId: string, courseIds: string[]): string {
   return COURSE_COLORS[idx % COURSE_COLORS.length]
 }
 
-// ── Assignment panel ─────────────────────────────────────────────────────────
-
 interface AssignmentPanelProps {
   classId: string
   schemaId: string
@@ -47,7 +42,7 @@ interface AssignmentPanelProps {
   staff: StaffDto[]
   rooms: RoomDto[]
   onClose: () => void
-  onSaved: (updated: Pick<SchemaDetailDto, 'slots' | 'conflicts'>) => void
+  onSaved: (updated: SlotsAndConflictsDto) => void
 }
 
 function AssignmentPanel({
@@ -72,7 +67,7 @@ function AssignmentPanel({
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      api.put<Pick<SchemaDetailDto, 'slots' | 'conflicts'>>(
+      api.put<SlotsAndConflictsDto>(
         `/classes/${classId}/schemas/${schemaId}/slots/${existing?.id ?? timeSlotId}`,
         {
           timeSlotId,
@@ -218,8 +213,6 @@ function AssignmentPanel({
   )
 }
 
-// ── Grid cell ────────────────────────────────────────────────────────────────
-
 interface CellProps {
   slot: SlotDto | null
   isConflict: boolean
@@ -287,15 +280,11 @@ function GridCell({ slot, isConflict, courseColorClass, onClick }: CellProps) {
   )
 }
 
-// ── Conflict type label ──────────────────────────────────────────────────────
-
 function conflictTypeLabel(type: ConflictInfo['type']): string {
   if (type === 'TeacherDoubleBooked') return 'Lærer dobbeltbooket'
   if (type === 'RoomDoubleBooked') return 'Lokale dobbeltbooket'
   return 'Pædagog dobbeltbooket'
 }
-
-// ── Main page ────────────────────────────────────────────────────────────────
 
 export default function SchemaBuilderPage() {
   const { classId, schemaId } = useParams<{ classId: string; schemaId: string }>()
@@ -383,7 +372,7 @@ export default function SchemaBuilderPage() {
     [timeSlots]
   )
 
-  const handleCellSaved = (updated: Pick<SchemaDetailDto, 'slots' | 'conflicts'>) => {
+  const handleCellSaved = (updated: SlotsAndConflictsDto) => {
     setLocalSlots(updated.slots)
     setLocalConflicts(updated.conflicts)
     setPanelCell(null)

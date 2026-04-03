@@ -3,8 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api, ClassDto, SchemaDto, SchemaStatus } from '../api/client'
 
-// ── Modals ──────────────────────────────────────────────────────────────────
-
 interface ClassModalProps {
   initial?: ClassDto
   onClose: () => void
@@ -133,8 +131,6 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   )
 }
 
-// ── Schema status helpers ────────────────────────────────────────────────────
-
 function statusLabel(status: SchemaStatus) {
   return status === 'Complete' ? 'Færdig' : 'Kladde'
 }
@@ -144,8 +140,6 @@ function statusClasses(status: SchemaStatus) {
     ? 'bg-brand-100 text-brand-700'
     : 'bg-amber-100 text-amber-700'
 }
-
-// ── Schema list for an expanded class ───────────────────────────────────────
 
 function SchemaList({ classId }: { classId: string }) {
   const navigate = useNavigate()
@@ -246,8 +240,6 @@ function SchemaList({ classId }: { classId: string }) {
     </div>
   )
 }
-
-// ── Main page ────────────────────────────────────────────────────────────────
 
 export default function ClassesPage() {
   const qc = useQueryClient()
