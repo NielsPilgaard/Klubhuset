@@ -211,7 +211,7 @@ export default function DashboardPage() {
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-700">Klasser med uassignerede lektioner</h2>
+              <h2 className="text-sm font-semibold text-gray-700">Klasser som mangler lektioner</h2>
             </div>
             {data!.unassignedClasses.length === 0 ? (
               <div className="px-5 py-8 text-center">

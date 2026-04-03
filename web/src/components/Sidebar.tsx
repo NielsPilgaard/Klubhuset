@@ -1,5 +1,14 @@
 import { NavLink } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
+
+interface SchoolSettingsDto {
+  name: string
+  contactEmail: string | null
+  contactPhone: string | null
+  logoUrl: string | null
+}
 
 const navItems = [
   {
@@ -65,6 +74,10 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { logout } = useAuth()
+  const { data: school } = useQuery<SchoolSettingsDto>({
+    queryKey: ['school-settings'],
+    queryFn: () => api.get('/schools/settings'),
+  })
 
   return (
     <>
@@ -88,12 +101,26 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Brand */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-brand-700">
-          <span className="font-display text-xl font-semibold tracking-tight text-white">
-            Skoleplanen
-          </span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            {school?.logoUrl ? (
+              <img
+                src={school.logoUrl}
+                alt=""
+                className="h-7 w-7 rounded object-contain shrink-0 bg-white/10"
+              />
+            ) : null}
+            <div className="min-w-0">
+              <span className="block font-display text-sm font-semibold tracking-tight text-white truncate">
+                {school?.name ?? 'Skoleplanen'}
+              </span>
+              {school?.name ? (
+                <span className="block text-xs text-brand-400">Skoleplanen</span>
+              ) : null}
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="lg:hidden p-1 rounded text-brand-300 hover:text-white"
+            className="lg:hidden p-1 rounded text-brand-300 hover:text-white shrink-0"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />

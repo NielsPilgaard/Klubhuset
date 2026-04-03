@@ -1,15 +1,12 @@
 using System.Text.Json.Serialization;
-using Amazon;
-using Amazon.Runtime;
-using Amazon.S3;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Microsoft.OpenApi;
+using Skoleplanen.Api.Auth;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
+using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
-using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,27 +39,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	   });
 
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
 // OpenAPI / Swagger (spec generated from code)
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-	const string schemeId = "Bearer";
-
-	options.SwaggerDoc("v1", new OpenApiInfo { Title = "Skoleplanen API", Version = "v1" });
-	options.AddSecurityDefinition(schemeId,
-								  new OpenApiSecurityScheme
-								  {
-									  Name = "Authorization",
-									  Type = SecuritySchemeType.Http,
-									  Scheme = schemeId,
-									  BearerFormat = "JWT",
-									  In = ParameterLocation.Header,
-								  });
-
-	options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-	{ [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
-});
+builder.Services.AddSwagger();
 
 // Email
 builder.Services.AddOptions<SmtpOptions>()
@@ -73,24 +53,7 @@ builder.Services.AddOptions<SmtpOptions>()
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 
 // Object storage (OVHCloud S3-compatible / LocalStack in dev)
-builder.Services.AddOptions<S3Options>()
-	   .BindConfiguration(S3Options.SectionName)
-	   .ValidateDataAnnotations();
-
-builder.Services.AddSingleton<IAmazonS3>(sp =>
-{
-	var opts = sp.GetRequiredService<IOptions<S3Options>>().Value;
-	var config = new AmazonS3Config
-	{
-		ServiceURL = opts.ServiceUrl,
-		ForcePathStyle = true,
-		AuthenticationRegion = RegionEndpoint.EUWest1.SystemName,
-	};
-
-	return new AmazonS3Client(new BasicAWSCredentials(opts.AccessKey, opts.SecretKey), config);
-});
-
-builder.Services.AddScoped<IObjectStorage, S3ObjectStorage>();
+builder.Services.AddObjectStorage();
 
 // Conflict detection
 builder.Services.AddScoped<ConflictDetectionService>();
@@ -104,15 +67,7 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-	app.UseSwagger(c => c.RouteTemplate = "api/v1/openapi/{documentName}/openapi.json");
-	app.UseSwaggerUI(c =>
-	{
-		c.SwaggerEndpoint("/api/v1/openapi/v1/openapi.json", "Skoleplanen API v1");
-		c.RoutePrefix = "api/v1/openapi";
-	});
-}
+app.UseSwaggerInDevelopment();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -124,5 +79,9 @@ if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db"
 {
 	await app.Services.SeedAsync();
 }
+
+// Ensure S3 bucket exists (idempotent — no-op if already present).
+// In dev this targets LocalStack; in prod it targets OVHCloud Object Storage.
+await app.Services.EnsureS3BucketAsync();
 
 app.Run();

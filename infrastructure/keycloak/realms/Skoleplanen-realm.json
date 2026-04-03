@@ -121,6 +121,30 @@
   ],
   "clientScopes": [
     {
+      "name": "roles",
+      "description": "OpenID Connect scope for realm and client role mappings",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "consent.screen.text": "${rolesScopeConsentText}"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "user.attribute": "foo",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
       "name": "tenant",
       "description": "Tenant ID claim added via protocol mapper",
       "protocol": "openid-connect",
