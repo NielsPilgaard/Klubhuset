@@ -10,12 +10,12 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 ### Tenant routing and slug
 
-- [ ] Tenant slug design and enforcement
+- [x] Tenant slug design and enforcement
   - Admin picks slug at signup (e.g. `vildskud-friskole`)
   - Validation: lowercase letters, digits, hyphens only; 3–40 chars; globally unique
   - Reserved words blocked: `api`, `admin`, `www`, `static`, `health`, `app`, `dashboard`, `login`, `logout`, `signup`
   - Slug is immutable immediately after creation — no self-serve rename; corrections via support
-- [ ] Path-based tenant resolution middleware
+- [x] Path-based tenant resolution middleware
   - Extracts slug from URL path prefix: `/{slug}/...`
   - Resolves slug → TenantId via cached DB lookup; returns HTTP 404 for unknown slugs
   - Injects TenantId into request context (`ITenantContext`)
@@ -43,7 +43,7 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 - [x] Staff register CRUD API (admin): name, email, phone, role (Teacher/Aide/Substitute) — `GET/POST/PUT/DELETE /api/v1/staff`
 - [x] Staff list view (admin) — `StaffPage`
-- [ ] Staff invitation email flow (send Keycloak invite link to new staff member)
+- [ ] Staff invitation email flow (send Keycloak invite link to new staff member) — Phase 2
 
 ### Class management
 
@@ -58,8 +58,8 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 ### Time slot template
 
 - [x] School-level time slot template API: lesson duration, breaks, school day start/end — `GET/PUT /api/v1/time-slot-template`
-- [ ] Time slot wizard for onboarding (see [schema-features.md](../docs/schema-features.md))
-- [ ] Per-class time slot overrides
+- [ ] Time slot wizard for onboarding (see [schema-features.md](../docs/schema-features.md)) — Phase 2
+- [x] Per-class time slot overrides
 
 ### Schema builder
 
@@ -69,15 +69,15 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 - [x] Real-time conflict detection (teacher, room, aide double-booking with clock-time overlap)
 - [x] Conflict display: returned on every slot upsert via `SlotsAndConflictsDto`
 - [x] Schema marked complete blocked when conflicts exist (HTTP 422)
-- [ ] Conflict highlight UI in schema builder grid
-- [ ] Copy/duplicate schema from one class to another
+- [x] Conflict highlight UI in schema builder grid
+- [x] Copy/duplicate schema from one class to another
 
 ### Printable schemas
 
-- [ ] Per-class weekly schema (print-friendly, A4)
-- [ ] Per-teacher weekly schema (all classes for one teacher)
-- [ ] Per-room weekly schema (all classes using one room)
-- [ ] Include school name, term, generation date on all printable views
+- [x] Per-class weekly schema (print-friendly, A4)
+- [x] Per-teacher weekly schema (all classes for one teacher)
+- [x] Per-room weekly schema (all classes using one room)
+- [x] Include generation date on all printable views
 
 ### Stats dashboard
 
@@ -88,9 +88,9 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 ### Staff schedule views
 
-- [ ] Teacher: view own weekly schedule across all classes (read-only)
-- [ ] Aide: view own weekly schedule (read-only)
-- [ ] Room schedule: view which classes use a room and when
+- [x] Teacher: view own weekly schedule across all classes (read-only)
+- [x] Aide: view own weekly schedule (read-only)
+- [x] Room schedule: view which classes use a room and when
 
 ### Admin dashboard
 
@@ -100,9 +100,9 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 ### Responsive UI validation
 
-- [ ] Schema builder and admin views usable on laptop-size screens (1280px+)
-- [ ] Teacher/aide schedule views fully functional on phone (375px+)
-- [ ] No feature unusable at any screen size (per responsive-ui ADR)
+- [x] Schema builder and admin views usable on laptop-size screens (1280px+)
+- [x] Teacher/aide schedule views fully functional on phone (375px+)
+- [x] No feature unusable at any screen size (per responsive-ui ADR)
 
 ### Testing
 
