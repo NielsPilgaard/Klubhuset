@@ -15,7 +15,7 @@ namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 /// <see cref="TestTenantContext"/> and a simple test-only JWT scheme so
 /// tests can control which tenant they're operating as.
 /// </summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
@@ -26,10 +26,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public TestTenantContext TenantContext { get; } = new();
 
-    public async ValueTask InitializeAsync()
-    {
-        await _postgres.StartAsync();
-    }
+    public async Task StartAsync() => await _postgres.StartAsync();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -67,7 +64,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         });
     }
 
-    public new async ValueTask DisposeAsync()
+    public async Task StopAsync()
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();

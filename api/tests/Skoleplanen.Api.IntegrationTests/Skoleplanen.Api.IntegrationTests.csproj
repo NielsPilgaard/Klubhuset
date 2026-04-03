@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <!-- tUnit framework -->
-    <PackageReference Include="TUnit" Version="0.25.14" />
-    <PackageReference Include="TUnit.AspNetCore" Version="0.25.14" />
+    <PackageReference Include="TUnit" Version="1.6.5" />
+    <PackageReference Include="TUnit.AspNetCore" Version="1.6.5" />
 
     <!-- Testcontainers PostgreSQL -->
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.4.0" />

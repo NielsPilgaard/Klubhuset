@@ -29,47 +29,48 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 ### Authentication
 
-- [ ] Keycloak integration: admin login, teacher login, aide login
-- [ ] Role-based access: `admin`, `teacher`, `aide` roles mapped from Keycloak token claims
-- [ ] All API endpoints scoped to authenticated tenant (middleware enforces this)
+- [x] Keycloak realm configured: `skoleplanen-web` public OIDC client, `skoleplanen-api` bearer-only resource server
+- [x] Role-based access: `admin`, `teacher`, `aide` roles in Keycloak; mapped to JWT claims; enforced on API endpoints via `[Authorize(Roles = "...")]`
+- [x] Frontend Keycloak OIDC login flow (`keycloak-js`, PKCE, auto token refresh)
+- [x] All API endpoints require a valid Keycloak-issued JWT; tenant_id claim drives `ITenantContext`
 
 ### Room management
 
-- [ ] CRUD for rooms (lokaler): name, capacity (optional), description
-- [ ] Room list view (admin)
+- [x] CRUD API for rooms (lokaler): name, capacity, description — `GET/POST/PUT/DELETE /api/v1/rooms`
+- [x] Room list view (admin) — `RoomsPage`
 
 ### Staff management
 
-- [ ] Staff register CRUD (admin view): name, email, phone, role (teacher/aide/substitute)
-- [ ] Staff can be associated with courses they teach
+- [x] Staff register CRUD API (admin): name, email, phone, role (Teacher/Aide/Substitute) — `GET/POST/PUT/DELETE /api/v1/staff`
+- [x] Staff list view (admin) — `StaffPage`
+- [ ] Staff invitation email flow (send Keycloak invite link to new staff member)
 
 ### Class management
 
-- [ ] CRUD for classes (klasser): name (e.g. 2.b, 9.a), description
-- [ ] Class list view (admin)
+- [x] CRUD API for classes (klasser): name, description — `GET/POST/PUT/DELETE /api/v1/classes`
+- [x] Class list view (admin) — `ClassesPage`
 
 ### Course management
 
-- [ ] CRUD for courses (fag): name (e.g. dansk, matematik, idræt), description
-- [ ] Courses linked to classes via the schema (not directly — the link is a schema assignment)
+- [x] CRUD API for courses (fag): name, description — `GET/POST/PUT/DELETE /api/v1/courses`
+- [x] Course list view (admin) — `CoursesPage`
 
 ### Time slot template
 
-- [ ] School-level default time slot template: lesson duration, breaks, school day start/end
+- [x] School-level time slot template API: lesson duration, breaks, school day start/end — `GET/PUT /api/v1/time-slot-template`
 - [ ] Time slot wizard for onboarding (see [schema-features.md](../docs/schema-features.md))
 - [ ] Per-class time slot overrides
 
 ### Schema builder
 
-- [ ] Weekly grid view per class: rows = time slots, columns = weekdays
-- [ ] Cell assignment: select course + teacher + room (+ optional aide) per cell
-- [ ] Real-time conflict detection:
-  - Teacher double-booking (any clock-time overlap, not just matching slot indices)
-  - Room double-booking
-  - Aide double-booking
-- [ ] Conflict display: highlight conflicting cells, summary panel with conflict details
-- [ ] Schema must be conflict-free before it can be marked as complete
-- [ ] Copy/duplicate schema from one class to another as a starting point
+- [x] CRUD API for schemas per class — `GET/POST/DELETE /api/v1/classes/{classId}/schemas`
+- [x] Weekly grid UI — `SchemaBuilderPage`
+- [x] Cell assignment: course + teacher + room + optional aide via `PUT /api/v1/classes/{classId}/schemas/{schemaId}/slots`
+- [x] Real-time conflict detection (teacher, room, aide double-booking with clock-time overlap)
+- [x] Conflict display: returned on every slot upsert via `SlotsAndConflictsDto`
+- [x] Schema marked complete blocked when conflicts exist (HTTP 422)
+- [ ] Conflict highlight UI in schema builder grid
+- [ ] Copy/duplicate schema from one class to another
 
 ### Printable schemas
 
@@ -80,25 +81,33 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 ### Stats dashboard
 
-- [ ] Hours per course per class (towards minimumstimetal)
-- [ ] Hours per teacher / aide
-- [ ] Unassigned slots (classes with empty cells)
-- [ ] Summary on admin dashboard
+- [x] Hours per course per class — `GET /api/v1/stats/dashboard`
+- [x] Hours per teacher / aide
+- [x] Unassigned slots count
+- [x] Stats displayed on admin dashboard — `DashboardPage`
 
 ### Staff schedule views
 
 - [ ] Teacher: view own weekly schedule across all classes (read-only)
 - [ ] Aide: view own weekly schedule (read-only)
-- [ ] Room schedule: view which classes use a room and when (admin + teacher view)
+- [ ] Room schedule: view which classes use a room and when
 
 ### Admin dashboard
 
-- [ ] School overview: class count, staff count, course count
-- [ ] Schema completeness: how many classes have a complete schema
-- [ ] Quick links to schema builder, staff list, course list
+- [x] School overview: class count, staff count, course count — `DashboardPage`
+- [x] Schema completeness indicator
+- [x] Quick links to schema builder, staff list, course list via sidebar
 
 ### Responsive UI validation
 
 - [ ] Schema builder and admin views usable on laptop-size screens (1280px+)
 - [ ] Teacher/aide schedule views fully functional on phone (375px+)
 - [ ] No feature unusable at any screen size (per responsive-ui ADR)
+
+### Testing
+
+- [x] Integration test project: tUnit + Testcontainers (real PostgreSQL) + `WebApplicationFactory`
+- [x] Test auth handler bypasses Keycloak for integration tests
+- [x] CRUD tests: full room lifecycle (create, read, update, delete, 404, validation)
+- [x] Tenant isolation tests: data from tenant A is invisible to tenant B; cross-tenant ID lookup returns 404
+- [x] Conflict detection tests: teacher double-booking, room double-booking, mark-complete blocked on conflicts
