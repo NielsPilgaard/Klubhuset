@@ -29,11 +29,16 @@ export default function RoomSchedulePage() {
     enabled: !!roomId,
   })
 
-  // Group slots by weekday
+  // Group slots by weekday, sorted by startTime
   const byDay: Record<number, ScheduleSlotDto[]> = {}
   for (const slot of slots ?? []) {
     if (!byDay[slot.weekday]) byDay[slot.weekday] = []
     byDay[slot.weekday].push(slot)
+  }
+  
+  // Sort each day's slots by startTime
+  for (const day in byDay) {
+    byDay[parseInt(day)].sort((a, b) => a.startTime.localeCompare(b.startTime))
   }
 
   return (
@@ -50,19 +55,21 @@ export default function RoomSchedulePage() {
           </h1>
           <p className="mt-1 text-sm text-gray-500">Ugentlig belægning — aktive skemaer</p>
         </div>
-        <a
-          href={`/udskriv/lokale/${roomId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-auto flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-          Udskriv
-        </a>
+        {roomId && (
+          <a
+            href={`/udskriv/lokale/${roomId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+            Udskriv
+          </a>
+        )}
       </div>
 
       {isError && (

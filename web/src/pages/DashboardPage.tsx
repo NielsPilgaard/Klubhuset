@@ -1,5 +1,64 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { api, DashboardStats, StaffRole } from '../api/client'
+
+interface OnboardingStatus {
+  hasLogo: boolean
+  staffCount: number
+  classCount: number
+  courseCount: number
+  roomCount: number
+  stepsCompleted: number
+  stepsTotal: number
+  progressPercent: number
+}
+
+function OnboardingCard({ status }: { status: OnboardingStatus }) {
+  if (status.stepsCompleted >= status.stepsTotal) return null
+
+  const steps = [
+    { label: 'Logo uploadet', done: status.hasLogo },
+    { label: 'Medarbejdere oprettet', done: status.staffCount > 0 },
+    { label: 'Klasser oprettet', done: status.classCount > 0 },
+    { label: 'Fag oprettet', done: status.courseCount > 0 },
+    { label: 'Lokaler oprettet', done: status.roomCount > 0 },
+  ]
+
+  return (
+    <div className="bg-white rounded-xl border border-brand-200 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-semibold text-gray-900">
+            Kom godt i gang — {status.stepsCompleted} af {status.stepsTotal} trin fuldført
+          </h2>
+          <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-brand-500 rounded-full transition-all"
+              style={{ width: `${status.progressPercent}%` }}
+            />
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {steps.map((s) => (
+              <li key={s.label} className="flex items-center gap-2 text-sm">
+                {s.done
+                  ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-500 shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
+                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 shrink-0"><circle cx="12" cy="12" r="9" /></svg>
+                }
+                <span className={s.done ? 'text-gray-400 line-through' : 'text-gray-700'}>{s.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Link
+          to="/setup"
+          className="shrink-0 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors whitespace-nowrap"
+        >
+          Fortsæt opsætning
+        </Link>
+      </div>
+    </div>
+  )
+}
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -50,6 +109,12 @@ export default function DashboardPage() {
     queryFn: () => api.get('/stats/dashboard'),
   })
 
+  const { data: onboarding } = useQuery<OnboardingStatus>({
+    queryKey: ['onboarding-status'],
+    queryFn: () => api.get('/schools/onboarding-status'),
+    retry: false,
+  })
+
   if (isError) {
     return (
       <div className="p-8">
@@ -73,6 +138,9 @@ export default function DashboardPage() {
         <h1 className="font-display text-2xl font-semibold text-gray-900">Oversigt</h1>
         <p className="mt-1 text-sm text-gray-500">Status og nøgletal for din skole</p>
       </div>
+
+      {/* Onboarding progress */}
+      {onboarding && <OnboardingCard status={onboarding} />}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

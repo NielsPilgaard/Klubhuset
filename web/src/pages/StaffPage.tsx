@@ -19,6 +19,29 @@ function roleBadge(role: StaffRole): string {
   return 'bg-gray-100 text-gray-600'
 }
 
+interface InvitationDto {
+  id: string
+  staffId: string
+  staffName: string
+  email: string
+  status: 'Pending' | 'Accepted' | 'Expired'
+  expiresAt: string
+  acceptedAt: string | null
+  createdAt: string
+}
+
+function inviteStatusBadge(status: InvitationDto['status']): string {
+  if (status === 'Accepted') return 'bg-green-100 text-green-700'
+  if (status === 'Expired') return 'bg-red-100 text-red-700'
+  return 'bg-amber-100 text-amber-700'
+}
+
+function inviteStatusLabel(status: InvitationDto['status']): string {
+  if (status === 'Accepted') return 'Accepteret'
+  if (status === 'Expired') return 'Udløbet'
+  return 'Afventer'
+}
+
 interface StaffModalProps {
   initial?: StaffDto
   onClose: () => void
@@ -116,21 +139,141 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
   )
 }
 
+interface InviteModalProps {
+  staff: StaffDto
+  onClose: () => void
+}
+
+function InviteModal({ staff, onClose }: InviteModalProps) {
+  const qc = useQueryClient()
+  const [sent, setSent] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const { data: invitations, isLoading } = useQuery<InvitationDto[]>({
+    queryKey: ['invitations', 'staff', staff.id],
+    queryFn: () => api.get(`/staff-invitations/by-staff/${staff.id}`),
+  })
+
+  const sendMutation = useMutation({
+    mutationFn: () => api.post(`/staff-invitations/invite/${staff.id}`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['invitations', 'staff', staff.id] })
+      setSent(true)
+    },
+    onError: async (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Ukendt fejl'
+      setErrorMsg(msg)
+    },
+  })
+
+  const latestInvite = invitations?.[0]
+  const canResend = !latestInvite || latestInvite.status === 'Expired'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-gray-900">
+            Invitér {staff.name}
+          </h2>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {staff.email ? (
+            <p className="text-sm text-gray-600">
+              Der sendes en invitationsmail til <strong>{staff.email}</strong> med et link til at oprette en konto.
+            </p>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-800">
+                Medarbejderen har ingen e-mailadresse. Tilføj en e-mail under "Rediger" og prøv igen.
+              </p>
+            </div>
+          )}
+
+          {/* Previous invitations */}
+          {!isLoading && invitations && invitations.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tidligere invitationer</p>
+              <div className="space-y-1.5">
+                {invitations.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between text-sm py-1.5 px-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600">
+                      {new Date(inv.createdAt).toLocaleDateString('da-DK')}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inviteStatusBadge(inv.status)}`}>
+                      {inviteStatusLabel(inv.status)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sent && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800">Invitation sendt! Medarbejderen modtager en e-mail inden for kort tid.</p>
+            </div>
+          )}
+
+          {errorMsg && (
+            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{errorMsg}</p>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Luk
+          </button>
+          {staff.email && (canResend || sent) && (
+            <button
+              onClick={() => { setSent(false); sendMutation.mutate() }}
+              disabled={sendMutation.isPending}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {sendMutation.isPending
+                ? 'Sender…'
+                : latestInvite?.status === 'Expired'
+                  ? 'Send ny invitation'
+                  : 'Send invitation'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function StaffPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
   const [editingStaff, setEditingStaff] = useState<StaffDto | null>(null)
+  const [invitingStaff, setInvitingStaff] = useState<StaffDto | null>(null)
 
   const { data: staff, isLoading, isError, refetch } = useQuery<StaffDto[]>({
     queryKey: ['staff'],
     queryFn: () => api.get('/staff'),
   })
 
+  const { data: allInvitations } = useQuery<InvitationDto[]>({
+    queryKey: ['invitations'],
+    queryFn: () => api.get('/staff-invitations'),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/staff/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['staff'] }),
   })
+
+  function getLatestInvite(staffId: string): InvitationDto | undefined {
+    return allInvitations?.filter((i) => i.staffId === staffId)[0]
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
@@ -141,6 +284,7 @@ export default function StaffPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
+          aria-label="Opret medarbejder"
           className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -167,7 +311,7 @@ export default function StaffPage() {
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Navn</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Rolle</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">E-mail</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Telefon</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Invitation</th>
               <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Handlinger</th>
             </tr>
           </thead>
@@ -178,67 +322,91 @@ export default function StaffPage() {
                   <td className="px-5 py-3"><div className="h-4 w-28 bg-gray-200 rounded" /></td>
                   <td className="px-5 py-3"><div className="h-5 w-16 bg-gray-100 rounded-full" /></td>
                   <td className="px-5 py-3 hidden sm:table-cell"><div className="h-4 w-36 bg-gray-100 rounded" /></td>
-                  <td className="px-5 py-3 hidden md:table-cell"><div className="h-4 w-24 bg-gray-100 rounded" /></td>
+                  <td className="px-5 py-3 hidden lg:table-cell"><div className="h-4 w-20 bg-gray-100 rounded-full" /></td>
                   <td className="px-5 py-3" />
                 </tr>
               ))}
             {!isLoading && staff?.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-gray-400">
-                  Ingen medarbejdere oprettet endnu
+                <td colSpan={5} className="px-5 py-12 text-center">
+                  <p className="text-gray-400 font-medium">Ingen medarbejdere oprettet endnu</p>
+                  <p className="text-gray-400 text-xs mt-1">Opret din første medarbejder for at komme i gang</p>
                 </td>
               </tr>
             )}
-            {staff?.map((s) => (
-              <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-5 py-3 font-medium text-gray-900">{s.name}</td>
-                <td className="px-5 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleBadge(s.role)}`}>
-                    {roleLabel(s.role)}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{s.email ?? '—'}</td>
-                <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{s.phone ?? '—'}</td>
-                <td className="px-5 py-3 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => navigate(`/medarbejdere/${s.id}/skema`)}
-                      className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
-                      title="Se skema"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setEditingStaff(s)}
-                      className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Slet "${s.name}"?`)) deleteMutation.mutate(s.id)
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {staff?.map((s) => {
+              const invite = getLatestInvite(s.id ?? '')
+              return (
+                <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-3 font-medium text-gray-900">{s.name}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleBadge(s.role ?? 'Teacher')}`}>
+                      {roleLabel(s.role ?? 'Teacher')}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{s.email ?? '—'}</td>
+                  <td className="px-5 py-3 hidden lg:table-cell">
+                    {invite ? (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inviteStatusBadge(invite.status)}`}>
+                        {inviteStatusLabel(invite.status)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">Ikke inviteret</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setInvitingStaff(s)}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                        title="Send invitation"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                          <polyline points="22,6 12,13 2,6" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => navigate(`/medarbejdere/${s.id}/skema`)}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                        title="Se skema"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setEditingStaff(s)}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                        title="Rediger"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Slet "${s.name}"?`)) deleteMutation.mutate(s.id ?? '')
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                        title="Slet"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -252,6 +420,9 @@ export default function StaffPage() {
           onClose={() => setEditingStaff(null)}
           onSaved={() => setEditingStaff(null)}
         />
+      )}
+      {invitingStaff && (
+        <InviteModal staff={invitingStaff} onClose={() => setInvitingStaff(null)} />
       )}
     </div>
   )

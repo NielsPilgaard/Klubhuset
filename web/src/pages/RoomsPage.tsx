@@ -116,6 +116,7 @@ export default function RoomsPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
+          aria-label="Opret lokale"
           className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

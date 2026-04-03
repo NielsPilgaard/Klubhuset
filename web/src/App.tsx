@@ -12,6 +12,10 @@ import CoursesPage from './pages/CoursesPage'
 import RoomsPage from './pages/RoomsPage'
 import RoomSchedulePage from './pages/RoomSchedulePage'
 import PrintSchemaPage from './pages/PrintSchemaPage'
+import SkoleindstillingerPage from './pages/SkoleindstillingerPage'
+import SignupPage from './pages/SignupPage'
+import InvitationAcceptPage from './pages/InvitationAcceptPage'
+import SchoolSetupWizardPage from './pages/SchoolSetupWizardPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,8 +42,12 @@ export default function App() {
             <Route path="fag" element={<CoursesPage />} />
             <Route path="lokaler" element={<RoomsPage />} />
             <Route path="lokaler/:roomId/skema" element={<RoomSchedulePage />} />
+            <Route path="indstillinger" element={<SkoleindstillingerPage />} />
           </Route>
-          {/* Print pages — outside Layout (no sidebar) */}
+          {/* Pages outside Layout (no sidebar) */}
+          <Route path="signup" element={<SignupPage />} />
+          <Route path="setup" element={<SchoolSetupWizardPage />} />
+          <Route path="invitation/:token" element={<InvitationAcceptPage />} />
           <Route path="udskriv/klasse/:classId" element={<PrintSchemaPage />} />
           <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
           <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />
