@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
+using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +64,9 @@ builder.Services.AddOptions<SmtpOptions>()
 	   .ValidateOnStart();
 
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
+
+// Conflict detection
+builder.Services.AddScoped<ConflictDetectionService>();
 
 // Controllers
 builder.Services.AddControllers();
