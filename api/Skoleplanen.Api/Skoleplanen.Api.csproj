@@ -12,9 +12,7 @@
   </ItemGroup>
 
   <Target Name="GenerateOpenApiSpec" AfterTargets="Build">
-    <Exec Command="dotnet swagger tofile --output &quot;$(MSBuildProjectDirectory)/../../openapi/v1.json&quot; &quot;$(TargetPath)&quot; v1"
-          WorkingDirectory="$(MSBuildProjectDirectory)/../.."
-          EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development" />
+    <Exec Command="dotnet swagger tofile --output &quot;$(MSBuildProjectDirectory)/../../openapi/v1.json&quot; &quot;$(TargetPath)&quot; v1" WorkingDirectory="$(MSBuildProjectDirectory)/../.." EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development" />
   </Target>
 
   <ItemGroup>
@@ -28,6 +26,10 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Migrations\" />
   </ItemGroup>
 
 </Project>

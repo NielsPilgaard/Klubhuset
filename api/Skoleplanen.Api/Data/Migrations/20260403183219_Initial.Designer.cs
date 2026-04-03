@@ -12,8 +12,8 @@ using Skoleplanen.Api.Data;
 namespace Skoleplanen.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260403182930_Misc")]
-    partial class Misc
+    [Migration("20260403183219_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

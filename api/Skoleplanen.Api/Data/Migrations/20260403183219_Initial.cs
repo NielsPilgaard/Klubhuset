@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Skoleplanen.Api.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddDomainEntities : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,8 +17,8 @@ namespace Skoleplanen.Api.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(8000)", maxLength: 8000, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -32,9 +32,9 @@ namespace Skoleplanen.Api.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(8000)", maxLength: 8000, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
                 constraints: table =>
                 {
@@ -47,9 +47,9 @@ namespace Skoleplanen.Api.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(8000)", maxLength: 8000, nullable: true),
                     Capacity = table.Column<int>(type: "integer", nullable: true),
-                    Description = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -62,12 +62,12 @@ namespace Skoleplanen.Api.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Slug = table.Column<string>(type: "text", nullable: false),
-                    ContactEmail = table.Column<string>(type: "text", nullable: true),
-                    ContactPhone = table.Column<string>(type: "text", nullable: true),
-                    LogoUrl = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    ContactEmail = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ContactPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    LogoUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
                 constraints: table =>
                 {
@@ -80,11 +80,11 @@ namespace Skoleplanen.Api.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: true),
-                    Phone = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Phone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     Role = table.Column<int>(type: "integer", nullable: false),
-                    KeycloakSubject = table.Column<string>(type: "text", nullable: true),
+                    KeycloakSubject = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -116,7 +116,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     ClassId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
@@ -142,7 +142,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     SortOrder = table.Column<int>(type: "integer", nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
-                    Label = table.Column<string>(type: "text", nullable: true)
+                    Label = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -152,6 +152,31 @@ namespace Skoleplanen.Api.Data.Migrations
                         column: x => x.ClassId,
                         principalTable: "Classes",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StaffInvitations",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StaffId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Email = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Token = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    AcceptedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StaffInvitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StaffInvitations_Staff_StaffId",
+                        column: x => x.StaffId,
+                        principalTable: "Staff",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -271,6 +296,17 @@ namespace Skoleplanen.Api.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_StaffInvitations_StaffId",
+                table: "StaffInvitations",
+                column: "StaffId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StaffInvitations_Token",
+                table: "StaffInvitations",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TimeSlots_ClassId",
                 table: "TimeSlots",
                 column: "ClassId");
@@ -291,6 +327,9 @@ namespace Skoleplanen.Api.Data.Migrations
                 name: "Schools");
 
             migrationBuilder.DropTable(
+                name: "StaffInvitations");
+
+            migrationBuilder.DropTable(
                 name: "TimeSlotTemplateBreaks");
 
             migrationBuilder.DropTable(
@@ -303,10 +342,10 @@ namespace Skoleplanen.Api.Data.Migrations
                 name: "Schemas");
 
             migrationBuilder.DropTable(
-                name: "Staff");
+                name: "TimeSlots");
 
             migrationBuilder.DropTable(
-                name: "TimeSlots");
+                name: "Staff");
 
             migrationBuilder.DropTable(
                 name: "TimeSlotTemplates");
