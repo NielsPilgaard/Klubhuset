@@ -283,3 +283,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403205521_Remove_Slugs') THEN
+    DROP INDEX "IX_Schools_Slug";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403205521_Remove_Slugs') THEN
+    ALTER TABLE "Schools" DROP COLUMN "Slug";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403205521_Remove_Slugs') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260403205521_Remove_Slugs', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
