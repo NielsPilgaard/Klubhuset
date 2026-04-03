@@ -22,6 +22,47 @@ namespace Skoleplanen.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Skoleplanen.Api.Models.StaffInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("StaffInvitations");
+                });
+
             modelBuilder.Entity("Skoleplanen.Api.Domain.Class", b =>
                 {
                     b.Property<Guid>("Id")
@@ -327,6 +368,17 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.HasIndex("TimeSlotTemplateId");
 
                     b.ToTable("TimeSlotTemplateBreaks");
+                });
+
+            modelBuilder.Entity("Skoleplanen.Api.Models.StaffInvitation", b =>
+                {
+                    b.HasOne("Skoleplanen.Api.Domain.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Skoleplanen.Api.Domain.Schema", b =>

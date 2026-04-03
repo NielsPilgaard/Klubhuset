@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Domain;
+using Skoleplanen.Api.Models;
 using Skoleplanen.Api.Tenancy;
 
 namespace Skoleplanen.Api.Controllers;

@@ -1,10 +1,15 @@
 using System.Text.Json.Serialization;
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
 using Skoleplanen.Api.Services;
+using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,12 +72,35 @@ builder.Services.AddOptions<SmtpOptions>()
 
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 
+// Object storage (OVHCloud S3-compatible / LocalStack in dev)
+builder.Services.AddOptions<S3Options>()
+	   .BindConfiguration(S3Options.SectionName)
+	   .ValidateDataAnnotations();
+
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+	var opts = sp.GetRequiredService<IOptions<S3Options>>().Value;
+	var config = new AmazonS3Config
+	{
+		ServiceURL = opts.ServiceUrl,
+		ForcePathStyle = true,
+		AuthenticationRegion = RegionEndpoint.EUWest1.SystemName,
+	};
+
+	return new AmazonS3Client(new BasicAWSCredentials(opts.AccessKey, opts.SecretKey), config);
+});
+
+builder.Services.AddScoped<IObjectStorage, S3ObjectStorage>();
+
 // Conflict detection
 builder.Services.AddScoped<ConflictDetectionService>();
 
+// Staff invitations
+builder.Services.AddScoped<StaffInvitationService>();
+
 // Controllers
 builder.Services.AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 
@@ -90,5 +118,28 @@ app.UseMiddleware<SlugResolutionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Dev seed — insert the test school if it doesn't exist yet.
+// Skip when no connection string is present (e.g. swagger CLI running at build time).
+var connectionString = app.Configuration.GetConnectionString("skoleplanen-db");
+if (app.Environment.IsDevelopment() && !string.IsNullOrEmpty(connectionString))
+{
+	using var scope = app.Services.CreateScope();
+	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+	var testSchoolId = new Guid("11111111-1111-1111-1111-111111111111");
+	var exists = await db.Schools.IgnoreQueryFilters().AnyAsync(s => s.Id == testSchoolId);
+	if (!exists)
+	{
+		db.Schools.Add(new Skoleplanen.Api.Models.School
+		{
+			Id = testSchoolId,
+			Name = "Testskole",
+			Slug = "testskole",
+			ContactEmail = "admin@testskole.dk"
+		});
+
+		await db.SaveChangesAsync();
+	}
+}
 
 app.Run();

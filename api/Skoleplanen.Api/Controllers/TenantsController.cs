@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Domain;
+using Skoleplanen.Api.Models;
 
 namespace Skoleplanen.Api.Controllers;
 
@@ -18,9 +18,15 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 	];
 
 	public record CreateTenantRequest(
-		[Required][MinLength(3)][MaxLength(40)] string Slug,
-		[Required][MinLength(1)] string Name,
-		string? ContactEmail);
+		[Required]
+		[MinLength(3)]
+		[MaxLength(40)]
+		string Slug,
+		[Required]
+		[MinLength(1)]
+		[MaxLength(100)]
+		string Name,
+		[EmailAddress] string? ContactEmail);
 
 	public record TenantDto(Guid Id, string Slug, string Name, string? ContactEmail);
 
@@ -39,9 +45,9 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 
 		// Schools are not tenant-scoped themselves (they ARE the tenant root)
 		var school = await db.Schools
-			.AsNoTracking()
-			.IgnoreQueryFilters()
-			.FirstOrDefaultAsync(s => s.Slug == slug, ct);
+							 .AsNoTracking()
+							 .IgnoreQueryFilters()
+							 .FirstOrDefaultAsync(s => s.Slug == slug, ct);
 
 		return school is null
 				   ? NotFound()
@@ -53,14 +59,20 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 	/// The slug is validated and checked for global uniqueness here.
 	/// </summary>
 	[HttpPost]
-	[AllowAnonymous]
+	[Authorize]
 	public async Task<ActionResult<TenantDto>> Create([FromBody] CreateTenantRequest req, CancellationToken ct)
 	{
 		if (!IsValidSlug(req.Slug))
 		{
 			return ValidationProblem(new ValidationProblemDetails
 			{
-				Errors = { ["slug"] = ["Slug må kun indeholde små bogstaver, tal og bindestreger (3–40 tegn)."] }
+				Errors =
+				{
+					["slug"] =
+					[
+						"Slug må kun indeholde små bogstaver, tal og bindestreger (3–40 tegn) og må ikke starte, slutte med eller indeholde dobbelte bindestreger."
+					]
+				}
 			});
 		}
 
@@ -73,8 +85,8 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 		}
 
 		var slugTaken = await db.Schools
-			.IgnoreQueryFilters()
-			.AnyAsync(s => s.Slug == req.Slug, ct);
+								.IgnoreQueryFilters()
+								.AnyAsync(s => s.Slug == req.Slug, ct);
 
 		if (slugTaken)
 		{
@@ -94,13 +106,35 @@ public sealed class TenantsController(AppDbContext db) : ControllerBase
 		};
 
 		db.Schools.Add(school);
-		await db.SaveChangesAsync(ct);
+		try
+		{
+			await db.SaveChangesAsync(ct);
+		}
+		catch (DbUpdateException ex) when (ex.InnerException != null &&
+										   (ex.InnerException.Message.Contains(
+												"Slug",
+												StringComparison.OrdinalIgnoreCase) ||
+											ex.InnerException.Message.Contains(
+												"duplicate key",
+												StringComparison.OrdinalIgnoreCase)))
+		{
+			// Handle unique constraint violation from concurrent requests
+			return ValidationProblem(new ValidationProblemDetails
+			{
+				Errors = { ["slug"] = ["Dette slug er allerede taget. Prøv venligst et andet slug."] }
+			});
+		}
 
-		return CreatedAtAction(nameof(GetBySlug), new { slug = school.Slug },
-			new TenantDto(school.Id, school.Slug, school.Name, school.ContactEmail));
+		return CreatedAtAction(nameof(GetBySlug),
+							   new { slug = school.Slug },
+							   new TenantDto(school.Id, school.Slug, school.Name, school.ContactEmail));
 	}
 
 	private static bool IsValidSlug(string slug) =>
+		!string.IsNullOrEmpty(slug) &&
 		slug.Length is >= 3 and <= 40 &&
+		slug[0] != '-' &&
+		slug[^1] != '-' &&
+		!slug.Contains("--") &&
 		slug.All(c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c == '-');
 }

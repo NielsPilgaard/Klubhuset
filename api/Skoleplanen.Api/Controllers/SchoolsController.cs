@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleplanen.Api.Data;
+using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
 
 namespace Skoleplanen.Api.Controllers;
@@ -14,8 +15,19 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 {
 	public record SchoolSettingsDto(string Name, string? ContactEmail, string? ContactPhone, string? LogoUrl);
 
+	public record OnboardingStatusDto(
+		bool HasLogo,
+		int StaffCount,
+		int ClassCount,
+		int CourseCount,
+		int RoomCount,
+		int StepsCompleted,
+		int StepsTotal);
+
 	public record UpdateSchoolSettingsRequest(
-		[Required][StringLength(200, MinimumLength = 1)] string Name,
+		[Required]
+		[StringLength(200, MinimumLength = 1)]
+		string Name,
 		[EmailAddress] string? ContactEmail,
 		[Phone] string? ContactPhone);
 
@@ -23,9 +35,9 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 	public async Task<ActionResult<SchoolSettingsDto>> GetSettings(CancellationToken ct)
 	{
 		var school = await db.Schools
-			.AsNoTracking()
-			.IgnoreQueryFilters()
-			.FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+							 .AsNoTracking()
+							 .IgnoreQueryFilters()
+							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
 
 		if (school is null)
 		{
@@ -41,8 +53,8 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 		CancellationToken ct)
 	{
 		var school = await db.Schools
-			.IgnoreQueryFilters()
-			.FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+							 .IgnoreQueryFilters()
+							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
 
 		if (school is null)
 		{
@@ -55,6 +67,41 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 		await db.SaveChangesAsync(ct);
 		return Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
+	}
+
+	[HttpGet("onboarding-status")]
+	public async Task<ActionResult<OnboardingStatusDto>> GetOnboardingStatus(CancellationToken ct)
+	{
+		var school = await db.Schools
+							 .AsNoTracking()
+							 .IgnoreQueryFilters()
+							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+
+		if (school is null)
+		{
+			return NotFound();
+		}
+
+		var staffCount = await db.Staff.CountAsync(ct);
+		var classCount = await db.Classes.CountAsync(ct);
+		var courseCount = await db.Courses.CountAsync(ct);
+		var roomCount = await db.Rooms.CountAsync(ct);
+		var hasLogo = !string.IsNullOrEmpty(school.LogoUrl);
+
+		var stepsCompleted =
+			(hasLogo ? 1 : 0) +
+			(staffCount > 0 ? 1 : 0) +
+			(classCount > 0 ? 1 : 0) +
+			(courseCount > 0 ? 1 : 0) +
+			(roomCount > 0 ? 1 : 0);
+
+		return Ok(new OnboardingStatusDto(hasLogo,
+										  staffCount,
+										  classCount,
+										  courseCount,
+										  roomCount,
+										  stepsCompleted,
+										  StepsTotal: 5));
 	}
 
 	[HttpPost("logo")]
@@ -71,17 +118,27 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 		}
 
 		var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-		if (ext is not (".png" or ".jpg" or ".jpeg" or ".svg" or ".webp"))
+
+		// Map extension to safe MIME type; reject unknown extensions
+		var mimeType = ext switch
+		{
+			".png" => "image/png",
+			".jpg" or ".jpeg" => "image/jpeg",
+			".webp" => "image/webp",
+			_ => null
+		};
+
+		if (mimeType is null)
 		{
 			return ValidationProblem(new ValidationProblemDetails
 			{
-				Errors = { ["file"] = ["Kun PNG, JPG, SVG og WebP er tilladt."] }
+				Errors = { ["file"] = ["Kun PNG, JPG og WebP er tilladt."] }
 			});
 		}
 
 		var school = await db.Schools
-			.IgnoreQueryFilters()
-			.FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+							 .IgnoreQueryFilters()
+							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
 
 		if (school is null)
 		{
@@ -90,7 +147,7 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 		await using var stream = file.OpenReadStream();
 		var key = $"logos/{tenant.TenantId}{ext}";
-		var url = await storage.UploadAsync(key, file.ContentType, stream, ct);
+		var url = await storage.UploadAsync(key, mimeType, stream, ct);
 
 		school.LogoUrl = url;
 		await db.SaveChangesAsync(ct);

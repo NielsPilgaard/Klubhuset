@@ -9,6 +9,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 {
 	public DbSet<School> Schools => Set<School>();
 	public DbSet<Staff> Staff => Set<Staff>();
+	public DbSet<StaffInvitation> StaffInvitations => Set<StaffInvitation>();
 	public DbSet<Class> Classes => Set<Class>();
 	public DbSet<Course> Courses => Set<Course>();
 	public DbSet<Room> Rooms => Set<Room>();
@@ -26,6 +27,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 		{
 			e.HasIndex(s => s.Slug).IsUnique();
 			e.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
+		});
+
+		modelBuilder.Entity<StaffInvitation>(e =>
+		{
+			e.HasIndex(i => i.Token).IsUnique();
+			e.HasOne<Staff>(i => i.Staff)
+			 .WithMany()
+			 .HasForeignKey(i => i.StaffId)
+			 .OnDelete(DeleteBehavior.Cascade);
+			e.Ignore(i => i.Status);
 		});
 
 		modelBuilder.Entity<Course>(e =>

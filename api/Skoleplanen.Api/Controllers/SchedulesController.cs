@@ -11,7 +11,7 @@ namespace Skoleplanen.Api.Controllers;
 public sealed class SchedulesController(AppDbContext db) : ControllerBase
 {
 	public record ScheduleSlotDto(
-		int Weekday,
+		DayOfWeek Weekday,
 		string StartTime,
 		string EndTime,
 		string CourseName,
@@ -36,26 +36,30 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 		}
 
 		var slots = await db.SchemaSlots
-			.AsNoTrackingWithIdentityResolution()
-			.Where(s => s.Schema.IsActive && (s.TeacherId == staffId || s.AideId == staffId))
-			.Include(s => s.TimeSlot)
-			.Include(s => s.Course)
-			.Include(s => s.Schema).ThenInclude(sc => sc.Class)
-			.Include(s => s.Room)
-			.Include(s => s.Teacher)
-			.Include(s => s.Aide)
-			.OrderBy(s => s.Weekday)
-			.ThenBy(s => s.TimeSlot.SortOrder)
-			.Select(s => new ScheduleSlotDto(
-				s.Weekday,
-				s.TimeSlot.StartTime.ToString("HH:mm"),
-				s.TimeSlot.EndTime.ToString("HH:mm"),
-				s.Course.Name,
-				s.Schema.Class.Name,
-				s.RoomId, s.Room != null ? s.Room.Name : null,
-				s.AideId, s.Aide != null ? s.Aide.Name : null,
-				s.TeacherId, s.Teacher.Name))
-			.ToListAsync(ct);
+							.AsNoTrackingWithIdentityResolution()
+							.Where(s => s.Schema.IsActive && (s.TeacherId == staffId || s.AideId == staffId))
+							.Include(s => s.TimeSlot)
+							.Include(s => s.Course)
+							.Include(s => s.Schema)
+							.ThenInclude(sc => sc.Class)
+							.Include(s => s.Room)
+							.Include(s => s.Teacher)
+							.Include(s => s.Aide)
+							.OrderBy(s => s.Weekday)
+							.ThenBy(s => s.TimeSlot.SortOrder)
+							.Select(s => new ScheduleSlotDto(
+										s.Weekday,
+										s.TimeSlot.StartTime.ToString("HH:mm"),
+										s.TimeSlot.EndTime.ToString("HH:mm"),
+										s.Course.Name,
+										s.Schema.Class.Name,
+										s.RoomId,
+										s.Room != null ? s.Room.Name : null,
+										s.AideId,
+										s.Aide != null ? s.Aide.Name : null,
+										s.TeacherId,
+										s.Teacher.Name))
+							.ToListAsync(ct);
 
 		return Ok(slots);
 	}
@@ -73,26 +77,30 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 		}
 
 		var slots = await db.SchemaSlots
-			.AsNoTrackingWithIdentityResolution()
-			.Where(s => s.Schema.IsActive && s.RoomId == roomId)
-			.Include(s => s.TimeSlot)
-			.Include(s => s.Course)
-			.Include(s => s.Schema).ThenInclude(sc => sc.Class)
-			.Include(s => s.Room)
-			.Include(s => s.Teacher)
-			.Include(s => s.Aide)
-			.OrderBy(s => s.Weekday)
-			.ThenBy(s => s.TimeSlot.SortOrder)
-			.Select(s => new ScheduleSlotDto(
-				s.Weekday,
-				s.TimeSlot.StartTime.ToString("HH:mm"),
-				s.TimeSlot.EndTime.ToString("HH:mm"),
-				s.Course.Name,
-				s.Schema.Class.Name,
-				s.RoomId, s.Room != null ? s.Room.Name : null,
-				s.AideId, s.Aide != null ? s.Aide.Name : null,
-				s.TeacherId, s.Teacher.Name))
-			.ToListAsync(ct);
+							.AsNoTrackingWithIdentityResolution()
+							.Where(s => s.Schema.IsActive && s.RoomId == roomId)
+							.Include(s => s.TimeSlot)
+							.Include(s => s.Course)
+							.Include(s => s.Schema)
+							.ThenInclude(sc => sc.Class)
+							.Include(s => s.Room)
+							.Include(s => s.Teacher)
+							.Include(s => s.Aide)
+							.OrderBy(s => s.Weekday)
+							.ThenBy(s => s.TimeSlot.SortOrder)
+							.Select(s => new ScheduleSlotDto(
+										s.Weekday,
+										s.TimeSlot.StartTime.ToString("HH:mm"),
+										s.TimeSlot.EndTime.ToString("HH:mm"),
+										s.Course.Name,
+										s.Schema.Class.Name,
+										s.RoomId,
+										s.Room != null ? s.Room.Name : null,
+										s.AideId,
+										s.Aide != null ? s.Aide.Name : null,
+										s.TeacherId,
+										s.Teacher.Name))
+							.ToListAsync(ct);
 
 		return Ok(slots);
 	}
