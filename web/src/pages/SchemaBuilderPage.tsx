@@ -1,0 +1,609 @@
+import { useState, useMemo } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  api,
+  SchemaDetailDto,
+  TimeSlotDto,
+  CourseDto,
+  StaffDto,
+  RoomDto,
+  SlotDto,
+  ConflictInfo,
+} from '../api/client'
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
+
+// Deterministic course colors by index
+const COURSE_COLORS = [
+  'bg-blue-100 text-blue-800 border-blue-200',
+  'bg-purple-100 text-purple-800 border-purple-200',
+  'bg-teal-100 text-teal-800 border-teal-200',
+  'bg-orange-100 text-orange-800 border-orange-200',
+  'bg-pink-100 text-pink-800 border-pink-200',
+  'bg-indigo-100 text-indigo-800 border-indigo-200',
+  'bg-cyan-100 text-cyan-800 border-cyan-200',
+  'bg-yellow-100 text-yellow-800 border-yellow-200',
+  'bg-lime-100 text-lime-800 border-lime-200',
+  'bg-rose-100 text-rose-800 border-rose-200',
+]
+
+function getCourseColor(courseId: string, courseIds: string[]): string {
+  const idx = courseIds.indexOf(courseId)
+  return COURSE_COLORS[idx % COURSE_COLORS.length]
+}
+
+// ── Assignment panel ─────────────────────────────────────────────────────────
+
+interface AssignmentPanelProps {
+  classId: string
+  schemaId: string
+  timeSlotId: string
+  weekday: number
+  existing: SlotDto | null
+  courses: CourseDto[]
+  staff: StaffDto[]
+  rooms: RoomDto[]
+  onClose: () => void
+  onSaved: (updated: Pick<SchemaDetailDto, 'slots' | 'conflicts'>) => void
+}
+
+function AssignmentPanel({
+  classId,
+  schemaId,
+  timeSlotId,
+  weekday,
+  existing,
+  courses,
+  staff,
+  rooms,
+  onClose,
+  onSaved,
+}: AssignmentPanelProps) {
+  const [courseId, setCourseId] = useState(existing?.courseId ?? '')
+  const [teacherId, setTeacherId] = useState(existing?.teacherId ?? '')
+  const [roomId, setRoomId] = useState(existing?.roomId ?? '')
+  const [aideId, setAideId] = useState(existing?.aideId ?? '')
+
+  const teachers = staff.filter((s) => s.role === 'Teacher')
+  const aides = staff.filter((s) => s.role === 'Aide' || s.role === 'Substitute')
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      api.put<Pick<SchemaDetailDto, 'slots' | 'conflicts'>>(
+        `/classes/${classId}/schemas/${schemaId}/slots/${existing?.id ?? timeSlotId}`,
+        {
+          timeSlotId,
+          weekday,
+          courseId,
+          teacherId,
+          roomId: roomId || null,
+          aideId: aideId || null,
+        }
+      ),
+    onSuccess: (data) => onSaved(data),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () =>
+      api.delete(`/classes/${classId}/schemas/${schemaId}/slots/${timeSlotId}/${weekday}`),
+    onSuccess: () => {
+      // Re-fetch by closing — parent will refetch
+      onClose()
+    },
+  })
+
+  const canSave = courseId && teacherId
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-gray-900">
+            {WEEKDAYS[weekday - 1]}
+          </h2>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {/* Course */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fag <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              <option value="">Vælg fag</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Teacher */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lærer <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={teacherId}
+              onChange={(e) => setTeacherId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              <option value="">Vælg lærer</option>
+              {teachers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Room */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lokale</label>
+            <select
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              <option value="">Intet lokale</option>
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Aide */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pædagog / Vikar</label>
+            <select
+              value={aideId}
+              onChange={(e) => setAideId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              <option value="">Ingen</option>
+              {aides.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {(saveMutation.isError || deleteMutation.isError) && (
+            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          {existing ? (
+            <button
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {deleteMutation.isPending ? 'Sletter...' : 'Slet lektion'}
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Annuller
+            </button>
+            <button
+              onClick={() => saveMutation.mutate()}
+              disabled={!canSave || saveMutation.isPending}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {saveMutation.isPending ? 'Gemmer...' : 'Gem'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Grid cell ────────────────────────────────────────────────────────────────
+
+interface CellProps {
+  slot: SlotDto | null
+  isConflict: boolean
+  courseColorClass: string
+  onClick: () => void
+}
+
+function GridCell({ slot, isConflict, courseColorClass, onClick }: CellProps) {
+  if (!slot) {
+    return (
+      <button
+        onClick={onClick}
+        className="group h-full w-full flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 hover:border-brand-400 hover:bg-brand-50 transition-all"
+      >
+        <svg
+          width="18" height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="text-gray-300 group-hover:text-brand-400 transition-colors"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+    )
+  }
+
+  if (isConflict) {
+    return (
+      <button
+        onClick={onClick}
+        className="h-full w-full flex flex-col gap-0.5 p-2 rounded-lg border-2 border-red-300 bg-red-50 text-left hover:bg-red-100 transition-colors"
+      >
+        <div className="flex items-start justify-between gap-1">
+          <span className="text-xs font-semibold text-red-800 leading-tight line-clamp-1">
+            {slot.courseName}
+          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-red-500 shrink-0 mt-0.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+        <span className="text-xs text-red-600 leading-tight line-clamp-1">{slot.teacherName}</span>
+        {slot.roomName && (
+          <span className="text-xs text-red-400 leading-tight line-clamp-1">{slot.roomName}</span>
+        )}
+      </button>
+    )
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={`h-full w-full flex flex-col gap-0.5 p-2 rounded-lg border text-left hover:brightness-95 transition-all ${courseColorClass}`}
+    >
+      <span className="text-xs font-semibold leading-tight line-clamp-2">{slot.courseName}</span>
+      <span className="text-xs opacity-75 leading-tight line-clamp-1">{slot.teacherName}</span>
+      {slot.roomName && (
+        <span className="text-xs opacity-60 leading-tight line-clamp-1">{slot.roomName}</span>
+      )}
+    </button>
+  )
+}
+
+// ── Conflict type label ──────────────────────────────────────────────────────
+
+function conflictTypeLabel(type: ConflictInfo['type']): string {
+  if (type === 'TeacherDoubleBooked') return 'Lærer dobbeltbooket'
+  if (type === 'RoomDoubleBooked') return 'Lokale dobbeltbooket'
+  return 'Pædagog dobbeltbooket'
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
+
+export default function SchemaBuilderPage() {
+  const { classId, schemaId } = useParams<{ classId: string; schemaId: string }>()
+  const qc = useQueryClient()
+
+  const [panelCell, setPanelCell] = useState<{ timeSlotId: string; weekday: number } | null>(null)
+
+  // Local state for slots+conflicts so we can update optimistically from PUT response
+  const [localSlots, setLocalSlots] = useState<SlotDto[] | null>(null)
+  const [localConflicts, setLocalConflicts] = useState<ConflictInfo[] | null>(null)
+
+  const { data: detail, isLoading: loadingDetail, isError: errorDetail } = useQuery<SchemaDetailDto>({
+    queryKey: ['schema', classId, schemaId],
+    queryFn: () => api.get(`/classes/${classId}/schemas/${schemaId}`),
+    enabled: !!classId && !!schemaId,
+  })
+
+  const { data: timeSlots, isLoading: loadingTs } = useQuery<TimeSlotDto[]>({
+    queryKey: ['time-slots', classId],
+    queryFn: () => api.get(`/classes/${classId}/time-slots`),
+    enabled: !!classId,
+  })
+
+  const { data: courses } = useQuery<CourseDto[]>({
+    queryKey: ['courses'],
+    queryFn: () => api.get('/courses'),
+  })
+
+  const { data: staff } = useQuery<StaffDto[]>({
+    queryKey: ['staff'],
+    queryFn: () => api.get('/staff'),
+  })
+
+  const { data: rooms } = useQuery<RoomDto[]>({
+    queryKey: ['rooms'],
+    queryFn: () => api.get('/rooms'),
+  })
+
+  const completeMutation = useMutation({
+    mutationFn: () => api.post(`/classes/${classId}/schemas/${schemaId}/complete`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] }),
+  })
+
+  const activateMutation = useMutation({
+    mutationFn: () => api.post(`/classes/${classId}/schemas/${schemaId}/activate`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] }),
+  })
+
+  // Derive current slots/conflicts — prefer local state (updated after PUT)
+  const slots: SlotDto[] = localSlots ?? detail?.slots ?? []
+  const conflicts: ConflictInfo[] = localConflicts ?? detail?.conflicts ?? []
+  const schema = detail?.schema
+
+  // Build lookup: [timeSlotId][weekday] → SlotDto
+  const slotMap = useMemo(() => {
+    const map: Record<string, Record<number, SlotDto>> = {}
+    for (const s of slots) {
+      if (!map[s.timeSlotId]) map[s.timeSlotId] = {}
+      map[s.timeSlotId][s.weekday] = s
+    }
+    return map
+  }, [slots])
+
+  // Conflict slot IDs for fast lookup
+  const conflictSlotIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const c of conflicts) {
+      ids.add(c.slotAId)
+      ids.add(c.slotBId)
+    }
+    return ids
+  }, [conflicts])
+
+  // Course color map (stable order based on unique courseIds in data)
+  const courseIds = useMemo(() => {
+    const seen: string[] = []
+    for (const s of slots) {
+      if (!seen.includes(s.courseId)) seen.push(s.courseId)
+    }
+    return seen
+  }, [slots])
+
+  const sortedTimeSlots = useMemo(
+    () => [...(timeSlots ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    [timeSlots]
+  )
+
+  const handleCellSaved = (updated: Pick<SchemaDetailDto, 'slots' | 'conflicts'>) => {
+    setLocalSlots(updated.slots)
+    setLocalConflicts(updated.conflicts)
+    setPanelCell(null)
+    // Also update query cache
+    qc.setQueryData<SchemaDetailDto>(['schema', classId, schemaId], (old) =>
+      old ? { ...old, slots: updated.slots, conflicts: updated.conflicts } : old
+    )
+  }
+
+  const handleCellDeleted = () => {
+    setPanelCell(null)
+    // Refetch after delete
+    qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] })
+    setLocalSlots(null)
+    setLocalConflicts(null)
+  }
+
+  const isLoading = loadingDetail || loadingTs
+  const hasConflicts = conflicts.length > 0
+
+  const openPanel = panelCell
+    ? { ...panelCell, existing: slotMap[panelCell.timeSlotId]?.[panelCell.weekday] ?? null }
+    : null
+
+  if (errorDetail) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <p className="text-red-700 font-medium">Kunne ikke hente skema</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Status bar */}
+      <div className="shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link to="/klasser" className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </Link>
+          {isLoading ? (
+            <div className="h-5 w-36 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <>
+              <h1 className="font-display text-base font-semibold text-gray-900 truncate">
+                {schema?.name}
+              </h1>
+              <span className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${
+                schema?.status === 'Complete'
+                  ? 'bg-brand-100 text-brand-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {schema?.status === 'Complete' ? 'Færdig' : 'Kladde'}
+              </span>
+              {schema?.isActive && (
+                <span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-brand-600 text-white">
+                  Aktiv
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {hasConflicts && (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg border border-red-200">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              {conflicts.length} konflikt{conflicts.length !== 1 ? 'er' : ''}
+            </span>
+          )}
+          {schema?.status !== 'Complete' && (
+            <button
+              onClick={() => completeMutation.mutate()}
+              disabled={hasConflicts || completeMutation.isPending}
+              title={hasConflicts ? 'Løs konflikter først' : undefined}
+              className="px-3 py-1.5 text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Markér som færdig
+            </button>
+          )}
+          {!schema?.isActive && (
+            <button
+              onClick={() => activateMutation.mutate()}
+              disabled={activateMutation.isPending}
+              className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            >
+              Aktivér
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main content area: grid + conflict panel */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 lg:p-6">
+          {isLoading ? (
+            <div className="animate-pulse">
+              <div className="grid grid-cols-6 gap-2 mb-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-8 bg-gray-200 rounded" />
+                ))}
+              </div>
+              {Array.from({ length: 6 }).map((_, r) => (
+                <div key={r} className="grid grid-cols-6 gap-2 mb-2">
+                  {Array.from({ length: 6 }).map((_, c) => (
+                    <div key={c} className="h-20 bg-gray-100 rounded-lg" />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="min-w-[640px]">
+              {/* Grid header */}
+              <div className="grid grid-cols-[100px_repeat(5,1fr)] gap-2 mb-2">
+                <div /> {/* empty corner */}
+                {WEEKDAYS.map((day) => (
+                  <div key={day} className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider py-1">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Grid rows */}
+              <div className="space-y-2">
+                {sortedTimeSlots.map((ts) => (
+                  <div key={ts.id} className="grid grid-cols-[100px_repeat(5,1fr)] gap-2">
+                    {/* Time label */}
+                    <div className="flex flex-col justify-center text-right pr-3">
+                      <span className="text-xs font-medium text-gray-600 tabular-nums">
+                        {ts.startTime.slice(0, 5)}
+                      </span>
+                      <span className="text-xs text-gray-400 tabular-nums">
+                        {ts.endTime.slice(0, 5)}
+                      </span>
+                      {ts.label && (
+                        <span className="text-xs text-gray-400 truncate">{ts.label}</span>
+                      )}
+                    </div>
+
+                    {/* 5 day cells */}
+                    {[1, 2, 3, 4, 5].map((weekday) => {
+                      const slot = slotMap[ts.id]?.[weekday] ?? null
+                      const isConflict = slot ? conflictSlotIds.has(slot.id) : false
+                      const colorClass = slot ? getCourseColor(slot.courseId, courseIds) : ''
+                      return (
+                        <div key={weekday} className="h-20">
+                          <GridCell
+                            slot={slot}
+                            isConflict={isConflict}
+                            courseColorClass={colorClass}
+                            onClick={() => setPanelCell({ timeSlotId: ts.id, weekday })}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+
+              {sortedTimeSlots.length === 0 && (
+                <div className="text-center py-12 text-gray-400 text-sm">
+                  Ingen lektioner defineret endnu. Opsæt en lektionsstruktur for klassen.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Conflicts panel */}
+          {!isLoading && hasConflicts && (
+            <div className="mt-6 bg-red-50 border border-red-200 rounded-xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-red-200 flex items-center gap-2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-500">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <h3 className="text-sm font-semibold text-red-800">
+                  {conflicts.length} konflikt{conflicts.length !== 1 ? 'er' : ''} fundet
+                </h3>
+              </div>
+              <div className="divide-y divide-red-100">
+                {conflicts.map((c, i) => (
+                  <div key={i} className="px-5 py-3 flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-red-800">{conflictTypeLabel(c.type)}</p>
+                      <p className="text-xs text-red-600 mt-0.5">
+                        {c.resourceName} · {WEEKDAYS[c.weekday - 1]} {c.startTime.slice(0, 5)}–{c.endTime.slice(0, 5)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Assignment panel */}
+      {openPanel && courses && staff && rooms && (
+        <AssignmentPanel
+          classId={classId!}
+          schemaId={schemaId!}
+          timeSlotId={openPanel.timeSlotId}
+          weekday={openPanel.weekday}
+          existing={openPanel.existing}
+          courses={courses}
+          staff={staff}
+          rooms={rooms}
+          onClose={handleCellDeleted}
+          onSaved={handleCellSaved}
+        />
+      )}
+    </div>
+  )
+}
