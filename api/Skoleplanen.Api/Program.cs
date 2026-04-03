@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Multi-tenancy
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+builder.Services.AddMemoryCache();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -85,6 +86,7 @@ if (app.Environment.IsDevelopment())
 	});
 }
 
+app.UseMiddleware<SlugResolutionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

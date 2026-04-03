@@ -7,5 +7,5 @@ namespace Skoleplanen.Api.Data;
 /// </summary>
 public interface ITenantScoped
 {
-    Guid TenantId { get; }
+	Guid TenantId { get; }
 }

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Domain;
+using Skoleplanen.Api.Models;
 
 namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 

@@ -37,17 +37,23 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             // Replace DB with the Testcontainers instance
             var descriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor != null) services.Remove(descriptor);
+            if (descriptor != null)
+			{
+				services.Remove(descriptor);
+			}
 
-            services.AddDbContext<AppDbContext>(options =>
+			services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(_postgres.GetConnectionString()));
 
             // Replace tenant context — tests control TenantId directly
             var tenantDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(ITenantContext));
-            if (tenantDescriptor != null) services.Remove(tenantDescriptor);
+            if (tenantDescriptor != null)
+			{
+				services.Remove(tenantDescriptor);
+			}
 
-            services.AddScoped<ITenantContext>(_ => TenantContext);
+			services.AddScoped<ITenantContext>(_ => TenantContext);
 
             // Replace JWT auth with a no-op test scheme so [Authorize] passes
             services.AddAuthentication(TestAuthHandler.SchemeName)

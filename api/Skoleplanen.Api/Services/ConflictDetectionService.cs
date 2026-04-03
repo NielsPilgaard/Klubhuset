@@ -33,10 +33,13 @@ public sealed class ConflictDetectionService(AppDbContext db)
             .Include(s => s.Aide)
             .ToListAsync(ct);
 
-        if (targetSlots.Count == 0) return [];
+        if (targetSlots.Count == 0)
+		{
+			return [];
+		}
 
-        // Load all other active schema slots for the same tenant (for cross-class conflict detection)
-        var otherSlots = await db.SchemaSlots
+		// Load all other active schema slots for the same tenant (for cross-class conflict detection)
+		var otherSlots = await db.SchemaSlots
             .Where(s => s.SchemaId != schemaId && s.Schema.IsActive)
             .Include(s => s.TimeSlot)
             .Include(s => s.Teacher)
@@ -54,15 +57,23 @@ public sealed class ConflictDetectionService(AppDbContext db)
             foreach (var b in allSlots)
             {
                 // Don't compare a slot with itself
-                if (a.Id == b.Id) continue;
-                // Only same weekday can conflict
-                if (a.Weekday != b.Weekday) continue;
-                // Check clock-time overlap
-                if (!Overlaps(a.TimeSlot.StartTime, a.TimeSlot.EndTime, b.TimeSlot.StartTime, b.TimeSlot.EndTime))
-                    continue;
+                if (a.Id == b.Id)
+				{
+					continue;
+				}
+				// Only same weekday can conflict
+				if (a.Weekday != b.Weekday)
+				{
+					continue;
+				}
+				// Check clock-time overlap
+				if (!Overlaps(a.TimeSlot.StartTime, a.TimeSlot.EndTime, b.TimeSlot.StartTime, b.TimeSlot.EndTime))
+				{
+					continue;
+				}
 
-                // Teacher double-booking
-                if (a.TeacherId == b.TeacherId)
+				// Teacher double-booking
+				if (a.TeacherId == b.TeacherId)
                 {
                     conflicts.Add(new ConflictInfo(
                         ConflictType.TeacherDoubleBooked,
@@ -102,8 +113,10 @@ public sealed class ConflictDetectionService(AppDbContext db)
                 ? (c.SlotAId, c.SlotBId)
                 : (c.SlotBId, c.SlotAId);
             if (seen.Add((slot1, slot2, c.Type)))
-                deduped.Add(c);
-        }
+			{
+				deduped.Add(c);
+			}
+		}
 
         return deduped;
     }
