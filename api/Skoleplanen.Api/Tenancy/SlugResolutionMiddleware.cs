@@ -7,7 +7,7 @@ namespace Skoleplanen.Api.Tenancy;
 /// <summary>
 /// Extracts the tenant slug from the URL path prefix (/{slug}/...) and resolves
 /// it to a TenantId via a cached DB lookup. Injects the resolved TenantId into
-/// the request Items collection so downstream <see cref="SlugTenantContext"/> can read it.
+/// the request Items collection so downstream <see cref="HttpTenantContext"/> can read it.
 ///
 /// Returns HTTP 404 for unknown slugs. Paths that don't start with a known-slug
 /// segment (e.g. /api/v1/tenants) are left untouched.
@@ -64,18 +64,21 @@ public sealed class SlugResolutionMiddleware(RequestDelegate next, IMemoryCache 
 
 		if (cache.TryGetValue(cacheKey, out Guid cached))
 		{
-			return cached;
+			// Guid.Empty is used as a sentinel for "not found" (negative cache)
+			return cached == Guid.Empty ? null : cached;
 		}
 
 		var school = await db.Schools
-			.AsNoTracking()
-			.IgnoreQueryFilters()
-			.Where(s => s.Slug == slug)
-			.Select(s => new { s.Id })
-			.FirstOrDefaultAsync(ct);
+							 .AsNoTracking()
+							 .IgnoreQueryFilters()
+							 .Where(s => s.Slug == slug)
+							 .Select(s => new { s.Id })
+							 .FirstOrDefaultAsync(ct);
 
 		if (school is null)
 		{
+			// Cache the miss as Guid.Empty (negative cache) for 10 minutes
+			cache.Set(cacheKey, Guid.Empty, TimeSpan.FromMinutes(10));
 			return null;
 		}
 
