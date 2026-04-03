@@ -7,8 +7,8 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run codegen && vite",
+    "build": "npm run codegen && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "codegen": "openapi-typescript ../openapi/v1.json -o src/api/schema.d.ts"

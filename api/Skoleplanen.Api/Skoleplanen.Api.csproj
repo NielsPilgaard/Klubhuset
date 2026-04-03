@@ -4,15 +4,17 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Emit OpenAPI spec to disk at build time so codegen can consume it -->
-    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../web/openapi</OpenApiDocumentsDirectory>
-    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <UserSecretsId>skoleplanen-api</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\infrastructure\aspire\Skoleplanen.ServiceDefaults\Skoleplanen.ServiceDefaults.csproj" />
   </ItemGroup>
+
+  <Target Name="GenerateOpenApiSpec" AfterTargets="Build">
+    <Exec Command="dotnet swagger tofile --output &quot;$(MSBuildProjectDirectory)/../../web/openapi/v1.json&quot; &quot;$(TargetPath)&quot; v1"
+          WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="MailKit" Version="4.15.1" />

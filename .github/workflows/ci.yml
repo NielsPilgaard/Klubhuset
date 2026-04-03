@@ -18,6 +18,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Restore tools
+        run: dotnet tool restore
+
       - name: Restore
         run: dotnet restore api/Skoleplanen.Api/Skoleplanen.Api.csproj
 
@@ -27,6 +30,12 @@ jobs:
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
         # Tests live in sibling *Tests projects; when none exist yet this is a no-op.
+
+      - name: Check OpenAPI spec is up to date
+        run: |
+          cp web/openapi/v1.json web/openapi/v1.json.committed
+          dotnet build api/Skoleplanen.Api/Skoleplanen.Api.csproj --no-restore --configuration Release
+          diff web/openapi/v1.json.committed web/openapi/v1.json || (echo "OpenAPI spec is stale — run 'dotnet build' and commit web/openapi/v1.json" && exit 1)
 
   web:
     name: Web — build & lint
