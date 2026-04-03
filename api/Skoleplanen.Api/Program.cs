@@ -135,9 +135,9 @@ if (app.Environment.IsDevelopment() && !string.IsNullOrEmpty(connectionString))
 		db.Schools.Add(new School
 		{
 			Id = testSchoolId,
-			Name = "Testskole",
-			Slug = "testskole",
-			ContactEmail = "admin@testskole.dk"
+			Name = "Debugskolen",
+			Slug = "debugskolen",
+			ContactEmail = "admin@debugskolen.dk"
 		});
 
 		await db.SaveChangesAsync();

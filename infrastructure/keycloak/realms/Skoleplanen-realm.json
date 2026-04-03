@@ -69,7 +69,8 @@
         "web-origins",
         "profile",
         "roles",
-        "email"
+        "email",
+        "tenant"
       ],
       "optionalClientScopes": [
         "address",
@@ -81,17 +82,17 @@
   ],
   "users": [
     {
-      "username": "admin@testskole.dk",
-      "email": "admin@testskole.dk",
-      "firstName": "Test",
+      "username": "admin@debugskolen.dk",
+      "email": "admin@debugskolen.dk",
+      "firstName": "Debug",
       "lastName": "Admin",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
         {
           "type": "password",
-          "value": "test",
-          "temporary": true
+          "value": "test1234",
+          "temporary": false
         }
       ],
       "realmRoles": ["admin"],

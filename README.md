@@ -117,9 +117,9 @@ A test school and admin user are seeded automatically in development:
 | Field    | Value                   |
 | -------- | ----------------------- |
 | URL      | http://localhost:5173   |
-| Username | `admin@testskole.dk`    |
-| Password | `test`                  |
-| School   | Testskole (`testskole`) |
+| Username | `admin@debugskolen.dk`      |
+| Password | `test1234`                  |
+| School   | Debugskolen (`debugskolen`) |
 
 The Keycloak user is imported from the realm JSON. The school row is seeded by the API on startup.
 
