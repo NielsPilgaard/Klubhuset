@@ -67,9 +67,12 @@ public sealed class ConflictDetectionService(AppDbContext db)
 					continue;
 				}
 
+				// Must be on the same weekday and have overlapping clock time
+				if (a.Weekday != b.Weekday)
+				{
+					continue;
+				}
 
-
-				// Check clock-time overlap
 				if (!Overlaps(a.TimeSlot.StartTime, a.TimeSlot.EndTime, b.TimeSlot.StartTime, b.TimeSlot.EndTime))
 				{
 					continue;

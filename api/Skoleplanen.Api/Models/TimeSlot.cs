@@ -28,4 +28,7 @@ public sealed class TimeSlot : ITenantScoped
 	/// <summary>Label shown on the grid (e.g. "1.", "2." or custom name).</summary>
 	[StringLength(500)]
 	public string? Label { get; set; }
+
+	/// <summary>True when this row represents a break (non-assignable).</summary>
+	public bool IsBreak { get; set; }
 }

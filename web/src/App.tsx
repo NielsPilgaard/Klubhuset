@@ -22,6 +22,7 @@ import LoginPage from './pages/LoginPage'
 import FilesPage from './pages/FilesPage'
 import BillingPage from './pages/BillingPage'
 import ExportsPage from './pages/ExportsPage'
+import ClassTimeSlotsPage from './pages/ClassTimeSlotsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="klasser" element={<ClassesPage />} />
             <Route path="klasser/:classId/skema/:schemaId" element={<SchemaBuilderPage />} />
+            <Route path="klasser/:classId/lektioner" element={<ClassTimeSlotsPage />} />
             <Route path="medarbejdere" element={<StaffPage />} />
             <Route path="medarbejdere/:staffId/skema" element={<StaffSchedulePage />} />
             <Route path="fag" element={<CoursesPage />} />

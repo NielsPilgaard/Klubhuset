@@ -22,6 +22,9 @@ function weekdayLabel(day: string | undefined): string {
   const idx = WEEKDAY_NAMES.indexOf(day as WeekdayName)
   return idx >= 0 ? WEEKDAYS[idx] : day
 }
+const SESSION_KEY_COURSE = 'schema-last-courseId'
+const SESSION_KEY_TEACHER = 'schema-last-teacherId'
+
 const COURSE_COLORS = [
   'bg-blue-100 text-blue-800 border-blue-200',
   'bg-purple-100 text-purple-800 border-purple-200',
@@ -65,8 +68,12 @@ function AssignmentPanel({
   onClose,
   onSaved,
 }: AssignmentPanelProps) {
-  const [courseId, setCourseId] = useState(existing?.courseId ?? '')
-  const [teacherId, setTeacherId] = useState(existing?.teacherId ?? '')
+  const [courseId, setCourseId] = useState(
+    existing?.courseId ?? sessionStorage.getItem(SESSION_KEY_COURSE) ?? ''
+  )
+  const [teacherId, setTeacherId] = useState(
+    existing?.teacherId ?? sessionStorage.getItem(SESSION_KEY_TEACHER) ?? ''
+  )
   const [roomId, setRoomId] = useState(existing?.roomId ?? '')
   const [aideId, setAideId] = useState(existing?.aideId ?? '')
 
@@ -86,7 +93,11 @@ function AssignmentPanel({
           aideId: aideId || null,
         }
       ),
-    onSuccess: (data) => onSaved(data),
+    onSuccess: (data) => {
+      sessionStorage.setItem(SESSION_KEY_COURSE, courseId)
+      sessionStorage.setItem(SESSION_KEY_TEACHER, teacherId)
+      onSaved(data)
+    },
   })
 
   const deleteMutation = useMutation({
@@ -360,7 +371,7 @@ export default function SchemaBuilderPage() {
     const map: Record<string, Record<number, SlotDto>> = {}
     for (const s of slots) {
       if (!s.timeSlotId || s.weekday === undefined) continue
-      const weekdayNum = typeof s.weekday === 'number' ? s.weekday : WEEKDAYS.indexOf(s.weekday as string) + 1
+      const weekdayNum = typeof s.weekday === 'number' ? s.weekday : WEEKDAY_NAMES.indexOf(s.weekday as WeekdayName) + 1
       if (!map[s.timeSlotId]) map[s.timeSlotId] = {}
       map[s.timeSlotId][weekdayNum] = s
     }
@@ -460,6 +471,18 @@ export default function SchemaBuilderPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            to={`/klasser/${classId}/lektioner`}
+            className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+            title="Tilpas lektionsstruktur"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </Link>
           <a
             href={`/udskriv/klasse/${classId}`}
             target="_blank"
@@ -580,10 +603,10 @@ export default function SchemaBuilderPage() {
                     Opsæt skoledagens lektioner og pauser, så kan du begynde at bygge skemaet.
                   </p>
                   <Link
-                    to="/indstillinger"
+                    to={`/klasser/${classId}/lektioner`}
                     className="inline-block mt-4 px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                   >
-                    Gå til indstillinger
+                    Opsæt lektionsstruktur
                   </Link>
                 </div>
               )}

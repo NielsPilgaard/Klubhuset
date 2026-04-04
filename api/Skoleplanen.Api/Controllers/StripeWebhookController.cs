@@ -16,12 +16,20 @@ public sealed class StripeWebhookController(
 {
     [HttpPost]
     [AllowAnonymous]
+    [DisableRequestSizeLimit]
     public async Task<IActionResult> Handle(CancellationToken ct)
     {
         string json;
-        using (var reader = new StreamReader(Request.Body))
+        using (var reader = new StreamReader(Request.Body, leaveOpen: true))
         {
             json = await reader.ReadToEndAsync(ct);
+        }
+
+        var signature = Request.Headers["Stripe-Signature"].FirstOrDefault();
+        if (string.IsNullOrEmpty(signature))
+        {
+            logger.LogWarning("Stripe webhook received without Stripe-Signature header");
+            return BadRequest();
         }
 
         Event stripeEvent;
@@ -29,8 +37,9 @@ public sealed class StripeWebhookController(
         {
             stripeEvent = EventUtility.ConstructEvent(
                 json,
-                Request.Headers["Stripe-Signature"],
-                stripeOptions.Value.WebhookSecret);
+                signature,
+                stripeOptions.Value.WebhookSecret,
+                throwOnApiVersionMismatch: false);
         }
         catch (StripeException ex)
         {

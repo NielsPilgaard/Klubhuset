@@ -39,6 +39,20 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<TemplateDto>> UpsertTemplate([FromBody] UpsertTemplateRequest req, CancellationToken ct)
 	{
+		// Validate that every break starts exactly on a module boundary
+		// TODO: Uncomment
+		// if (req.Breaks.Count > 0)
+		// {
+		// 	var breakValidationError = ValidateBreaksAgainstModules(req.DayStartTime, req.LessonDurationMinutes, req.Breaks);
+		// 	if (breakValidationError is not null)
+		// 	{
+		// 		return Problem(
+		// 			title: "Ugyldig pausekonfiguration",
+		// 			detail: breakValidationError,
+		// 			statusCode: 422);
+		// 	}
+		// }
+
 		var timeSlotTemplate = await db.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(ct);
 		if (timeSlotTemplate is null)
 		{
@@ -87,16 +101,26 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 
 		while (current < t.DayEndTime)
 		{
-			// Check if a break starts at or before the next lesson would end
-			var lessonEnd = current.AddMinutes(t.LessonDurationMinutes);
-			var overlappingBreak = breaks.FirstOrDefault(b => b.StartTime >= current && b.StartTime < lessonEnd);
-
-			if (overlappingBreak is not null)
+			// Emit a break row if one starts exactly here
+			var breakHere = breaks.FirstOrDefault(b => b.StartTime == current);
+			if (breakHere is not null)
 			{
-				// A break interrupts here — skip past it
-				current = overlappingBreak.StartTime.AddMinutes(overlappingBreak.DurationMinutes);
+				slots.Add(new TimeSlot
+				{
+					Id = Guid.NewGuid(),
+					TenantId = tenantId,
+					ClassId = null,
+					SortOrder = sortOrder++,
+					StartTime = breakHere.StartTime,
+					EndTime = breakHere.StartTime.AddMinutes(breakHere.DurationMinutes),
+					Label = "Pause",
+					IsBreak = true,
+				});
+				current = breakHere.StartTime.AddMinutes(breakHere.DurationMinutes);
 				continue;
 			}
+
+			var lessonEnd = current.AddMinutes(t.LessonDurationMinutes);
 
 			if (lessonEnd > t.DayEndTime)
 			{
@@ -111,22 +135,16 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 				SortOrder = sortOrder++,
 				StartTime = current,
 				EndTime = lessonEnd,
+				IsBreak = false,
 			});
 
 			current = lessonEnd;
-
-			// Advance past any break that starts exactly at the lesson end
-			var postBreak = breaks.FirstOrDefault(b => b.StartTime == current);
-			if (postBreak is not null)
-			{
-				current = current.AddMinutes(postBreak.DurationMinutes);
-			}
 		}
 
 		return slots;
 	}
 
-	public record TimeSlotDto(Guid Id, Guid? ClassId, int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label);
+	public record TimeSlotDto(Guid Id, Guid? ClassId, int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label, bool IsBreak);
 	public record UpsertTimeSlotRequest(int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label);
 
 	[HttpGet("classes/{classId:guid}/time-slots")]
@@ -136,18 +154,20 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			.AsNoTracking()
 			.Where(s => s.ClassId == classId)
 			.OrderBy(s => s.SortOrder)
-			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label))
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
 			.ToListAsync(ct);
 
 		if (slots.Count > 0)
+		{
 			return Ok(slots);
+		}
 
 		// Fall back to school-level time slots when the class has no overrides
 		var schoolSlots = await db.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == null)
 			.OrderBy(s => s.SortOrder)
-			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label))
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
 			.ToListAsync(ct);
 
 		return Ok(schoolSlots);
@@ -181,7 +201,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 		db.TimeSlots.AddRange(newSlots);
 		await db.SaveChangesAsync(ct);
 
-		var result = newSlots.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label));
+		var result = newSlots.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak));
 		return Ok(result);
 	}
 
@@ -192,7 +212,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			.AsNoTracking()
 			.Where(s => s.ClassId == null)
 			.OrderBy(s => s.SortOrder)
-			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label))
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
 			.ToListAsync(ct);
 
 		return Ok(slots);
