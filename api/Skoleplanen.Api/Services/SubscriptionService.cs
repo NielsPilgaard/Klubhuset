@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Models;
 using Stripe;
@@ -10,7 +11,7 @@ namespace Skoleplanen.Api.Services;
 
 public sealed class SubscriptionService(
     AppDbContext db,
-    IConfiguration config,
+    IOptions<StripeOptions> stripeOptions,
     ILogger<SubscriptionService> logger,
     CustomerService customerService,
     SessionService sessionService,
@@ -72,8 +73,7 @@ public sealed class SubscriptionService(
         var sub = await GetOrCreateAsync(schoolId, ct);
         var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, ct);
 
-        var priceId = config["Stripe:PriceId"]
-                      ?? throw new InvalidOperationException("Stripe:PriceId not configured");
+        var priceId = stripeOptions.Value.PriceId;
 
         // Ensure Stripe customer exists
         var customerId = sub.StripeCustomerId;

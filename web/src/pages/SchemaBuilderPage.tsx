@@ -76,7 +76,7 @@ function AssignmentPanel({
   const saveMutation = useMutation({
     mutationFn: () =>
       api.put<SlotsAndConflictsDto>(
-        `/classes/${classId}/schemas/${schemaId}/slots/${existing?.id ?? timeSlotId}`,
+        `/classes/${classId}/schemas/${schemaId}/slots`,
         {
           timeSlotId,
           weekday,

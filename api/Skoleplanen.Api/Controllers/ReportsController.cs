@@ -1,69 +1,20 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
+using Skoleplanen.Api.Services;
 
 namespace Skoleplanen.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/reports")]
 [Authorize(Roles = "admin")]
-public sealed class ReportsController(AppDbContext db) : ControllerBase
+public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 {
-    private const string XlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-    private static string RoleLabel(StaffRole role) => role switch
-    {
-        StaffRole.Teacher    => "Lærer",
-        StaffRole.Aide       => "Pædagog",
-        StaffRole.Substitute => "Vikar",
-        _                    => role.ToString()
-    };
-
-    private static string DayLabel(DayOfWeek day) => day switch
-    {
-        DayOfWeek.Monday    => "Mandag",
-        DayOfWeek.Tuesday   => "Tirsdag",
-        DayOfWeek.Wednesday => "Onsdag",
-        DayOfWeek.Thursday  => "Torsdag",
-        DayOfWeek.Friday    => "Fredag",
-        _                   => day.ToString()
-    };
-
-    private async Task<List<SchemaSlot>> GetActiveSlotsAsync(CancellationToken ct) =>
-        await db.SchemaSlots
-            .AsNoTrackingWithIdentityResolution()
-            .Where(s => s.Schema.IsActive)
-            .Include(s => s.Course)
-            .Include(s => s.Schema).ThenInclude(sc => sc.Class)
-            .Include(s => s.TimeSlot)
-            .Include(s => s.Teacher)
-            .Include(s => s.Room)
-            .Include(s => s.Aide)
-            .ToListAsync(ct);
-
-    private static void StyleHeader(IXLRow row)
-    {
-        row.Style.Font.Bold = true;
-        row.Style.Fill.BackgroundColor = XLColor.FromHtml("#1e3a5f");
-        row.Style.Font.FontColor = XLColor.White;
-    }
-
-    private static FileStreamResult ToXlsx(XLWorkbook wb, string filename)
-    {
-        var stream = new MemoryStream();
-        wb.SaveAs(stream);
-        stream.Position = 0;
-        return new FileStreamResult(stream, XlsxMime) { FileDownloadName = filename };
-    }
-
     /// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>
     [HttpGet("hours/staff.xlsx")]
     public async Task<IActionResult> GetStaffHoursXlsx(CancellationToken ct)
     {
-        var activeSlots = await GetActiveSlotsAsync(ct);
+        var activeSlots = await excel.GetActiveSlotsAsync(ct);
 
         var teacherHours = activeSlots
             .GroupBy(s => (s.TeacherId, s.Teacher.Name, s.Teacher.Role))
@@ -87,24 +38,24 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
         ws.Cell(1, 1).Value = "Navn";
         ws.Cell(1, 2).Value = "Rolle";
         ws.Cell(1, 3).Value = "Timer";
-        StyleHeader(ws.Row(1));
+        ExcelReportBuilder.StyleHeader(ws.Row(1));
 
         for (var i = 0; i < rows.Count; i++)
         {
             ws.Cell(i + 2, 1).Value = rows[i].Name;
-            ws.Cell(i + 2, 2).Value = RoleLabel(rows[i].Role);
+            ws.Cell(i + 2, 2).Value = ExcelReportBuilder.RoleLabel(rows[i].Role);
             ws.Cell(i + 2, 3).Value = rows[i].Hours;
         }
 
         ws.Columns().AdjustToContents();
-        return ToXlsx(wb, "timer-medarbejdere.xlsx");
+        return ExcelReportBuilder.ToXlsx(wb, "timer-medarbejdere.xlsx");
     }
 
     /// <summary>GET /api/v1/reports/hours/courses.xlsx</summary>
     [HttpGet("hours/courses.xlsx")]
     public async Task<IActionResult> GetCourseHoursXlsx(CancellationToken ct)
     {
-        var activeSlots = await GetActiveSlotsAsync(ct);
+        var activeSlots = await excel.GetActiveSlotsAsync(ct);
 
         var rows = activeSlots
             .GroupBy(s => (s.Schema.Class.Name, s.Course.Name))
@@ -121,7 +72,7 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
         ws.Cell(1, 1).Value = "Klasse";
         ws.Cell(1, 2).Value = "Fag";
         ws.Cell(1, 3).Value = "Timer";
-        StyleHeader(ws.Row(1));
+        ExcelReportBuilder.StyleHeader(ws.Row(1));
 
         for (var i = 0; i < rows.Count; i++)
         {
@@ -131,14 +82,14 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
         }
 
         ws.Columns().AdjustToContents();
-        return ToXlsx(wb, "timer-fag.xlsx");
+        return ExcelReportBuilder.ToXlsx(wb, "timer-fag.xlsx");
     }
 
     /// <summary>GET /api/v1/reports/schema.xlsx</summary>
     [HttpGet("schema.xlsx")]
     public async Task<IActionResult> GetSchemaXlsx(CancellationToken ct)
     {
-        var activeSlots = await GetActiveSlotsAsync(ct);
+        var activeSlots = await excel.GetActiveSlotsAsync(ct);
 
         var rows = activeSlots
             .OrderBy(s => s.Schema.Class.Name)
@@ -146,7 +97,7 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
             .ThenBy(s => s.TimeSlot.StartTime)
             .Select(s => (
                 ClassName: s.Schema.Class.Name,
-                Day: DayLabel(s.Weekday),
+                Day: ExcelReportBuilder.DayLabel(s.Weekday),
                 Start: s.TimeSlot.StartTime.ToString("HH:mm"),
                 End: s.TimeSlot.EndTime.ToString("HH:mm"),
                 Course: s.Course.Name,
@@ -163,7 +114,7 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
         ws.Cell(1, 5).Value = "Fag";
         ws.Cell(1, 6).Value = "Lærer";
         ws.Cell(1, 7).Value = "Lokale";
-        StyleHeader(ws.Row(1));
+        ExcelReportBuilder.StyleHeader(ws.Row(1));
 
         for (var i = 0; i < rows.Count; i++)
         {
@@ -177,6 +128,6 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
         }
 
         ws.Columns().AdjustToContents();
-        return ToXlsx(wb, "skema.xlsx");
+        return ExcelReportBuilder.ToXlsx(wb, "skema.xlsx");
     }
 }

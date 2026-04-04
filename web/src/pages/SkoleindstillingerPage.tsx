@@ -51,6 +51,7 @@ export default function SkoleindstillingerPage() {
   }, [data, initialized])
 
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [logoError, setLogoError] = useState<string | null>(null)
 
   const saveMutation = useMutation({
@@ -64,9 +65,12 @@ export default function SkoleindstillingerPage() {
       qc.invalidateQueries({ queryKey: ['school-settings'] })
       setInitialized(false)
       setSaveError(null)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
     },
     onError: (err) => {
       setSaveError(err instanceof ApiError ? err.message : 'Der opstod en fejl.')
+      setSaveSuccess(false)
     },
   })
 
@@ -154,6 +158,7 @@ export default function SkoleindstillingerPage() {
             />
           </div>
           {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+          {saveSuccess && <p className="text-sm text-green-600">Ændringer gemt.</p>}
         </div>
         <div className="px-6 py-4 flex justify-end">
           <button
@@ -222,6 +227,7 @@ function SkoledagCard() {
   const [breaks, setBreaks] = useState<BreakEntry[]>([])
   const [initialized, setInitialized] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   function validateSkoledagForm(): string | null {
     if (dayStart >= dayEnd) return 'Skoledagen skal slutte efter den starter.'
@@ -259,9 +265,12 @@ function SkoledagCard() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['time-slot-template'] })
       setSaveError(null)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
     },
     onError: () => {
       setSaveError('Kunne ikke gemme skoledag. Prøv igen.')
+      setSaveSuccess(false)
     },
   })
 
@@ -363,6 +372,7 @@ function SkoledagCard() {
         </div>
 
         {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+        {saveSuccess && <p className="text-sm text-green-600">Ændringer gemt.</p>}
       </div>
       <div className="px-6 py-4 flex justify-end">
         <button

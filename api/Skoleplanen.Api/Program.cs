@@ -59,6 +59,11 @@ builder.Services.AddOptions<SmtpOptions>()
 	   .ValidateDataAnnotations()
 	   .ValidateOnStart();
 
+builder.Services.AddOptions<StripeOptions>()
+	   .BindConfiguration(StripeOptions.SectionName)
+	   .ValidateDataAnnotations()
+	   .ValidateOnStart();
+
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 
 builder.Services.AddObjectStorage();
@@ -66,6 +71,7 @@ builder.Services.AddObjectStorage();
 builder.Services.AddScoped<ConflictDetectionService>();
 
 builder.Services.AddScoped<StaffInvitationService>();
+builder.Services.AddScoped<ExcelReportBuilder>();
 
 builder.Services.AddScoped<Skoleplanen.Api.Services.SubscriptionService>();
 
@@ -74,11 +80,11 @@ builder.Services.AddSingleton<CustomerService>();
 builder.Services.AddSingleton<Stripe.Checkout.SessionService>();
 builder.Services.AddSingleton<Stripe.BillingPortal.SessionService>();
 
-// Configure Stripe global API key
-var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
-if (!string.IsNullOrEmpty(stripeSecretKey))
+// Configure Stripe global API key from strongly-typed options
+var stripeOptions = builder.Configuration.GetSection(StripeOptions.SectionName).Get<StripeOptions>();
+if (!string.IsNullOrEmpty(stripeOptions?.SecretKey))
 {
-    StripeConfiguration.ApiKey = stripeSecretKey;
+    StripeConfiguration.ApiKey = stripeOptions.SecretKey;
 }
 
 builder.Services.AddControllers()
