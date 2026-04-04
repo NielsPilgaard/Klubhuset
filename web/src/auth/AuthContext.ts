@@ -3,7 +3,7 @@ import { createContext } from 'react'
 export interface AuthContextValue {
   authenticated: boolean
   token: string | undefined
-  userName: string | null
+  userName: string | undefined
   logout: () => void
 }
 

@@ -19,6 +19,7 @@ public enum SubscriptionStatus
 /// </summary>
 [Index(nameof(StripeSubscriptionId))]
 [Index(nameof(StripeCustomerId))]
+[Index(nameof(SchoolId), IsUnique = true)]
 public sealed class Subscription : IEntityTypeConfiguration<Subscription>
 {
     public Guid Id { get; set; }

@@ -62,6 +62,11 @@ builder.Services.AddScoped<StaffInvitationService>();
 
 builder.Services.AddScoped<Skoleplanen.Api.Services.SubscriptionService>();
 
+// Register Stripe services
+builder.Services.AddSingleton<Stripe.CustomerService>();
+builder.Services.AddSingleton<Stripe.Checkout.SessionService>();
+builder.Services.AddSingleton<Stripe.BillingPortal.SessionService>();
+
 // Configure Stripe global API key
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrEmpty(stripeSecretKey))

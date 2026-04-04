@@ -38,6 +38,12 @@ public sealed class BillingController(
         [FromBody] CheckoutRequest req,
         CancellationToken ct)
     {
+        // Validate redirect URLs
+        if (!IsValidRedirectUrl(req.SuccessUrl) || !IsValidRedirectUrl(req.CancelUrl))
+        {
+            return BadRequest("Invalid success or cancel URL");
+        }
+
         var url = await subscriptionService.CreateCheckoutSessionAsync(
             tenantContext.TenantId, req.SuccessUrl, req.CancelUrl, ct);
         return Ok(new CheckoutResponse(url));
@@ -48,6 +54,12 @@ public sealed class BillingController(
         [FromBody] PortalRequest req,
         CancellationToken ct)
     {
+        // Validate return URL
+        if (!IsValidRedirectUrl(req.ReturnUrl))
+        {
+            return BadRequest("Invalid return URL");
+        }
+
         var url = await subscriptionService.CreateBillingPortalSessionAsync(
             tenantContext.TenantId, req.ReturnUrl, ct);
         return Ok(new CheckoutResponse(url));
@@ -69,5 +81,11 @@ public sealed class BillingController(
             isActive,
             hasAccess,
             trialDaysLeft);
+    }
+
+    private static bool IsValidRedirectUrl(string url)
+    {
+        // Only allow relative URLs to prevent open redirects
+        return url.StartsWith("/");
     }
 }

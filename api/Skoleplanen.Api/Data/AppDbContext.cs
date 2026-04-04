@@ -51,4 +51,27 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 		modelBuilder.Entity<TEntity>()
 			.HasQueryFilter(e => e.TenantId == tenantContext.TenantId);
 	}
+
+	public override int SaveChanges(bool acceptAllChangesOnSuccess)
+	{
+		UpdateTimestamps();
+		return base.SaveChanges(acceptAllChangesOnSuccess);
+	}
+
+	public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+	{
+		UpdateTimestamps();
+		return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+	}
+
+	private void UpdateTimestamps()
+	{
+		foreach (var entry in ChangeTracker.Entries<Subscription>())
+		{
+			if (entry.State == EntityState.Modified)
+			{
+				entry.Entity.UpdatedAt = DateTimeOffset.UtcNow;
+			}
+		}
+	}
 }

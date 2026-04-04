@@ -78,7 +78,19 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label))
 			.ToListAsync(ct);
-		return Ok(slots);
+
+		if (slots.Count > 0)
+			return Ok(slots);
+
+		// Fall back to school-level time slots when the class has no overrides
+		var schoolSlots = await db.TimeSlots
+			.AsNoTracking()
+			.Where(s => s.ClassId == null)
+			.OrderBy(s => s.SortOrder)
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label))
+			.ToListAsync(ct);
+
+		return Ok(schoolSlots);
 	}
 
 	[HttpPut("classes/{classId:guid}/time-slots")]

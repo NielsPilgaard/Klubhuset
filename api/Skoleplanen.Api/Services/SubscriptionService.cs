@@ -11,7 +11,10 @@ namespace Skoleplanen.Api.Services;
 public sealed class SubscriptionService(
     AppDbContext db,
     IConfiguration config,
-    ILogger<SubscriptionService> logger)
+    ILogger<SubscriptionService> logger,
+    CustomerService customerService,
+    SessionService sessionService,
+    Stripe.BillingPortal.SessionService billingPortalSessionService)
 {
     private const int TrialDays = 14;
 
@@ -21,7 +24,10 @@ public sealed class SubscriptionService(
     public async Task<LocalSubscription> GetOrCreateAsync(Guid schoolId, CancellationToken ct = default)
     {
         var sub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
-        if (sub is not null) return sub;
+        if (sub is not null)
+        {
+            return sub;
+        }
 
         var school = await db.Schools.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == schoolId, ct)
                      ?? throw new InvalidOperationException($"School {schoolId} not found");
@@ -31,12 +37,27 @@ public sealed class SubscriptionService(
             Id = Guid.NewGuid(),
             SchoolId = schoolId,
             Status = SubscriptionStatus.Trialing,
-            TrialEnd = school.CreatedAt.AddDays(TrialDays),
+            TrialEnd = DateTimeOffset.UtcNow.AddDays(TrialDays),
         };
 
         db.Subscriptions.Add(sub);
-        await db.SaveChangesAsync(ct);
-        return sub;
+        
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            return sub;
+        }
+        catch (DbUpdateException)
+        {
+            // Race condition: another request created the subscription. Fetch and return it.
+            var existingSub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
+            if (existingSub is not null)
+            {
+                return existingSub;
+            }
+
+            throw;
+        }
     }
 
     /// <summary>
@@ -48,6 +69,12 @@ public sealed class SubscriptionService(
         string cancelUrl,
         CancellationToken ct = default)
     {
+        // Validate URLs
+        if (!IsAllowedUrl(successUrl) || !IsAllowedUrl(cancelUrl))
+        {
+            throw new InvalidOperationException("Invalid success or cancel URL");
+        }
+
         var sub = await GetOrCreateAsync(schoolId, ct);
         var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, ct);
 
@@ -58,7 +85,6 @@ public sealed class SubscriptionService(
         var customerId = sub.StripeCustomerId;
         if (customerId is null)
         {
-            var customerService = new CustomerService();
             var customer = await customerService.CreateAsync(new CustomerCreateOptions
             {
                 Email = school.ContactEmail,
@@ -87,9 +113,9 @@ public sealed class SubscriptionService(
             Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
         };
 
-        var sessionService = new SessionService();
         var session = await sessionService.CreateAsync(options, cancellationToken: ct);
-        return session.Url;
+        
+        return session.Url ?? throw new InvalidOperationException("Stripe session URL is null");
     }
 
     /// <summary>
@@ -100,19 +126,26 @@ public sealed class SubscriptionService(
         string returnUrl,
         CancellationToken ct = default)
     {
+        // Validate URL
+        if (!IsAllowedUrl(returnUrl))
+        {
+            throw new InvalidOperationException("Invalid return URL");
+        }
+
         var sub = await GetOrCreateAsync(schoolId, ct);
 
         if (sub.StripeCustomerId is null)
+        {
             throw new InvalidOperationException("No Stripe customer for this school — subscribe first.");
+        }
 
-        var portalService = new Stripe.BillingPortal.SessionService();
-        var session = await portalService.CreateAsync(new Stripe.BillingPortal.SessionCreateOptions
+        var session = await billingPortalSessionService.CreateAsync(new Stripe.BillingPortal.SessionCreateOptions
         {
             Customer = sub.StripeCustomerId,
             ReturnUrl = returnUrl,
         }, cancellationToken: ct);
 
-        return session.Url;
+        return session.Url ?? throw new InvalidOperationException("Stripe billing portal session URL is null");
     }
 
     /// <summary>
@@ -123,25 +156,45 @@ public sealed class SubscriptionService(
         switch (stripeEvent.Type)
         {
             case EventTypes.CheckoutSessionCompleted:
+            {
                 if (stripeEvent.Data.Object is Session session)
+                {
                     await HandleCheckoutCompletedAsync(session, ct);
+                }
+
                 break;
+            }
 
             case EventTypes.CustomerSubscriptionUpdated:
             case EventTypes.CustomerSubscriptionDeleted:
+            {
                 if (stripeEvent.Data.Object is StripeSubscription stripeSub)
+                {
                     await HandleSubscriptionChangedAsync(stripeSub, ct);
+                }
+
                 break;
+            }
 
             case EventTypes.InvoicePaymentSucceeded:
+            {
                 if (stripeEvent.Data.Object is Invoice invoice)
+                {
                     await HandleInvoicePaymentSucceededAsync(invoice, ct);
+                }
+
                 break;
+            }
 
             case EventTypes.InvoicePaymentFailed:
+            {
                 if (stripeEvent.Data.Object is Invoice failedInvoice)
+                {
                     await HandleInvoicePaymentFailedAsync(failedInvoice, ct);
+                }
+
                 break;
+            }
 
             default:
                 logger.LogDebug("Unhandled Stripe event type: {Type}", stripeEvent.Type);
@@ -159,7 +212,11 @@ public sealed class SubscriptionService(
         }
 
         var sub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
-        if (sub is null) return;
+        if (sub is null)
+        {
+            logger.LogWarning("SubscriptionService.HandleCheckoutCompletedAsync: Subscription not found for SchoolId {SchoolId}, SessionId {SessionId}", schoolId, session.Id);
+            return;
+        }
 
         sub.StripeCustomerId ??= session.CustomerId;
         sub.StripeSubscriptionId = session.SubscriptionId;
@@ -172,7 +229,11 @@ public sealed class SubscriptionService(
     {
         var sub = await db.Subscriptions.FirstOrDefaultAsync(
             s => s.StripeSubscriptionId == stripeSub.Id, ct);
-        if (sub is null) return;
+        if (sub is null)
+        {
+            logger.LogWarning("SubscriptionService.HandleSubscriptionChangedAsync: Subscription not found for StripeSubscriptionId {StripeSubscriptionId}", stripeSub.Id);
+            return;
+        }
 
         sub.Status = stripeSub.Status switch
         {
@@ -191,11 +252,18 @@ public sealed class SubscriptionService(
 
     private async Task HandleInvoicePaymentSucceededAsync(Invoice invoice, CancellationToken ct)
     {
-        if (invoice.SubscriptionId is null) return;
+        if (invoice.SubscriptionId is null)
+        {
+            return;
+        }
 
         var sub = await db.Subscriptions.FirstOrDefaultAsync(
             s => s.StripeSubscriptionId == invoice.SubscriptionId, ct);
-        if (sub is null) return;
+        if (sub is null)
+        {
+            logger.LogWarning("SubscriptionService.HandleInvoicePaymentSucceededAsync: Subscription not found for StripeSubscriptionId {StripeSubscriptionId}, InvoiceId {InvoiceId}", invoice.SubscriptionId, invoice.Id);
+            return;
+        }
 
         sub.Status = SubscriptionStatus.Active;
         sub.UpdatedAt = DateTimeOffset.UtcNow;
@@ -204,14 +272,27 @@ public sealed class SubscriptionService(
 
     private async Task HandleInvoicePaymentFailedAsync(Invoice invoice, CancellationToken ct)
     {
-        if (invoice.SubscriptionId is null) return;
+        if (invoice.SubscriptionId is null)
+        {
+            return;
+        }
 
         var sub = await db.Subscriptions.FirstOrDefaultAsync(
             s => s.StripeSubscriptionId == invoice.SubscriptionId, ct);
-        if (sub is null) return;
+        if (sub is null)
+        {
+            logger.LogWarning("SubscriptionService.HandleInvoicePaymentFailedAsync: Subscription not found for StripeSubscriptionId {StripeSubscriptionId}, InvoiceId {InvoiceId}", invoice.SubscriptionId, invoice.Id);
+            return;
+        }
 
         sub.Status = SubscriptionStatus.PastDue;
         sub.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+    }
+
+    private static bool IsAllowedUrl(string url)
+    {
+        // Only allow relative URLs to prevent open redirects
+        return url.StartsWith("/");
     }
 }

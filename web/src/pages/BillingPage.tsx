@@ -61,6 +61,11 @@ export default function BillingPage() {
     onSuccess: ({ url }) => {
       window.location.href = url
     },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Kunne ikke oprette checkoutsession'
+      console.error('Checkout error:', error)
+      alert(errorMessage)
+    },
   })
 
   const portalMutation = useMutation({
@@ -70,6 +75,11 @@ export default function BillingPage() {
       }) as Promise<{ url: string }>,
     onSuccess: ({ url }) => {
       window.location.href = url
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Kunne ikke åbne administrationsportal'
+      console.error('Portal error:', error)
+      alert(errorMessage)
     },
   })
 
