@@ -62,8 +62,63 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			DurationMinutes = b.DurationMinutes,
 		}).ToList();
 
+		// Regenerate school-level time slots (ClassId = null) from the template
+		var existingSchoolSlots = await db.TimeSlots.Where(s => s.ClassId == null).ToListAsync(ct);
+		db.TimeSlots.RemoveRange(existingSchoolSlots);
+
+		var generatedSlots = GenerateSlotsFromTemplate(timeSlotTemplate, tenant.TenantId);
+		db.TimeSlots.AddRange(generatedSlots);
+
 		await db.SaveChangesAsync(ct);
 		return Ok(ToTemplateDto(timeSlotTemplate));
+	}
+
+	private static List<TimeSlot> GenerateSlotsFromTemplate(TimeSlotTemplate t, Guid tenantId)
+	{
+		var slots = new List<TimeSlot>();
+		var breaks = t.Breaks.OrderBy(b => b.StartTime).ToList();
+		var current = t.DayStartTime;
+		var sortOrder = 1;
+
+		while (current < t.DayEndTime)
+		{
+			// Check if a break starts at or before the next lesson would end
+			var lessonEnd = current.AddMinutes(t.LessonDurationMinutes);
+			var overlappingBreak = breaks.FirstOrDefault(b => b.StartTime >= current && b.StartTime < lessonEnd);
+
+			if (overlappingBreak is not null)
+			{
+				// A break interrupts here — skip past it
+				current = overlappingBreak.StartTime.AddMinutes(overlappingBreak.DurationMinutes);
+				continue;
+			}
+
+			if (lessonEnd > t.DayEndTime)
+			{
+				break;
+			}
+
+			slots.Add(new TimeSlot
+			{
+				Id = Guid.NewGuid(),
+				TenantId = tenantId,
+				ClassId = null,
+				SortOrder = sortOrder++,
+				StartTime = current,
+				EndTime = lessonEnd,
+			});
+
+			current = lessonEnd;
+
+			// Advance past any break that starts exactly at the lesson end
+			var postBreak = breaks.FirstOrDefault(b => b.StartTime == current);
+			if (postBreak is not null)
+			{
+				current = current.AddMinutes(postBreak.DurationMinutes);
+			}
+		}
+
+		return slots;
 	}
 
 	public record TimeSlotDto(Guid Id, Guid? ClassId, int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label);
