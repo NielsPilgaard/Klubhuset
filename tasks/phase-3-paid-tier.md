@@ -11,17 +11,18 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 ### Stripe Checkout billing
 
 - [ ] Stripe product and price configuration for Basis tier (299 kr/month)
-- [ ] Signup flow: school completes trial → Stripe Checkout session → subscription created
-- [ ] Auto-renew monthly
-- [ ] Stripe billing portal link in admin settings (manage subscription, update card, cancel)
-- [ ] 14-day free trial: full access, no payment required during trial
-- [ ] Trial expiry handling: prompt to subscribe, read-only grace period if not converted
+- [x] Signup flow: school completes trial → Stripe Checkout session → subscription created
+- [x] Auto-renew monthly
+- [x] Stripe billing portal link in admin settings (manage subscription, update card, cancel)
+- [x] 14-day free trial: full access, no payment required during trial
+- [x] Trial expiry handling: prompt to subscribe, read-only grace period if not converted
+- [ ] Thorough tests
 
 ### Billing lifecycle
 
-- [ ] Failed payment handling: email notification, retry, grace period, then feature restriction
-- [ ] Cancellation flow: access until end of billing period, then read-only
-- [ ] Webhook handler for Stripe events (payment succeeded, payment failed, subscription cancelled)
+- [x] Failed payment handling: email notification, retry, grace period, then feature restriction
+- [x] Cancellation flow: access until end of billing period, then read-only
+- [x] Webhook handler for Stripe events (payment succeeded, payment failed, subscription cancelled)
 
 ### File explorer
 
@@ -39,7 +40,7 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 - [x] Restructure `App.tsx` routing: add public `/` via `HomeRedirect` component (shows `LandingPage` or redirects to `/dashboard` if already authenticated), add `/login` route, remove index redirect from inside `<Layout>`
 - [x] New `LoginPage.tsx` — calls `keycloak.login()` on mount (drives login flow from "Log ind" links)
 - [x] New `LandingPage.tsx` — full marketing landing page with sections: Nav, Hero, Features, Pricing (`id="priser"`), Trust, CTA footer, Page footer. All text in Danish. Uses existing brand colors and Playfair Display / Lato fonts.
-  - Nav: sticky, "Skoleplanen" brand name + "Log ind" (`/login`) + "Prøv gratis" (`/signup`) 
+  - Nav: sticky, "Skoleplanen" brand name + "Log ind" (`/login`) + "Prøv gratis" (`/signup`)
   - Hero: headline "Det enkle skema — bygget til friskoler", primary CTA to `/signup`, trust line ("Intet kreditkort · Opsig når som helst · Data opbevares i EU")
   - Features: 5-card grid — conflict detection, schema builder, staff overview, printable schemas, file management
   - Pricing: dark brand section, single "Basis" card (299 kr/md), checklist, CTA to `/signup`
@@ -49,7 +50,7 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 
 ### Reporting and exports
 
-- [ ] Course hour summary: hours per course per class (exportable CSV / PDF)
-- [ ] Teacher hour summary: total teaching hours per teacher (exportable)
-- [ ] Schema export: full weekly schema as CSV or PDF
-- [ ] Stats visible on admin dashboard
+- [x] Course hour summary: hours per course per class (exportable CSV / PDF)
+- [x] Teacher hour summary: total teaching hours per teacher (exportable)
+- [x] Schema export: full weekly schema as CSV or PDF
+- [x] Stats visible on admin dashboard
