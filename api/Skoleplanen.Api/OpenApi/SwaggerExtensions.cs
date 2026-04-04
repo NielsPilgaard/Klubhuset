@@ -4,7 +4,7 @@ namespace Skoleplanen.Api.OpenApi;
 
 public static class SwaggerExtensions
 {
-    public static IServiceCollection AddSwagger(this IServiceCollection services)
+    public static IServiceCollection AddOpenApi(this IServiceCollection services)
     {
         const string schemeId = "Bearer";
 

@@ -7,6 +7,7 @@ using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
 using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
+using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,10 +42,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
-// OpenAPI / Swagger (spec generated from code)
-builder.Services.AddSwagger();
+builder.Services.AddOpenApi();
 
-// Email
 builder.Services.AddOptions<SmtpOptions>()
 	   .BindConfiguration(SmtpOptions.SectionName)
 	   .ValidateDataAnnotations()
@@ -52,16 +51,12 @@ builder.Services.AddOptions<SmtpOptions>()
 
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 
-// Object storage (OVHCloud S3-compatible / LocalStack in dev)
 builder.Services.AddObjectStorage();
 
-// Conflict detection
 builder.Services.AddScoped<ConflictDetectionService>();
 
-// Staff invitations
 builder.Services.AddScoped<StaffInvitationService>();
 
-// Controllers
 builder.Services.AddControllers()
 	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -80,8 +75,6 @@ if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db"
 	await app.Services.SeedAsync();
 }
 
-// Ensure S3 bucket exists (idempotent — no-op if already present).
-// In dev this targets LocalStack; in prod it targets OVHCloud Object Storage.
 await app.Services.EnsureS3BucketAsync();
 
 app.Run();
