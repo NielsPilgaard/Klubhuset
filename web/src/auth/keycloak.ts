@@ -13,7 +13,7 @@ let initPromise: Promise<boolean> | null = null
 export function getInitPromise(): Promise<boolean> {
   if (!initPromise) {
     initPromise = keycloak.init({
-      onLoad: 'login-required',
+      onLoad: 'check-sso',
       pkceMethod: 'S256',
       checkLoginIframe: false,
     })

@@ -77,7 +77,7 @@ export default function SignupPage() {
             Din skole <strong>{name}</strong> er klar. En administrator kan nu logge ind og begynde at oprette skemaer.
           </p>
           <a
-            href="/"
+            href="/login"
             className="inline-block mt-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
             Gå til login
@@ -136,7 +136,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={!name.trim() || !slug.trim() || pending}
+            disabled={!name.trim() || pending}
             className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {pending ? 'Opretter skole...' : 'Opret skole'}
@@ -146,7 +146,7 @@ export default function SignupPage() {
         <div className="px-8 pb-6 text-center">
           <p className="text-xs text-gray-400">
             Har du allerede en konto?{' '}
-            <a href="/" className="text-brand-600 hover:underline">Log ind</a>
+            <a href="/login" className="text-brand-600 hover:underline">Log ind</a>
           </p>
         </div>
       </div>

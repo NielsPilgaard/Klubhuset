@@ -35,17 +35,17 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 
 ### Landing page
 
-- [ ] Fix `AuthProvider` — change `onLoad: 'login-required'` to `'check-sso'` so unauthenticated visitors are not force-redirected to Keycloak (`/web/src/auth/AuthProvider.tsx`)
-- [ ] Restructure `App.tsx` routing: add public `/` via `HomeRedirect` component (shows `LandingPage` or redirects to `/dashboard` if already authenticated), add `/login` route, remove index redirect from inside `<Layout>`
-- [ ] New `LoginPage.tsx` — calls `keycloak.login()` on mount (drives login flow from "Log ind" links)
-- [ ] New `LandingPage.tsx` — full marketing landing page with sections: Nav, Hero, Features, Pricing (`id="priser"`), Trust, CTA footer, Page footer. All text in Danish. Uses existing brand colors and Playfair Display / Lato fonts.
+- [x] Fix `AuthProvider` — change `onLoad: 'login-required'` to `'check-sso'` so unauthenticated visitors are not force-redirected to Keycloak (`/web/src/auth/AuthProvider.tsx`)
+- [x] Restructure `App.tsx` routing: add public `/` via `HomeRedirect` component (shows `LandingPage` or redirects to `/dashboard` if already authenticated), add `/login` route, remove index redirect from inside `<Layout>`
+- [x] New `LoginPage.tsx` — calls `keycloak.login()` on mount (drives login flow from "Log ind" links)
+- [x] New `LandingPage.tsx` — full marketing landing page with sections: Nav, Hero, Features, Pricing (`id="priser"`), Trust, CTA footer, Page footer. All text in Danish. Uses existing brand colors and Playfair Display / Lato fonts.
   - Nav: sticky, "Skoleplanen" brand name + "Log ind" (`/login`) + "Prøv gratis" (`/signup`) 
   - Hero: headline "Det enkle skema — bygget til friskoler", primary CTA to `/signup`, trust line ("Intet kreditkort · Opsig når som helst · Data opbevares i EU")
   - Features: 5-card grid — conflict detection, schema builder, staff overview, printable schemas, file management
   - Pricing: dark brand section, single "Basis" card (299 kr/md), checklist, CTA to `/signup`
   - Trust: EU data, transparent pricing, simple from day one
   - CTA footer + page footer
-- [ ] Update `SignupPage.tsx` — change "Log ind" link from `href="/"` to `href="/login"`
+- [x] Update `SignupPage.tsx` — change "Log ind" link from `href="/"` to `href="/login"`
 
 ### Reporting and exports
 
