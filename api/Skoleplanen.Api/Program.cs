@@ -75,6 +75,10 @@ if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db"
 	await app.Services.SeedAsync();
 }
 
-await app.Services.EnsureS3BucketAsync();
+// Skip when S3 config is absent (e.g. swagger CLI running at build time).
+if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
+{
+	await app.Services.EnsureS3BucketAsync();
+}
 
 app.Run();
