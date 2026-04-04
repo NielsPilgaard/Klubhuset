@@ -25,13 +25,13 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 
 ### File explorer
 
-- [ ] File upload (admin and teacher) → OVHCloud Object Storage
-- [ ] Link files to courses
-- [ ] Browse files by course
-- [ ] File list with name, upload date, uploader, linked course
-- [ ] Download file
-- [ ] Delete file (admin only)
-- [ ] Storage quota enforcement (100 GB for Basis, 1000 GB for Skole+ when available)
+- [x] File upload (admin and teacher) → OVHCloud Object Storage
+- [x] Link files to courses
+- [x] Browse files by course
+- [x] File list with name, upload date, uploader, linked course
+- [x] Download file
+- [x] Delete file (admin only)
+- [x] Storage quota enforcement (100 GB for Basis, 1000 GB for Skole+ when available)
 
 ### Landing page
 

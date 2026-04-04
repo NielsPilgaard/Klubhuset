@@ -19,6 +19,7 @@ import InvitationAcceptPage from './pages/InvitationAcceptPage'
 import SchoolSetupWizardPage from './pages/SchoolSetupWizardPage'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import FilesPage from './pages/FilesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="fag" element={<CoursesPage />} />
             <Route path="lokaler" element={<RoomsPage />} />
             <Route path="lokaler/:roomId/skema" element={<RoomSchedulePage />} />
+            <Route path="filer" element={<FilesPage />} />
             <Route path="indstillinger" element={<SkoleindstillingerPage />} />
           </Route>
         </Routes>
