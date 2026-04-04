@@ -293,6 +293,6 @@ public sealed class SubscriptionService(
     private static bool IsAllowedUrl(string url)
     {
         // Only allow relative URLs to prevent open redirects
-        return url.StartsWith("/");
+        return url.StartsWith('/');
     }
 }

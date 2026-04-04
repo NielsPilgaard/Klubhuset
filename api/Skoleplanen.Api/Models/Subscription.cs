@@ -24,7 +24,6 @@ public sealed class Subscription : IEntityTypeConfiguration<Subscription>
 {
     public Guid Id { get; set; }
 
-    [ForeignKey(nameof(School))]
     public Guid SchoolId { get; set; }
 
     public SubscriptionStatus Status { get; set; }
@@ -47,6 +46,8 @@ public sealed class Subscription : IEntityTypeConfiguration<Subscription>
     public void Configure(EntityTypeBuilder<Subscription> builder)
     {
         builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(s => s.UpdatedAt).HasDefaultValueSql("now()");
+        builder.Property(s => s.UpdatedAt)
+            .HasDefaultValueSql("now()")
+            .ValueGeneratedOnAddOrUpdate();
     }
 }

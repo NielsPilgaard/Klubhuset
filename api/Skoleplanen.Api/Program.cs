@@ -9,6 +9,7 @@ using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,7 +64,7 @@ builder.Services.AddScoped<StaffInvitationService>();
 builder.Services.AddScoped<Skoleplanen.Api.Services.SubscriptionService>();
 
 // Register Stripe services
-builder.Services.AddSingleton<Stripe.CustomerService>();
+builder.Services.AddSingleton<CustomerService>();
 builder.Services.AddSingleton<Stripe.Checkout.SessionService>();
 builder.Services.AddSingleton<Stripe.BillingPortal.SessionService>();
 
