@@ -28,11 +28,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null
   }
 
+  const parsed = keycloak.tokenParsed as Record<string, string> | undefined
+  const userName =
+    parsed?.['name'] ??
+    parsed?.['preferred_username'] ??
+    null
+
   return (
     <AuthContext.Provider
       value={{
         authenticated,
         token: keycloak.token,
+        userName,
         logout: () => keycloak.logout(),
       }}
     >

@@ -74,6 +74,17 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    to: '/eksporter',
+    label: 'Eksporter',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+    ),
+  },
 ]
 
 interface SidebarProps {
@@ -82,7 +93,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { logout } = useAuth()
+  const { logout, userName } = useAuth()
   const { data: school } = useQuery<SchoolSettingsDto>({
     queryKey: ['school-settings'],
     queryFn: () => api.get('/schools/settings'),
@@ -178,6 +189,23 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             Opsætningsguide
           </NavLink>
           <NavLink
+            to="/abonnement"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-brand-600 text-white'
+                  : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+              }`
+            }
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+              <line x1="1" y1="10" x2="23" y2="10" />
+            </svg>
+            Abonnement
+          </NavLink>
+          <NavLink
             to="/indstillinger"
             onClick={onClose}
             className={({ isActive }) =>
@@ -194,6 +222,16 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Indstillinger
           </NavLink>
+          {userName && (
+            <div className="flex items-center gap-2 px-3 py-2">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-brand-600 shrink-0">
+                <span className="text-xs font-semibold text-white leading-none">
+                  {userName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-xs text-brand-300 truncate">{userName}</span>
+            </div>
+          )}
           <button
             onClick={logout}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium text-brand-200 hover:bg-brand-800 hover:text-white transition-colors"

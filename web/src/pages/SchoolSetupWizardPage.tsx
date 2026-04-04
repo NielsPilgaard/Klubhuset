@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { StaffRole } from '../api/client'
@@ -32,6 +32,13 @@ function StepSchoolName({ onNext, onSkip }: { onNext: () => void; onSkip: () => 
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [savedName, setSavedName] = useState('')
+
+  useEffect(() => {
+    api.get<{ name: string }>('/schools/settings').then((s) => {
+      if (s.name) setName(s.name)
+    }).catch(() => {})
+  }, [])
 
   async function save() {
     if (!name.trim()) { onNext(); return }
@@ -39,12 +46,31 @@ function StepSchoolName({ onNext, onSkip }: { onNext: () => void; onSkip: () => 
     setError('')
     try {
       await api.put('/schools/settings', { name })
-      onNext()
+      setSavedName(name.trim())
     } catch {
       setError('Kunne ikke gemme skolenavn. Prøv igen.')
     } finally {
       setSaving(false)
     }
+  }
+
+  if (savedName) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="text-sm font-medium text-green-800">{savedName}</span>
+        </div>
+        <button
+          onClick={onNext}
+          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          Fortsæt
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -83,6 +109,7 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
   const [file, setFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [uploadedName, setUploadedName] = useState('')
 
   async function upload() {
     if (!file) { onNext(); return }
@@ -100,13 +127,32 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
         body: form,
         headers,
       })
-      if (res.ok) { onNext() }
+      if (res.ok) { setUploadedName(file.name) }
       else { setError('Kunne ikke uploade logo. Prøv igen fra indstillinger.') }
     } catch {
       setError('Uploaden fejlede. Du kan uploade logo fra Indstillinger.')
     } finally {
       setSaving(false)
     }
+  }
+
+  if (uploadedName) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="text-sm font-medium text-green-800">{uploadedName} uploadet</span>
+        </div>
+        <button
+          onClick={onNext}
+          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          Fortsæt
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -165,6 +211,8 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
     setBreaks((prev) => prev.filter((_, idx) => idx !== i))
   }
 
+  const [saved, setSaved] = useState(false)
+
   async function save() {
     setSaving(true)
     setError('')
@@ -179,12 +227,33 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
           durationMinutes: b.durationMinutes,
         })),
       })
-      onNext()
+      setSaved(true)
     } catch {
       setError('Kunne ikke gemme lektionsstruktur. Prøv igen.')
     } finally {
       setSaving(false)
     }
+  }
+
+  if (saved) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="text-sm font-medium text-green-800">
+            {dayStart}–{dayEnd}, {lessonDuration} min. lektioner{breaks.length > 0 ? `, ${breaks.length} pause(r)` : ''}
+          </span>
+        </div>
+        <button
+          onClick={onNext}
+          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          Fortsæt
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -340,7 +409,6 @@ function StepCreateItems({
     try {
       await Promise.all(names.map((name) => api.post(apiPath, { name })))
       setSaved(names)
-      onNext()
     } catch {
       setError(`Kunne ikke oprette ${plural.toLowerCase()}. Prøv igen.`)
     } finally {
@@ -348,7 +416,24 @@ function StepCreateItems({
     }
   }
 
-  if (saved.length > 0) return null
+  if (saved.length > 0) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0 mt-0.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="text-sm font-medium text-green-800">{saved.join(', ')}</span>
+        </div>
+        <button
+          onClick={onNext}
+          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          Fortsæt
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

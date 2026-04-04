@@ -20,6 +20,8 @@ import SchoolSetupWizardPage from './pages/SchoolSetupWizardPage'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import FilesPage from './pages/FilesPage'
+import BillingPage from './pages/BillingPage'
+import ExportsPage from './pages/ExportsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +69,8 @@ export default function App() {
             <Route path="lokaler" element={<RoomsPage />} />
             <Route path="lokaler/:roomId/skema" element={<RoomSchedulePage />} />
             <Route path="filer" element={<FilesPage />} />
+            <Route path="eksporter" element={<ExportsPage />} />
+            <Route path="abonnement" element={<BillingPage />} />
             <Route path="indstillinger" element={<SkoleindstillingerPage />} />
           </Route>
         </Routes>

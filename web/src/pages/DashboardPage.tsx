@@ -158,13 +158,13 @@ export default function DashboardPage() {
             <StatCard label="Lokaler" value={data!.roomCount} />
             <StatCard
               label="Skemaer"
-              value={`${data!.schemasComplete} / ${data!.schemasTotal}`}
-              sub="færdige"
+              value={data!.schemasTotal === 0 ? '–' : `${data!.schemasComplete} / ${data!.schemasTotal}`}
+              sub={data!.schemasTotal === 0 ? 'Ingen skemaer oprettet' : 'færdige'}
             />
             <StatCard
               label="Klasser u. skema"
-              value={data!.unassignedClasses.length}
-              sub={data!.unassignedClasses.length === 0 ? 'Alle klasser har skema' : 'mangler tildeling'}
+              value={data!.unassignedClasses?.filter(c => !c.hasSchema).length ?? 0}
+              sub={(data!.unassignedClasses?.filter(c => !c.hasSchema).length ?? 0) === 0 ? 'Alle klasser har et skema' : 'mangler skema'}
             />
           </>
         )}
@@ -211,33 +211,32 @@ export default function DashboardPage() {
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-700">Klasser som mangler lektioner</h2>
+              <h2 className="text-sm font-semibold text-gray-700">Klasser med mangler</h2>
             </div>
-            {data!.unassignedClasses.length === 0 ? (
+            {(data!.unassignedClasses?.length ?? 0) === 0 ? (
               <div className="px-5 py-8 text-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-brand-50 mb-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-500">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-500"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
-                <p className="text-sm text-gray-500">Alle lektioner er tildelt</p>
+                <p className="text-sm text-gray-500">Alle klasser har et færdigt skema</p>
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Klasse</th>
-                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">Tomme lektioner</th>
+                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data!.unassignedClasses.map((c) => (
+                  {data!.unassignedClasses?.map((c) => (
                     <tr key={c.classId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-2.5 font-medium text-gray-800">{c.className}</td>
                       <td className="px-5 py-2.5 text-right">
-                        <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">
-                          {c.emptySlots}
-                        </span>
+                        {c.hasSchema
+                          ? <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">{c.emptySlots}</span>
+                          : <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs font-medium">Intet skema</span>
+                        }
                       </td>
                     </tr>
                   ))}

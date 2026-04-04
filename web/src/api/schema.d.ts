@@ -4,6 +4,129 @@
  */
 
 export interface paths {
+    "/api/v1/billing/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SubscriptionDto"];
+                        "application/json": components["schemas"]["SubscriptionDto"];
+                        "text/json": components["schemas"]["SubscriptionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CheckoutRequest"];
+                    "text/json": components["schemas"]["CheckoutRequest"];
+                    "application/*+json": components["schemas"]["CheckoutRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CheckoutResponse"];
+                        "application/json": components["schemas"]["CheckoutResponse"];
+                        "text/json": components["schemas"]["CheckoutResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PortalRequest"];
+                    "text/json": components["schemas"]["PortalRequest"];
+                    "application/*+json": components["schemas"]["PortalRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CheckoutResponse"];
+                        "application/json": components["schemas"]["CheckoutResponse"];
+                        "text/json": components["schemas"]["CheckoutResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/classes": {
         parameters: {
             query?: never;
@@ -405,6 +528,105 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/hours/staff.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/hours/courses.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/schema.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1567,6 +1789,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stripe/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants": {
         parameters: {
             query?: never;
@@ -1795,6 +2050,13 @@ export interface components {
             /** Format: int32 */
             durationMinutes?: number;
         };
+        CheckoutRequest: {
+            successUrl?: string | null;
+            cancelUrl?: string | null;
+        };
+        CheckoutResponse: {
+            url?: string | null;
+        };
         ClassDto: {
             /** Format: uuid */
             id?: string;
@@ -1916,6 +2178,9 @@ export interface components {
             /** Format: int32 */
             stepsTotal?: number;
         };
+        PortalRequest: {
+            returnUrl?: string | null;
+        };
         RoomDto: {
             /** Format: uuid */
             id?: string;
@@ -1995,6 +2260,20 @@ export interface components {
         };
         /** @enum {string} */
         StaffRole: "Teacher" | "Aide" | "Substitute";
+        SubscriptionDto: {
+            status?: components["schemas"]["SubscriptionStatus"];
+            /** Format: date-time */
+            trialEnd?: string;
+            /** Format: date-time */
+            currentPeriodEnd?: string | null;
+            isTrialing?: boolean;
+            isActive?: boolean;
+            hasAccess?: boolean;
+            /** Format: int32 */
+            trialDaysLeft?: number;
+        };
+        /** @enum {string} */
+        SubscriptionStatus: "Trialing" | "Active" | "PastDue" | "Canceled" | "Unpaid";
         TemplateDto: {
             /** Format: uuid */
             id?: string;
@@ -2032,6 +2311,7 @@ export interface components {
             className?: string | null;
             /** Format: int32 */
             emptySlots?: number;
+            hasSchema?: boolean;
         };
         UpdateSchoolSettingsRequest: {
             name?: string | null;
