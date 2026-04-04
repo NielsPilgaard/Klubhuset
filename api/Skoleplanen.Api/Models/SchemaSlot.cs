@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skoleplanen.Api.Data;
 
 namespace Skoleplanen.Api.Models;
@@ -6,7 +8,7 @@ namespace Skoleplanen.Api.Models;
 /// One assigned lesson in a schema grid cell.
 /// Weekday + TimeSlot → Course + Teacher + optional Room + optional Aide.
 /// </summary>
-public sealed class SchemaSlot : ITenantScoped
+public sealed class SchemaSlot : ITenantScoped, IEntityTypeConfiguration<SchemaSlot>
 {
 	public Guid Id { get; set; }
 	public Guid TenantId { get; set; }
@@ -31,4 +33,18 @@ public sealed class SchemaSlot : ITenantScoped
 
 	public Guid? AideId { get; set; }
 	public Staff? Aide { get; set; }
+
+	// SchemaSlot has two FKs to Staff (Teacher and Aide) — configure explicitly
+	public void Configure(EntityTypeBuilder<SchemaSlot> builder)
+	{
+		builder.HasOne(s => s.Teacher)
+		       .WithMany()
+		       .HasForeignKey(s => s.TeacherId)
+		       .OnDelete(DeleteBehavior.Restrict);
+
+		builder.HasOne(s => s.Aide)
+		       .WithMany()
+		       .HasForeignKey(s => s.AideId)
+		       .OnDelete(DeleteBehavior.Restrict);
+	}
 }

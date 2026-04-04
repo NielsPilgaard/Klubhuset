@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skoleplanen.Api.Data;
 
 namespace Skoleplanen.Api.Models;
@@ -10,7 +12,7 @@ public enum InvitationStatus
     Expired,
 }
 
-public sealed class StaffInvitation : ITenantScoped
+public sealed class StaffInvitation : ITenantScoped, IEntityTypeConfiguration<StaffInvitation>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
@@ -37,4 +39,14 @@ public sealed class StaffInvitation : ITenantScoped
         AcceptedAt.HasValue ? InvitationStatus.Accepted
         : DateTimeOffset.UtcNow > ExpiresAt ? InvitationStatus.Expired
         : InvitationStatus.Pending;
+
+    public void Configure(EntityTypeBuilder<StaffInvitation> builder)
+    {
+        builder.HasIndex(i => i.Token).IsUnique();
+        builder.HasOne(i => i.Staff)
+               .WithMany()
+               .HasForeignKey(i => i.StaffId)
+               .OnDelete(DeleteBehavior.Cascade);
+        builder.Ignore(i => i.Status);
+    }
 }

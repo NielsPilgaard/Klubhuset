@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Skoleplanen.Api.Models;
 
@@ -18,7 +19,7 @@ public enum SubscriptionStatus
 /// </summary>
 [Index(nameof(StripeSubscriptionId))]
 [Index(nameof(StripeCustomerId))]
-public sealed class Subscription
+public sealed class Subscription : IEntityTypeConfiguration<Subscription>
 {
     public Guid Id { get; set; }
 
@@ -41,4 +42,10 @@ public sealed class Subscription
 
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    public void Configure(EntityTypeBuilder<Subscription> builder)
+    {
+        builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
+        builder.Property(s => s.UpdatedAt).HasDefaultValueSql("now()");
+    }
 }

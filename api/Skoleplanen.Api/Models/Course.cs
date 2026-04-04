@@ -1,10 +1,12 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skoleplanen.Api.Data;
 using System.ComponentModel.DataAnnotations;
 
 namespace Skoleplanen.Api.Models;
 
 /// <summary>Fag — a subject (e.g. dansk, matematik, idræt).</summary>
-public sealed class Course : ITenantScoped
+public sealed class Course : ITenantScoped, IEntityTypeConfiguration<Course>
 {
 	public Guid Id { get; set; }
 	public Guid TenantId { get; set; }
@@ -16,4 +18,9 @@ public sealed class Course : ITenantScoped
 	public string? Description { get; set; }
 
 	public DateTimeOffset CreatedAt { get; init; }
+
+	public void Configure(EntityTypeBuilder<Course> builder)
+	{
+		builder.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
+	}
 }

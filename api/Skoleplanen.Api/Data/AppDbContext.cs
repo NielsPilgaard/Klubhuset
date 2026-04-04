@@ -25,48 +25,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	{
 		base.OnModelCreating(modelBuilder);
 
-		modelBuilder.Entity<School>(e => e.Property(s => s.CreatedAt).HasDefaultValueSql("now()"));
-
-		modelBuilder.Entity<StaffInvitation>(e =>
-		{
-			e.HasIndex(i => i.Token).IsUnique();
-			e.HasOne(i => i.Staff)
-			 .WithMany()
-			 .HasForeignKey(i => i.StaffId)
-			 .OnDelete(DeleteBehavior.Cascade);
-			e.Ignore(i => i.Status);
-		});
-
-		modelBuilder.Entity<Course>(e => e.Property(c => c.CreatedAt).HasDefaultValueSql("now()"));
-
-		modelBuilder.Entity<SchoolFile>(e =>
-		{
-			e.Property(f => f.UploadedAt).HasDefaultValueSql("now()");
-			e.HasOne(f => f.Course)
-			 .WithMany()
-			 .HasForeignKey(f => f.CourseId)
-			 .OnDelete(DeleteBehavior.SetNull);
-		});
-
-		modelBuilder.Entity<Subscription>(e =>
-		{
-			e.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
-			e.Property(s => s.UpdatedAt).HasDefaultValueSql("now()");
-		});
-
-		// SchemaSlot has two FK to Staff (Teacher and Aide) — configure explicitly
-		modelBuilder.Entity<SchemaSlot>(e =>
-		{
-			e.HasOne(s => s.Teacher)
-			 .WithMany()
-			 .HasForeignKey(s => s.TeacherId)
-			 .OnDelete(DeleteBehavior.Restrict);
-
-			e.HasOne(s => s.Aide)
-			 .WithMany()
-			 .HasForeignKey(s => s.AideId)
-			 .OnDelete(DeleteBehavior.Restrict);
-		});
+		modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
 		// All tenant-scoped entities must implement ITenantScoped.
 		// The global query filter below ensures every query is automatically
