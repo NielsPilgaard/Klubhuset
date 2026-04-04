@@ -1,6 +1,7 @@
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Util;
 using Microsoft.Extensions.Options;
 
@@ -40,7 +41,11 @@ public static class S3Extensions
 
         if (!await AmazonS3Util.DoesS3BucketExistV2Async(s3, opts.BucketName))
         {
-            await s3.PutBucketAsync(opts.BucketName);
+            await s3.PutBucketAsync(new PutBucketRequest
+            {
+                BucketName = opts.BucketName,
+                BucketRegionName = RegionEndpoint.EUWest1.SystemName,
+            });
         }
     }
 }
