@@ -69,12 +69,6 @@ public sealed class SubscriptionService(
         string cancelUrl,
         CancellationToken ct = default)
     {
-        // Validate URLs
-        if (!IsAllowedUrl(successUrl) || !IsAllowedUrl(cancelUrl))
-        {
-            throw new InvalidOperationException("Invalid success or cancel URL");
-        }
-
         var sub = await GetOrCreateAsync(schoolId, ct);
         var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, ct);
 
@@ -126,12 +120,6 @@ public sealed class SubscriptionService(
         string returnUrl,
         CancellationToken ct = default)
     {
-        // Validate URL
-        if (!IsAllowedUrl(returnUrl))
-        {
-            throw new InvalidOperationException("Invalid return URL");
-        }
-
         var sub = await GetOrCreateAsync(schoolId, ct);
 
         if (sub.StripeCustomerId is null)
@@ -288,11 +276,5 @@ public sealed class SubscriptionService(
         sub.Status = SubscriptionStatus.PastDue;
         sub.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
-    }
-
-    private static bool IsAllowedUrl(string url)
-    {
-        // Only allow relative URLs to prevent open redirects
-        return url.StartsWith('/');
     }
 }

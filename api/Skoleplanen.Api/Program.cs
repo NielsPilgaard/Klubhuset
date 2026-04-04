@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Skoleplanen.Api;
 using Skoleplanen.Api.Auth;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
@@ -47,6 +48,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddOptions<ApplicationOptions>()
+	   .BindConfiguration(ApplicationOptions.SectionName)
+	   .ValidateDataAnnotations()
+	   .ValidateOnStart();
 
 builder.Services.AddOptions<SmtpOptions>()
 	   .BindConfiguration(SmtpOptions.SectionName)

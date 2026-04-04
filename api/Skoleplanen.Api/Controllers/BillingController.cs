@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Skoleplanen.Api.Models;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Tenancy;
@@ -11,7 +12,8 @@ namespace Skoleplanen.Api.Controllers;
 [Authorize(Roles = "admin")]
 public sealed class BillingController(
     SubscriptionService subscriptionService,
-    ITenantContext tenantContext) : ControllerBase
+    ITenantContext tenantContext,
+    IOptions<ApplicationOptions> appOptions) : ControllerBase
 {
     public record SubscriptionDto(
         SubscriptionStatus Status,
@@ -22,8 +24,6 @@ public sealed class BillingController(
         bool HasAccess,
         int TrialDaysLeft);
 
-    public record CheckoutRequest(string SuccessUrl, string CancelUrl);
-    public record PortalRequest(string ReturnUrl);
     public record CheckoutResponse(string Url);
 
     [HttpGet("subscription")]
@@ -34,34 +34,24 @@ public sealed class BillingController(
     }
 
     [HttpPost("checkout")]
-    public async Task<ActionResult<CheckoutResponse>> CreateCheckout(
-        [FromBody] CheckoutRequest req,
-        CancellationToken ct)
+    public async Task<ActionResult<CheckoutResponse>> CreateCheckout(CancellationToken ct)
     {
-        // Validate redirect URLs
-        if (!IsValidRedirectUrl(req.SuccessUrl) || !IsValidRedirectUrl(req.CancelUrl))
-        {
-            return BadRequest("Invalid success or cancel URL");
-        }
+        var baseUrl = appOptions.Value.BaseUrl;
+        var successUrl = $"{baseUrl}/abonnement?success=true";
+        var cancelUrl = $"{baseUrl}/abonnement";
 
         var url = await subscriptionService.CreateCheckoutSessionAsync(
-            tenantContext.TenantId, req.SuccessUrl, req.CancelUrl, ct);
+            tenantContext.TenantId, successUrl, cancelUrl, ct);
         return Ok(new CheckoutResponse(url));
     }
 
     [HttpPost("portal")]
-    public async Task<ActionResult<CheckoutResponse>> CreatePortal(
-        [FromBody] PortalRequest req,
-        CancellationToken ct)
+    public async Task<ActionResult<CheckoutResponse>> CreatePortal(CancellationToken ct)
     {
-        // Validate return URL
-        if (!IsValidRedirectUrl(req.ReturnUrl))
-        {
-            return BadRequest("Invalid return URL");
-        }
+        var returnUrl = $"{appOptions.Value.BaseUrl}/abonnement";
 
         var url = await subscriptionService.CreateBillingPortalSessionAsync(
-            tenantContext.TenantId, req.ReturnUrl, ct);
+            tenantContext.TenantId, returnUrl, ct);
         return Ok(new CheckoutResponse(url));
     }
 
@@ -81,11 +71,5 @@ public sealed class BillingController(
             isActive,
             hasAccess,
             trialDaysLeft);
-    }
-
-    private static bool IsValidRedirectUrl(string url)
-    {
-        // Only allow relative URLs to prevent open redirects
-        return url.StartsWith("/");
     }
 }
