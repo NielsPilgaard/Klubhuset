@@ -13,7 +13,7 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
     {
         var request = new PutObjectRequest
         {
-            BucketName = _options.BucketName,
+            BucketName = _options.DefaultBucketName,
             Key = key,
             InputStream = content,
             ContentType = contentType,
@@ -24,6 +24,6 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 
         // URL-encode the key to ensure reserved/special characters are properly escaped
         var encodedKey = WebUtility.UrlEncode(key.TrimStart('/'));
-        return $"{_options.PublicEndpoint.TrimEnd('/')}/{_options.BucketName}/{encodedKey}";
+        return $"{_options.PublicEndpoint.TrimEnd('/')}/{_options.DefaultBucketName}/{encodedKey}";
     }
 }

@@ -18,6 +18,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<TimeSlot> TimeSlots => Set<TimeSlot>();
 	public DbSet<Schema> Schemas => Set<Schema>();
 	public DbSet<SchemaSlot> SchemaSlots => Set<SchemaSlot>();
+	public DbSet<SchoolFile> SchoolFiles => Set<SchoolFile>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -41,6 +42,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 		modelBuilder.Entity<Course>(e =>
 		{
 			e.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
+		});
+
+		modelBuilder.Entity<SchoolFile>(e =>
+		{
+			e.Property(f => f.UploadedAt).HasDefaultValueSql("now()");
+			e.HasOne(f => f.Course)
+			 .WithMany()
+			 .HasForeignKey(f => f.CourseId)
+			 .OnDelete(DeleteBehavior.SetNull);
 		});
 
 		// SchemaSlot has two FK to Staff (Teacher and Aide) — configure explicitly

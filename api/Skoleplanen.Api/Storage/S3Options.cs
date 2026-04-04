@@ -16,7 +16,7 @@ public sealed class S3Options
 	public required string SecretKey { get; init; }
 
 	[Required(AllowEmptyStrings = false)]
-	public required string BucketName { get; init; }
+	public required string DefaultBucketName { get; init; }
 
 	[Required(AllowEmptyStrings = false)]
 	public required string PublicEndpoint { get; init; }

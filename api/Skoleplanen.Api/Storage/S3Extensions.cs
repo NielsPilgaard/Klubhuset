@@ -1,4 +1,3 @@
-using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -22,7 +21,6 @@ public static class S3Extensions
             {
                 ServiceURL = opts.ServiceUrl,
                 ForcePathStyle = true,
-                AuthenticationRegion = RegionEndpoint.EUWest1.SystemName,
             };
 
             return new AmazonS3Client(new BasicAWSCredentials(opts.AccessKey, opts.SecretKey), config);
@@ -39,13 +37,15 @@ public static class S3Extensions
         var s3 = services.GetRequiredService<IAmazonS3>();
         var opts = services.GetRequiredService<IOptions<S3Options>>().Value;
 
-        if (!await AmazonS3Util.DoesS3BucketExistV2Async(s3, opts.BucketName))
+        var exists = await AmazonS3Util.DoesS3BucketExistV2Async(s3, opts.DefaultBucketName);
+        if (exists)
         {
-            await s3.PutBucketAsync(new PutBucketRequest
-            {
-                BucketName = opts.BucketName,
-                BucketRegionName = RegionEndpoint.EUWest1.SystemName,
-            });
+            return;
         }
+
+        await s3.PutBucketAsync(new PutBucketRequest
+        {
+            BucketName = opts.DefaultBucketName,
+        });
     }
 }
