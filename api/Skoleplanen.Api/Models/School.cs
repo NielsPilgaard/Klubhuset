@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skoleplanen.Api.Data;
 
 namespace Skoleplanen.Api.Models;
@@ -6,7 +8,7 @@ namespace Skoleplanen.Api.Models;
 /// <summary>
 /// Represents a tenant (school). TenantId == Id for the root entity.
 /// </summary>
-public sealed class School : ITenantScoped
+public sealed class School : ITenantScoped, IEntityTypeConfiguration<School>
 {
 	public Guid Id { get; set; }
 	public Guid TenantId => Id;
@@ -24,4 +26,9 @@ public sealed class School : ITenantScoped
 	public string? LogoUrl { get; set; }
 
 	public DateTimeOffset CreatedAt { get; init; }
+
+	public void Configure(EntityTypeBuilder<School> builder)
+	{
+		builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
+	}
 }

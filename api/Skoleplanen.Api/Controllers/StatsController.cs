@@ -24,7 +24,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 
 	public record HoursPerCourse(Guid CourseId, string CourseName, Guid ClassId, string ClassName, double Hours);
 	public record HoursPerStaff(Guid StaffId, string StaffName, StaffRole Role, double Hours);
-	public record UnassignedClass(Guid ClassId, string ClassName, int EmptySlots);
+	public record UnassignedClass(Guid ClassId, string ClassName, int EmptySlots, bool HasSchema);
 
 	[HttpGet("dashboard")]
 	[Authorize(Roles = "admin")]
@@ -77,7 +77,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 			.OrderBy(h => h.StaffName)
 			.ToList();
 
-		// Unassigned slots: classes with active schemas that have time slots without assignments
+		// Unassigned slots: classes with no active schema, or active schemas with empty time slots
 		var activeSchemas = await db.Schemas
 			.AsNoTrackingWithIdentityResolution()
 			.Where(s => s.IsActive)
@@ -87,19 +87,32 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 
 		var classTimeSlots = await db.TimeSlots.AsNoTracking().ToListAsync(ct);
 
-		var unassigned = activeSchemas.Select(schema =>
+		var activeSchemaClassIds = activeSchemas.Select(s => s.ClassId).ToHashSet();
+
+		var allClasses = await db.Classes.AsNoTracking().ToListAsync(ct);
+
+		// Classes with no active schema at all
+		var classesWithoutSchema = allClasses
+			.Where(c => !activeSchemaClassIds.Contains(c.Id))
+			.Select(c => new UnassignedClass(c.Id, c.Name, 0, HasSchema: false));
+
+		// Classes with an active schema but empty slots
+		var classesWithGaps = activeSchemas.Select(schema =>
 		{
-			// Time slots applicable to this class
 			var applicable = classTimeSlots
 				.Where(ts => ts.ClassId == schema.ClassId || ts.ClassId == null)
 				.ToList();
-			// Count weekday × timeslot combinations with no assignment
 			var emptySlots = applicable.Count * 5 - schema.Slots.Count;
-			return new UnassignedClass(schema.ClassId, schema.Class.Name, Math.Max(0, emptySlots));
+			return new UnassignedClass(schema.ClassId, schema.Class.Name, Math.Max(0, emptySlots), HasSchema: true);
 		})
-		.Where(u => u.EmptySlots > 0)
-		.OrderByDescending(u => u.EmptySlots)
-		.ToList();
+		.Where(u => u.EmptySlots > 0);
+
+		var unassigned = classesWithoutSchema
+			.Concat(classesWithGaps)
+			.OrderBy(u => u.HasSchema)
+			.ThenByDescending(u => u.EmptySlots)
+			.ThenBy(u => u.ClassName)
+			.ToList();
 
 		return Ok(new DashboardStats(
 			classCount, staffCount, courseCount, roomCount,

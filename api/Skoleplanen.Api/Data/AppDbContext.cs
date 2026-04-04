@@ -19,30 +19,25 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<Schema> Schemas => Set<Schema>();
 	public DbSet<SchemaSlot> SchemaSlots => Set<SchemaSlot>();
 	public DbSet<SchoolFile> SchoolFiles => Set<SchoolFile>();
+	public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
 
-		modelBuilder.Entity<School>(e =>
-		{
-			e.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
-		});
+		modelBuilder.Entity<School>(e => e.Property(s => s.CreatedAt).HasDefaultValueSql("now()"));
 
 		modelBuilder.Entity<StaffInvitation>(e =>
 		{
 			e.HasIndex(i => i.Token).IsUnique();
-			e.HasOne<Staff>(i => i.Staff)
+			e.HasOne(i => i.Staff)
 			 .WithMany()
 			 .HasForeignKey(i => i.StaffId)
 			 .OnDelete(DeleteBehavior.Cascade);
 			e.Ignore(i => i.Status);
 		});
 
-		modelBuilder.Entity<Course>(e =>
-		{
-			e.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
-		});
+		modelBuilder.Entity<Course>(e => e.Property(c => c.CreatedAt).HasDefaultValueSql("now()"));
 
 		modelBuilder.Entity<SchoolFile>(e =>
 		{
@@ -51,6 +46,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 			 .WithMany()
 			 .HasForeignKey(f => f.CourseId)
 			 .OnDelete(DeleteBehavior.SetNull);
+		});
+
+		modelBuilder.Entity<Subscription>(e =>
+		{
+			e.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
+			e.Property(s => s.UpdatedAt).HasDefaultValueSql("now()");
 		});
 
 		// SchemaSlot has two FK to Staff (Teacher and Aide) — configure explicitly

@@ -29,6 +29,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 		   options.Authority = builder.Configuration["Keycloak:Authority"];
 		   options.Audience = builder.Configuration["Keycloak:Audience"];
 		   options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+		   // Preserve Keycloak's original claim names (e.g. "preferred_username", "name")
+		   // instead of mapping them to WS-Federation URIs.
+		   options.MapInboundClaims = false;
 
 		   // Allow API to reach Keycloak internally (container-to-container) while
 		   // still validating tokens issued by the public issuer URL.
@@ -56,6 +59,15 @@ builder.Services.AddObjectStorage();
 builder.Services.AddScoped<ConflictDetectionService>();
 
 builder.Services.AddScoped<StaffInvitationService>();
+
+builder.Services.AddScoped<Skoleplanen.Api.Services.SubscriptionService>();
+
+// Configure Stripe global API key
+var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
+if (!string.IsNullOrEmpty(stripeSecretKey))
+{
+    Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
+}
 
 builder.Services.AddControllers()
 	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

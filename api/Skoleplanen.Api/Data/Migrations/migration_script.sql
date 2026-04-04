@@ -308,3 +308,102 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404051806_Add_SchoolFile') THEN
+    CREATE TABLE "SchoolFiles" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "FileName" character varying(500) NOT NULL,
+        "ContentType" character varying(200) NOT NULL,
+        "SizeBytes" bigint NOT NULL,
+        "StorageKey" character varying(1000) NOT NULL,
+        "Url" character varying(2000) NOT NULL,
+        "CourseId" uuid,
+        "UploadedBy" character varying(200) NOT NULL,
+        "UploadedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_SchoolFiles" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SchoolFiles_Courses_CourseId" FOREIGN KEY ("CourseId") REFERENCES "Courses" ("Id") ON DELETE SET NULL
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404051806_Add_SchoolFile') THEN
+    CREATE INDEX "IX_SchoolFiles_CourseId" ON "SchoolFiles" ("CourseId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404051806_Add_SchoolFile') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260404051806_Add_SchoolFile', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404060432_Add_Subscription') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260404060432_Add_Subscription', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404065008_Transactions') THEN
+    CREATE TABLE "Subscriptions" (
+        "Id" uuid NOT NULL,
+        "SchoolId" uuid NOT NULL,
+        "Status" integer NOT NULL,
+        "StripeCustomerId" text,
+        "StripeSubscriptionId" text,
+        "CurrentPeriodEnd" timestamp with time zone,
+        "TrialEnd" timestamp with time zone NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        "UpdatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_Subscriptions" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404065008_Transactions') THEN
+    CREATE UNIQUE INDEX "IX_Subscriptions_SchoolId" ON "Subscriptions" ("SchoolId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404065008_Transactions') THEN
+    CREATE INDEX "IX_Subscriptions_StripeCustomerId" ON "Subscriptions" ("StripeCustomerId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404065008_Transactions') THEN
+    CREATE INDEX "IX_Subscriptions_StripeSubscriptionId" ON "Subscriptions" ("StripeSubscriptionId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404065008_Transactions') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260404065008_Transactions', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+

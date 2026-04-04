@@ -21,10 +21,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     Description = table.Column<string>(type: "character varying(8000)", maxLength: 8000, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Classes", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_Classes", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "Courses",
@@ -36,10 +33,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     Description = table.Column<string>(type: "character varying(8000)", maxLength: 8000, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Courses", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_Courses", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "Rooms",
@@ -52,10 +46,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     Capacity = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Rooms", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_Rooms", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "Schools",
@@ -69,10 +60,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     LogoUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Schools", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_Schools", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "Staff",
@@ -87,10 +75,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     KeycloakSubject = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Staff", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_Staff", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "TimeSlotTemplates",
@@ -104,10 +89,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     ActiveDays = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TimeSlotTemplates", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_TimeSlotTemplates", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "Schemas",
