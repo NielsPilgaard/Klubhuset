@@ -3255,6 +3255,9 @@
           "emptySlots": {
             "type": "integer",
             "format": "int32"
+          },
+          "hasSchema": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

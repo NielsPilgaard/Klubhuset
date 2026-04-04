@@ -1,3 +1,5 @@
+import Logo from '../components/Logo'
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
@@ -5,7 +7,10 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+          <div className="flex items-center gap-2">
+            <Logo variant="light" size={28} />
+            <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+          </div>
           <div className="flex items-center gap-4">
             <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">
               Log ind
@@ -63,7 +68,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Konfliktkontrol i realtid"
-              description="Lærere og lokaler kan ikke dobbeltbookes. Systemet advarer med det samme."
+              description="Systemet advarer med det samme om dobbeltbookinger."
             />
             <FeatureCard
               icon={
@@ -73,7 +78,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Skemabygger"
-              description="Træk og slip lektioner på plads. Simpelt og overskueligt — selv for sekretæren."
+              description="Træk og slip lektioner på plads. Simpelt og overskueligt — for alle."
             />
             <FeatureCard
               icon={
@@ -85,7 +90,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Medarbejderoversigt"
-              description="Se alle læreres skemaer samlet. Find vikarer og planlæg bemanding nemt."
+              description="Se alle medarbejderes skemaer samlet — lærere, pædagoger og vikarer."
             />
             <FeatureCard
               icon={
@@ -210,7 +215,10 @@ export default function LandingPage() {
       {/* Page footer */}
       <footer className="py-8 px-6 bg-brand-900 text-brand-300 text-sm text-center">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-display text-white font-semibold">Skoleplanen</span>
+          <div className="flex items-center gap-2">
+            <Logo variant="dark" size={22} />
+            <span className="font-display text-white font-semibold">Skoleplanen</span>
+          </div>
           <span>© {new Date().getFullYear()} Skoleplanen · Data opbevares i EU</span>
           <a href="/login" className="hover:text-white transition-colors">Log ind</a>
         </div>

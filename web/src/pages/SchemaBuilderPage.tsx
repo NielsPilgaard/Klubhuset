@@ -14,6 +14,13 @@ import {
 } from '../api/client'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
+const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const
+type WeekdayName = typeof WEEKDAY_NAMES[number]
+function weekdayLabel(day: string | undefined): string {
+  if (!day) return ''
+  const idx = WEEKDAY_NAMES.indexOf(day as WeekdayName)
+  return idx >= 0 ? WEEKDAYS[idx] : day
+}
 const COURSE_COLORS = [
   'bg-blue-100 text-blue-800 border-blue-200',
   'bg-purple-100 text-purple-800 border-purple-200',
@@ -350,8 +357,10 @@ export default function SchemaBuilderPage() {
   const slotMap = useMemo(() => {
     const map: Record<string, Record<number, SlotDto>> = {}
     for (const s of slots) {
+      if (!s.timeSlotId || s.weekday === undefined) continue
+      const weekdayNum = typeof s.weekday === 'number' ? s.weekday : WEEKDAYS.indexOf(s.weekday as string) + 1
       if (!map[s.timeSlotId]) map[s.timeSlotId] = {}
-      map[s.timeSlotId][s.weekday] = s
+      map[s.timeSlotId][weekdayNum] = s
     }
     return map
   }, [slots])
@@ -360,8 +369,8 @@ export default function SchemaBuilderPage() {
   const conflictSlotIds = useMemo(() => {
     const ids = new Set<string>()
     for (const c of conflicts) {
-      ids.add(c.slotAId)
-      ids.add(c.slotBId)
+      if (c.slotAId) ids.add(c.slotAId)
+      if (c.slotBId) ids.add(c.slotBId)
     }
     return ids
   }, [conflicts])
@@ -370,19 +379,19 @@ export default function SchemaBuilderPage() {
   const courseIds = useMemo(() => {
     const seen: string[] = []
     for (const s of slots) {
-      if (!seen.includes(s.courseId)) seen.push(s.courseId)
+      if (s.courseId && !seen.includes(s.courseId)) seen.push(s.courseId)
     }
     return seen
   }, [slots])
 
   const sortedTimeSlots = useMemo(
-    () => [...(timeSlots ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    () => [...(timeSlots ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     [timeSlots]
   )
 
   const handleCellSaved = (updated: SlotsAndConflictsDto) => {
-    setLocalSlots(updated.slots)
-    setLocalConflicts(updated.conflicts)
+    setLocalSlots(updated.slots ?? null)
+    setLocalConflicts(updated.conflicts ?? null)
     setPanelCell(null)
     // Also update query cache
     qc.setQueryData<SchemaDetailDto>(['schema', classId, schemaId], (old) =>
@@ -532,10 +541,10 @@ export default function SchemaBuilderPage() {
                     {/* Time label */}
                     <div className="flex flex-col justify-center text-right pr-3">
                       <span className="text-xs font-medium text-gray-600 tabular-nums">
-                        {ts.startTime.slice(0, 5)}
+                        {ts.startTime?.slice(0, 5)}
                       </span>
                       <span className="text-xs text-gray-400 tabular-nums">
-                        {ts.endTime.slice(0, 5)}
+                        {ts.endTime?.slice(0, 5)}
                       </span>
                       {ts.label && (
                         <span className="text-xs text-gray-400 truncate">{ts.label}</span>
@@ -544,16 +553,16 @@ export default function SchemaBuilderPage() {
 
                     {/* 5 day cells */}
                     {[1, 2, 3, 4, 5].map((weekday) => {
-                      const slot = slotMap[ts.id]?.[weekday] ?? null
-                      const isConflict = slot ? conflictSlotIds.has(slot.id) : false
-                      const colorClass = slot ? getCourseColor(slot.courseId, courseIds) : ''
+                      const slot = ts.id ? slotMap[ts.id]?.[weekday] ?? null : null
+                      const isConflict = slot ? conflictSlotIds.has(slot.id ?? '') : false
+                      const colorClass = slot ? getCourseColor(slot.courseId ?? '', courseIds) : ''
                       return (
                         <div key={weekday} className="h-20">
                           <GridCell
                             slot={slot}
                             isConflict={isConflict}
                             courseColorClass={colorClass}
-                            onClick={() => setPanelCell({ timeSlotId: ts.id, weekday })}
+                            onClick={() => ts.id && setPanelCell({ timeSlotId: ts.id, weekday })}
                           />
                         </div>
                       )
@@ -563,8 +572,17 @@ export default function SchemaBuilderPage() {
               </div>
 
               {sortedTimeSlots.length === 0 && (
-                <div className="text-center py-12 text-gray-400 text-sm">
-                  Ingen lektioner defineret endnu. Opsæt en lektionsstruktur for klassen.
+                <div className="text-center py-16">
+                  <p className="text-gray-500 text-sm font-medium">Ingen lektionsstruktur defineret</p>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Opsæt skoledagens lektioner og pauser, så kan du begynde at bygge skemaet.
+                  </p>
+                  <Link
+                    to="/setup"
+                    className="inline-block mt-4 px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+                  >
+                    Opsæt lektionsstruktur
+                  </Link>
                 </div>
               )}
             </div>
@@ -590,7 +608,7 @@ export default function SchemaBuilderPage() {
                     <div>
                       <p className="text-sm font-medium text-red-800">{conflictTypeLabel(c.type)}</p>
                       <p className="text-xs text-red-600 mt-0.5">
-                        {c.resourceName} · {WEEKDAYS[c.weekday - 1]} {c.startTime.slice(0, 5)}–{c.endTime.slice(0, 5)}
+                        {c.resourceName} · {weekdayLabel(c.weekday)} {c.startTime?.slice(0, 5)}–{c.endTime?.slice(0, 5)}
                       </p>
                     </div>
                   </div>

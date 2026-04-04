@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
+import Logo from './Logo'
 
 interface SchoolSettingsDto {
   name: string
@@ -128,7 +129,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 alt=""
                 className="h-7 w-7 rounded object-contain shrink-0 bg-white/10"
               />
-            ) : null}
+            ) : (
+              <Logo variant="dark" size={28} />
+            )}
             <div className="min-w-0">
               <span className="block font-display text-sm font-semibold tracking-tight text-white truncate">
                 {school?.name ?? 'Skoleplanen'}
