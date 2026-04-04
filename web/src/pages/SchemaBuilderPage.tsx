@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { usePageTitle } from '../hooks/usePageTitle'
 import {
   api,
   SchemaDetailDto,
@@ -294,6 +295,7 @@ function conflictTypeLabel(type: ConflictInfo['type']): string {
 }
 
 export default function SchemaBuilderPage() {
+  usePageTitle('Skema')
   const { classId, schemaId } = useParams<{ classId: string; schemaId: string }>()
   const qc = useQueryClient()
 
@@ -578,10 +580,10 @@ export default function SchemaBuilderPage() {
                     Opsæt skoledagens lektioner og pauser, så kan du begynde at bygge skemaet.
                   </p>
                   <Link
-                    to="/setup"
+                    to="/indstillinger"
                     className="inline-block mt-4 px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                   >
-                    Opsæt lektionsstruktur
+                    Gå til indstillinger
                   </Link>
                 </div>
               )}

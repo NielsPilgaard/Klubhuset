@@ -199,6 +199,56 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.Status, copy.IsActive));
 	}
 
+	[HttpPost("{schemaId:guid}/copy-to/{targetClassId:guid}")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult<SchemaDto>> CopyToClass(Guid classId, Guid schemaId, Guid targetClassId,
+		[FromBody] CopySchemaRequest req, CancellationToken ct)
+	{
+		var source = await db.Schemas
+							 .Include(s => s.Slots)
+							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		if (source is null)
+		{
+			return NotFound();
+		}
+
+		var targetExists = await db.Classes.AnyAsync(c => c.Id == targetClassId, ct);
+		if (!targetExists)
+		{
+			return NotFound();
+		}
+
+		var copy = new Schema
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenant.TenantId,
+			ClassId = targetClassId,
+			Name = req.Name,
+		};
+		db.Schemas.Add(copy);
+
+		foreach (var slot in source.Slots)
+		{
+			db.SchemaSlots.Add(new SchemaSlot
+			{
+				Id = Guid.NewGuid(),
+				TenantId = tenant.TenantId,
+				SchemaId = copy.Id,
+				TimeSlotId = slot.TimeSlotId,
+				Weekday = slot.Weekday,
+				CourseId = slot.CourseId,
+				TeacherId = slot.TeacherId,
+				RoomId = slot.RoomId,
+				AideId = slot.AideId,
+			});
+		}
+
+		await db.SaveChangesAsync(ct);
+		return CreatedAtAction(nameof(GetById),
+							   new { classId = targetClassId, schemaId = copy.Id },
+							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.Status, copy.IsActive));
+	}
+
 	[HttpDelete("{schemaId:guid}")]
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult> Delete(Guid classId, Guid schemaId, CancellationToken ct)

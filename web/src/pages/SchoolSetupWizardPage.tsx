@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { StaffRole } from '../api/client'
+import { TimeInput } from '../components/TimeInput'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,7 +18,7 @@ interface WizardStep {
 const STEPS: WizardStep[] = [
   { id: 1, title: 'Skolenavn', description: 'Bekræft eller opdater skolens navn' },
   { id: 2, title: 'Logo', description: 'Upload et logo til skolen' },
-  { id: 3, title: 'Lektionsstruktur', description: 'Definér varighed og pauser for en normal skoledag' },
+  { id: 3, title: 'Skoledag', description: 'Definér varighed og pauser for en normal skoledag' },
   { id: 4, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
   { id: 5, title: 'Fag', description: 'Tilføj fag, f.eks. dansk, matematik' },
   { id: 6, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
@@ -32,7 +34,6 @@ function StepSchoolName({ onNext, onSkip }: { onNext: () => void; onSkip: () => 
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [savedName, setSavedName] = useState('')
 
   useEffect(() => {
     api.get<{ name: string }>('/schools/settings').then((s) => {
@@ -46,31 +47,12 @@ function StepSchoolName({ onNext, onSkip }: { onNext: () => void; onSkip: () => 
     setError('')
     try {
       await api.put('/schools/settings', { name })
-      setSavedName(name.trim())
+      onNext()
     } catch {
       setError('Kunne ikke gemme skolenavn. Prøv igen.')
     } finally {
       setSaving(false)
     }
-  }
-
-  if (savedName) {
-    return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span className="text-sm font-medium text-green-800">{savedName}</span>
-        </div>
-        <button
-          onClick={onNext}
-          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          Fortsæt
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -109,7 +91,13 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
   const [file, setFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [uploadedName, setUploadedName] = useState('')
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.get<{ logoUrl: string | null }>('/schools/settings')
+      .then(s => { if (s.logoUrl) setExistingLogoUrl(s.logoUrl) })
+      .catch(() => {})
+  }, [])
 
   async function upload() {
     if (!file) { onNext(); return }
@@ -127,7 +115,7 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
         body: form,
         headers,
       })
-      if (res.ok) { setUploadedName(file.name) }
+      if (res.ok) { onNext() }
       else { setError('Kunne ikke uploade logo. Prøv igen fra indstillinger.') }
     } catch {
       setError('Uploaden fejlede. Du kan uploade logo fra Indstillinger.')
@@ -136,32 +124,21 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
     }
   }
 
-  if (uploadedName) {
-    return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span className="text-sm font-medium text-green-800">{uploadedName} uploadet</span>
-        </div>
-        <button
-          onClick={onNext}
-          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          Fortsæt
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-5">
       <p className="text-sm text-gray-600">
         Upload et logo til din skole. Det vises på udskrevne skemaer. Max 2 MB, PNG eller JPG.
       </p>
+      {existingLogoUrl && (
+        <div className="flex items-center gap-3">
+          <img src={existingLogoUrl} alt="Nuværende logo" className="h-12 w-auto object-contain rounded border border-gray-100" />
+          <span className="text-sm text-gray-500">Nuværende logo</span>
+        </div>
+      )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {existingLogoUrl ? 'Erstat logo' : 'Logo'}
+        </label>
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp"
@@ -211,8 +188,6 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
     setBreaks((prev) => prev.filter((_, idx) => idx !== i))
   }
 
-  const [saved, setSaved] = useState(false)
-
   async function save() {
     setSaving(true)
     setError('')
@@ -227,33 +202,12 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
           durationMinutes: b.durationMinutes,
         })),
       })
-      setSaved(true)
+      onNext()
     } catch {
-      setError('Kunne ikke gemme lektionsstruktur. Prøv igen.')
+      setError('Kunne ikke gemme skoledag. Prøv igen.')
     } finally {
       setSaving(false)
     }
-  }
-
-  if (saved) {
-    return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span className="text-sm font-medium text-green-800">
-            {dayStart}–{dayEnd}, {lessonDuration} min. lektioner{breaks.length > 0 ? `, ${breaks.length} pause(r)` : ''}
-          </span>
-        </div>
-        <button
-          onClick={onNext}
-          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          Fortsæt
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -265,21 +219,11 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag starter</label>
-          <input
-            type="time"
-            value={dayStart}
-            onChange={(e) => setDayStart(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
+          <TimeInput value={dayStart} onChange={setDayStart} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag slutter</label>
-          <input
-            type="time"
-            value={dayEnd}
-            onChange={(e) => setDayEnd(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
+          <TimeInput value={dayEnd} onChange={setDayEnd} />
         </div>
       </div>
 
@@ -324,12 +268,7 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
               <div className="flex-1 grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs text-gray-500 mb-0.5">Starttidspunkt</label>
-                  <input
-                    type="time"
-                    value={b.startTime}
-                    onChange={(e) => updateBreak(i, 'startTime', e.target.value)}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                  />
+                  <TimeInput value={b.startTime} onChange={(v) => updateBreak(i, 'startTime', v)} />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-0.5">Varighed (min)</label>
@@ -391,7 +330,6 @@ function StepCreateItems({
   const [items, setItems] = useState<string[]>([''])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState<string[]>([])
 
   function addRow() { setItems((prev) => [...prev, '']) }
   function updateRow(i: number, val: string) {
@@ -408,31 +346,12 @@ function StepCreateItems({
     setError('')
     try {
       await Promise.all(names.map((name) => api.post(apiPath, { name })))
-      setSaved(names)
+      onNext()
     } catch {
       setError(`Kunne ikke oprette ${plural.toLowerCase()}. Prøv igen.`)
     } finally {
       setSaving(false)
     }
-  }
-
-  if (saved.length > 0) {
-    return (
-      <div className="space-y-5">
-        <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0 mt-0.5">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span className="text-sm font-medium text-green-800">{saved.join(', ')}</span>
-        </div>
-        <button
-          onClick={onNext}
-          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          Fortsæt
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -667,6 +586,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 // ---------------------------------------------------------------------------
 
 export default function SchoolSetupWizardPage() {
+  usePageTitle('Opsætning')
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
 

@@ -39,25 +39,6 @@
         "tags": [
           "Billing"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -87,25 +68,6 @@
         "tags": [
           "Billing"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PortalRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PortalRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/PortalRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -659,7 +621,7 @@
         }
       }
     },
-    "/api/v1/reports/hours/staff.csv": {
+    "/api/v1/reports/hours/staff.xlsx": {
       "get": {
         "tags": [
           "Reports"
@@ -671,7 +633,7 @@
         }
       }
     },
-    "/api/v1/reports/hours/courses.csv": {
+    "/api/v1/reports/hours/courses.xlsx": {
       "get": {
         "tags": [
           "Reports"
@@ -683,7 +645,7 @@
         }
       }
     },
-    "/api/v1/reports/schema.csv": {
+    "/api/v1/reports/schema.xlsx": {
       "get": {
         "tags": [
           "Reports"
@@ -1295,6 +1257,83 @@
           },
           {
             "name": "schemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopySchemaRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopySchemaRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopySchemaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/classes/{classId}/schemas/{schemaId}/copy-to/{targetClassId}": {
+      "post": {
+        "tags": [
+          "Schemas"
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "schemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "targetClassId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2490,20 +2529,6 @@
         },
         "additionalProperties": false
       },
-      "CheckoutRequest": {
-        "type": "object",
-        "properties": {
-          "successUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "cancelUrl": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "CheckoutResponse": {
         "type": "object",
         "properties": {
@@ -2849,16 +2874,6 @@
           "stepsTotal": {
             "type": "integer",
             "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "PortalRequest": {
-        "type": "object",
-        "properties": {
-          "returnUrl": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false

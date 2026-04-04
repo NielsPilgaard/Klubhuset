@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, FileDto, CourseDto } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 
 function formatBytes(bytes: number): string {
@@ -80,8 +81,8 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">Upload fil</h2>
         </div>
@@ -152,6 +153,7 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
 }
 
 export default function FilesPage() {
+  usePageTitle('Filer')
   const qc = useQueryClient()
   const isAdmin = keycloak.hasRealmRole('admin')
 

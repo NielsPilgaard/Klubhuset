@@ -78,7 +78,7 @@ builder.Services.AddSingleton<Stripe.BillingPortal.SessionService>();
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrEmpty(stripeSecretKey))
 {
-    Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
+    StripeConfiguration.ApiKey = stripeSecretKey;
 }
 
 builder.Services.AddControllers()

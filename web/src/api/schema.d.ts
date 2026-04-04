@@ -57,13 +57,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CheckoutRequest"];
-                    "text/json": components["schemas"]["CheckoutRequest"];
-                    "application/*+json": components["schemas"]["CheckoutRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -100,13 +94,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["PortalRequest"];
-                    "text/json": components["schemas"]["PortalRequest"];
-                    "application/*+json": components["schemas"]["PortalRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -533,7 +521,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/reports/hours/staff.csv": {
+    "/api/v1/reports/hours/staff.xlsx": {
         parameters: {
             query?: never;
             header?: never;
@@ -566,7 +554,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/reports/hours/courses.csv": {
+    "/api/v1/reports/hours/courses.xlsx": {
         parameters: {
             query?: never;
             header?: never;
@@ -599,7 +587,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/reports/schema.csv": {
+    "/api/v1/reports/schema.xlsx": {
         parameters: {
             query?: never;
             header?: never;
@@ -1085,6 +1073,53 @@ export interface paths {
                 path: {
                     classId: string;
                     schemaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CopySchemaRequest"];
+                    "text/json": components["schemas"]["CopySchemaRequest"];
+                    "application/*+json": components["schemas"]["CopySchemaRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SchemaDto"];
+                        "application/json": components["schemas"]["SchemaDto"];
+                        "text/json": components["schemas"]["SchemaDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/classes/{classId}/schemas/{schemaId}/copy-to/{targetClassId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classId: string;
+                    schemaId: string;
+                    targetClassId: string;
                 };
                 cookie?: never;
             };
@@ -2050,10 +2085,6 @@ export interface components {
             /** Format: int32 */
             durationMinutes?: number;
         };
-        CheckoutRequest: {
-            successUrl?: string | null;
-            cancelUrl?: string | null;
-        };
         CheckoutResponse: {
             url?: string | null;
         };
@@ -2177,9 +2208,6 @@ export interface components {
             stepsCompleted?: number;
             /** Format: int32 */
             stepsTotal?: number;
-        };
-        PortalRequest: {
-            returnUrl?: string | null;
         };
         RoomDto: {
             /** Format: uuid */

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api, StaffDto, StaffRole } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
   { value: 'Teacher', label: 'Lærer' },
@@ -68,9 +69,14 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
     },
   })
 
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">
             {initial ? 'Rediger medarbejder' : 'Opret medarbejder'}
@@ -82,6 +88,7 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="Fuldt navn"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -103,6 +110,7 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               type="email"
               placeholder="navn@skole.dk"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -113,6 +121,7 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               type="tel"
               placeholder="+45 12 34 56 78"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -127,7 +136,7 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
             Annuller
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={handleSave}
             disabled={!name.trim() || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -251,6 +260,7 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
 }
 
 export default function StaffPage() {
+  usePageTitle('Medarbejdere')
   const qc = useQueryClient()
   const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)

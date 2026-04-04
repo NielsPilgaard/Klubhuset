@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import keycloak from '../auth/keycloak'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface ExportCard {
   title: string
@@ -12,20 +13,20 @@ const EXPORTS: ExportCard[] = [
   {
     title: 'Timer pr. medarbejder',
     description: 'Oversigt over undervisningstimer pr. lærer og pædagog',
-    path: '/reports/hours/staff.csv',
-    filename: 'timer-medarbejdere.csv',
+    path: '/reports/hours/staff.xlsx',
+    filename: 'timer-medarbejdere.xlsx',
   },
   {
     title: 'Timer pr. fag',
     description: 'Ugentlige timer fordelt på fag og klasse',
-    path: '/reports/hours/courses.csv',
-    filename: 'timer-fag.csv',
+    path: '/reports/hours/courses.xlsx',
+    filename: 'timer-fag.xlsx',
   },
   {
     title: 'Komplet skema',
     description: 'Alle aktive lektioner med dag, tid, fag, lærer og lokale',
-    path: '/reports/schema.csv',
-    filename: 'skema.csv',
+    path: '/reports/schema.xlsx',
+    filename: 'skema.xlsx',
   },
 ]
 
@@ -69,6 +70,7 @@ function Spinner() {
 }
 
 export default function ExportsPage() {
+  usePageTitle('Eksporter')
   const [downloading, setDownloading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 

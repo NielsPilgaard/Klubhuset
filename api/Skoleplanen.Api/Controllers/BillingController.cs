@@ -40,9 +40,20 @@ public sealed class BillingController(
         var successUrl = $"{baseUrl}/abonnement?success=true";
         var cancelUrl = $"{baseUrl}/abonnement";
 
-        var url = await subscriptionService.CreateCheckoutSessionAsync(
-            tenantContext.TenantId, successUrl, cancelUrl, ct);
-        return Ok(new CheckoutResponse(url));
+        try
+        {
+            var url = await subscriptionService.CreateCheckoutSessionAsync(
+                tenantContext.TenantId, successUrl, cancelUrl, ct);
+            return Ok(new CheckoutResponse(url));
+        }
+        catch (Stripe.StripeException ex)
+        {
+            return Problem(
+                title: "Betalingsgateway fejl",
+                detail: "Kunne ikke oprette betalingssession. Prøv igen eller kontakt support.",
+                statusCode: StatusCodes.Status502BadGateway,
+                extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
+        }
     }
 
     [HttpPost("portal")]
@@ -50,9 +61,20 @@ public sealed class BillingController(
     {
         var returnUrl = $"{appOptions.Value.BaseUrl}/abonnement";
 
-        var url = await subscriptionService.CreateBillingPortalSessionAsync(
-            tenantContext.TenantId, returnUrl, ct);
-        return Ok(new CheckoutResponse(url));
+        try
+        {
+            var url = await subscriptionService.CreateBillingPortalSessionAsync(
+                tenantContext.TenantId, returnUrl, ct);
+            return Ok(new CheckoutResponse(url));
+        }
+        catch (Stripe.StripeException ex)
+        {
+            return Problem(
+                title: "Betalingsgateway fejl",
+                detail: "Kunne ikke åbne betalingsportal. Prøv igen eller kontakt support.",
+                statusCode: StatusCodes.Status502BadGateway,
+                extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
+        }
     }
 
     private static SubscriptionDto ToDto(Subscription sub)

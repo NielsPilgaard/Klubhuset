@@ -1,6 +1,8 @@
 import Logo from '../components/Logo'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function LandingPage() {
+  usePageTitle('')
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
 

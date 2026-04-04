@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface SubscriptionStatus {
   status: 'Trialing' | 'Active' | 'PastDue' | 'Canceled' | 'Unpaid'
@@ -47,6 +48,7 @@ function CheckIcon() {
 }
 
 export default function BillingPage() {
+  usePageTitle('Abonnement')
   const { data, isLoading, isError, refetch } = useQuery<SubscriptionStatus>({
     queryKey: ['billing', 'subscription'],
     queryFn: () => api.get('/billing/subscription'),
@@ -118,7 +120,7 @@ export default function BillingPage() {
       ) : null}
 
       {/* Pricing info card */}
-      <PricingCard />
+      <PricingCard isActive={data?.isActive ?? false} />
     </div>
   )
 }
@@ -206,6 +208,9 @@ function StatusCard({
             >
               {isRedirecting ? 'Vent...' : 'Administrer abonnement'}
             </button>
+            <p className="mt-2 text-xs text-green-600">
+              Du kan opsige eller ændre dit abonnement via administreringsportalen.
+            </p>
           </div>
         </div>
       </div>
@@ -286,7 +291,7 @@ function StatusCard({
   )
 }
 
-function PricingCard() {
+function PricingCard({ isActive }: { isActive: boolean }) {
   const features = [
     'Ubegrænsede skemaer',
     'Op til 100 GB filer',
@@ -299,7 +304,14 @@ function PricingCard() {
     <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
       <div className="px-6 py-5 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-gray-700">Basis</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-gray-700">Basis</h2>
+            {isActive && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                Aktiv
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-gray-400">Alt hvad din skole behøver</p>
         </div>
         <div className="text-right shrink-0">

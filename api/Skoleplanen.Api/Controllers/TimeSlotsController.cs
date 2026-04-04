@@ -51,9 +51,13 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 		timeSlotTemplate.DayEndTime = req.DayEndTime;
 		timeSlotTemplate.ActiveDays = req.ActiveDays;
 
-		// Replace breaks
-		db.TimeSlotTemplateBreaks.RemoveRange(timeSlotTemplate.Breaks);
-		timeSlotTemplate.Breaks = req.Breaks.Select(b => new TimeSlotTemplateBreak
+		// Replace breaks — remove old ones cleanly then add new ones separately
+		// to avoid EF Core double-tracking the deletes and raising a concurrency exception.
+		var oldBreaks = timeSlotTemplate.Breaks.ToList();
+		db.TimeSlotTemplateBreaks.RemoveRange(oldBreaks);
+		timeSlotTemplate.Breaks.Clear();
+
+		var newBreaks = req.Breaks.Select(b => new TimeSlotTemplateBreak
 		{
 			Id = Guid.NewGuid(),
 			TenantId = tenant.TenantId,
@@ -61,6 +65,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			StartTime = b.StartTime,
 			DurationMinutes = b.DurationMinutes,
 		}).ToList();
+		db.TimeSlotTemplateBreaks.AddRange(newBreaks);
 
 		// Regenerate school-level time slots (ClassId = null) from the template
 		var existingSchoolSlots = await db.TimeSlots.Where(s => s.ClassId == null).ToListAsync(ct);

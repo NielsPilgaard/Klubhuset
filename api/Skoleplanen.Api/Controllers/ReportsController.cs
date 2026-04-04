@@ -1,4 +1,4 @@
-using System.Text;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +12,7 @@ namespace Skoleplanen.Api.Controllers;
 [Authorize(Roles = "admin")]
 public sealed class ReportsController(AppDbContext db) : ControllerBase
 {
-    // RFC 4180: wrap every field in double quotes and escape embedded quotes by doubling them.
-    private static string CsvField(string? value)
-    {
-        var s = value ?? string.Empty;
-        return "\"" + s.Replace("\"", "\"\"") + "\"";
-    }
+    private const string XlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private static string RoleLabel(StaffRole role) => role switch
     {
@@ -49,9 +44,24 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
             .Include(s => s.Aide)
             .ToListAsync(ct);
 
-    /// <summary>GET /api/v1/reports/hours/staff.csv</summary>
-    [HttpGet("hours/staff.csv")]
-    public async Task<IActionResult> GetStaffHoursCsv(CancellationToken ct)
+    private static void StyleHeader(IXLRow row)
+    {
+        row.Style.Font.Bold = true;
+        row.Style.Fill.BackgroundColor = XLColor.FromHtml("#1e3a5f");
+        row.Style.Font.FontColor = XLColor.White;
+    }
+
+    private static FileStreamResult ToXlsx(XLWorkbook wb, string filename)
+    {
+        var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        stream.Position = 0;
+        return new FileStreamResult(stream, XlsxMime) { FileDownloadName = filename };
+    }
+
+    /// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>
+    [HttpGet("hours/staff.xlsx")]
+    public async Task<IActionResult> GetStaffHoursXlsx(CancellationToken ct)
     {
         var activeSlots = await GetActiveSlotsAsync(ct);
 
@@ -70,27 +80,29 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
                 Role: g.Key.Role,
                 Hours: Math.Round(g.Sum(s => (s.TimeSlot.EndTime - s.TimeSlot.StartTime).TotalHours), 2)));
 
-        var rows = teacherHours.Concat(aideHours)
-            .OrderBy(r => r.Name)
-            .ToList();
+        var rows = teacherHours.Concat(aideHours).OrderBy(r => r.Name).ToList();
 
-        var sb = new StringBuilder();
-        sb.AppendLine("\"Navn\",\"Rolle\",\"Timer\"");
-        foreach (var row in rows)
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Timer pr. medarbejder");
+        ws.Cell(1, 1).Value = "Navn";
+        ws.Cell(1, 2).Value = "Rolle";
+        ws.Cell(1, 3).Value = "Timer";
+        StyleHeader(ws.Row(1));
+
+        for (var i = 0; i < rows.Count; i++)
         {
-            sb.AppendLine(string.Join(",",
-                CsvField(row.Name),
-                CsvField(RoleLabel(row.Role)),
-                CsvField(row.Hours.ToString("F2"))));
+            ws.Cell(i + 2, 1).Value = rows[i].Name;
+            ws.Cell(i + 2, 2).Value = RoleLabel(rows[i].Role);
+            ws.Cell(i + 2, 3).Value = rows[i].Hours;
         }
 
-        Response.Headers.Append("Content-Disposition", "attachment; filename=\"timer-medarbejdere.csv\"");
-        return Content(sb.ToString(), "text/csv");
+        ws.Columns().AdjustToContents();
+        return ToXlsx(wb, "timer-medarbejdere.xlsx");
     }
 
-    /// <summary>GET /api/v1/reports/hours/courses.csv</summary>
-    [HttpGet("hours/courses.csv")]
-    public async Task<IActionResult> GetCourseHoursCsv(CancellationToken ct)
+    /// <summary>GET /api/v1/reports/hours/courses.xlsx</summary>
+    [HttpGet("hours/courses.xlsx")]
+    public async Task<IActionResult> GetCourseHoursXlsx(CancellationToken ct)
     {
         var activeSlots = await GetActiveSlotsAsync(ct);
 
@@ -104,23 +116,27 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
             .ThenBy(r => r.CourseName)
             .ToList();
 
-        var sb = new StringBuilder();
-        sb.AppendLine("\"Klasse\",\"Fag\",\"Timer\"");
-        foreach (var row in rows)
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Timer pr. fag");
+        ws.Cell(1, 1).Value = "Klasse";
+        ws.Cell(1, 2).Value = "Fag";
+        ws.Cell(1, 3).Value = "Timer";
+        StyleHeader(ws.Row(1));
+
+        for (var i = 0; i < rows.Count; i++)
         {
-            sb.AppendLine(string.Join(",",
-                CsvField(row.ClassName),
-                CsvField(row.CourseName),
-                CsvField(row.Hours.ToString("F2"))));
+            ws.Cell(i + 2, 1).Value = rows[i].ClassName;
+            ws.Cell(i + 2, 2).Value = rows[i].CourseName;
+            ws.Cell(i + 2, 3).Value = rows[i].Hours;
         }
 
-        Response.Headers.Append("Content-Disposition", "attachment; filename=\"timer-fag.csv\"");
-        return Content(sb.ToString(), "text/csv");
+        ws.Columns().AdjustToContents();
+        return ToXlsx(wb, "timer-fag.xlsx");
     }
 
-    /// <summary>GET /api/v1/reports/schema.csv</summary>
-    [HttpGet("schema.csv")]
-    public async Task<IActionResult> GetSchemaCsv(CancellationToken ct)
+    /// <summary>GET /api/v1/reports/schema.xlsx</summary>
+    [HttpGet("schema.xlsx")]
+    public async Task<IActionResult> GetSchemaXlsx(CancellationToken ct)
     {
         var activeSlots = await GetActiveSlotsAsync(ct);
 
@@ -135,24 +151,32 @@ public sealed class ReportsController(AppDbContext db) : ControllerBase
                 End: s.TimeSlot.EndTime.ToString("HH:mm"),
                 Course: s.Course.Name,
                 Teacher: s.Teacher.Name,
-                Room: s.Room?.Name))
+                Room: s.Room?.Name ?? string.Empty))
             .ToList();
 
-        var sb = new StringBuilder();
-        sb.AppendLine("\"Klasse\",\"Dag\",\"Start\",\"Slut\",\"Fag\",\"Lærer\",\"Lokale\"");
-        foreach (var row in rows)
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Komplet skema");
+        ws.Cell(1, 1).Value = "Klasse";
+        ws.Cell(1, 2).Value = "Dag";
+        ws.Cell(1, 3).Value = "Start";
+        ws.Cell(1, 4).Value = "Slut";
+        ws.Cell(1, 5).Value = "Fag";
+        ws.Cell(1, 6).Value = "Lærer";
+        ws.Cell(1, 7).Value = "Lokale";
+        StyleHeader(ws.Row(1));
+
+        for (var i = 0; i < rows.Count; i++)
         {
-            sb.AppendLine(string.Join(",",
-                CsvField(row.ClassName),
-                CsvField(row.Day),
-                CsvField(row.Start),
-                CsvField(row.End),
-                CsvField(row.Course),
-                CsvField(row.Teacher),
-                CsvField(row.Room)));
+            ws.Cell(i + 2, 1).Value = rows[i].ClassName;
+            ws.Cell(i + 2, 2).Value = rows[i].Day;
+            ws.Cell(i + 2, 3).Value = rows[i].Start;
+            ws.Cell(i + 2, 4).Value = rows[i].End;
+            ws.Cell(i + 2, 5).Value = rows[i].Course;
+            ws.Cell(i + 2, 6).Value = rows[i].Teacher;
+            ws.Cell(i + 2, 7).Value = rows[i].Room;
         }
 
-        Response.Headers.Append("Content-Disposition", "attachment; filename=\"skema.csv\"");
-        return Content(sb.ToString(), "text/csv");
+        ws.Columns().AdjustToContents();
+        return ToXlsx(wb, "skema.xlsx");
     }
 }

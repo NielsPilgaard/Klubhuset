@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api, DashboardStats, StaffRole } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface OnboardingStatus {
   hasLogo: boolean
@@ -108,6 +109,7 @@ function SkeletonTable({ rows = 4 }: { rows?: number }) {
 }
 
 export default function DashboardPage() {
+  usePageTitle('Oversigt')
   const { data, isLoading, isError, refetch } = useQuery<DashboardStats>({
     queryKey: ['stats', 'dashboard'],
     queryFn: () => api.get('/stats/dashboard'),
@@ -235,7 +237,7 @@ export default function DashboardPage() {
                       <td className="px-5 py-2.5 text-right">
                         {c.hasSchema
                           ? <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">{c.emptySlots}</span>
-                          : <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs font-medium">Intet skema</span>
+                          : <Link to="/klasser" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium hover:bg-brand-200 transition-colors">Opret skema →</Link>
                         }
                       </td>
                     </tr>

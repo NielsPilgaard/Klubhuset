@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Skoleplanen.Api.Services;
 using Stripe;
@@ -13,6 +14,7 @@ public sealed class StripeWebhookController(
     ILogger<StripeWebhookController> logger) : ControllerBase
 {
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> Handle(CancellationToken ct)
     {
         var webhookSecret = config["Stripe:WebhookSecret"];

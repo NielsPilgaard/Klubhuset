@@ -11,6 +11,11 @@ interface SchoolSettingsDto {
   logoUrl: string | null
 }
 
+interface OnboardingStatus {
+  stepsCompleted: number
+  stepsTotal: number
+}
+
 const navItems = [
   {
     to: '/dashboard',
@@ -99,6 +104,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     queryKey: ['school-settings'],
     queryFn: () => api.get('/schools/settings'),
   })
+  const { data: onboarding } = useQuery<OnboardingStatus>({
+    queryKey: ['onboarding-status'],
+    queryFn: () => api.get('/schools/onboarding-status'),
+    retry: false,
+    staleTime: 60_000,
+  })
+  const wizardDone = onboarding != null && onboarding.stepsCompleted >= onboarding.stepsTotal
 
   return (
     <>
@@ -122,7 +134,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Brand */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-brand-700">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <NavLink
+            to="/dashboard"
+            onClick={onClose}
+            className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
+          >
             {school?.logoUrl ? (
               <img
                 src={school.logoUrl}
@@ -140,7 +156,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <span className="block text-xs text-brand-400">Skoleplanen</span>
               ) : null}
             </div>
-          </div>
+          </NavLink>
           <button
             onClick={onClose}
             className="lg:hidden p-1 rounded text-brand-300 hover:text-white shrink-0"
@@ -175,22 +191,24 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Footer */}
         <div className="px-3 py-4 border-t border-brand-700 space-y-2">
-          <NavLink
-            to="/setup"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-brand-600 text-white'
-                  : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-              }`
-            }
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            Opsætningsguide
-          </NavLink>
+          {!wizardDone && (
+            <NavLink
+              to="/setup"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-brand-600 text-white'
+                    : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+                }`
+              }
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              Opsætningsguide
+            </NavLink>
+          )}
           <NavLink
             to="/abonnement"
             onClick={onClose}

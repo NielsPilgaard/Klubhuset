@@ -15,7 +15,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Proactively refresh token before it expires (30s before expiry)
         setInterval(() => {
           keycloak.updateToken(30).catch(() => {
-            keycloak.login()
+            if (document.visibilityState === 'visible') {
+              keycloak.login()
+            }
           })
         }, 60_000)
       })
