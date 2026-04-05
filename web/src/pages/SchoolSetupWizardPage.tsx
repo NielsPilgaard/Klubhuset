@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
+import { useQueryClient } from '@tanstack/react-query'
+import { api, ApiError } from '../api/client'
 import type { StaffRole } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -24,6 +25,12 @@ const STEPS: WizardStep[] = [
   { id: 6, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
   { id: 7, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
   { id: 8, title: 'Færdig', description: 'Din skole er klar til brug' },
+]
+
+const STANDARD_COURSES = [
+  'Dansk', 'Matematik', 'Engelsk', 'Naturfag', 'Historie', 'Musik',
+  'Idræt', 'Kristendom', 'Billedkunst', 'Håndværk og design',
+  'Tysk', 'Fransk', 'Geografi', 'Biologi', 'Fysik/kemi', 'Samfundsfag',
 ]
 
 // ---------------------------------------------------------------------------
@@ -106,17 +113,8 @@ function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }
     try {
       const form = new FormData()
       form.append('file', file)
-
-      const token = await getToken()
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-
-      const res = await fetch('/api/v1/schools/logo', {
-        method: 'POST',
-        body: form,
-        headers,
-      })
-      if (res.ok) { onNext() }
-      else { setError('Kunne ikke uploade logo. Prøv igen fra indstillinger.') }
+      await api.postForm('/schools/logo', form)
+      onNext()
     } catch {
       setError('Uploaden fejlede. Du kan uploade logo fra Indstillinger.')
     } finally {
@@ -175,6 +173,19 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
   const [breaks, setBreaks] = useState<BreakEntry[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [savedBefore, setSavedBefore] = useState(false)
+
+  useEffect(() => {
+    api.get<{ lessonDurationMinutes: number; dayStartTime: string; dayEndTime: string; breaks: { startTime: string; durationMinutes: number }[] }>('/time-slot-template')
+      .then((t) => {
+        setLessonDuration(t.lessonDurationMinutes)
+        setDayStart(t.dayStartTime.slice(0, 5))
+        setDayEnd(t.dayEndTime.slice(0, 5))
+        setBreaks(t.breaks.map((b) => ({ startTime: b.startTime.slice(0, 5), durationMinutes: b.durationMinutes })))
+        setSavedBefore(true)
+      })
+      .catch(() => {})
+  }, [])
 
   function addBreak() {
     setBreaks((prev) => [...prev, { startTime: '10:00', durationMinutes: 15 }])
@@ -203,8 +214,17 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
         })),
       })
       onNext()
-    } catch {
-      setError('Kunne ikke gemme skoledag. Prøv igen.')
+    } catch (e) {
+      if (e instanceof ApiError) {
+        try {
+          const problem = JSON.parse(e.message) as { detail?: string }
+          setError(problem.detail ?? 'Kunne ikke gemme skoledag. Prøv igen.')
+        } catch {
+          setError('Kunne ikke gemme skoledag. Prøv igen.')
+        }
+      } else {
+        setError('Kunne ikke gemme skoledag. Prøv igen.')
+      }
     } finally {
       setSaving(false)
     }
@@ -278,6 +298,7 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
                     max={60}
                     value={b.durationMinutes}
                     onChange={(e) => updateBreak(i, 'durationMinutes', Number(e.target.value))}
+                    onFocus={(e) => { if (e.target.value === '0') e.target.value = '' }}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                 </div>
@@ -296,7 +317,7 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-3 pt-2">
+      <div className="flex items-center gap-3 pt-2">
         <button
           onClick={save}
           disabled={saving}
@@ -307,6 +328,12 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
         <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
           Spring over
         </button>
+        {savedBefore && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            Gemt
+          </span>
+        )}
       </div>
     </div>
   )
@@ -330,6 +357,18 @@ function StepCreateItems({
   const [items, setItems] = useState<string[]>([''])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [savedBefore, setSavedBefore] = useState(false)
+
+  useEffect(() => {
+    api.get<{ name: string }[]>(apiPath)
+      .then((existing) => {
+        if (existing.length > 0) {
+          setItems(existing.map((e) => e.name))
+          setSavedBefore(true)
+        }
+      })
+      .catch(() => {})
+  }, [apiPath])
 
   function addRow() { setItems((prev) => [...prev, '']) }
   function updateRow(i: number, val: string) {
@@ -337,6 +376,14 @@ function StepCreateItems({
   }
   function removeRow(i: number) {
     setItems((prev) => prev.filter((_, idx) => idx !== i))
+  }
+
+  function importStandard() {
+    setItems((prev) => {
+      const existing = prev.filter(Boolean)
+      const toAdd = STANDARD_COURSES.filter((n) => !existing.includes(n))
+      return [...existing, ...toAdd, '']
+    })
   }
 
   async function save() {
@@ -359,6 +406,17 @@ function StepCreateItems({
       <p className="text-sm text-gray-600">
         Tilføj de {plural.toLowerCase()}, du vil starte med. Du kan altid tilføje flere senere.
       </p>
+      {apiPath === '/courses' && (
+        <button
+          onClick={importStandard}
+          className="flex items-center gap-1.5 text-sm text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2v10m0 0l-3-3m3 3l3-3M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" />
+          </svg>
+          Importér standardfag
+        </button>
+      )}
       <div className="space-y-2">
         {items.map((val, i) => (
           <div key={i} className="flex gap-2">
@@ -392,7 +450,7 @@ function StepCreateItems({
         </button>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-3 pt-2">
+      <div className="flex items-center gap-3 pt-2">
         <button
           onClick={save}
           disabled={saving}
@@ -403,6 +461,12 @@ function StepCreateItems({
         <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
           Spring over
         </button>
+        {savedBefore && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            Gemt
+          </span>
+        )}
       </div>
     </div>
   )
@@ -588,10 +652,16 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 export default function SchoolSetupWizardPage() {
   usePageTitle('Opsætning')
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [step, setStep] = useState(1)
 
   const advance = () => setStep((s) => Math.min(s + 1, STEPS.length))
   const skip = () => setStep((s) => Math.min(s + 1, STEPS.length))
+
+  function finish() {
+    qc.invalidateQueries({ queryKey: ['onboarding-status'] })
+    navigate('/dashboard')
+  }
 
   const current = STEPS[step - 1]
 
@@ -603,7 +673,7 @@ export default function SchoolSetupWizardPage() {
           <div className="flex items-center justify-between mb-4">
             <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={finish}
               className="text-xs text-gray-400 hover:text-gray-600"
             >
               Gem og afslut
@@ -654,7 +724,7 @@ export default function SchoolSetupWizardPage() {
             />
           )}
           {step === 7 && <StepInviteStaff onNext={advance} onSkip={skip} />}
-          {step === 8 && <StepDone onFinish={() => navigate('/dashboard')} />}
+          {step === 8 && <StepDone onFinish={finish} />}
         </div>
 
         {/* Step dots */}
@@ -673,15 +743,4 @@ export default function SchoolSetupWizardPage() {
       </div>
     </div>
   )
-}
-
-// Helper: get current Keycloak token without importing keycloak directly
-async function getToken(): Promise<string | undefined> {
-  try {
-    const { default: keycloak } = await import('../auth/keycloak')
-    await keycloak.updateToken(30).catch(() => keycloak.login())
-    return keycloak.token
-  } catch {
-    return undefined
-  }
 }
