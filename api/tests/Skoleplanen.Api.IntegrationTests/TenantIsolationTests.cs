@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Skoleplanen.Api.Controllers;
 using Skoleplanen.Api.IntegrationTests.Infrastructure;
 namespace Skoleplanen.Api.IntegrationTests;
@@ -11,6 +13,12 @@ namespace Skoleplanen.Api.IntegrationTests;
 /// </summary>
 public sealed class TenantIsolationTests
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        Converters = { new JsonStringEnumConverter() },
+        PropertyNameCaseInsensitive = true,
+    };
+
     private static readonly Guid TenantA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static readonly Guid TenantB = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
@@ -88,7 +96,7 @@ public sealed class TenantIsolationTests
         var createResponse = await clientA.PostAsJsonAsync("/api/v1/staff",
             new { name = "Hanne Hansen", role = "Teacher" });
         createResponse.EnsureSuccessStatusCode();
-        var staffA = (await createResponse.Content.ReadFromJsonAsync<StaffController.StaffDto>())!;
+        var staffA = (await createResponse.Content.ReadFromJsonAsync<StaffController.StaffDto>(JsonOpts))!;
 
         // Act — list staff as Tenant B
         _factory.TenantContext.TenantId = TenantB;
@@ -96,7 +104,7 @@ public sealed class TenantIsolationTests
 
         var listResponse = await clientB.GetAsync("/api/v1/staff");
         await Assert.That(listResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var staff = await listResponse.Content.ReadFromJsonAsync<List<StaffController.StaffDto>>();
+        var staff = await listResponse.Content.ReadFromJsonAsync<List<StaffController.StaffDto>>(JsonOpts);
 
         // Assert
         await Assert.That(staff!.Any(s => s.Id == staffA.Id)).IsFalse();
