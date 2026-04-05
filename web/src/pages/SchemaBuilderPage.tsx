@@ -112,10 +112,12 @@ function SearchableSelect({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Escape') { setOpen(false); return }
-    if (e.key === 'Enter' && open) {
-      e.preventDefault()
-      if (filtered.length > 0) select(filtered[0])
-      return
+    if (e.key === 'Enter') {
+      if (open && filtered.length > 0) {
+        e.preventDefault()
+        select(filtered[0])
+      }
+      // If dropdown is closed, let the event bubble so the form's onSubmit fires
     }
   }
 

@@ -171,7 +171,7 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 	}
 
 	public record TimeSlotDto(Guid Id, Guid? ClassId, int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label, bool IsBreak);
-	public record UpsertTimeSlotRequest(int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label);
+	public record UpsertTimeSlotRequest(int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label, bool IsBreak = false);
 
 	[HttpGet("classes/{classId:guid}/time-slots")]
 	public async Task<ActionResult<List<TimeSlotDto>>> GetForClass(Guid classId, CancellationToken ct)
@@ -270,6 +270,7 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 			StartTime = r.StartTime,
 			EndTime = r.EndTime,
 			Label = r.Label,
+			IsBreak = r.IsBreak,
 		}).ToList();
 
 		context.TimeSlots.AddRange(newSlots);
