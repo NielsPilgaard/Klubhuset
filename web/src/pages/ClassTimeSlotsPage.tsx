@@ -5,7 +5,7 @@ import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function ClassTimeSlotsPage() {
   usePageTitle('Lektionsstruktur')
-  const { classId } = useParams<{ classId: string }>()
+  const { classId, schemaId } = useParams<{ classId: string; schemaId?: string }>()
   const qc = useQueryClient()
 
   const { data: cls } = useQuery<ClassDto[]>({
@@ -15,17 +15,26 @@ export default function ClassTimeSlotsPage() {
   })
   const className = cls?.[0]?.name
 
+  const timeSlotsUrl = schemaId
+    ? `/classes/${classId}/schemas/${schemaId}/time-slots`
+    : `/classes/${classId}/time-slots`
+  const timeSlotsKey = schemaId ? ['time-slots', classId, schemaId] : ['time-slots', classId]
+
   const { data: timeSlots, isLoading } = useQuery<TimeSlotDto[]>({
-    queryKey: ['time-slots', classId],
-    queryFn: () => api.get(`/classes/${classId}/time-slots`),
+    queryKey: timeSlotsKey,
+    queryFn: () => api.get(timeSlotsUrl),
     enabled: !!classId,
   })
 
-  const isCustom = timeSlots?.some((s) => s.classId != null)
+  const isCustom = schemaId
+    ? timeSlots !== undefined // schema-scoped is always "custom"
+    : timeSlots?.some((s) => s.classId != null)
 
   const resetMutation = useMutation({
-    mutationFn: () => api.put<TimeSlotDto[]>(`/classes/${classId}/time-slots`, []),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['time-slots', classId] }),
+    mutationFn: () => schemaId
+      ? api.put<TimeSlotDto[]>(`/classes/${classId}/schemas/${schemaId}/time-slots`, [])
+      : api.put<TimeSlotDto[]>(`/classes/${classId}/time-slots`, []),
+    onSuccess: () => qc.invalidateQueries({ queryKey: timeSlotsKey }),
   })
 
   const lessonSlots = timeSlots?.filter((s) => !s.isBreak) ?? []
@@ -35,7 +44,10 @@ export default function ClassTimeSlotsPage() {
     <div className="flex flex-col h-full">
       <div className="shrink-0 bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/klasser" className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+          <Link
+            to={schemaId ? `/klasser/${classId}/skema/${schemaId}` : '/klasser'}
+            className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15 18 9 12 15 6" />
             </svg>
@@ -55,7 +67,7 @@ export default function ClassTimeSlotsPage() {
             disabled={resetMutation.isPending}
             className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
-            {resetMutation.isPending ? 'Nulstiller...' : 'Nulstil til skolens standard'}
+            {resetMutation.isPending ? 'Nulstiller...' : schemaId ? 'Nulstil til klassens standard' : 'Nulstil til skolens standard'}
           </button>
         )}
       </div>

@@ -37,7 +37,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	public record SlotsAndConflictsDto(IReadOnlyList<SlotDto> Slots, IReadOnlyList<ConflictInfo> Conflicts);
 
-	public record CreateSchemaRequest([Required][MinLength(1)] string Name);
+	public record CreateSchemaRequest([Required][MinLength(1)] string Name, Guid? CopyTimeSlotsFromSchemaId = null);
 
 	public record CopySchemaRequest([Required][MinLength(1)] string Name);
 
@@ -100,6 +100,32 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		};
 
 		db.Schemas.Add(schema);
+
+		// Copy time slots from source schema if requested
+		if (req.CopyTimeSlotsFromSchemaId.HasValue)
+		{
+			var sourceSlots = await db.TimeSlots
+				.AsNoTracking()
+				.Where(s => s.SchemaId == req.CopyTimeSlotsFromSchemaId.Value)
+				.ToListAsync(ct);
+
+			foreach (var slot in sourceSlots)
+			{
+				db.TimeSlots.Add(new TimeSlot
+				{
+					Id = Guid.NewGuid(),
+					TenantId = tenant.TenantId,
+					ClassId = classId,
+					SchemaId = schema.Id,
+					SortOrder = slot.SortOrder,
+					StartTime = slot.StartTime,
+					EndTime = slot.EndTime,
+					Label = slot.Label,
+					IsBreak = slot.IsBreak,
+				});
+			}
+		}
+
 		await db.SaveChangesAsync(ct);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId, schemaId = schema.Id },
@@ -193,6 +219,25 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			});
 		}
 
+		// Copy schema-level time slots
+		var sourceTimeSlots = await db.TimeSlots.AsNoTracking()
+			.Where(s => s.SchemaId == schemaId).ToListAsync(ct);
+		foreach (var ts in sourceTimeSlots)
+		{
+			db.TimeSlots.Add(new TimeSlot
+			{
+				Id = Guid.NewGuid(),
+				TenantId = tenant.TenantId,
+				ClassId = classId,
+				SchemaId = copy.Id,
+				SortOrder = ts.SortOrder,
+				StartTime = ts.StartTime,
+				EndTime = ts.EndTime,
+				Label = ts.Label,
+				IsBreak = ts.IsBreak,
+			});
+		}
+
 		await db.SaveChangesAsync(ct);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId, schemaId = copy.Id },
@@ -240,6 +285,25 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 				TeacherId = slot.TeacherId,
 				RoomId = slot.RoomId,
 				AideId = slot.AideId,
+			});
+		}
+
+		// Copy schema-level time slots
+		var sourceTimeSlotsForClass = await db.TimeSlots.AsNoTracking()
+			.Where(s => s.SchemaId == schemaId).ToListAsync(ct);
+		foreach (var ts in sourceTimeSlotsForClass)
+		{
+			db.TimeSlots.Add(new TimeSlot
+			{
+				Id = Guid.NewGuid(),
+				TenantId = tenant.TenantId,
+				ClassId = targetClassId,
+				SchemaId = copy.Id,
+				SortOrder = ts.SortOrder,
+				StartTime = ts.StartTime,
+				EndTime = ts.EndTime,
+				Label = ts.Label,
+				IsBreak = ts.IsBreak,
 			});
 		}
 

@@ -68,6 +68,101 @@ function decodeDragId(id: string): { timeSlotId: string; weekday: number } {
   return { timeSlotId, weekday: parseInt(weekdayStr, 10) }
 }
 
+// ─── Searchable combobox ─────────────────────────────────────────────────────
+
+interface SearchableSelectProps {
+  label: string
+  required?: boolean
+  options: { id: string; label: string }[]
+  value: string
+  query: string
+  onQueryChange: (q: string) => void
+  onChange: (id: string) => void
+  placeholder?: string
+  emptyLabel?: string
+  'data-testid'?: string
+}
+
+function SearchableSelect({
+  label, required, options, value, query, onQueryChange, onChange,
+  placeholder = 'Søg...', emptyLabel = '—', 'data-testid': testId,
+}: SearchableSelectProps) {
+  const [open, setOpen] = useState(false)
+
+  const filtered = query.trim() === ''
+    ? options
+    : options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+
+  function select(opt: { id: string; label: string } | null) {
+    if (opt) {
+      onChange(opt.id)
+      onQueryChange(opt.label)
+    } else {
+      onChange('')
+      onQueryChange('')
+    }
+    setOpen(false)
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    onQueryChange(e.target.value)
+    onChange('')
+    setOpen(true)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') { setOpen(false); return }
+    if (e.key === 'Enter' && open) {
+      e.preventDefault()
+      if (filtered.length > 0) select(filtered[0])
+      return
+    }
+  }
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input
+        type="text"
+        autoComplete="off"
+        value={query}
+        onChange={handleInputChange}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        data-testid={testId}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+      />
+      {!value && query === '' && (
+        <span className="pointer-events-none absolute right-3 top-[calc(50%+10px)] -translate-y-1/2 text-xs text-gray-400">{emptyLabel}</span>
+      )}
+      {open && (
+        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto text-sm">
+          {!required && (
+            <li
+              onMouseDown={() => select(null)}
+              className="px-3 py-2 text-gray-400 hover:bg-gray-50 cursor-pointer"
+            >{emptyLabel}</li>
+          )}
+          {filtered.map((o) => (
+            <li
+              key={o.id}
+              onMouseDown={() => select(o)}
+              className={`px-3 py-2 cursor-pointer hover:bg-brand-50 hover:text-brand-700 ${o.id === value ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-800'}`}
+            >{o.label}</li>
+          ))}
+          {filtered.length === 0 && (
+            <li className="px-3 py-2 text-gray-400 italic">Ingen resultater</li>
+          )}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 // ─── Assignment panel ────────────────────────────────────────────────────────
 
 interface AssignmentPanelProps {
@@ -119,12 +214,36 @@ function AssignmentPanel({
     onSuccess: onClose,
   })
 
+  // ─── Combobox state ─────────────────────────────────────────────────────────
+  const [courseQuery, setCourseQuery] = useState(
+    courses.find((c) => c.id === courseId)?.name ?? ''
+  )
+  const [teacherQuery, setTeacherQuery] = useState(
+    staff.find((s) => s.id === teacherId)?.name ?? ''
+  )
+  const [roomQuery, setRoomQuery] = useState(
+    rooms.find((r) => r.id === roomId)?.name ?? ''
+  )
+  const [aideQuery, setAideQuery] = useState(
+    [...teachers, ...aides].find((s) => s.id === aideId)?.name ?? ''
+  )
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!(courseId && teacherId) || saveMutation.isPending) return
+    saveMutation.mutate()
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <form
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+      >
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold text-gray-900">{WEEKDAYS[weekday - 1]}</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md">
+          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -132,38 +251,50 @@ function AssignmentPanel({
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fag <span className="text-red-500">*</span></label>
-            <select value={courseId} onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white">
-              <option value="">Vælg fag</option>
-              {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lærer <span className="text-red-500">*</span></label>
-            <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white">
-              <option value="">Vælg lærer</option>
-              {teachers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lokale</label>
-            <select value={roomId} onChange={(e) => setRoomId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white">
-              <option value="">Intet lokale</option>
-              {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pædagog / Vikar</label>
-            <select value={aideId} onChange={(e) => setAideId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white">
-              <option value="">Ingen</option>
-              {aides.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
+          <SearchableSelect
+            label="Fag"
+            required
+            options={courses.map((c) => ({ id: c.id ?? '', label: c.name ?? '' }))}
+            value={courseId}
+            query={courseQuery}
+            onQueryChange={setCourseQuery}
+            onChange={(id) => setCourseId(id)}
+            placeholder="Søg efter fag..."
+            data-testid="slot-course-input"
+          />
+          <SearchableSelect
+            label="Lærer"
+            required
+            options={teachers.map((s) => ({ id: s.id ?? '', label: s.name ?? '' }))}
+            value={teacherId}
+            query={teacherQuery}
+            onQueryChange={setTeacherQuery}
+            onChange={(id) => setTeacherId(id)}
+            placeholder="Søg efter lærer..."
+            data-testid="slot-teacher-input"
+          />
+          <SearchableSelect
+            label="Lokale"
+            options={rooms.map((r) => ({ id: r.id ?? '', label: r.name ?? '' }))}
+            value={roomId}
+            query={roomQuery}
+            onQueryChange={setRoomQuery}
+            onChange={(id) => setRoomId(id)}
+            placeholder="Søg efter lokale..."
+            emptyLabel="Intet lokale"
+            data-testid="slot-room-input"
+          />
+          <SearchableSelect
+            label="Pædagog / Vikar"
+            options={aides.map((s) => ({ id: s.id ?? '', label: s.name ?? '' }))}
+            value={aideId}
+            query={aideQuery}
+            onQueryChange={setAideQuery}
+            onChange={(id) => setAideId(id)}
+            placeholder="Søg efter pædagog..."
+            emptyLabel="Ingen"
+            data-testid="slot-aide-input"
+          />
           {(saveMutation.isError || deleteMutation.isError) && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
@@ -171,23 +302,23 @@ function AssignmentPanel({
 
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
           {existing ? (
-            <button onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
+            <button type="button" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
               className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50">
               {deleteMutation.isPending ? 'Sletter...' : 'Slet lektion'}
             </button>
           ) : <span />}
           <div className="flex gap-3">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Annuller
             </button>
-            <button onClick={() => saveMutation.mutate()}
+            <button type="submit"
               disabled={!(courseId && teacherId) || saveMutation.isPending}
               className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               {saveMutation.isPending ? 'Gemmer...' : 'Gem'}
             </button>
           </div>
         </div>
-      </div>
+      </form>
     </div>
   )
 }
@@ -212,7 +343,12 @@ function SlotCard({ slot, isConflict, colorClass, isDragging }: SlotCardProps) {
             <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         </div>
-        <span className="text-xs text-red-600 leading-tight line-clamp-1">{slot.teacherName}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-red-600 leading-tight line-clamp-1 flex-1">{slot.teacherName}</span>
+          {slot.teacherName && (
+            <span className="text-xs text-red-500 font-medium shrink-0">{deriveInitials(slot.teacherName)}</span>
+          )}
+        </div>
         {slot.roomName && <span className="text-xs text-red-400 leading-tight line-clamp-1">{slot.roomName}</span>}
       </div>
     )
@@ -221,7 +357,12 @@ function SlotCard({ slot, isConflict, colorClass, isDragging }: SlotCardProps) {
   return (
     <div className={`h-full w-full flex flex-col gap-0.5 p-2 rounded-lg border text-left select-none ${colorClass} ${isDragging ? 'opacity-80 shadow-lg rotate-1' : ''}`}>
       <span className="text-xs font-semibold leading-tight line-clamp-2">{slot.courseName}</span>
-      <span className="text-xs opacity-75 leading-tight line-clamp-1">{slot.teacherName}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-xs opacity-75 leading-tight line-clamp-1 flex-1">{slot.teacherName}</span>
+        {slot.teacherName && (
+          <span className="text-xs text-gray-500 font-medium shrink-0">{deriveInitials(slot.teacherName)}</span>
+        )}
+      </div>
       {slot.roomName && <span className="text-xs opacity-60 leading-tight line-clamp-1">{slot.roomName}</span>}
     </div>
   )
@@ -303,11 +444,13 @@ function EmptyCell({ onClick }: { onClick: () => void }) {
   )
 }
 
-function conflictTypeLabel(type: ConflictInfo['type']): string {
-  if (type === 'TeacherDoubleBooked') return 'Lærer dobbeltbooket'
-  if (type === 'RoomDoubleBooked') return 'Lokale dobbeltbooket'
-  return 'Pædagog dobbeltbooket'
+function deriveInitials(name: string | null | undefined): string {
+  if (!name) return ''
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
+
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
@@ -333,9 +476,9 @@ export default function SchemaBuilderPage() {
   })
 
   const { data: timeSlots, isLoading: loadingTs } = useQuery<TimeSlotDto[]>({
-    queryKey: ['time-slots', classId],
-    queryFn: () => api.get(`/classes/${classId}/time-slots`),
-    enabled: !!classId,
+    queryKey: ['time-slots', classId, schemaId],
+    queryFn: () => api.get(`/classes/${classId}/schemas/${schemaId}/time-slots`),
+    enabled: !!classId && !!schemaId,
   })
 
   const { data: courses } = useQuery<CourseDto[]>({
@@ -549,7 +692,7 @@ export default function SchemaBuilderPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link to={`/klasser/${classId}/lektioner`}
+          <Link to={`/klasser/${classId}/schemas/${schemaId}/lektioner`}
             className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
             title="Tilpas lektionsstruktur">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -703,7 +846,7 @@ export default function SchemaBuilderPage() {
                       <p className="text-gray-400 text-sm mt-1">
                         Opsæt skoledagens lektioner og pauser, så kan du begynde at bygge skemaet.
                       </p>
-                      <Link to={`/klasser/${classId}/lektioner`}
+                      <Link to={`/klasser/${classId}/schemas/${schemaId}/lektioner`}
                         className="inline-block mt-4 px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
                         Opsæt lektionsstruktur
                       </Link>
@@ -741,14 +884,24 @@ export default function SchemaBuilderPage() {
                 </h3>
               </div>
               <div className="divide-y divide-red-100">
-                {conflicts.map((c, i) => (
-                  <div key={i} className="px-5 py-3">
-                    <p className="text-sm font-medium text-red-800">{conflictTypeLabel(c.type)}</p>
-                    <p className="text-xs text-red-600 mt-0.5">
-                      {c.resourceName} · {weekdayLabel(c.weekday)} {c.startTime?.slice(0, 5)}–{c.endTime?.slice(0, 5)}
-                    </p>
-                  </div>
-                ))}
+                {conflicts.map((c, i) => {
+                  const day = weekdayLabel(c.weekday)
+                  const time = `${c.startTime?.slice(0, 5)}–${c.endTime?.slice(0, 5)}`
+                  const aLabel = [c.slotACourseName, c.slotAClassName].filter(Boolean).join(' · ')
+                  const bLabel = [c.slotBCourseName, c.slotBClassName].filter(Boolean).join(' · ')
+                  return (
+                    <div key={i} className="px-5 py-3">
+                      <p className="text-sm font-medium text-red-800">
+                        {c.type === 'TeacherDoubleBooked' && <>Lærer <span className="font-semibold">{c.resourceName}</span> er booket to gange</>}
+                        {c.type === 'RoomDoubleBooked' && <>Lokale <span className="font-semibold">{c.resourceName}</span> er booket to gange</>}
+                        {c.type === 'AideDoubleBooked' && <>Pædagog <span className="font-semibold">{c.resourceName}</span> er booket to gange</>}
+                      </p>
+                      <p className="text-xs text-red-600 mt-0.5">
+                        {day} {time} — {aLabel} og {bLabel}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

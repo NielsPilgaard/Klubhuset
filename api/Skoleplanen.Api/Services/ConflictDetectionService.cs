@@ -18,7 +18,11 @@ public record ConflictInfo(
 	string ResourceName,
 	DayOfWeek Weekday,
 	TimeOnly StartTime,
-	TimeOnly EndTime);
+	TimeOnly EndTime,
+	string SlotACourseName,
+	string SlotBCourseName,
+	string SlotAClassName,
+	string SlotBClassName);
 
 public sealed class ConflictDetectionService(AppDbContext db)
 {
@@ -33,9 +37,11 @@ public sealed class ConflictDetectionService(AppDbContext db)
 		var targetSlots = await db.SchemaSlots
 								  .Where(s => s.SchemaId == schemaId)
 								  .Include(s => s.TimeSlot)
+								  .Include(s => s.Course)
 								  .Include(s => s.Teacher)
 								  .Include(s => s.Room)
 								  .Include(s => s.Aide)
+								  .Include(s => s.Schema).ThenInclude(sc => sc.Class)
 								  .ToListAsync(ct);
 
 		if (targetSlots.Count == 0)
@@ -47,9 +53,11 @@ public sealed class ConflictDetectionService(AppDbContext db)
 		var otherSlots = await db.SchemaSlots
 								 .Where(s => s.SchemaId != schemaId && s.Schema.IsActive)
 								 .Include(s => s.TimeSlot)
+								 .Include(s => s.Course)
 								 .Include(s => s.Teacher)
 								 .Include(s => s.Room)
 								 .Include(s => s.Aide)
+								 .Include(s => s.Schema).ThenInclude(sc => sc.Class)
 								 .ToListAsync(ct);
 
 		// All slots to check against = target + other active schemas
@@ -89,7 +97,11 @@ public sealed class ConflictDetectionService(AppDbContext db)
 									  a.Teacher?.Name ?? string.Empty,
 									  a.Weekday,
 									  a.TimeSlot.StartTime,
-									  a.TimeSlot.EndTime));
+									  a.TimeSlot.EndTime,
+									  a.Course?.Name ?? string.Empty,
+									  b.Course?.Name ?? string.Empty,
+									  a.Schema?.Class?.Name ?? string.Empty,
+									  b.Schema?.Class?.Name ?? string.Empty));
 				}
 
 				// Room double-booking
@@ -103,7 +115,11 @@ public sealed class ConflictDetectionService(AppDbContext db)
 									  a.Room?.Name ?? $"Room #{a.RoomId}",
 									  a.Weekday,
 									  a.TimeSlot.StartTime,
-									  a.TimeSlot.EndTime));
+									  a.TimeSlot.EndTime,
+									  a.Course?.Name ?? string.Empty,
+									  b.Course?.Name ?? string.Empty,
+									  a.Schema?.Class?.Name ?? string.Empty,
+									  b.Schema?.Class?.Name ?? string.Empty));
 				}
 
 				// Aide double-booking
@@ -117,7 +133,11 @@ public sealed class ConflictDetectionService(AppDbContext db)
 									  a.Aide?.Name ?? $"Aide #{a.AideId}",
 									  a.Weekday,
 									  a.TimeSlot.StartTime,
-									  a.TimeSlot.EndTime));
+									  a.TimeSlot.EndTime,
+									  a.Course?.Name ?? string.Empty,
+									  b.Course?.Name ?? string.Empty,
+									  a.Schema?.Class?.Name ?? string.Empty,
+									  b.Schema?.Class?.Name ?? string.Empty));
 				}
 			}
 		}

@@ -27,5 +27,6 @@ public sealed class Schema : ITenantScoped
 	public bool IsActive { get; set; }
 
 	public ICollection<SchemaSlot> Slots { get; set; } = [];
+	public ICollection<TimeSlot> TimeSlots { get; set; } = [];
 	public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

@@ -79,8 +79,8 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 
 		context.TimeSlotTemplateBreaks.AddRange(newBreaks);
 
-		// Regenerate school-level time slots (ClassId = null) from the template
-		var existingSchoolSlots = await context.TimeSlots.Where(s => s.ClassId == null).ToListAsync(ct);
+		// Regenerate school-level time slots (ClassId = null, SchemaId = null) from the template
+		var existingSchoolSlots = await context.TimeSlots.Where(s => s.ClassId == null && s.SchemaId == null).ToListAsync(ct);
 		context.TimeSlots.RemoveRange(existingSchoolSlots);
 
 		var generatedSlots = GenerateSlotsFromTemplate(timeSlotTemplate, tenant.TenantId);
@@ -178,7 +178,7 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 	{
 		var slots = await context.TimeSlots
 			.AsNoTracking()
-			.Where(s => s.ClassId == classId)
+			.Where(s => s.ClassId == classId && s.SchemaId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
 			.ToListAsync(ct);
@@ -191,12 +191,92 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 		// Fall back to school-level time slots when the class has no overrides
 		var schoolSlots = await context.TimeSlots
 			.AsNoTracking()
-			.Where(s => s.ClassId == null)
+			.Where(s => s.ClassId == null && s.SchemaId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
 			.ToListAsync(ct);
 
 		return Ok(schoolSlots);
+	}
+
+	[HttpGet("classes/{classId:guid}/schemas/{schemaId:guid}/time-slots")]
+	public async Task<ActionResult<List<TimeSlotDto>>> GetForSchema(Guid classId, Guid schemaId, CancellationToken ct)
+	{
+		var schemaExists = await context.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		if (!schemaExists)
+		{
+			return NotFound();
+		}
+
+		// Schema-level slots take precedence
+		var schemaSlots = await context.TimeSlots
+			.AsNoTracking()
+			.Where(s => s.SchemaId == schemaId)
+			.OrderBy(s => s.SortOrder)
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
+			.ToListAsync(ct);
+
+		if (schemaSlots.Count > 0)
+		{
+			return Ok(schemaSlots);
+		}
+
+		// Fall back to class-level, then school-level
+		var classSlots = await context.TimeSlots
+			.AsNoTracking()
+			.Where(s => s.ClassId == classId && s.SchemaId == null)
+			.OrderBy(s => s.SortOrder)
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
+			.ToListAsync(ct);
+
+		if (classSlots.Count > 0)
+		{
+			return Ok(classSlots);
+		}
+
+		var schoolSlots = await context.TimeSlots
+			.AsNoTracking()
+			.Where(s => s.ClassId == null && s.SchemaId == null)
+			.OrderBy(s => s.SortOrder)
+			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
+			.ToListAsync(ct);
+
+		return Ok(schoolSlots);
+	}
+
+	[HttpPut("classes/{classId:guid}/schemas/{schemaId:guid}/time-slots")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForSchema(
+		Guid classId, Guid schemaId,
+		[FromBody] IReadOnlyList<UpsertTimeSlotRequest> req,
+		CancellationToken ct)
+	{
+		var schema = await context.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		if (schema is null)
+		{
+			return NotFound();
+		}
+
+		var existing = await context.TimeSlots.Where(s => s.SchemaId == schemaId).ToListAsync(ct);
+		context.TimeSlots.RemoveRange(existing);
+
+		var newSlots = req.Select(r => new TimeSlot
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenant.TenantId,
+			ClassId = classId,
+			SchemaId = schemaId,
+			SortOrder = r.SortOrder,
+			StartTime = r.StartTime,
+			EndTime = r.EndTime,
+			Label = r.Label,
+		}).ToList();
+
+		context.TimeSlots.AddRange(newSlots);
+		await context.SaveChangesAsync(ct);
+
+		var result = newSlots.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak));
+		return Ok(result);
 	}
 
 	[HttpPut("classes/{classId:guid}/time-slots")]
@@ -210,7 +290,7 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 			return NotFound();
 		}
 
-		var existing = await context.TimeSlots.Where(s => s.ClassId == classId).ToListAsync(ct);
+		var existing = await context.TimeSlots.Where(s => s.ClassId == classId && s.SchemaId == null).ToListAsync(ct);
 		context.TimeSlots.RemoveRange(existing);
 
 		var newSlots = req.Select(upsertTimeSlotRequest => new TimeSlot

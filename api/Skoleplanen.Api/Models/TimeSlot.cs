@@ -16,6 +16,10 @@ public sealed class TimeSlot : ITenantScoped
 	public Guid? ClassId { get; set; }
 	public Class? Class { get; set; }
 
+	/// <summary>The schema this time slot belongs to. Null = class-level or school-level slot.</summary>
+	public Guid? SchemaId { get; set; }
+	public Schema? Schema { get; set; }
+
 	/// <summary>Order index within the day (1-based).</summary>
 	public int SortOrder { get; set; }
 

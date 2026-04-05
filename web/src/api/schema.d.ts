@@ -2201,6 +2201,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/classes/{classId}/schemas/{schemaId}/time-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classId: string;
+                    schemaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TimeSlotDto"][];
+                        "application/json": components["schemas"]["TimeSlotDto"][];
+                        "text/json": components["schemas"]["TimeSlotDto"][];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classId: string;
+                    schemaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertTimeSlotRequest"][];
+                    "text/json": components["schemas"]["UpsertTimeSlotRequest"][];
+                    "application/*+json": components["schemas"]["UpsertTimeSlotRequest"][];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TimeSlotDto"][];
+                        "application/json": components["schemas"]["TimeSlotDto"][];
+                        "text/json": components["schemas"]["TimeSlotDto"][];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/time-slots": {
         parameters: {
             query?: never;
@@ -2466,6 +2536,10 @@ export interface components {
             startTime?: string;
             /** Format: time */
             endTime?: string;
+            slotACourseName?: string | null;
+            slotBCourseName?: string | null;
+            slotAClassName?: string | null;
+            slotBClassName?: string | null;
         };
         /** @enum {string} */
         ConflictType: "TeacherDoubleBooked" | "RoomDoubleBooked" | "AideDoubleBooked";
@@ -2488,6 +2562,8 @@ export interface components {
         };
         CreateSchemaRequest: {
             name?: string | null;
+            /** Format: uuid */
+            copyTimeSlotsFromSchemaId?: string | null;
         };
         CreateTenantRequest: {
             name?: string | null;
