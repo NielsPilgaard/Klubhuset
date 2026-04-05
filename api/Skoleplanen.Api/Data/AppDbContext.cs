@@ -19,6 +19,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<Schema> Schemas => Set<Schema>();
 	public DbSet<SchemaSlot> SchemaSlots => Set<SchemaSlot>();
 	public DbSet<SchoolFile> SchoolFiles => Set<SchoolFile>();
+	public DbSet<CalendarEntry> CalendarEntries => Set<CalendarEntry>();
 	public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)

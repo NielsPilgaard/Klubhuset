@@ -23,6 +23,7 @@ import FilesPage from './pages/FilesPage'
 import BillingPage from './pages/BillingPage'
 import ExportsPage from './pages/ExportsPage'
 import ClassTimeSlotsPage from './pages/ClassTimeSlotsPage'
+import CalendarPage from './pages/CalendarPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="filer" element={<FilesPage />} />
             <Route path="eksporter" element={<ExportsPage />} />
             <Route path="abonnement" element={<BillingPage />} />
+            <Route path="kalender" element={<CalendarPage />} />
             <Route path="indstillinger" element={<SkoleindstillingerPage />} />
           </Route>
         </Routes>

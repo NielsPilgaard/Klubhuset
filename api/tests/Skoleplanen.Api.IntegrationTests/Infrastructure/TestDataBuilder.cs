@@ -77,6 +77,26 @@ public static class TestDataBuilder
         return slot;
     }
 
+    public static async Task<CalendarEntry> CreateCalendarEntryAsync(
+        IServiceProvider services, Guid tenantId,
+        CalendarEntryType type, string title, DateOnly startDate, DateOnly endDate)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entry = new CalendarEntry
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Type = type,
+            Title = title,
+            StartDate = startDate,
+            EndDate = endDate,
+        };
+        db.CalendarEntries.Add(entry);
+        await db.SaveChangesAsync();
+        return entry;
+    }
+
     public static async Task<(Class klass, Schema schema)> CreateClassWithSchemaAsync(
         IServiceProvider services, Guid tenantId,
         string className = "2.b", string schemaName = "Skema 2024")
