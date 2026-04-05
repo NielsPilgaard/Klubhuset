@@ -98,17 +98,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
-// Skip when no connection string is present (e.g. swagger CLI running at build time).
-if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
-{
-	await app.Services.SeedAsync();
-}
+var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
 
-// Skip when S3 config is absent (e.g. swagger CLI running at build time).
-if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
+if (!isOpenApiGeneration)
 {
-	await app.Services.EnsureS3BucketAsync();
+	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
+	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
+	{
+		await app.Services.SeedAsync();
+	}
+
+	if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
+	{
+		await app.Services.EnsureS3BucketAsync();
+	}
 }
 
 app.Run();

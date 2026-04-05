@@ -123,6 +123,7 @@ export default function BillingPage() {
       <PricingCard
         isActive={data?.isActive ?? false}
         isTrialing={data?.isTrialing ?? false}
+        trialEnd={data?.trialEnd}
         onCheckout={() => checkoutMutation.mutate()}
         isRedirecting={isRedirecting}
       />
@@ -163,19 +164,13 @@ function StatusCard({
             <h2 className="text-base font-semibold text-brand-900">Gratis prøveperiode</h2>
             <p className="mt-1 text-sm text-brand-700">
               {data.trialDaysLeft > 0
-                ? `${data.trialDaysLeft} ${data.trialDaysLeft === 1 ? 'dag' : 'dage'} tilbage af prøveperioden`
+                ? `${data.trialDaysLeft} ${data.trialDaysLeft === 1 ? 'dag' : 'dage'} tilbage — ingen betaling endnu`
                 : 'Prøveperioden udløber i dag'}
             </p>
             <p className="mt-0.5 text-sm text-brand-600">
-              Udløber den {formatDate(data.trialEnd)}
+              Du kan bruge alle funktioner gratis frem til den {formatDate(data.trialEnd)}.
+              Herefter koster det 299 kr/md.
             </p>
-            <button
-              onClick={onCheckout}
-              disabled={isRedirecting}
-              className="mt-4 px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isRedirecting ? 'Vent...' : 'Aktiver abonnement'}
-            </button>
           </div>
         </div>
       </div>
@@ -299,11 +294,13 @@ function StatusCard({
 function PricingCard({
   isActive,
   isTrialing,
+  trialEnd,
   onCheckout,
   isRedirecting,
 }: {
   isActive: boolean
   isTrialing: boolean
+  trialEnd?: string
   onCheckout: () => void
   isRedirecting: boolean
 }) {
@@ -356,7 +353,7 @@ function PricingCard({
             disabled={isRedirecting}
             className="w-full px-4 py-2.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isRedirecting ? 'Vent...' : 'Køb abonnement'}
+            {isRedirecting ? 'Vent...' : isTrialing && trialEnd ? `Abonner nu — første betaling den ${formatDate(trialEnd)}` : 'Køb abonnement'}
           </button>
         </div>
       )}

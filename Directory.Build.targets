@@ -1,0 +1,29 @@
+<Project>
+
+  <!-- Override GenerateOpenApiDocuments to inject ASPNETCORE_ENVIRONMENT=Development so that
+       appsettings.Development.json is loaded and ValidateOnStart guards pass at build time.
+       Directory.Build.targets is imported after NuGet package targets, so this definition wins.
+       $(PkgMicrosoft_Extensions_ApiDescription_Server) is set by NuGet restore. -->
+  <Target Name="GenerateOpenApiDocuments"
+          Inputs="$(TargetPath)"
+          Outputs="$(_OpenApiDocumentsCache)"
+          Condition="'$(OpenApiGenerateDocuments)' == 'true'">
+    <PropertyGroup>
+      <_DotNetGetDocumentOutputPath>$([System.IO.Path]::GetFullPath('$(OpenApiDocumentsDirectory)').TrimEnd('\'))</_DotNetGetDocumentOutputPath>
+      <_DotNetGetDocumentCommand>dotnet "$(PkgMicrosoft_Extensions_ApiDescription_Server)/tools/dotnet-getdocument.dll" --assembly "$(TargetPath)"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand>$(_DotNetGetDocumentCommand) --file-list "$(_OpenApiDocumentsCache)" --framework "$(TargetFrameworkMoniker)"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand>$(_DotNetGetDocumentCommand) --output "$(_DotNetGetDocumentOutputPath)" --project "$(MSBuildProjectName)"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand Condition=" '$(ProjectAssetsFile)' != '' ">$(_DotNetGetDocumentCommand) --assets-file "$(ProjectAssetsFile)"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand Condition=" '$(PlatformTarget)' != '' ">$(_DotNetGetDocumentCommand) --platform "$(PlatformTarget)"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand Condition=" '$(PlatformTarget)' == '' AND '$(Platform)' != '' ">$(_DotNetGetDocumentCommand) --platform "$(Platform)"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand Condition=" '$(RuntimeIdentifier)' != '' ">$(_DotNetGetDocumentCommand) --runtime "$(RuntimeIdentifier) --self-contained"</_DotNetGetDocumentCommand>
+      <_DotNetGetDocumentCommand>$(_DotNetGetDocumentCommand) $(OpenApiGenerateDocumentsOptions)</_DotNetGetDocumentCommand>
+    </PropertyGroup>
+    <Message Importance="high" Text="%0AGenerateOpenApiDocuments:" />
+    <Message Importance="high" Text="  $(_DotNetGetDocumentCommand)" />
+    <Exec Command="$(_DotNetGetDocumentCommand)"
+          LogStandardErrorAsError="true"
+          EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;OPENAPI_GENERATE=true" />
+  </Target>
+
+</Project>

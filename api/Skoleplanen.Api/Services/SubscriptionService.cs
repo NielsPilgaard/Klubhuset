@@ -105,6 +105,14 @@ public sealed class SubscriptionService(
             SuccessUrl = successUrl,
             CancelUrl = cancelUrl,
             Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
+            PaymentMethodCollection = "if_required",
+            SubscriptionData = sub.Status == SubscriptionStatus.Trialing && sub.TrialEnd > DateTimeOffset.UtcNow
+                ? new SessionSubscriptionDataOptions
+                {
+                    TrialEnd = sub.TrialEnd.UtcDateTime,
+                    Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
+                }
+                : null,
         };
 
         var session = await sessionService.CreateAsync(options, cancellationToken: ct);
@@ -233,7 +241,10 @@ public sealed class SubscriptionService(
             _ => sub.Status,
         };
 
-        sub.CurrentPeriodEnd = stripeSub.CurrentPeriodEnd;
+        // Stripe SDK returns DateTime.MinValue when unset — treat that as null
+        sub.CurrentPeriodEnd = stripeSub.CurrentPeriodEnd > DateTime.UnixEpoch
+            ? stripeSub.CurrentPeriodEnd
+            : null;
         sub.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
     }
