@@ -298,7 +298,7 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
                     max={60}
                     value={b.durationMinutes}
                     onChange={(e) => updateBreak(i, 'durationMinutes', Number(e.target.value))}
-                    onFocus={(e) => { if (e.target.value === '0') e.target.value = '' }}
+                    onFocus={(e) => e.target.select()}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                 </div>
@@ -355,6 +355,7 @@ function StepCreateItems({
   onSkip: () => void
 }) {
   const [items, setItems] = useState<string[]>([''])
+  const [existingNames, setExistingNames] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [savedBefore, setSavedBefore] = useState(false)
@@ -363,7 +364,9 @@ function StepCreateItems({
     api.get<{ name: string }[]>(apiPath)
       .then((existing) => {
         if (existing.length > 0) {
-          setItems(existing.map((e) => e.name))
+          const names = existing.map((e) => e.name)
+          setItems(names)
+          setExistingNames(new Set(names))
           setSavedBefore(true)
         }
       })
@@ -388,11 +391,12 @@ function StepCreateItems({
 
   async function save() {
     const names = items.map((n) => n.trim()).filter(Boolean)
+    const newNames = names.filter((n) => !existingNames.has(n))
     if (names.length === 0) { onNext(); return }
     setSaving(true)
     setError('')
     try {
-      await Promise.all(names.map((name) => api.post(apiPath, { name })))
+      await Promise.all(newNames.map((name) => api.post(apiPath, { name })))
       onNext()
     } catch {
       setError(`Kunne ikke oprette ${plural.toLowerCase()}. Prøv igen.`)
