@@ -1,22 +1,6 @@
 # Task: Fix Miscellaneous UX Bugs
 
-Small isolated fixes across school settings, dashboard, and billing.
-
----
-
-## 1. School settings: add address field
-
-**Location**: School settings page (search for `skole`, `settings`, or `school` in `web/src/pages/`).
-
-Add a text input for the school's address. This is a single free-text field (not structured street/city/zip) for now.
-
-### API
-
-Add `Address` (`string?`, max 500 chars) to the school/tenant settings model. Generate a new EF Core migration. Add it to the settings GET and PUT endpoints.
-
-### Frontend
-
-Add a labeled text input "Adresse" to the school settings form, below the school name. Pre-populate from the saved value. Include in the form submit payload.
+Small isolated fixes across dashboard, and billing.
 
 ---
 
@@ -34,7 +18,8 @@ Find the dashboard component and the "Opret schema" action. Change the `navigate
 
 **Symptom**: Clicking "Abonner nu" shows a "Start gratis" step and asks for an email address. This is wrong — we should go straight to Stripe Checkout for a credit card.
 
-**Fix**: 
+**Fix**:
+
 - Remove the email capture step from the subscription flow entirely.
 - The "Abonner nu" button must trigger Stripe Checkout directly. Call the existing `POST /api/v1/billing/checkout` (or equivalent) endpoint which creates a Stripe Checkout session and returns a redirect URL.
 - Redirect the user to the Stripe Checkout URL immediately.

@@ -10,13 +10,13 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 
 ### Stripe Checkout billing
 
-- [ ] Stripe product and price configuration for Basis tier (299 kr/month)
+- [x] Stripe product and price configuration for Basis tier (299 kr/month)
 - [x] Signup flow: school completes trial → Stripe Checkout session → subscription created
 - [x] Auto-renew monthly
 - [x] Stripe billing portal link in admin settings (manage subscription, update card, cancel)
 - [x] 14-day free trial: full access, no payment required during trial
 - [x] Trial expiry handling: prompt to subscribe, read-only grace period if not converted
-- [ ] Thorough tests
+- [x] Thorough tests
 
 ### Billing lifecycle
 
