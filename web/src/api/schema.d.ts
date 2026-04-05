@@ -2332,6 +2332,7 @@ export interface components {
             /** Format: time */
             endTime?: string;
             label?: string | null;
+            isBreak?: boolean;
         };
         UnassignedClass: {
             /** Format: uuid */

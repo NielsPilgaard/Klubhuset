@@ -11,7 +11,7 @@
     "build": "npm run codegen && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "codegen": "openapi-typescript ../openapi/v1.json -o src/api/schema.d.ts"
+    "codegen": "openapi-typescript ../openapi/Skoleplanen.Api.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

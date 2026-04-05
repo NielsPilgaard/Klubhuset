@@ -1,24 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, TimeSlotDto, ClassDto, TemplateDto } from '../api/client'
+import { api, TimeSlotDto, ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
-
-interface EditableSlot {
-  sortOrder: number
-  startTime: string
-  endTime: string
-  label: string
-}
-
-function toEditable(slot: TimeSlotDto): EditableSlot {
-  return {
-    sortOrder: slot.sortOrder ?? 0,
-    startTime: slot.startTime?.slice(0, 5) ?? '',
-    endTime: slot.endTime?.slice(0, 5) ?? '',
-    label: slot.label ?? '',
-  }
-}
 
 export default function ClassTimeSlotsPage() {
   usePageTitle('Lektionsstruktur')
@@ -38,74 +21,15 @@ export default function ClassTimeSlotsPage() {
     enabled: !!classId,
   })
 
-  const { data: template } = useQuery<TemplateDto>({
-    queryKey: ['time-slot-template'],
-    queryFn: () => api.get('/time-slot-template'),
-  })
-
-  const [slots, setSlots] = useState<EditableSlot[]>([])
-  const [dirty, setDirty] = useState(false)
-
-  useEffect(() => {
-    if (timeSlots) {
-      setSlots(timeSlots.map(toEditable))
-      setDirty(false)
-    }
-  }, [timeSlots])
-
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      api.put<TimeSlotDto[]>(`/classes/${classId}/time-slots`, slots.map((s, i) => ({
-        sortOrder: i + 1,
-        startTime: s.startTime + ':00',
-        endTime: s.endTime + ':00',
-        label: s.label || null,
-      }))),
-    onSuccess: (data) => {
-      qc.setQueryData(['time-slots', classId], data)
-      setSlots(data.map(toEditable))
-      setDirty(false)
-    },
-  })
+  const isCustom = timeSlots?.some((s) => s.classId != null)
 
   const resetMutation = useMutation({
-    mutationFn: () =>
-      api.put<TimeSlotDto[]>(`/classes/${classId}/time-slots`, []),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['time-slots', classId] })
-      setDirty(false)
-    },
+    mutationFn: () => api.put<TimeSlotDto[]>(`/classes/${classId}/time-slots`, []),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['time-slots', classId] }),
   })
 
-  function updateSlot(idx: number, field: keyof EditableSlot, value: string) {
-    setSlots((prev) => {
-      const next = [...prev]
-      next[idx] = { ...next[idx], [field]: value }
-      return next
-    })
-    setDirty(true)
-  }
-
-  function addSlot() {
-    const last = slots[slots.length - 1]
-    const newStart = last?.endTime ?? '08:00'
-    const [h, m] = newStart.split(':').map(Number)
-    const dur = template?.lessonDurationMinutes ?? 45
-    const endTotal = h * 60 + m + dur
-    const newEnd = `${String(Math.floor(endTotal / 60)).padStart(2, '0')}:${String(endTotal % 60).padStart(2, '0')}`
-    setSlots((prev) => [
-      ...prev,
-      { sortOrder: prev.length + 1, startTime: newStart, endTime: newEnd, label: '' },
-    ])
-    setDirty(true)
-  }
-
-  function removeSlot(idx: number) {
-    setSlots((prev) => prev.filter((_, i) => i !== idx))
-    setDirty(true)
-  }
-
-  const isCustom = timeSlots?.some((s) => s.classId != null)
+  const lessonSlots = timeSlots?.filter((s) => !s.isBreak) ?? []
+  const breakSlots = timeSlots?.filter((s) => s.isBreak) ?? []
 
   return (
     <div className="flex flex-col h-full">
@@ -125,89 +49,88 @@ export default function ClassTimeSlotsPage() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {isCustom && (
-            <button
-              onClick={() => resetMutation.mutate()}
-              disabled={resetMutation.isPending}
-              className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-            >
-              {resetMutation.isPending ? 'Nulstiller...' : 'Nulstil til skolens standard'}
-            </button>
-          )}
+        {isCustom && (
           <button
-            onClick={() => saveMutation.mutate()}
-            disabled={!dirty || saveMutation.isPending}
-            className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={() => resetMutation.mutate()}
+            disabled={resetMutation.isPending}
+            className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
-            {saveMutation.isPending ? 'Gemmer...' : 'Gem ændringer'}
+            {resetMutation.isPending ? 'Nulstiller...' : 'Nulstil til skolens standard'}
           </button>
-        </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-auto p-4 lg:p-6">
         {isLoading ? (
-          <div className="animate-pulse space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-12 bg-gray-100 rounded-lg" />
+          <div className="animate-pulse space-y-2 max-w-sm">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded-lg" />
             ))}
           </div>
         ) : (
-          <div className="max-w-lg space-y-2">
+          <div className="max-w-sm space-y-1.5">
             {!isCustom && (
               <p className="text-sm text-gray-500 mb-4">
-                Denne klasse bruger skolens standard lektionsstruktur. Rediger herunder for at tilpasse.
+                Denne klasse bruger skolens standard lektionsstruktur. Lektionsstrukturen redigeres under{' '}
+                <Link to="/indstillinger" className="text-brand-600 hover:underline">Skoleindstillinger</Link>.
               </p>
             )}
 
-            {slots.map((slot, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
-                <span className="text-xs font-medium text-gray-400 w-5 text-right shrink-0">{idx + 1}.</span>
-                <input
-                  type="time"
-                  value={slot.startTime}
-                  onChange={(e) => updateSlot(idx, 'startTime', e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent tabular-nums"
-                />
-                <span className="text-gray-400 text-sm">–</span>
-                <input
-                  type="time"
-                  value={slot.endTime}
-                  onChange={(e) => updateSlot(idx, 'endTime', e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent tabular-nums"
-                />
-                <input
-                  type="text"
-                  value={slot.label}
-                  onChange={(e) => updateSlot(idx, 'label', e.target.value)}
-                  placeholder="Label (valgfrit)"
-                  className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                />
-                <button
-                  onClick={() => removeSlot(idx)}
-                  className="p-1 text-gray-300 hover:text-red-500 rounded transition-colors shrink-0"
-                  title="Fjern lektion"
+            {(timeSlots ?? []).length === 0 && (
+              <div className="py-10 text-center">
+                <p className="text-sm text-gray-500">Ingen lektionsstruktur defineret endnu.</p>
+                <Link
+                  to="/indstillinger"
+                  className="inline-block mt-3 px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
+                  Opsæt skoledagen
+                </Link>
               </div>
+            )}
+
+            {(timeSlots ?? []).map((slot, idx) => (
+              slot.isBreak ? (
+                <div
+                  key={slot.id ?? idx}
+                  className="flex items-center gap-3 px-3 py-2 bg-gray-50 border border-dashed border-gray-200 rounded-lg"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 shrink-0">
+                    <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                    <line x1="6" y1="1" x2="6" y2="4" />
+                    <line x1="10" y1="1" x2="10" y2="4" />
+                    <line x1="14" y1="1" x2="14" y2="4" />
+                  </svg>
+                  <span className="text-xs text-gray-500 tabular-nums">
+                    {slot.startTime?.slice(0, 5)}–{slot.endTime?.slice(0, 5)}
+                  </span>
+                  <span className="text-xs text-gray-400">Pause</span>
+                </div>
+              ) : (
+                <div
+                  key={slot.id ?? idx}
+                  className="flex items-center gap-3 px-3 py-2.5 bg-white border border-gray-200 rounded-lg"
+                >
+                  <span className="text-xs font-medium text-gray-400 w-5 text-right shrink-0 tabular-nums">
+                    {lessonSlots.findIndex((s) => s.id === slot.id) + 1}.
+                  </span>
+                  <span className="text-sm tabular-nums text-gray-700">
+                    {slot.startTime?.slice(0, 5)}–{slot.endTime?.slice(0, 5)}
+                  </span>
+                  {slot.label && (
+                    <span className="text-xs text-gray-400">{slot.label}</span>
+                  )}
+                </div>
+              )
             ))}
 
-            <button
-              onClick={addSlot}
-              className="w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 hover:border-brand-400 hover:text-brand-500 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Tilføj lektion
-            </button>
+            {(timeSlots ?? []).length > 0 && (
+              <p className="text-xs text-gray-400 pt-2">
+                {lessonSlots.length} lektioner · {breakSlots.length} pause{breakSlots.length !== 1 ? 'r' : ''}
+              </p>
+            )}
 
-            {(saveMutation.isError || resetMutation.isError) && (
+            {resetMutation.isError && (
               <p className="text-sm text-red-600 mt-2">Der opstod en fejl. Prøv igen.</p>
             )}
           </div>

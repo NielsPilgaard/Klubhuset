@@ -92,6 +92,32 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 		return Ok(ToTemplateDto(timeSlotTemplate));
 	}
 
+	/// <summary>
+	/// Returns an error message if any break start time falls in the middle of a lesson module.
+	/// Breaks must start exactly on a module boundary: dayStart + N * lessonDuration.
+	/// </summary>
+	private static string? ValidateBreaksAgainstModules(TimeOnly dayStart, int lessonDuration, IReadOnlyList<UpsertBreakRequest> breaks)
+	{
+		foreach (var b in breaks)
+		{
+			if (b.StartTime < dayStart)
+			{
+				return $"Pausen kl. {b.StartTime:HH\\:mm} starter før skoledagen.";
+			}
+
+			var minutesFromStart = (int)(b.StartTime - dayStart).TotalMinutes;
+			if (minutesFromStart % lessonDuration != 0)
+			{
+				var moduleNumber = minutesFromStart / lessonDuration + 1;
+				var moduleStart = dayStart.AddMinutes((moduleNumber - 1) * lessonDuration);
+				var moduleEnd = dayStart.AddMinutes(moduleNumber * lessonDuration);
+				return $"Pausen kl. {b.StartTime:HH\\:mm} falder midt i modul {moduleNumber} ({moduleStart:HH\\:mm}–{moduleEnd:HH\\:mm}). Pauser skal starte præcis ved en lektionsovergang.";
+			}
+		}
+
+		return null;
+	}
+
 	private static List<TimeSlot> GenerateSlotsFromTemplate(TimeSlotTemplate t, Guid tenantId)
 	{
 		var slots = new List<TimeSlot>();

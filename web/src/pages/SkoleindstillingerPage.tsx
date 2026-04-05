@@ -232,6 +232,26 @@ function SkoledagCard() {
   function validateSkoledagForm(): string | null {
     if (dayStart >= dayEnd) return 'Skoledagen skal slutte efter den starter.'
     if (lessonDuration <= 0) return 'Lektionslængde skal være større end 0.'
+
+    // Each break must start exactly on a module boundary: dayStart + N * lessonDuration
+    const [sh, sm] = dayStart.split(':').map(Number)
+    const dayStartMinutes = sh * 60 + sm
+    for (const b of breaks) {
+      const [bh, bm] = b.startTime.split(':').map(Number)
+      const breakMinutes = bh * 60 + bm
+      if (breakMinutes < dayStartMinutes) {
+        return `Pausen kl. ${b.startTime} starter før skoledagen.`
+      }
+      const minutesFromStart = breakMinutes - dayStartMinutes
+      if (minutesFromStart % lessonDuration !== 0) {
+        const moduleNumber = Math.floor(minutesFromStart / lessonDuration) + 1
+        const modStartMin = dayStartMinutes + (moduleNumber - 1) * lessonDuration
+        const modEndMin = dayStartMinutes + moduleNumber * lessonDuration
+        const fmt = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+        return `Pausen kl. ${b.startTime} falder midt i modul ${moduleNumber} (${fmt(modStartMin)}–${fmt(modEndMin)}). Pauser skal starte præcis ved en lektionsovergang.`
+      }
+    }
+
     return null
   }
 

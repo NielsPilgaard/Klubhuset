@@ -3252,6 +3252,9 @@
           "label": {
             "type": "string",
             "nullable": true
+          },
+          "isBreak": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
