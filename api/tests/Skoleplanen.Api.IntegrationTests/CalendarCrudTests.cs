@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Skoleplanen.Api.Controllers;
 using Skoleplanen.Api.IntegrationTests.Infrastructure;
 using Skoleplanen.Api.Models;
@@ -8,6 +10,11 @@ namespace Skoleplanen.Api.IntegrationTests;
 
 public sealed class CalendarCrudTests
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        Converters = { new JsonStringEnumConverter() },
+        PropertyNameCaseInsensitive = true,
+    };
     private ApiFactory _factory = null!;
     private HttpClient _client = null!;
 
@@ -34,7 +41,7 @@ public sealed class CalendarCrudTests
         var response = await _client.GetAsync("/api/v1/calendar");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var entries = await response.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>();
+        var entries = await response.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>(JsonOpts);
         await Assert.That(entries).IsNotNull();
         await Assert.That(entries!.Count).IsEqualTo(0);
     }
@@ -49,13 +56,13 @@ public sealed class CalendarCrudTests
         var createResponse = await _client.PostAsJsonAsync("/api/v1/calendar", request);
         await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
-        var created = await createResponse.Content.ReadFromJsonAsync<CalendarController.CalendarEntryDto>();
+        var created = await createResponse.Content.ReadFromJsonAsync<CalendarController.CalendarEntryDto>(JsonOpts);
         await Assert.That(created).IsNotNull();
         await Assert.That(created!.Title).IsEqualTo("Efterårsferie");
 
         var getResponse = await _client.GetAsync("/api/v1/calendar");
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var entries = await getResponse.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>();
+        var entries = await getResponse.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>(JsonOpts);
         await Assert.That(entries!.Count).IsEqualTo(1);
         await Assert.That(entries[0].Title).IsEqualTo("Efterårsferie");
     }
@@ -82,7 +89,7 @@ public sealed class CalendarCrudTests
         var updateResponse = await _client.PutAsJsonAsync($"/api/v1/calendar/{created.Id}", updateRequest);
         await Assert.That(updateResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var updated = await updateResponse.Content.ReadFromJsonAsync<CalendarController.CalendarEntryDto>();
+        var updated = await updateResponse.Content.ReadFromJsonAsync<CalendarController.CalendarEntryDto>(JsonOpts);
         await Assert.That(updated!.Title).IsEqualTo("Ny titel");
         await Assert.That(updated.Type).IsEqualTo(CalendarEntryType.Begivenhed);
     }
@@ -96,7 +103,7 @@ public sealed class CalendarCrudTests
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         var getResponse = await _client.GetAsync("/api/v1/calendar");
-        var entries = await getResponse.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>();
+        var entries = await getResponse.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>(JsonOpts);
         await Assert.That(entries!.Count).IsEqualTo(0);
     }
 
@@ -106,7 +113,7 @@ public sealed class CalendarCrudTests
         var response = await _client.GetAsync("/api/v1/calendar/defaults?year=2025");
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var defaults = await response.Content.ReadFromJsonAsync<List<CalendarController.DefaultHolidayDto>>();
+        var defaults = await response.Content.ReadFromJsonAsync<List<CalendarController.DefaultHolidayDto>>(JsonOpts);
         await Assert.That(defaults).IsNotNull();
         await Assert.That(defaults!.Count).IsGreaterThan(0);
     }
@@ -130,7 +137,7 @@ public sealed class CalendarCrudTests
 
         // The default tenant's client should only see its own entry
         var response = await _client.GetAsync("/api/v1/calendar");
-        var entries = await response.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>();
+        var entries = await response.Content.ReadFromJsonAsync<List<CalendarController.CalendarEntryDto>>(JsonOpts);
         await Assert.That(entries!.Count).IsEqualTo(1);
         await Assert.That(entries[0].Title).IsEqualTo("Tenant 1 ferie");
     }
@@ -142,6 +149,6 @@ public sealed class CalendarCrudTests
             new DateOnly(2025, 10, 13), new DateOnly(2025, 10, 17));
         var response = await _client.PostAsJsonAsync("/api/v1/calendar", request);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<CalendarController.CalendarEntryDto>())!;
+        return (await response.Content.ReadFromJsonAsync<CalendarController.CalendarEntryDto>(JsonOpts))!;
     }
 }

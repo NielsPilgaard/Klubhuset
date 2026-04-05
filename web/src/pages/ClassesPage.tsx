@@ -365,6 +365,7 @@ function SchemaList({ classId }: { classId: string }) {
 
 export default function ClassesPage() {
   usePageTitle('Klasser')
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingClass, setEditingClass] = useState<ClassDto | null>(null)
@@ -458,6 +459,12 @@ export default function ClassesPage() {
                 )}
               </button>
               <div className="flex items-center gap-2 shrink-0 ml-4">
+                <button
+                  onClick={() => navigate(`/klasser/${cls.id}/ugeplan`)}
+                  className="px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-md transition-colors"
+                >
+                  Ugeplan
+                </button>
                 <button
                   onClick={() => setEditingClass(cls)}
                   className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"

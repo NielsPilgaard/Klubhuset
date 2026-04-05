@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Skoleplanen.Api.Controllers;
 using Skoleplanen.Api.IntegrationTests.Infrastructure;
 using Skoleplanen.Api.Services;
@@ -13,6 +15,12 @@ namespace Skoleplanen.Api.IntegrationTests;
 /// </summary>
 public sealed class ConflictDetectionTests
 {
+	private static readonly JsonSerializerOptions JsonOpts = new()
+	{
+		Converters = { new JsonStringEnumConverter() },
+		PropertyNameCaseInsensitive = true,
+	};
+
 	private ApiFactory _factory = null!;
 	private HttpClient _client = null!;
 	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
@@ -64,7 +72,7 @@ public sealed class ConflictDetectionTests
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>();
+		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>(JsonOpts);
 		await Assert.That(result!.Conflicts.Count).IsEqualTo(0);
 	}
 
@@ -98,7 +106,7 @@ public sealed class ConflictDetectionTests
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>();
+		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>(JsonOpts);
 		await Assert.That(result!.Conflicts.Count).IsGreaterThan(0);
 
 		var conflict = result.Conflicts.First();
@@ -143,7 +151,7 @@ public sealed class ConflictDetectionTests
 											 teacher2.Id,
 											 roomId: room.Id);
 
-		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>();
+		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>(JsonOpts);
 
 		await Assert.That(result!.Conflicts.Any(c => c.Type == ConflictType.RoomDoubleBooked)).IsTrue();
 		await Assert.That(result.Conflicts.First(c => c.Type == ConflictType.RoomDoubleBooked).ResourceId)

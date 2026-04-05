@@ -21,6 +21,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<SchoolFile> SchoolFiles => Set<SchoolFile>();
 	public DbSet<CalendarEntry> CalendarEntries => Set<CalendarEntry>();
 	public DbSet<Subscription> Subscriptions => Set<Subscription>();
+	public DbSet<WeekPlan> WeekPlans => Set<WeekPlan>();
+	public DbSet<WeekPlanSlot> WeekPlanSlots => Set<WeekPlanSlot>();
+	public DbSet<WeekPlanSlotFile> WeekPlanSlotFiles => Set<WeekPlanSlotFile>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

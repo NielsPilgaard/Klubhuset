@@ -24,6 +24,7 @@ import BillingPage from './pages/BillingPage'
 import ExportsPage from './pages/ExportsPage'
 import ClassTimeSlotsPage from './pages/ClassTimeSlotsPage'
 import CalendarPage from './pages/CalendarPage'
+import WeekPlanPage from './pages/WeekPlanPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="eksporter" element={<ExportsPage />} />
             <Route path="abonnement" element={<BillingPage />} />
             <Route path="kalender" element={<CalendarPage />} />
+            <Route path="klasser/:classId/ugeplan" element={<WeekPlanPage />} />
             <Route path="indstillinger" element={<SkoleindstillingerPage />} />
           </Route>
         </Routes>

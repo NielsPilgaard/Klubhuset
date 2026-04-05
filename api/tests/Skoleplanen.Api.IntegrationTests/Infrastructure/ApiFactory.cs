@@ -32,6 +32,15 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 	{
 		builder.UseEnvironment("Testing");
 
+		// Provide stub values for required config that isn't needed in tests
+		builder.UseSetting("Stripe:SecretKey", "sk_test_stub");
+		builder.UseSetting("Stripe:PriceId", "price_stub");
+		builder.UseSetting("Stripe:WebhookSecret", "whsec_stub");
+		builder.UseSetting("Smtp:Host", "localhost");
+		builder.UseSetting("Smtp:Port", "25");
+		builder.UseSetting("Smtp:Username", "test");
+		builder.UseSetting("Smtp:Password", "test");
+
 		builder.ConfigureServices(services =>
 		{
 			// Replace DB with the Testcontainers instance

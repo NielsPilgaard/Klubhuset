@@ -97,6 +97,45 @@ public static class TestDataBuilder
         return entry;
     }
 
+    public static async Task<SchoolFile> CreateSchoolFileAsync(
+        IServiceProvider services, Guid tenantId, string fileName = "test.pdf")
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var file = new SchoolFile
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            FileName = fileName,
+            ContentType = "application/pdf",
+            SizeBytes = 1024,
+            StorageKey = $"test/{Guid.NewGuid()}/{fileName}",
+            Url = $"https://storage.example.com/{fileName}",
+            UploadedBy = "test@skole.dk",
+        };
+        db.SchoolFiles.Add(file);
+        await db.SaveChangesAsync();
+        return file;
+    }
+
+    public static async Task<WeekPlan> CreateWeekPlanAsync(
+        IServiceProvider services, Guid tenantId, Guid classId, int isoYear, int isoWeek)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var plan = new WeekPlan
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ClassId = classId,
+            IsoYear = isoYear,
+            IsoWeek = isoWeek,
+        };
+        db.WeekPlans.Add(plan);
+        await db.SaveChangesAsync();
+        return plan;
+    }
+
     public static async Task<(Class klass, Schema schema)> CreateClassWithSchemaAsync(
         IServiceProvider services, Guid tenantId,
         string className = "2.b", string schemaName = "Skema 2024")
