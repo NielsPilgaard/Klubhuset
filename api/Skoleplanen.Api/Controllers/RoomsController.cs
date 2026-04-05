@@ -34,14 +34,12 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 	public async Task<ActionResult<RoomDto>> GetById(Guid id, CancellationToken ct)
 	{
 		var room = await db.Rooms
-			.AsNoTracking()
-			.FirstOrDefaultAsync(r => r.Id == id, ct);
-		if (room is null)
-		{
-			return NotFound();
-		}
+						   .AsNoTracking()
+						   .FirstOrDefaultAsync(r => r.Id == id, ct);
 
-		return Ok(new RoomDto(room.Id, room.Name, room.Capacity, room.Description));
+		return room is null
+				   ? NotFound()
+				   : Ok(new RoomDto(room.Id, room.Name, room.Capacity, room.Description));
 	}
 
 	[HttpPost]

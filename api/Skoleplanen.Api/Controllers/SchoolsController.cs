@@ -39,12 +39,9 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 							 .IgnoreQueryFilters()
 							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
 
-		if (school is null)
-		{
-			return NotFound();
-		}
-
-		return Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
+		return school is null
+				   ? NotFound()
+				   : Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
 	}
 
 	[HttpPut("settings")]

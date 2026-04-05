@@ -109,7 +109,7 @@ public sealed class ConflictDetectionTests
 		var result = await response.Content.ReadFromJsonAsync<SlotsAndConflictsDto>(JsonOpts);
 		await Assert.That(result!.Conflicts.Count).IsGreaterThan(0);
 
-		var conflict = result.Conflicts.First();
+		var conflict = result.Conflicts[0];
 		await Assert.That(conflict.Type).IsEqualTo(ConflictType.TeacherDoubleBooked);
 		await Assert.That(conflict.ResourceId).IsEqualTo(teacher.Id);
 	}

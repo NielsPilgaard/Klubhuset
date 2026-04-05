@@ -10,7 +10,7 @@ namespace Skoleplanen.Api.Controllers;
 [ApiController]
 [Route("api/v1")]
 [Authorize]
-public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) : ControllerBase
+public sealed class TimeSlotsController(AppDbContext context, ITenantContext tenant) : ControllerBase
 {
 	public record BreakDto(Guid Id, TimeOnly StartTime, int DurationMinutes);
 	public record TemplateDto(Guid Id, int LessonDurationMinutes, TimeOnly DayStartTime, TimeOnly DayEndTime,
@@ -23,16 +23,14 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	[HttpGet("time-slot-template")]
 	public async Task<ActionResult<TemplateDto>> GetTemplate(CancellationToken ct)
 	{
-		var t = await db.TimeSlotTemplates
-			.AsNoTrackingWithIdentityResolution()
-			.Include(t => t.Breaks)
-			.FirstOrDefaultAsync(ct);
-		if (t is null)
-		{
-			return NotFound();
-		}
+		var timeSlotTemplate = await context.TimeSlotTemplates
+						.AsNoTrackingWithIdentityResolution()
+						.Include(t => t.Breaks)
+						.FirstOrDefaultAsync(ct);
 
-		return Ok(ToTemplateDto(t));
+		return timeSlotTemplate is null
+				   ? NotFound()
+				   : Ok(ToTemplateDto(timeSlotTemplate));
 	}
 
 	[HttpPut("time-slot-template")]
@@ -40,24 +38,23 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	public async Task<ActionResult<TemplateDto>> UpsertTemplate([FromBody] UpsertTemplateRequest req, CancellationToken ct)
 	{
 		// Validate that every break starts exactly on a module boundary
-		// TODO: Uncomment
-		// if (req.Breaks.Count > 0)
-		// {
-		// 	var breakValidationError = ValidateBreaksAgainstModules(req.DayStartTime, req.LessonDurationMinutes, req.Breaks);
-		// 	if (breakValidationError is not null)
-		// 	{
-		// 		return Problem(
-		// 			title: "Ugyldig pausekonfiguration",
-		// 			detail: breakValidationError,
-		// 			statusCode: 422);
-		// 	}
-		// }
+		if (req.Breaks.Count > 0)
+		{
+			var breakValidationError = ValidateBreaksAgainstModules(req.DayStartTime, req.LessonDurationMinutes, req.Breaks);
+			if (breakValidationError is not null)
+			{
+				return Problem(
+					title: "Ugyldig pausekonfiguration",
+					detail: breakValidationError,
+					statusCode: 422);
+			}
+		}
 
-		var timeSlotTemplate = await db.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(ct);
+		var timeSlotTemplate = await context.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(ct);
 		if (timeSlotTemplate is null)
 		{
 			timeSlotTemplate = new TimeSlotTemplate { Id = Guid.NewGuid(), TenantId = tenant.TenantId };
-			db.TimeSlotTemplates.Add(timeSlotTemplate);
+			context.TimeSlotTemplates.Add(timeSlotTemplate);
 		}
 
 		timeSlotTemplate.LessonDurationMinutes = req.LessonDurationMinutes;
@@ -68,7 +65,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 		// Replace breaks — remove old ones cleanly then add new ones separately
 		// to avoid EF Core double-tracking the deletes and raising a concurrency exception.
 		var oldBreaks = timeSlotTemplate.Breaks.ToList();
-		db.TimeSlotTemplateBreaks.RemoveRange(oldBreaks);
+		context.TimeSlotTemplateBreaks.RemoveRange(oldBreaks);
 		timeSlotTemplate.Breaks.Clear();
 
 		var newBreaks = req.Breaks.Select(b => new TimeSlotTemplateBreak
@@ -79,16 +76,17 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			StartTime = b.StartTime,
 			DurationMinutes = b.DurationMinutes,
 		}).ToList();
-		db.TimeSlotTemplateBreaks.AddRange(newBreaks);
+
+		context.TimeSlotTemplateBreaks.AddRange(newBreaks);
 
 		// Regenerate school-level time slots (ClassId = null) from the template
-		var existingSchoolSlots = await db.TimeSlots.Where(s => s.ClassId == null).ToListAsync(ct);
-		db.TimeSlots.RemoveRange(existingSchoolSlots);
+		var existingSchoolSlots = await context.TimeSlots.Where(s => s.ClassId == null).ToListAsync(ct);
+		context.TimeSlots.RemoveRange(existingSchoolSlots);
 
 		var generatedSlots = GenerateSlotsFromTemplate(timeSlotTemplate, tenant.TenantId);
-		db.TimeSlots.AddRange(generatedSlots);
+		context.TimeSlots.AddRange(generatedSlots);
 
-		await db.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(ct);
 		return Ok(ToTemplateDto(timeSlotTemplate));
 	}
 
@@ -98,21 +96,23 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	/// </summary>
 	private static string? ValidateBreaksAgainstModules(TimeOnly dayStart, int lessonDuration, IReadOnlyList<UpsertBreakRequest> breaks)
 	{
-		foreach (var b in breaks)
+		foreach (var @break in breaks)
 		{
-			if (b.StartTime < dayStart)
+			if (@break.StartTime < dayStart)
 			{
-				return $"Pausen kl. {b.StartTime:HH\\:mm} starter før skoledagen.";
+				return $"Pausen kl. {@break.StartTime:HH\\:mm} starter før skoledagen.";
 			}
 
-			var minutesFromStart = (int)(b.StartTime - dayStart).TotalMinutes;
-			if (minutesFromStart % lessonDuration != 0)
+			var minutesFromStart = (int)(@break.StartTime - dayStart).TotalMinutes;
+			if (minutesFromStart % lessonDuration == 0)
 			{
-				var moduleNumber = minutesFromStart / lessonDuration + 1;
-				var moduleStart = dayStart.AddMinutes((moduleNumber - 1) * lessonDuration);
-				var moduleEnd = dayStart.AddMinutes(moduleNumber * lessonDuration);
-				return $"Pausen kl. {b.StartTime:HH\\:mm} falder midt i modul {moduleNumber} ({moduleStart:HH\\:mm}–{moduleEnd:HH\\:mm}). Pauser skal starte præcis ved en lektionsovergang.";
+				continue;
 			}
+
+			var moduleNumber = minutesFromStart / lessonDuration + 1;
+			var moduleStart = dayStart.AddMinutes((moduleNumber - 1) * lessonDuration);
+			var moduleEnd = dayStart.AddMinutes(moduleNumber * lessonDuration);
+			return $@"Pausen kl. {@break.StartTime:HH\:mm} falder midt i modul {moduleNumber} ({moduleStart:HH\:mm}–{moduleEnd:HH\:mm}). Pauser skal starte præcis ved en lektionsovergang.";
 		}
 
 		return null;
@@ -176,7 +176,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	[HttpGet("classes/{classId:guid}/time-slots")]
 	public async Task<ActionResult<List<TimeSlotDto>>> GetForClass(Guid classId, CancellationToken ct)
 	{
-		var slots = await db.TimeSlots
+		var slots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == classId)
 			.OrderBy(s => s.SortOrder)
@@ -189,7 +189,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 		}
 
 		// Fall back to school-level time slots when the class has no overrides
-		var schoolSlots = await db.TimeSlots
+		var schoolSlots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == null)
 			.OrderBy(s => s.SortOrder)
@@ -204,14 +204,14 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForClass(Guid classId, [FromBody] IReadOnlyList<UpsertTimeSlotRequest> req, CancellationToken ct)
 	{
 		// Verify class belongs to tenant
-		var exists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
+		var exists = await context.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!exists)
 		{
 			return NotFound();
 		}
 
-		var existing = await db.TimeSlots.Where(s => s.ClassId == classId).ToListAsync(ct);
-		db.TimeSlots.RemoveRange(existing);
+		var existing = await context.TimeSlots.Where(s => s.ClassId == classId).ToListAsync(ct);
+		context.TimeSlots.RemoveRange(existing);
 
 		var newSlots = req.Select(upsertTimeSlotRequest => new TimeSlot
 		{
@@ -224,8 +224,8 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 			Label = upsertTimeSlotRequest.Label,
 		}).ToList();
 
-		db.TimeSlots.AddRange(newSlots);
-		await db.SaveChangesAsync(ct);
+		context.TimeSlots.AddRange(newSlots);
+		await context.SaveChangesAsync(ct);
 
 		var result = newSlots.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak));
 		return Ok(result);
@@ -234,7 +234,7 @@ public sealed class TimeSlotsController(AppDbContext db, ITenantContext tenant) 
 	[HttpGet("time-slots")]
 	public async Task<ActionResult<List<TimeSlotDto>>> GetSchoolLevelSlots(CancellationToken ct)
 	{
-		var slots = await db.TimeSlots
+		var slots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == null)
 			.OrderBy(s => s.SortOrder)

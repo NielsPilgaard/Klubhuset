@@ -17,8 +17,7 @@ namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 /// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
-	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-		.WithImage("postgres:16-alpine")
+	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
 		.WithDatabase("skoleplanen_test")
 		.WithUsername("test")
 		.WithPassword("test")

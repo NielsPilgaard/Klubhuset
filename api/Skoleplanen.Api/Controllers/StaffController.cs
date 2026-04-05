@@ -29,15 +29,13 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant) : Co
 	[HttpGet("{id:guid}")]
 	public async Task<ActionResult<StaffDto>> GetById(Guid id, CancellationToken ct)
 	{
-		var s = await db.Staff
-			.AsNoTracking()
-			.FirstOrDefaultAsync(s => s.Id == id, ct);
-		if (s is null)
-		{
-			return NotFound();
-		}
+		var staff = await db.Staff
+							.AsNoTracking()
+							.FirstOrDefaultAsync(s => s.Id == id, ct);
 
-		return Ok(new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role));
+		return staff is null
+				   ? NotFound()
+				   : Ok(new StaffDto(staff.Id, staff.Name, staff.Email, staff.Phone, staff.Role));
 	}
 
 	[HttpPost]

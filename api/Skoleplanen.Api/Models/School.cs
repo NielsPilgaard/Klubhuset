@@ -27,8 +27,5 @@ public sealed class School : ITenantScoped, IEntityTypeConfiguration<School>
 
 	public DateTimeOffset CreatedAt { get; init; }
 
-	public void Configure(EntityTypeBuilder<School> builder)
-	{
-		builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
-	}
+	public void Configure(EntityTypeBuilder<School> builder) => builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
 }

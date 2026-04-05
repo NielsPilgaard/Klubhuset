@@ -37,9 +37,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	public record SlotsAndConflictsDto(IReadOnlyList<SlotDto> Slots, IReadOnlyList<ConflictInfo> Conflicts);
 
-	public record CreateSchemaRequest([Required] [MinLength(1)] string Name);
+	public record CreateSchemaRequest([Required][MinLength(1)] string Name);
 
-	public record CopySchemaRequest([Required] [MinLength(1)] string Name);
+	public record CopySchemaRequest([Required][MinLength(1)] string Name);
 
 	public record UpsertSlotRequest(
 		[Required] Guid TimeSlotId,
@@ -268,12 +268,10 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	public async Task<ActionResult<List<SlotDto>>> GetSlots(Guid classId, Guid schemaId, CancellationToken ct)
 	{
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
-		if (!schemaExists)
-		{
-			return NotFound();
-		}
 
-		return Ok(await GetSlotDtos(schemaId, ct));
+		return schemaExists
+				   ? Ok(await GetSlotDtos(schemaId, ct))
+				   : NotFound();
 	}
 
 	[HttpPut("{schemaId:guid}/slots")]
@@ -369,12 +367,10 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	public async Task<ActionResult<List<ConflictInfo>>> GetConflicts(Guid classId, Guid schemaId, CancellationToken ct)
 	{
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
-		if (!schemaExists)
-		{
-			return NotFound();
-		}
 
-		return Ok(await conflicts.DetectAsync(schemaId, ct));
+		return schemaExists
+				   ? Ok(await conflicts.DetectAsync(schemaId, ct))
+				   : NotFound();
 	}
 
 	private async Task<IReadOnlyList<SlotDto>> GetSlotDtos(Guid schemaId, CancellationToken ct) =>

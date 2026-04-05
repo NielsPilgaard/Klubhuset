@@ -11,7 +11,7 @@ namespace Skoleplanen.Api.Controllers;
 [ApiController]
 [Route("api/v1/classes")]
 [Authorize]
-public sealed class ClassesController(AppDbContext db, ITenantContext tenant) : ControllerBase
+public sealed class ClassesController(AppDbContext context, ITenantContext tenant) : ControllerBase
 {
 	public record ClassDto(Guid Id, string Name, string? Description);
 	public record UpsertClassRequest(
@@ -21,73 +21,79 @@ public sealed class ClassesController(AppDbContext db, ITenantContext tenant) : 
 	[HttpGet]
 	public async Task<ActionResult<List<ClassDto>>> GetAll(CancellationToken ct)
 	{
-		var classes = await db.Classes
+		var classes = await context.Classes
 			.AsNoTracking()
 			.OrderBy(c => c.Name)
 			.Select(c => new ClassDto(c.Id, c.Name, c.Description))
 			.ToListAsync(ct);
+
 		return Ok(classes);
 	}
 
 	[HttpGet("{id:guid}")]
 	public async Task<ActionResult<ClassDto>> GetById(Guid id, CancellationToken ct)
 	{
-		var c = await db.Classes
-			.AsNoTracking()
-			.FirstOrDefaultAsync(c => c.Id == id, ct);
-		if (c is null)
-		{
-			return NotFound();
-		}
+		var @class = await context.Classes
+								  .AsNoTracking()
+								  .FirstOrDefaultAsync(c => c.Id == id, ct);
 
-		return Ok(new ClassDto(c.Id, c.Name, c.Description));
+		return @class is null
+				   ? NotFound()
+				   : Ok(new ClassDto(@class.Id, @class.Name, @class.Description));
 	}
 
 	[HttpPost]
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<ClassDto>> Create([FromBody] UpsertClassRequest req, CancellationToken ct)
 	{
-		var c = new Class
+		var @class = new Class
 		{
 			Id = Guid.NewGuid(),
 			TenantId = tenant.TenantId,
 			Name = req.Name,
 			Description = req.Description,
 		};
-		db.Classes.Add(c);
-		await db.SaveChangesAsync(ct);
-		return CreatedAtAction(nameof(GetById), new { id = c.Id },
-			new ClassDto(c.Id, c.Name, c.Description));
+
+		context.Classes.Add(@class);
+
+		await context.SaveChangesAsync(ct);
+
+		return CreatedAtAction(nameof(GetById), new { id = @class.Id },
+			new ClassDto(@class.Id, @class.Name, @class.Description));
 	}
 
 	[HttpPut("{id:guid}")]
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<ClassDto>> Update(Guid id, [FromBody] UpsertClassRequest req, CancellationToken ct)
 	{
-		var c = await db.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
-		if (c is null)
+		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
+		if (@class is null)
 		{
 			return NotFound();
 		}
 
-		c.Name = req.Name;
-		c.Description = req.Description;
-		await db.SaveChangesAsync(ct);
-		return Ok(new ClassDto(c.Id, c.Name, c.Description));
+		@class.Name = req.Name;
+		@class.Description = req.Description;
+
+		await context.SaveChangesAsync(ct);
+
+		return Ok(new ClassDto(@class.Id, @class.Name, @class.Description));
 	}
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
-		var c = await db.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
-		if (c is null)
+		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
+		if (@class is null)
 		{
 			return NotFound();
 		}
 
-		db.Classes.Remove(c);
-		await db.SaveChangesAsync(ct);
+		context.Classes.Remove(@class);
+
+		await context.SaveChangesAsync(ct);
+
 		return NoContent();
 	}
 }
