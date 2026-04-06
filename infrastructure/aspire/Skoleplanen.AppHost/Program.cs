@@ -56,6 +56,7 @@ var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
 
 // React + Vite frontend
 builder.AddViteApp("web", appDirectory: "../../../web", runScriptName: "dev")
+	   .WithEndpoint("http", e => e.Port = 5173)
 	   .WithExternalHttpEndpoints()
 	   .WithReference(api);
 

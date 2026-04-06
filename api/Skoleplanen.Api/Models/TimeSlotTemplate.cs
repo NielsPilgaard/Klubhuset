@@ -1,6 +1,6 @@
 using Skoleplanen.Api.Data;
 
-namespace Skoleplanen.Api.Domain;
+namespace Skoleplanen.Api.Models;
 
 /// <summary>
 /// School-level default lesson structure.

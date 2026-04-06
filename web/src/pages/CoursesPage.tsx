@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, CourseDto } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
+
+const PRESET_COURSES = [
+  'Dansk', 'Matematik', 'Engelsk', 'Naturfag', 'Historie', 'Musik',
+  'Idræt', 'Kristendom', 'Billedkunst', 'Håndværk og design',
+  'Tysk', 'Fransk', 'Geografi', 'Biologi', 'Fysik/kemi', 'Samfundsfag',
+]
 
 interface CourseModalProps {
   initial?: CourseDto
@@ -26,9 +33,14 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
     },
   })
 
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">
             {initial ? 'Rediger fag' : 'Opret fag'}
@@ -40,6 +52,7 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="fx Matematik"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -49,6 +62,7 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="Valgfri beskrivelse"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -62,7 +76,7 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
             Annuller
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={handleSave}
             disabled={!name.trim() || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -74,9 +88,106 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
   )
 }
 
+interface BulkCreateModalProps {
+  existingNames: string[]
+  onClose: () => void
+  onSaved: () => void
+}
+
+function BulkCreateModal({ existingNames, onClose, onSaved }: BulkCreateModalProps) {
+  const qc = useQueryClient()
+  const available = PRESET_COURSES.filter((p) => !existingNames.includes(p))
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(available))
+
+  const allSelected = selected.size === available.length
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(available))
+  }
+  function toggle(name: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      Promise.all([...selected].map((name) => api.post('/courses', { name, description: null }))),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses'] })
+      onSaved()
+    },
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Tilføj standardfag</h2>
+          <p className="mt-0.5 text-sm text-gray-500">Vælg de fag du vil oprette på én gang</p>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          {available.length === 0 ? (
+            <p className="text-sm text-gray-500 italic">Alle standardfag er allerede oprettet.</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">{selected.size} valgt</span>
+                <button
+                  onClick={toggleAll}
+                  className="text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
+                >
+                  {allSelected ? 'Fravælg alle' : 'Vælg alle'}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {available.map((preset) => {
+                  const isSelected = selected.has(preset)
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => toggle(preset)}
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                        isSelected
+                          ? 'bg-brand-600 text-white border-brand-600'
+                          : 'border-gray-300 text-gray-600 hover:border-brand-400 hover:text-brand-700'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+          {mutation.isError && (
+            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Annuller
+          </button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={selected.size === 0 || mutation.isPending || available.length === 0}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {mutation.isPending ? 'Opretter...' : `Opret ${selected.size > 0 ? selected.size + ' ' : ''}fag`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CoursesPage() {
+  usePageTitle('Fag')
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
+  const [showBulk, setShowBulk] = useState(false)
   const [editingCourse, setEditingCourse] = useState<CourseDto | null>(null)
 
   const { data: courses, isLoading, isError, refetch } = useQuery<CourseDto[]>({
@@ -89,6 +200,8 @@ export default function CoursesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['courses'] }),
   })
 
+  const existingNames = courses?.map((c) => c.name) ?? []
+
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -96,16 +209,24 @@ export default function CoursesPage() {
           <h1 className="font-display text-2xl font-semibold text-gray-900">Fag</h1>
           <p className="mt-1 text-sm text-gray-500">Administrer skolens fag</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Opret fag
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowBulk(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Standardfag
+          </button>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Opret fag
+          </button>
+        </div>
       </div>
 
       {isError && (
@@ -180,6 +301,13 @@ export default function CoursesPage() {
 
       {showCreate && (
         <CourseModal onClose={() => setShowCreate(false)} onSaved={() => setShowCreate(false)} />
+      )}
+      {showBulk && (
+        <BulkCreateModal
+          existingNames={existingNames}
+          onClose={() => setShowBulk(false)}
+          onSaved={() => setShowBulk(false)}
+        />
       )}
       {editingCourse && (
         <CourseModal

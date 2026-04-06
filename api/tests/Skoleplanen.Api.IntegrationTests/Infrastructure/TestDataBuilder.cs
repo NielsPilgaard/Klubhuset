@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Domain;
+using Skoleplanen.Api.Models;
 
 namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 
@@ -20,7 +20,6 @@ public static class TestDataBuilder
         {
             Id = tenantId,
             Name = name,
-            Slug = $"test-{tenantId:N}",
             ContactEmail = "test@skole.dk",
         };
         db.Schools.Add(school);
@@ -76,6 +75,65 @@ public static class TestDataBuilder
         db.TimeSlots.Add(slot);
         await db.SaveChangesAsync();
         return slot;
+    }
+
+    public static async Task<CalendarEntry> CreateCalendarEntryAsync(
+        IServiceProvider services, Guid tenantId,
+        CalendarEntryType type, string title, DateOnly startDate, DateOnly endDate)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entry = new CalendarEntry
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Type = type,
+            Title = title,
+            StartDate = startDate,
+            EndDate = endDate,
+        };
+        db.CalendarEntries.Add(entry);
+        await db.SaveChangesAsync();
+        return entry;
+    }
+
+    public static async Task<SchoolFile> CreateSchoolFileAsync(
+        IServiceProvider services, Guid tenantId, string fileName = "test.pdf")
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var file = new SchoolFile
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            FileName = fileName,
+            ContentType = "application/pdf",
+            SizeBytes = 1024,
+            StorageKey = $"test/{Guid.NewGuid()}/{fileName}",
+            Url = $"https://storage.example.com/{fileName}",
+            UploadedBy = "test@skole.dk",
+        };
+        db.SchoolFiles.Add(file);
+        await db.SaveChangesAsync();
+        return file;
+    }
+
+    public static async Task<WeekPlan> CreateWeekPlanAsync(
+        IServiceProvider services, Guid tenantId, Guid classId, int isoYear, int isoWeek)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var plan = new WeekPlan
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ClassId = classId,
+            IsoYear = isoYear,
+            IsoWeek = isoWeek,
+        };
+        db.WeekPlans.Add(plan);
+        await db.SaveChangesAsync();
+        return plan;
     }
 
     public static async Task<(Class klass, Schema schema)> CreateClassWithSchemaAsync(

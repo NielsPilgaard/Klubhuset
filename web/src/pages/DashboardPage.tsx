@@ -1,5 +1,69 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { api, DashboardStats, StaffRole } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
+
+interface OnboardingStatus {
+  hasLogo: boolean
+  staffCount: number
+  classCount: number
+  courseCount: number
+  roomCount: number
+  stepsCompleted: number
+  stepsTotal: number
+  progressPercent: number
+}
+
+function OnboardingCard({ status }: { status: OnboardingStatus }) {
+  const steps = [
+    { label: 'Logo uploadet', done: status.hasLogo },
+    { label: 'Medarbejdere oprettet', done: status.staffCount > 0 },
+    { label: 'Klasser oprettet', done: status.classCount > 0 },
+    { label: 'Fag oprettet', done: status.courseCount > 0 },
+    { label: 'Lokaler oprettet', done: status.roomCount > 0 },
+  ]
+
+  const stepsCompleted = steps.filter(s => s.done).length
+  const stepsTotal = steps.length
+  const progressPercent = stepsTotal > 0 ? Math.round((stepsCompleted / stepsTotal) * 100) : 0
+
+  if (stepsCompleted >= stepsTotal) return null
+
+  return (
+    <div className="bg-white rounded-xl border border-brand-200 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-semibold text-gray-900">
+            Kom godt i gang — {stepsCompleted} af {stepsTotal} trin fuldført
+          </h2>
+          <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-brand-500 rounded-full transition-all"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {steps.map((s) => (
+              <li key={s.label} className="flex items-center gap-2 text-sm">
+                {s.done
+                  ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-500 shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
+                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 shrink-0"><circle cx="12" cy="12" r="9" /></svg>
+                }
+                <span className={s.done ? 'text-gray-400 line-through' : 'text-gray-700'}>{s.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Link
+          to="/setup"
+          className="shrink-0 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors whitespace-nowrap"
+        >
+          Fortsæt opsætning
+        </Link>
+      </div>
+    </div>
+  )
+}
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -45,9 +109,16 @@ function SkeletonTable({ rows = 4 }: { rows?: number }) {
 }
 
 export default function DashboardPage() {
+  usePageTitle('Oversigt')
   const { data, isLoading, isError, refetch } = useQuery<DashboardStats>({
     queryKey: ['stats', 'dashboard'],
     queryFn: () => api.get('/stats/dashboard'),
+  })
+
+  const { data: onboarding } = useQuery<OnboardingStatus>({
+    queryKey: ['onboarding-status'],
+    queryFn: () => api.get('/schools/onboarding-status'),
+    retry: false,
   })
 
   if (isError) {
@@ -74,6 +145,9 @@ export default function DashboardPage() {
         <p className="mt-1 text-sm text-gray-500">Status og nøgletal for din skole</p>
       </div>
 
+      {/* Onboarding progress */}
+      {onboarding && <OnboardingCard status={onboarding} />}
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
@@ -86,13 +160,13 @@ export default function DashboardPage() {
             <StatCard label="Lokaler" value={data!.roomCount} />
             <StatCard
               label="Skemaer"
-              value={`${data!.schemasComplete} / ${data!.schemasTotal}`}
-              sub="færdige"
+              value={data!.schemasTotal === 0 ? '–' : `${data!.schemasComplete} / ${data!.schemasTotal}`}
+              sub={data!.schemasTotal === 0 ? 'Ingen skemaer oprettet' : 'færdige'}
             />
             <StatCard
               label="Klasser u. skema"
-              value={data!.unassignedClasses.length}
-              sub={data!.unassignedClasses.length === 0 ? 'Alle klasser har skema' : 'mangler tildeling'}
+              value={data!.unassignedClasses?.filter(c => !c.hasSchema).length ?? 0}
+              sub={(data!.unassignedClasses?.filter(c => !c.hasSchema).length ?? 0) === 0 ? 'Alle klasser har et skema' : 'mangler skema'}
             />
           </>
         )}
@@ -139,33 +213,32 @@ export default function DashboardPage() {
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-700">Klasser med uassignerede lektioner</h2>
+              <h2 className="text-sm font-semibold text-gray-700">Klasser med mangler</h2>
             </div>
-            {data!.unassignedClasses.length === 0 ? (
+            {(data!.unassignedClasses?.length ?? 0) === 0 ? (
               <div className="px-5 py-8 text-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-brand-50 mb-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-500">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-500"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
-                <p className="text-sm text-gray-500">Alle lektioner er tildelt</p>
+                <p className="text-sm text-gray-500">Alle klasser har et færdigt skema</p>
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Klasse</th>
-                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">Tomme lektioner</th>
+                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data!.unassignedClasses.map((c) => (
+                  {data!.unassignedClasses?.map((c) => (
                     <tr key={c.classId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-2.5 font-medium text-gray-800">{c.className}</td>
                       <td className="px-5 py-2.5 text-right">
-                        <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">
-                          {c.emptySlots}
-                        </span>
+                        {c.hasSchema
+                          ? <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">{c.emptySlots}</span>
+                          : <Link to={`/klasser?classId=${c.classId}&action=new-schema`} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium hover:bg-brand-200 transition-colors">Opret skema →</Link>
+                        }
                       </td>
                     </tr>
                   ))}

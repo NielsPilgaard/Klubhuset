@@ -1,25 +1,13 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import keycloak from './keycloak'
-
-interface AuthContextValue {
-  authenticated: boolean
-  token: string | undefined
-  logout: () => void
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+import { useEffect, useState, type ReactNode } from 'react'
+import keycloak, { getInitPromise } from './keycloak'
+import { AuthContext } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    keycloak
-      .init({
-        onLoad: 'login-required',
-        pkceMethod: 'S256',
-        checkLoginIframe: false,
-      })
+    getInitPromise()
       .then((auth) => {
         setAuthenticated(auth)
         setInitialized(true)
@@ -27,7 +15,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Proactively refresh token before it expires (30s before expiry)
         setInterval(() => {
           keycloak.updateToken(30).catch(() => {
-            keycloak.login()
+            if (document.visibilityState === 'visible') {
+              keycloak.login()
+            }
           })
         }, 60_000)
       })
@@ -40,21 +30,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null
   }
 
+  const parsed = keycloak.tokenParsed as Record<string, string> | undefined
+  const userName =
+    parsed?.['name'] ??
+    parsed?.['preferred_username'] ??
+    null
+
   return (
     <AuthContext.Provider
       value={{
         authenticated,
         token: keycloak.token,
+        userName,
         logout: () => keycloak.logout(),
       }}
     >
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
 }

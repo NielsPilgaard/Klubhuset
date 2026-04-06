@@ -6,4 +6,19 @@ const keycloak = new Keycloak({
   clientId: 'skoleplanen-web',
 })
 
+// Module-level promise so init() is only ever called once,
+// even if AuthProvider mounts twice (React 18 Strict Mode).
+let initPromise: Promise<boolean> | null = null
+
+export function getInitPromise(): Promise<boolean> {
+  if (!initPromise) {
+    initPromise = keycloak.init({
+      onLoad: 'check-sso',
+      pkceMethod: 'S256',
+      checkLoginIframe: false,
+    })
+  }
+  return initPromise
+}
+
 export default keycloak

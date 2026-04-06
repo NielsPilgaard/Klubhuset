@@ -1,17 +1,23 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
+using Skoleplanen.Api;
+using Skoleplanen.Api.Auth;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Email;
+using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
+using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Multi-tenancy
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+builder.Services.AddMemoryCache();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -25,6 +31,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 		   options.Authority = builder.Configuration["Keycloak:Authority"];
 		   options.Audience = builder.Configuration["Keycloak:Audience"];
 		   options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+		   // Preserve Keycloak's original claim names (e.g. "preferred_username", "name")
+		   // instead of mapping them to WS-Federation URIs.
+		   options.MapInboundClaims = false;
 
 		   // Allow API to reach Keycloak internally (container-to-container) while
 		   // still validating tokens issued by the public issuer URL.
@@ -36,57 +45,73 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	   });
 
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
-// OpenAPI / Swagger (spec generated from code)
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-	const string schemeId = "Bearer";
+builder.Services.AddOpenApi();
 
-	options.SwaggerDoc("v1", new OpenApiInfo { Title = "Skoleplanen API", Version = "v1" });
-	options.AddSecurityDefinition(schemeId,
-								  new OpenApiSecurityScheme
-								  {
-									  Name = "Authorization",
-									  Type = SecuritySchemeType.Http,
-									  Scheme = schemeId,
-									  BearerFormat = "JWT",
-									  In = ParameterLocation.Header,
-								  });
+builder.Services.AddOptions<ApplicationOptions>()
+	   .BindConfiguration(ApplicationOptions.SectionName)
+	   .ValidateDataAnnotations()
+	   .ValidateOnStart();
 
-	options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-									   { [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
-});
-
-// Email
 builder.Services.AddOptions<SmtpOptions>()
 	   .BindConfiguration(SmtpOptions.SectionName)
 	   .ValidateDataAnnotations()
 	   .ValidateOnStart();
 
+builder.Services.AddOptions<StripeOptions>()
+	   .BindConfiguration(StripeOptions.SectionName)
+	   .ValidateDataAnnotations()
+	   .ValidateOnStart();
+
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 
-// Conflict detection
+builder.Services.AddObjectStorage();
+
 builder.Services.AddScoped<ConflictDetectionService>();
 
-// Controllers
+builder.Services.AddScoped<StaffInvitationService>();
+builder.Services.AddScoped<ExcelReportBuilder>();
+
+builder.Services.AddScoped<Skoleplanen.Api.Services.SubscriptionService>();
+
+// Register Stripe services
+builder.Services.AddSingleton<CustomerService>();
+builder.Services.AddSingleton<Stripe.Checkout.SessionService>();
+builder.Services.AddSingleton<Stripe.BillingPortal.SessionService>();
+
+// Configure Stripe global API key from strongly-typed options
+var stripeOptions = builder.Configuration.GetSection(StripeOptions.SectionName).Get<StripeOptions>();
+if (!string.IsNullOrEmpty(stripeOptions?.SecretKey))
+{
+    StripeConfiguration.ApiKey = stripeOptions.SecretKey;
+}
+
 builder.Services.AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-	app.UseSwagger(c => c.RouteTemplate = "api/v1/openapi/{documentName}/openapi.json");
-	app.UseSwaggerUI(c =>
-	{
-		c.SwaggerEndpoint("/api/v1/openapi/v1/openapi.json", "Skoleplanen API v1");
-		c.RoutePrefix = "api/v1/openapi";
-	});
-}
+app.UseSwaggerInDevelopment();
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
+
+if (!isOpenApiGeneration)
+{
+	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
+	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
+	{
+		await app.Services.SeedAsync();
+	}
+
+	if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
+	{
+		await app.Services.EnsureS3BucketAsync();
+	}
+}
 
 app.Run();

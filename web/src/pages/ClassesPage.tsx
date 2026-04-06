@@ -1,7 +1,96 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api, ClassDto, SchemaDto, SchemaStatus } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
+
+interface CopySchemaModalProps {
+  classId: string
+  schemaId: string
+  sourceName: string
+  onClose: () => void
+  onSaved: () => void
+}
+
+function CopySchemaModal({ classId, schemaId, sourceName, onClose, onSaved }: CopySchemaModalProps) {
+  const qc = useQueryClient()
+  const [name, setName] = useState(`Kopi af ${sourceName}`)
+  const [targetClassId, setTargetClassId] = useState(classId)
+
+  const { data: allClasses } = useQuery<ClassDto[]>({
+    queryKey: ['classes'],
+    queryFn: () => api.get('/classes'),
+  })
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (targetClassId === classId) {
+        return api.post(`/classes/${classId}/schemas/${schemaId}/copy`, { name })
+      }
+      return api.post(`/classes/${classId}/schemas/${schemaId}/copy-to/${targetClassId}`, { name })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['schemas', classId] })
+      qc.invalidateQueries({ queryKey: ['schemas', targetClassId] })
+      onSaved()
+    },
+  })
+
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Kopiér skema</h2>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kopiér til klasse</label>
+            <select
+              value={targetClassId}
+              onChange={(e) => setTargetClassId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              {allClasses?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}{c.id === classId ? ' (samme klasse)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Navn på kopi *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          {mutation.isError && (
+            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Annuller
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!name.trim() || mutation.isPending}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {mutation.isPending ? 'Kopierer...' : 'Kopiér'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface ClassModalProps {
   initial?: ClassDto
@@ -25,9 +114,14 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
     },
   })
 
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">
             {initial ? 'Rediger klasse' : 'Opret klasse'}
@@ -39,6 +133,7 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="fx 5.a"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -48,6 +143,7 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="Valgfri beskrivelse"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -64,7 +160,7 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
             Annuller
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={handleSave}
             disabled={!name.trim() || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -94,9 +190,14 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
     },
   })
 
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">Opret skema</h2>
         </div>
@@ -106,6 +207,7 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="fx Efterår 2025"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -119,7 +221,7 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
             Annuller
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={handleSave}
             disabled={!name.trim() || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -141,10 +243,18 @@ function statusClasses(status: SchemaStatus) {
     : 'bg-amber-100 text-amber-700'
 }
 
-function SchemaList({ classId }: { classId: string }) {
+function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
+  const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
+
+  useEffect(() => {
+    if (autoOpenCreate) {
+      setShowCreate(true)
+      onAutoOpenHandled?.()
+    }
+  }, [autoOpenCreate, onAutoOpenHandled])
 
   const { data: schemas, isLoading } = useQuery<SchemaDto[]>({
     queryKey: ['schemas', classId],
@@ -216,6 +326,16 @@ function SchemaList({ classId }: { classId: string }) {
               >
                 Rediger
               </button>
+              <button
+                onClick={() => setCopyingSchema(s)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                title="Kopiér skema"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
               {!s.isActive && (
                 <button
                   onClick={() => activateMutation.mutate(s.id)}
@@ -237,20 +357,46 @@ function SchemaList({ classId }: { classId: string }) {
           onSaved={() => setShowCreate(false)}
         />
       )}
+      {copyingSchema && (
+        <CopySchemaModal
+          classId={classId}
+          schemaId={copyingSchema.id!}
+          sourceName={copyingSchema.name!}
+          onClose={() => setCopyingSchema(null)}
+          onSaved={() => setCopyingSchema(null)}
+        />
+      )}
     </div>
   )
 }
 
 export default function ClassesPage() {
+  usePageTitle('Klasser')
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingClass, setEditingClass] = useState<ClassDto | null>(null)
   const [expandedClass, setExpandedClass] = useState<string | null>(null)
+  const [newSchemaForClass, setNewSchemaForClass] = useState<string | null>(null)
 
   const { data: classes, isLoading, isError, refetch } = useQuery<ClassDto[]>({
     queryKey: ['classes'],
     queryFn: () => api.get('/classes'),
   })
+
+  useEffect(() => {
+    const action = searchParams.get('action')
+    const classId = searchParams.get('classId')
+    if (action === 'new-schema' && classId && classes) {
+      const match = classes.find((c) => c.id === classId)
+      if (match) {
+        setExpandedClass(classId)
+        setNewSchemaForClass(classId)
+        setSearchParams({}, { replace: true })
+      }
+    }
+  }, [searchParams, classes, setSearchParams])
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/classes/${id}`),
@@ -271,13 +417,13 @@ export default function ClassesPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Opret klasse
+          <span className="hidden sm:inline">Opret klasse</span>
         </button>
       </div>
 
@@ -312,9 +458,13 @@ export default function ClassesPage() {
 
         {classes?.map((cls) => (
           <div key={cls.id}>
-            <div className="flex items-center justify-between px-5 py-4">
+            <div
+              className="flex items-center justify-between px-5 py-4 cursor-pointer"
+              onClick={() => toggleExpand(cls.id!)}
+              data-testid={`class-row-${cls.id}`}
+            >
               <button
-                onClick={() => toggleExpand(cls.id)}
+                onClick={(e) => { e.stopPropagation(); toggleExpand(cls.id!) }}
                 className="flex items-center gap-3 min-w-0 text-left group"
               >
                 <svg
@@ -334,7 +484,13 @@ export default function ClassesPage() {
                   <span className="text-sm text-gray-400 truncate">{cls.description}</span>
                 )}
               </button>
-              <div className="flex items-center gap-2 shrink-0 ml-4">
+              <div className="flex items-center gap-2 shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => navigate(`/klasser/${cls.id}/ugeplan`)}
+                  className="px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-md transition-colors"
+                >
+                  Ugeplan
+                </button>
                 <button
                   onClick={() => setEditingClass(cls)}
                   className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
@@ -361,7 +517,13 @@ export default function ClassesPage() {
                 </button>
               </div>
             </div>
-            {expandedClass === cls.id && <SchemaList classId={cls.id} />}
+            {expandedClass === cls.id && (
+              <SchemaList
+                classId={cls.id}
+                autoOpenCreate={newSchemaForClass === cls.id}
+                onAutoOpenHandled={() => setNewSchemaForClass(null)}
+              />
+            )}
           </div>
         ))}
       </div>

@@ -15,61 +15,72 @@ namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 /// <see cref="TestTenantContext"/> and a simple test-only JWT scheme so
 /// tests can control which tenant they're operating as.
 /// </summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class ApiFactory : WebApplicationFactory<Program>
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .WithDatabase("skoleplanen_test")
-        .WithUsername("test")
-        .WithPassword("test")
-        .Build();
+	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
+		.WithDatabase("skoleplanen_test")
+		.WithUsername("test")
+		.WithPassword("test")
+		.Build();
 
-    public TestTenantContext TenantContext { get; } = new();
+	public TestTenantContext TenantContext { get; } = new();
 
-    public async ValueTask InitializeAsync()
-    {
-        await _postgres.StartAsync();
-    }
+	public async Task StartAsync() => await _postgres.StartAsync();
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Testing");
+	protected override void ConfigureWebHost(IWebHostBuilder builder)
+	{
+		builder.UseEnvironment("Testing");
 
-        builder.ConfigureServices(services =>
-        {
-            // Replace DB with the Testcontainers instance
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor != null) services.Remove(descriptor);
+		// Provide stub values for required config that isn't needed in tests
+		builder.UseSetting("Stripe:SecretKey", "sk_test_stub");
+		builder.UseSetting("Stripe:PriceId", "price_stub");
+		builder.UseSetting("Stripe:WebhookSecret", "whsec_stub");
+		builder.UseSetting("Smtp:Host", "localhost");
+		builder.UseSetting("Smtp:Port", "25");
+		builder.UseSetting("Smtp:Username", "test");
+		builder.UseSetting("Smtp:Password", "test");
 
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(_postgres.GetConnectionString()));
+		builder.ConfigureServices(services =>
+		{
+			// Replace DB with the Testcontainers instance
+			var descriptor = services.SingleOrDefault(
+				d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+			if (descriptor != null)
+			{
+				services.Remove(descriptor);
+			}
 
-            // Replace tenant context — tests control TenantId directly
-            var tenantDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ITenantContext));
-            if (tenantDescriptor != null) services.Remove(tenantDescriptor);
+			services.AddDbContext<AppDbContext>(options =>
+				options.UseNpgsql(_postgres.GetConnectionString()));
 
-            services.AddScoped<ITenantContext>(_ => TenantContext);
+			// Replace tenant context — tests control TenantId directly
+			var tenantDescriptor = services.SingleOrDefault(
+				d => d.ServiceType == typeof(ITenantContext));
+			if (tenantDescriptor != null)
+			{
+				services.Remove(tenantDescriptor);
+			}
 
-            // Replace JWT auth with a no-op test scheme so [Authorize] passes
-            services.AddAuthentication(TestAuthHandler.SchemeName)
-                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                        TestAuthHandler.SchemeName, _ => { });
-        });
+			services.AddScoped<ITenantContext>(_ => TenantContext);
 
-        builder.ConfigureServices(services =>
-        {
-            // Run EF migrations on first boot
-            using var scope = services.BuildServiceProvider().CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.Migrate();
-        });
-    }
+			// Replace JWT auth with a no-op test scheme so [Authorize] passes
+			services.AddAuthentication(TestAuthHandler.SchemeName)
+					.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+						TestAuthHandler.SchemeName, _ => { });
+		});
 
-    public new async ValueTask DisposeAsync()
-    {
-        await base.DisposeAsync();
-        await _postgres.DisposeAsync();
-    }
+		builder.ConfigureServices(services =>
+		{
+			// Run EF migrations on first boot
+			using var scope = services.BuildServiceProvider().CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+			db.Database.Migrate();
+		});
+	}
+
+	public async Task StopAsync()
+	{
+		await DisposeAsync();
+		await _postgres.DisposeAsync();
+	}
 }

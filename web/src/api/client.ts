@@ -28,9 +28,26 @@ export class ApiError extends Error {
   }
 }
 
+async function requestForm<T>(path: string, body: FormData): Promise<T> {
+  await keycloak.updateToken(30).catch(() => keycloak.login())
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {},
+    body,
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText)
+    throw new ApiError(res.status, text)
+  }
+  if (res.status === 204) return undefined as T
+  return res.json()
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  postForm: <T>(path: string, body: FormData) => requestForm<T>(path, body),
   put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
 }
@@ -52,3 +69,4 @@ export type TimeSlotDto = components['schemas']['TimeSlotDto']
 export type DashboardStats = components['schemas']['DashboardStats']
 export type TemplateDto = components['schemas']['TemplateDto']
 export type BreakDto = components['schemas']['BreakDto']
+export type FileDto = components['schemas']['FileDto']

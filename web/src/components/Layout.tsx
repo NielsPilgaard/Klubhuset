@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import Logo from './Logo'
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -22,6 +23,7 @@ export default function Layout() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
+          <Logo variant="light" size={24} />
           <span className="font-display text-lg font-semibold text-brand-800">Skoleplanen</span>
         </header>
 

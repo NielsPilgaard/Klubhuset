@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { api, RoomDto } from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface RoomModalProps {
   initial?: RoomDto
@@ -31,9 +33,14 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
     },
   })
 
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">
             {initial ? 'Rediger lokale' : 'Opret lokale'}
@@ -45,6 +52,7 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="fx Lokale 12"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -54,6 +62,8 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
             <input
               value={capacity}
               onChange={(e) => setCapacity(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               type="number"
               min="1"
               placeholder="fx 30"
@@ -65,6 +75,7 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="fx Musikundervisning"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -78,7 +89,7 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
             Annuller
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={handleSave}
             disabled={!name.trim() || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -91,7 +102,9 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
 }
 
 export default function RoomsPage() {
+  usePageTitle('Lokaler')
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
   const [editingRoom, setEditingRoom] = useState<RoomDto | null>(null)
 
@@ -114,13 +127,14 @@ export default function RoomsPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          aria-label="Opret lokale"
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Opret lokale
+          <span className="hidden sm:inline">Opret lokale</span>
         </button>
       </div>
 
@@ -169,6 +183,18 @@ export default function RoomsPage() {
                 <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{r.description ?? '—'}</td>
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => navigate(`/lokaler/${r.id}/skema`)}
+                      className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                      title="Se lokaleplan"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </button>
                     <button
                       onClick={() => setEditingRoom(r)}
                       className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
