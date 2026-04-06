@@ -16,6 +16,10 @@
     <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(CI)' == 'true'">
+    <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="4.0.20.3" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
