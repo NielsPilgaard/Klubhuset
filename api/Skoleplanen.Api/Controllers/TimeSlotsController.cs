@@ -92,27 +92,44 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 
 	/// <summary>
 	/// Returns an error message if any break start time falls in the middle of a lesson module.
-	/// Breaks must start exactly on a module boundary: dayStart + N * lessonDuration.
+	/// Walks the timeline accounting for earlier breaks shifting subsequent module boundaries.
 	/// </summary>
 	private static string? ValidateBreaksAgainstModules(TimeOnly dayStart, int lessonDuration, IReadOnlyList<UpsertBreakRequest> breaks)
 	{
-		foreach (var @break in breaks)
+		var sortedBreaks = breaks.OrderBy(b => b.StartTime).ToList();
+
+		foreach (var @break in sortedBreaks)
 		{
 			if (@break.StartTime < dayStart)
 			{
 				return $"Pausen kl. {@break.StartTime:HH\\:mm} starter før skoledagen.";
 			}
 
-			var minutesFromStart = (int)(@break.StartTime - dayStart).TotalMinutes;
-			if (minutesFromStart % lessonDuration == 0)
+			// Walk the timeline from dayStart, honouring earlier break durations,
+			// to determine whether this break lands on a module boundary.
+			var cursor = dayStart;
+			var moduleNumber = 1;
+			while (cursor < @break.StartTime)
 			{
-				continue;
-			}
+				var prevBreak = sortedBreaks.FirstOrDefault(pb => pb.StartTime == cursor && pb != @break);
+				if (prevBreak is not null)
+				{
+					cursor = cursor.AddMinutes(prevBreak.DurationMinutes);
+					continue;
+				}
 
-			var moduleNumber = minutesFromStart / lessonDuration + 1;
-			var moduleStart = dayStart.AddMinutes((moduleNumber - 1) * lessonDuration);
-			var moduleEnd = dayStart.AddMinutes(moduleNumber * lessonDuration);
-			return $@"Pausen kl. {@break.StartTime:HH\:mm} falder midt i modul {moduleNumber} ({moduleStart:HH\:mm}–{moduleEnd:HH\:mm}). Pauser skal starte præcis ved en lektionsovergang.";
+				var nextBoundary = cursor.AddMinutes(lessonDuration);
+				if (nextBoundary > @break.StartTime)
+				{
+					return $"Pausen kl. {@break.StartTime:HH\\:mm} falder midt i modul {moduleNumber} ({cursor:HH\\:mm}–{nextBoundary:HH\\:mm}). Pauser skal starte præcis ved en lektionsovergang.";
+				}
+
+				cursor = nextBoundary;
+				if (cursor < @break.StartTime)
+				{
+					moduleNumber++;
+				}
+			}
 		}
 
 		return null;
