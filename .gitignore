@@ -361,3 +361,4 @@ MigrationBackup/
 
 media/**/*.png
 media/
+.vscode/settings.json
