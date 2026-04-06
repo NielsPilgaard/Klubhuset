@@ -279,7 +279,7 @@ export default function FilesPage() {
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <a
-                      href={f.url}
+                      href={f.url || undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                       download={f.fileName}
@@ -297,7 +297,7 @@ export default function FilesPage() {
                       <button
                         data-testid={`delete-${f.id}`}
                         onClick={() => {
-                          if (confirm(`Slet filen "${f.fileName ?? 'fil'}"?`)) deleteMutation.mutate(f.id)
+                          if (f.id && confirm(`Slet filen "${f.fileName ?? 'fil'}"?`)) deleteMutation.mutate(f.id)
                         }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         title="Slet fil"
