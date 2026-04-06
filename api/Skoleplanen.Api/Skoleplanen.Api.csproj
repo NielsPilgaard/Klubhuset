@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <OpenApiGenerateDocumentsOnBuild Condition="'$(DOTNET_WATCH)' != '1'">true</OpenApiGenerateDocumentsOnBuild>
+    <OpenApiGenerateDocumentsOnBuild Condition="'$(DOTNET_WATCH)' != '1' AND '$(CI)' != 'true'">true</OpenApiGenerateDocumentsOnBuild>
     <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
   </PropertyGroup>
 
