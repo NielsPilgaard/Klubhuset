@@ -11,9 +11,13 @@
     <ProjectReference Include="..\..\infrastructure\aspire\Skoleplanen.ServiceDefaults\Skoleplanen.ServiceDefaults.csproj" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <OpenApiGenerateDocumentsOnBuild>$(OPENAPI_GENERATE)</OpenApiGenerateDocumentsOnBuild>
+  <PropertyGroup Condition="'$(DOTNET_WATCH)' != '1' AND '$(CI)' != 'true'">
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
     <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(DOTNET_WATCH)' == '1' OR '$(CI)' == 'true'">
+    <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
