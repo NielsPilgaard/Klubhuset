@@ -62,6 +62,8 @@ public sealed class FilesController(AppDbContext db, ITenantContext tenant, IObj
         return Ok(files);
     }
 
+    // TODO: Use presigned url flow for uploads instead of uploading through the API, to avoid tying up API resources and hitting timeouts on large files. 
+    // This also allows for better progress reporting on the frontend.
     [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<FileDto>> Upload(
@@ -100,6 +102,7 @@ public sealed class FilesController(AppDbContext db, ITenantContext tenant, IObj
         {
             return ValidationProblem(new ValidationProblemDetails
             {
+                // TODO: This needs to be different for skole+ tier
                 Errors = { ["file"] = ["Lagerkvoten er nået (100 GB). Slet filer for at frigøre plads."] }
             });
         }
