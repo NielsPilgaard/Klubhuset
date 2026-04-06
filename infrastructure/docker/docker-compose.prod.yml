@@ -17,7 +17,8 @@
 #   API_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-api:latest
 #   WEB_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-web:latest
 
-name: skoleplanen
+name:
+  skoleplanen
 
   # Postgres is managed as a dedicated Database resource in Dokploy.
   # Dokploy injects the connection strings below as environment variables.
@@ -54,7 +55,7 @@ services:
     image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE__ENVIRONMENT: Production
       ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
       Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
       Keycloak__Audience: skoleplanen-api

@@ -66,9 +66,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
-
 if (!isOpenApiGeneration)
 {
+	if (!builder.Environment.IsProduction())
+	{
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await db.Database.MigrateAsync();
+	}
+
 	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
 	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
 	{

@@ -16,8 +16,7 @@ public static class DbSeeder
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        await db.Database.MigrateAsync();
+        
         await SeedSchoolAsync(db);
         await SeedStaffAsync(db);
     }
