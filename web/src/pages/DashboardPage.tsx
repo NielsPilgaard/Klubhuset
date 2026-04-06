@@ -237,7 +237,7 @@ export default function DashboardPage() {
                       <td className="px-5 py-2.5 text-right">
                         {c.hasSchema
                           ? <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">{c.emptySlots}</span>
-                          : <Link to="/klasser" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium hover:bg-brand-200 transition-colors">Opret skema →</Link>
+                          : <Link to={`/klasser?classId=${c.classId}&action=new-schema`} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium hover:bg-brand-200 transition-colors">Opret skema →</Link>
                         }
                       </td>
                     </tr>
