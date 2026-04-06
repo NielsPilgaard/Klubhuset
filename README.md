@@ -108,15 +108,21 @@ dotnet user-secrets set "Parameters:keycloak-admin-password" "your-dev-password"
 # Scaleway TEM (Email)
 dotnet user-secrets set "Smtp:Username" "your-scaleway-username" --project api/Skoleplanen.Api
 dotnet user-secrets set "Smtp:Password" "your-scaleway-api-key" --project api/Skoleplanen.Api
+
+
+# OVHcloud S3
+dotnet user-secrets set "ObjectStorage:AccessKey" "your-s3-accesskey" --project api/Skoleplanen.Api
+dotnet user-secrets set "ObjectStorage:SecretKey" "your-s3-secretkey" --project api/Skoleplanen.Api
+
 ```
 
 ### Dev login credentials
 
 A test school and admin user are seeded automatically in development:
 
-| Field    | Value                   |
-| -------- | ----------------------- |
-| URL      | http://localhost:5173   |
+| Field    | Value                       |
+| -------- | --------------------------- |
+| URL      | http://localhost:5173       |
 | Username | `admin@debugskolen.dk`      |
 | Password | `test1234`                  |
 | School   | Debugskolen (`debugskolen`) |
