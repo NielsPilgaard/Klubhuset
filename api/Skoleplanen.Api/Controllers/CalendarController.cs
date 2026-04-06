@@ -40,7 +40,10 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
     [HttpGet("defaults")]
     public ActionResult<List<DefaultHolidayDto>> GetDefaults([FromQuery] int? year)
     {
-        var targetYear = year ?? DateOnly.FromDateTime(DateTime.Today).Year;
+        // year is the school start year (e.g. 2025 = 2025/2026)
+        // Default to current school start year
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var targetYear = year ?? (today.Month >= 8 ? today.Year : today.Year - 1);
         var defaults = ComputeDefaultHolidays(targetYear);
         return Ok(defaults);
     }
@@ -100,9 +103,8 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 
     private static List<DefaultHolidayDto> ComputeDefaultHolidays(int year)
     {
-        // Determine school year: if month Aug-Dec → year/year+1; otherwise (year-1)/year
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        int schoolStartYear = (today.Month >= 8) ? year : year - 1;
+        // year is treated as the school start year (e.g. 2025 = school year 2025/2026)
+        int schoolStartYear = year;
         int schoolEndYear = schoolStartYear + 1;
 
         var easter = ComputeEaster(schoolEndYear);

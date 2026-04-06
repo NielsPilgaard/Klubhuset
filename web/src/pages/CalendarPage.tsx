@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -47,6 +47,21 @@ const MONTH_NAMES = [
 
 const WEEKDAY_HEADERS = ['Ma', 'Ti', 'On', 'To', 'Fr', 'Lø', 'Sø']
 
+// Returns the school year start year for a given reference year.
+// School year starts in August. If today is Aug-Dec, school year = year/year+1.
+// The year selector represents the school start year (e.g. 2025 means 2025/2026).
+function getSchoolYears(schoolStartYear: number): { startYear: number; endYear: number } {
+  return { startYear: schoolStartYear, endYear: schoolStartYear + 1 }
+}
+
+// School year months: Aug through Jun (11 months)
+function getSchoolYearMonths(schoolStartYear: number): Array<{ year: number; month: number }> {
+  const months: Array<{ year: number; month: number }> = []
+  for (let m = 8; m <= 12; m++) months.push({ year: schoolStartYear, month: m })
+  for (let m = 1; m <= 6; m++) months.push({ year: schoolStartYear + 1, month: m })
+  return months
+}
+
 function buildMonthGrid(year: number, month: number): (number | null)[][] {
   // month is 1-based
   const firstDay = new Date(year, month - 1, 1)
@@ -89,22 +104,109 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${fmt(startDate)} – ${fmt(endDate)}`
 }
 
+function toDateString(year: number, month: number, day: number): string {
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${year}-${pad(month)}-${pad(day)}`
+}
+
+interface DayPopoverProps {
+  year: number
+  month: number
+  day: number
+  entries: CalendarEntryDto[]
+  isAdmin: boolean
+  onCreateForDate: (dateStr: string) => void
+  onEdit: (entry: CalendarEntryDto) => void
+  onClose: () => void
+}
+
+function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdit, onClose }: DayPopoverProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const dateStr = toDateString(year, month, day)
+  const dayEntries = getDayEntries(year, month, day, entries)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [onClose])
+
+  const formattedDate = new Date(`${dateStr}T00:00:00`).toLocaleDateString('da-DK', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+
+  return (
+    <div
+      ref={ref}
+      className="absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 w-52 text-left"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="px-3 py-2 border-b border-gray-100">
+        <p className="text-xs font-medium text-gray-700 capitalize">{formattedDate}</p>
+      </div>
+      <div className="px-3 py-2 space-y-1">
+        {dayEntries.length === 0 && (
+          <p className="text-xs text-gray-400 italic">Ingen begivenheder</p>
+        )}
+        {dayEntries.map((entry) => (
+          <div key={entry.id} className="flex items-center gap-1.5">
+            <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type] ?? 'bg-gray-100 text-gray-700'}`}>
+              {TYPE_LABELS[entry.type] ?? entry.type}
+            </span>
+            <span className="text-xs text-gray-800 flex-1 truncate">{entry.title}</span>
+            {isAdmin && (
+              <button
+                onClick={() => { onEdit(entry); onClose() }}
+                className="text-gray-400 hover:text-gray-700 flex-shrink-0"
+                title="Rediger"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {isAdmin && (
+        <div className="px-3 py-2 border-t border-gray-100">
+          <button
+            onClick={() => { onCreateForDate(dateStr); onClose() }}
+            className="w-full text-left text-xs text-brand-600 hover:text-brand-800 font-medium"
+          >
+            + Tilføj begivenhed
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface EntryModalProps {
   initial?: CalendarEntryDto
+  defaultDate?: string
   defaultYear: number
   onClose: () => void
   onSaved: () => void
 }
 
-function EntryModal({ initial, defaultYear, onClose, onSaved }: EntryModalProps) {
+function EntryModal({ initial, defaultDate, defaultYear, onClose, onSaved }: EntryModalProps) {
   const qc = useQueryClient()
   const today = new Date()
-  const todayStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`
+  const todayStr = toDateString(today.getFullYear(), today.getMonth() + 1, today.getDate())
+  const initialDate = defaultDate ?? todayStr
 
   const [type, setType] = useState(initial?.type ?? 'Ferie')
   const [title, setTitle] = useState(initial?.title ?? '')
-  const [startDate, setStartDate] = useState(initial?.startDate ?? todayStr)
-  const [endDate, setEndDate] = useState(initial?.endDate ?? todayStr)
+  const [startDate, setStartDate] = useState(initial?.startDate ?? initialDate)
+  const [endDate, setEndDate] = useState(initial?.endDate ?? initialDate)
 
   const dateError = endDate < startDate ? 'Slutdato skal være efter eller lig startdato' : null
 
@@ -116,7 +218,7 @@ function EntryModal({ initial, defaultYear, onClose, onSaved }: EntryModalProps)
         : api.post('/calendar', body)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['calendar', defaultYear] })
+      qc.invalidateQueries({ queryKey: ['calendar'] })
       onSaved()
     },
   })
@@ -204,34 +306,61 @@ export default function CalendarPage() {
   const qc = useQueryClient()
   const isAdmin = keycloak.hasRealmRole('admin')
 
-  const currentYear = new Date().getFullYear()
-  const [selectedYear, setSelectedYear] = useState(currentYear)
-  const [showCreate, setShowCreate] = useState(false)
-  const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
+  const today = new Date()
+  const currentSchoolStartYear = today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1
+  const [schoolStartYear, setSchoolStartYear] = useState(currentSchoolStartYear)
+  const { startYear, endYear } = getSchoolYears(schoolStartYear)
+  const schoolYearMonths = getSchoolYearMonths(schoolStartYear)
 
-  const { data: entries = [] } = useQuery<CalendarEntryDto[]>({
-    queryKey: ['calendar', selectedYear],
-    queryFn: () => api.get(`/calendar?year=${selectedYear}`),
+  const [createDate, setCreateDate] = useState<string | null>(null)
+  const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
+  const [openPopover, setOpenPopover] = useState<string | null>(null) // "year-month-day"
+
+  // Fetch entries for both years of the school year
+  const { data: entriesStartYear = [] } = useQuery<CalendarEntryDto[]>({
+    queryKey: ['calendar', startYear],
+    queryFn: () => api.get(`/calendar?year=${startYear}`),
+  })
+  const { data: entriesEndYear = [] } = useQuery<CalendarEntryDto[]>({
+    queryKey: ['calendar', endYear],
+    queryFn: () => api.get(`/calendar?year=${endYear}`),
   })
 
+  // Merge and deduplicate entries from both years
+  const allEntries: CalendarEntryDto[] = [
+    ...entriesStartYear,
+    ...entriesEndYear.filter((e) => !entriesStartYear.some((s) => s.id === e.id)),
+  ]
+
+  const hasEntries = allEntries.length > 0
+
   const { data: defaults = [] } = useQuery<DefaultHolidayDto[]>({
-    queryKey: ['calendar-defaults', selectedYear],
-    queryFn: () => api.get(`/calendar/defaults?year=${selectedYear}`),
-    enabled: isAdmin && entries.length === 0,
+    queryKey: ['calendar-defaults', schoolStartYear],
+    queryFn: () => api.get(`/calendar/defaults?year=${schoolStartYear}`),
+    enabled: isAdmin && !hasEntries,
   })
 
   const seedMutation = useMutation({
     mutationFn: (items: DefaultHolidayDto[]) =>
       Promise.all(items.map((d) => api.post('/calendar', d))),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar', selectedYear] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/calendar/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar', selectedYear] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar'] }),
   })
 
-  const yearOptions = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2]
+  // School year options: 5 years around current
+  const yearOptions = Array.from({ length: 5 }, (_, i) => currentSchoolStartYear - 2 + i)
+
+  function handleDayClick(year: number, month: number, day: number, isWeekend: boolean) {
+    if (isWeekend) return
+    const key = `${year}-${month}-${day}`
+    setOpenPopover((prev) => (prev === key ? null : key))
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
@@ -240,15 +369,15 @@ export default function CalendarPage() {
         <h1 className="font-display text-2xl font-semibold text-gray-900">Kalender</h1>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            value={schoolStartYear}
+            onChange={(e) => setSchoolStartYear(Number(e.target.value))}
             className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={y}>{y}/{y + 1}</option>
             ))}
           </select>
-          {isAdmin && entries.length === 0 && defaults.length > 0 && (
+          {isAdmin && !hasEntries && defaults.length > 0 && (
             <button
               onClick={() => seedMutation.mutate(defaults)}
               disabled={seedMutation.isPending}
@@ -257,23 +386,15 @@ export default function CalendarPage() {
               {seedMutation.isPending ? 'Tilføjer...' : 'Tilføj standardferier'}
             </button>
           )}
-          {isAdmin && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="bg-brand-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-brand-700 transition-colors"
-            >
-              Tilføj begivenhed
-            </button>
-          )}
         </div>
       </div>
 
       {/* Empty state */}
-      {isAdmin && entries.length === 0 && (
+      {isAdmin && !hasEntries && (
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-5">
           <p className="text-sm text-brand-800 font-medium mb-1">Ingen begivenheder endnu</p>
           <p className="text-sm text-brand-700">
-            Tilføj ferier, lukkedage og begivenheder for {selectedYear}. Du kan bruge &quot;Tilføj standardferier&quot; for at komme hurtigt i gang med danske skoleferier.
+            Tilføj ferier, lukkedage og begivenheder for skoleåret {startYear}/{endYear}. Du kan bruge &quot;Tilføj standardferier&quot; for at komme hurtigt i gang med danske skoleferier.
           </p>
           {defaults.length > 0 && (
             <button
@@ -289,14 +410,14 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* 12-month calendar grid */}
+      {/* School year calendar grid: Aug–Jun */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
-          const weeks = buildMonthGrid(selectedYear, month)
+        {schoolYearMonths.map(({ year, month }) => {
+          const weeks = buildMonthGrid(year, month)
           return (
-            <div key={month} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div key={`${year}-${month}`} className="bg-white rounded-xl border border-gray-200 p-4">
               <p className="font-display text-sm font-semibold text-gray-700 mb-3">
-                {MONTH_NAMES[month - 1]}
+                {MONTH_NAMES[month - 1]} {year}
               </p>
               <div className="grid grid-cols-7 gap-0">
                 {WEEKDAY_HEADERS.map((h) => (
@@ -307,17 +428,43 @@ export default function CalendarPage() {
                     if (day === null) {
                       return <div key={`${wi}-${di}`} />
                     }
-                    const dayEntries = getDayEntries(selectedYear, month, day, entries)
+                    const isWeekend = di >= 5 // Lø (5) or Sø (6)
+                    const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
                     const firstEntry = dayEntries[0]
                     const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type] ?? '' : ''
-                    const titles = dayEntries.map((e) => e.title).join(', ')
+                    const popoverKey = `${year}-${month}-${day}`
+                    const isOpen = openPopover === popoverKey
+
                     return (
                       <div
                         key={`${wi}-${di}`}
-                        title={titles || undefined}
-                        className={`text-xs text-center py-0.5 rounded ${colorClass || 'text-gray-700'}`}
+                        className="relative"
                       >
-                        {day}
+                        <div
+                          onClick={() => handleDayClick(year, month, day, isWeekend)}
+                          className={[
+                            'text-xs text-center py-0.5 rounded select-none',
+                            isWeekend
+                              ? 'text-gray-300 cursor-default'
+                              : colorClass
+                                ? `${colorClass} cursor-pointer`
+                                : 'text-gray-700 cursor-pointer hover:bg-gray-100',
+                          ].join(' ')}
+                        >
+                          {day}
+                        </div>
+                        {isOpen && (
+                          <DayPopover
+                            year={year}
+                            month={month}
+                            day={day}
+                            entries={allEntries}
+                            isAdmin={isAdmin}
+                            onCreateForDate={(dateStr) => setCreateDate(dateStr)}
+                            onEdit={(entry) => setEditingEntry(entry)}
+                            onClose={() => setOpenPopover(null)}
+                          />
+                        )}
                       </div>
                     )
                   })
@@ -329,7 +476,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Entry list */}
-      {entries.length > 0 && (
+      {allEntries.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -343,7 +490,7 @@ export default function CalendarPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {entries.map((entry) => (
+              {allEntries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type] ?? 'bg-gray-100 text-gray-700'}`}>
@@ -391,17 +538,18 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {showCreate && (
+      {createDate !== null && (
         <EntryModal
-          defaultYear={selectedYear}
-          onClose={() => setShowCreate(false)}
-          onSaved={() => setShowCreate(false)}
+          defaultDate={createDate}
+          defaultYear={schoolStartYear}
+          onClose={() => setCreateDate(null)}
+          onSaved={() => setCreateDate(null)}
         />
       )}
       {editingEntry && (
         <EntryModal
           initial={editingEntry}
-          defaultYear={selectedYear}
+          defaultYear={schoolStartYear}
           onClose={() => setEditingEntry(null)}
           onSaved={() => setEditingEntry(null)}
         />
