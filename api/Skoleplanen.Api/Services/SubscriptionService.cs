@@ -105,7 +105,7 @@ public sealed class SubscriptionService(
             SuccessUrl = successUrl,
             CancelUrl = cancelUrl,
             Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
-            PaymentMethodCollection = "if_required",
+            PaymentMethodCollection = "always",
             SubscriptionData = sub.Status == SubscriptionStatus.Trialing && sub.TrialEnd > DateTimeOffset.UtcNow
                 ? new SessionSubscriptionDataOptions
                 {
