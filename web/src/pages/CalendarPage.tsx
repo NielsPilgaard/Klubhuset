@@ -197,7 +197,7 @@ interface EntryModalProps {
   onSaved: () => void
 }
 
-function EntryModal({ initial, defaultDate, _defaultYear, onClose, onSaved }: EntryModalProps) {
+function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps) {
   const qc = useQueryClient()
   const today = new Date()
   const todayStr = toDateString(today.getFullYear(), today.getMonth() + 1, today.getDate())

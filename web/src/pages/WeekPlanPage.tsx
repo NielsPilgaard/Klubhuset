@@ -284,7 +284,6 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
 export default function WeekPlanPage() {
   usePageTitle('Ugeplan')
   const { classId } = useParams<{ classId: string }>()
-  const qc = useQueryClient()
 
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
