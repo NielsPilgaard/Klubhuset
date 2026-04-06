@@ -1,30 +1,35 @@
 import './App.css'
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/useAuth'
 import Layout from './components/Layout'
-import DashboardPage from './pages/DashboardPage'
-import ClassesPage from './pages/ClassesPage'
-import SchemaBuilderPage from './pages/SchemaBuilderPage'
-import StaffPage from './pages/StaffPage'
-import StaffSchedulePage from './pages/StaffSchedulePage'
-import CoursesPage from './pages/CoursesPage'
-import RoomsPage from './pages/RoomsPage'
-import RoomSchedulePage from './pages/RoomSchedulePage'
-import PrintSchemaPage from './pages/PrintSchemaPage'
-import SkoleindstillingerPage from './pages/SkoleindstillingerPage'
-import SignupPage from './pages/SignupPage'
-import InvitationAcceptPage from './pages/InvitationAcceptPage'
-import SchoolSetupWizardPage from './pages/SchoolSetupWizardPage'
+
+// Keep critical public pages as regular imports
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
-import FilesPage from './pages/FilesPage'
-import BillingPage from './pages/BillingPage'
-import ExportsPage from './pages/ExportsPage'
-import ClassTimeSlotsPage from './pages/ClassTimeSlotsPage'
-import CalendarPage from './pages/CalendarPage'
-import WeekPlanPage from './pages/WeekPlanPage'
+import SignupPage from './pages/SignupPage'
+import InvitationAcceptPage from './pages/InvitationAcceptPage'
+
+// Lazy load all other pages
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const ClassesPage = lazy(() => import('./pages/ClassesPage'))
+const SchemaBuilderPage = lazy(() => import('./pages/SchemaBuilderPage'))
+const StaffPage = lazy(() => import('./pages/StaffPage'))
+const StaffSchedulePage = lazy(() => import('./pages/StaffSchedulePage'))
+const CoursesPage = lazy(() => import('./pages/CoursesPage'))
+const RoomsPage = lazy(() => import('./pages/RoomsPage'))
+const RoomSchedulePage = lazy(() => import('./pages/RoomSchedulePage'))
+const PrintSchemaPage = lazy(() => import('./pages/PrintSchemaPage'))
+const SkoleindstillingerPage = lazy(() => import('./pages/SkoleindstillingerPage'))
+const SchoolSetupWizardPage = lazy(() => import('./pages/SchoolSetupWizardPage'))
+const FilesPage = lazy(() => import('./pages/FilesPage'))
+const BillingPage = lazy(() => import('./pages/BillingPage'))
+const ExportsPage = lazy(() => import('./pages/ExportsPage'))
+const ClassTimeSlotsPage = lazy(() => import('./pages/ClassTimeSlotsPage'))
+const CalendarPage = lazy(() => import('./pages/CalendarPage'))
+const WeekPlanPage = lazy(() => import('./pages/WeekPlanPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,9 +51,10 @@ function HomeRedirect() {
 export default function App() {
   return (
     <AuthProvider>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Indlæser...</div>}>
+            <Routes>
           {/* Public routes */}
           <Route path="/" element={<HomeRedirect />} />
           <Route path="login" element={<LoginPage />} />
@@ -81,6 +87,7 @@ export default function App() {
             <Route path="indstillinger" element={<SkoleindstillingerPage />} />
           </Route>
         </Routes>
+          </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
     </AuthProvider>
