@@ -206,7 +206,7 @@ export default function RoomsPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Slet lokalet "${r.name}"?`)) deleteMutation.mutate(r.id)
+                        if (confirm(`Slet lokalet "${r.name ?? 'lokale'}"?`)) deleteMutation.mutate(r.id)
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                     >

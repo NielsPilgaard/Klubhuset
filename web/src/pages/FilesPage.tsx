@@ -260,10 +260,10 @@ export default function FilesPage() {
               <tr key={f.id} className="hover:bg-gray-50 transition-colors" data-testid={`file-row-${f.id}`}>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400 shrink-0">{fileIcon(f.contentType)}</span>
+                    <span className="text-gray-400 shrink-0">{fileIcon(f.contentType ?? '')}</span>
                     <div className="min-w-0">
                       <span className="font-medium text-gray-900 truncate block">{f.fileName}</span>
-                      <span className="text-xs text-gray-400">{formatBytes(f.sizeBytes)}</span>
+                      <span className="text-xs text-gray-400">{formatBytes(f.sizeBytes ?? 0)}</span>
                     </div>
                   </div>
                 </td>
@@ -271,10 +271,10 @@ export default function FilesPage() {
                   {f.courseName ?? <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
-                  {formatDate(f.uploadedAt)}
+                  {formatDate(f.uploadedAt ?? new Date().toISOString())}
                 </td>
                 <td className="px-5 py-3 text-gray-500 hidden lg:table-cell">
-                  {f.uploadedBy}
+                  {f.uploadedBy ?? '—'}
                 </td>
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -297,7 +297,7 @@ export default function FilesPage() {
                       <button
                         data-testid={`delete-${f.id}`}
                         onClick={() => {
-                          if (confirm(`Slet filen "${f.fileName}"?`)) deleteMutation.mutate(f.id)
+                          if (confirm(`Slet filen "${f.fileName ?? 'fil'}"?`)) deleteMutation.mutate(f.id)
                         }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         title="Slet fil"

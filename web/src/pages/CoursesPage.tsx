@@ -204,7 +204,7 @@ export default function CoursesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['courses'] }),
   })
 
-  const existingNames = courses?.map((c) => c.name) ?? []
+  const existingNames = courses?.map((c) => c.name).filter((n): n is string => n !== null && n !== undefined) ?? []
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
