@@ -22,27 +22,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleplanen-db")));
 
 // Auth — validates Keycloak-issued JWTs
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-	   .AddJwtBearer(options =>
-	   {
-		   options.Authority = builder.Configuration["Keycloak:Authority"];
-		   options.Audience = builder.Configuration["Keycloak:Audience"];
-		   options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-		   // Preserve Keycloak's original claim names (e.g. "preferred_username", "name")
-		   // instead of mapping them to WS-Federation URIs.
-		   options.MapInboundClaims = false;
-
-		   // Allow API to reach Keycloak internally (container-to-container) while
-		   // still validating tokens issued by the public issuer URL.
-		   var metadataAddress = builder.Configuration["Keycloak:MetadataAddress"];
-		   if (!string.IsNullOrEmpty(metadataAddress))
-		   {
-			   options.MetadataAddress = metadataAddress;
-		   }
-	   });
-
-builder.Services.AddAuthorization();
-builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
+builder.Services.AddKeycloakAuth(builder.Configuration, builder.Environment);
 
 builder.Services.AddOpenApi();
 
