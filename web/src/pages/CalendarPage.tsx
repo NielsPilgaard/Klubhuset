@@ -96,7 +96,7 @@ function getDayEntries(
 
 function formatDateRange(startDate: string, endDate: string): string {
   const fmt = (d: string) => {
-    const [, m, day] = d.split('-')
+    const [, , day] = d.split('-')
     const monthShort = new Date(`${d}T00:00:00`).toLocaleDateString('da-DK', { month: 'short' })
     return `${parseInt(day)} ${monthShort}`
   }
@@ -197,7 +197,7 @@ interface EntryModalProps {
   onSaved: () => void
 }
 
-function EntryModal({ initial, defaultDate, defaultYear, onClose, onSaved }: EntryModalProps) {
+function EntryModal({ initial, defaultDate, _defaultYear, onClose, onSaved }: EntryModalProps) {
   const qc = useQueryClient()
   const today = new Date()
   const todayStr = toDateString(today.getFullYear(), today.getMonth() + 1, today.getDate())

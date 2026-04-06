@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 interface SubscriptionStatus {
@@ -63,8 +63,8 @@ export default function BillingPage() {
     onSuccess: ({ url }) => {
       window.location.href = url
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Kunne ikke oprette checkoutsession'
+    onError: (error: ApiError) => {
+      const errorMessage = error instanceof ApiError ? error.message : 'Kunne ikke oprette checkoutsession'
       console.error('Checkout error:', error)
       alert(errorMessage)
     },
@@ -78,8 +78,8 @@ export default function BillingPage() {
     onSuccess: ({ url }) => {
       window.location.href = url
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Kunne ikke åbne administrationsportal'
+    onError: (error: ApiError) => {
+      const errorMessage = error instanceof ApiError ? error.message : 'Kunne ikke åbne administrationsportal'
       console.error('Portal error:', error)
       alert(errorMessage)
     },
