@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api, ClassDto, SchemaDto, SchemaStatus } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -243,11 +243,18 @@ function statusClasses(status: SchemaStatus) {
     : 'bg-amber-100 text-amber-700'
 }
 
-function SchemaList({ classId }: { classId: string }) {
+function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
+
+  useEffect(() => {
+    if (autoOpenCreate) {
+      setShowCreate(true)
+      onAutoOpenHandled?.()
+    }
+  }, [autoOpenCreate, onAutoOpenHandled])
 
   const { data: schemas, isLoading } = useQuery<SchemaDto[]>({
     queryKey: ['schemas', classId],
@@ -366,15 +373,30 @@ function SchemaList({ classId }: { classId: string }) {
 export default function ClassesPage() {
   usePageTitle('Klasser')
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingClass, setEditingClass] = useState<ClassDto | null>(null)
   const [expandedClass, setExpandedClass] = useState<string | null>(null)
+  const [newSchemaForClass, setNewSchemaForClass] = useState<string | null>(null)
 
   const { data: classes, isLoading, isError, refetch } = useQuery<ClassDto[]>({
     queryKey: ['classes'],
     queryFn: () => api.get('/classes'),
   })
+
+  useEffect(() => {
+    const action = searchParams.get('action')
+    const classId = searchParams.get('classId')
+    if (action === 'new-schema' && classId && classes) {
+      const match = classes.find((c) => c.id === classId)
+      if (match) {
+        setExpandedClass(classId)
+        setNewSchemaForClass(classId)
+        setSearchParams({}, { replace: true })
+      }
+    }
+  }, [searchParams, classes, setSearchParams])
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/classes/${id}`),
@@ -495,7 +517,13 @@ export default function ClassesPage() {
                 </button>
               </div>
             </div>
-            {expandedClass === cls.id && <SchemaList classId={cls.id} />}
+            {expandedClass === cls.id && (
+              <SchemaList
+                classId={cls.id}
+                autoOpenCreate={newSchemaForClass === cls.id}
+                onAutoOpenHandled={() => setNewSchemaForClass(null)}
+              />
+            )}
           </div>
         ))}
       </div>
