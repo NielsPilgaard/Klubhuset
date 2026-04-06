@@ -92,12 +92,12 @@ if (!isOpenApiGeneration)
 	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
 	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
 	{
-		await app.Services.SeedAsync();
+		_ = Task.Run(() => app.Services.SeedAsync());
 	}
 
 	if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
 	{
-		await app.Services.EnsureS3BucketAsync();
+		_ = Task.Run(() => app.Services.EnsureS3BucketAsync());
 	}
 }
 
