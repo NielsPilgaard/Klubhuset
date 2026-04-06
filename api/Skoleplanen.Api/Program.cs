@@ -10,7 +10,6 @@ using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
-using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,9 +19,7 @@ builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddMemoryCache();
 
 // Database
-builder.Services.AddDbContext<AppDbContext>(options =>
-												options.UseNpgsql(
-													builder.Configuration.GetConnectionString("skoleplanen-db")));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleplanen-db")));
 
 // Auth — validates Keycloak-issued JWTs
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -73,19 +70,9 @@ builder.Services.AddScoped<ConflictDetectionService>();
 builder.Services.AddScoped<StaffInvitationService>();
 builder.Services.AddScoped<ExcelReportBuilder>();
 
-builder.Services.AddScoped<Skoleplanen.Api.Services.SubscriptionService>();
+builder.Services.AddScoped<SubscriptionService>();
 
-// Register Stripe services
-builder.Services.AddSingleton<CustomerService>();
-builder.Services.AddSingleton<Stripe.Checkout.SessionService>();
-builder.Services.AddSingleton<Stripe.BillingPortal.SessionService>();
-
-// Configure Stripe global API key from strongly-typed options
-var stripeOptions = builder.Configuration.GetSection(StripeOptions.SectionName).Get<StripeOptions>();
-if (!string.IsNullOrEmpty(stripeOptions?.SecretKey))
-{
-    StripeConfiguration.ApiKey = stripeOptions.SecretKey;
-}
+builder.Services.AddStripe(builder.Configuration);
 
 builder.Services.AddControllers()
 	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
