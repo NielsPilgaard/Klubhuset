@@ -1,0 +1,14 @@
+FROM node:20-alpine AS build
+WORKDIR /app
+
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+# openapi-typescript codegen reads from ../openapi/ relative to web/
+COPY openapi/ ../openapi/
+COPY web/ .
+RUN npm run build
+
+FROM nginx:alpine AS runtime
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
