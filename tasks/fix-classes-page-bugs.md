@@ -6,7 +6,7 @@ Fix UX bugs on the `/klasser` page and the Ugeplan view.
 
 ## 1. Clicking a class row should expand/collapse it
 
-Currently the class row must be clicked somewhere specific (or via a button). The entire class row should be clickable to toggle expand/collapse. 
+Currently the class row must be clicked somewhere specific (or via a button). The entire class row should be clickable to toggle expand/collapse.
 
 Find the class row component in `ClassesPage.tsx` (or similar). Make the row `cursor-pointer` and attach `onClick` to the row container to toggle the expanded state.
 
@@ -38,7 +38,14 @@ For now: set `isHolidayWeek = false` unless the holiday covers the full Mon–Fr
 
 **Symptom**: When inside `/klasser/:classId/lektioner` (time slots for a class) and clicking back, the user is taken to `/klasser` (class list) instead of back to the class detail view.
 
-**Fix**: Change the back button in the lektioner view to navigate to `/klasser/:classId` (or whatever the class detail route is), not to `/klasser`. Use `navigate(-1)` if the router history is reliable, or hard-code the parent route.
+## **Fix**: Change the back button in the lektioner view to navigate to `/klasser/:classId` (or whatever the class detail route is), not to `/klasser`. Use `navigate(-1)` if the router history is reliable, or hard-code the parent route.
+
+---
+
+## 5. The ugeplan is not editable?
+
+Unsure what's up with this? not done? @tasks/completed/weekly-plan.md
+Don't reflect actual schema with breaks, cannot insert plans, homework or anything really
 
 ---
 
