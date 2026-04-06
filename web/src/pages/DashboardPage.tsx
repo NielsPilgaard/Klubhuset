@@ -154,10 +154,10 @@ export default function DashboardPage() {
           Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
-            <StatCard label="Klasser" value={data!.classCount} />
-            <StatCard label="Medarbejdere" value={data!.staffCount} />
-            <StatCard label="Fag" value={data!.courseCount} />
-            <StatCard label="Lokaler" value={data!.roomCount} />
+            <StatCard label="Klasser" value={data!.classCount ?? 0} />
+            <StatCard label="Medarbejdere" value={data!.staffCount ?? 0} />
+            <StatCard label="Fag" value={data!.courseCount ?? 0} />
+            <StatCard label="Lokaler" value={data!.roomCount ?? 0} />
             <StatCard
               label="Skemaer"
               value={data!.schemasTotal === 0 ? '–' : `${data!.schemasComplete} / ${data!.schemasTotal}`}
@@ -182,7 +182,7 @@ export default function DashboardPage() {
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="text-sm font-semibold text-gray-700">Timer pr. medarbejder</h2>
             </div>
-            {data!.hoursPerStaff.length === 0 ? (
+            {!data?.hoursPerStaff || data.hoursPerStaff.length === 0 ? (
               <p className="px-5 py-6 text-sm text-gray-400 text-center">Ingen data endnu</p>
             ) : (
               <table className="w-full text-sm">
@@ -194,10 +194,10 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data!.hoursPerStaff.map((s) => (
+                  {data?.hoursPerStaff?.map((s) => (
                     <tr key={s.staffId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-2.5 font-medium text-gray-800">{s.staffName}</td>
-                      <td className="px-5 py-2.5 text-gray-500">{roleLabel(s.role)}</td>
+                      <td className="px-5 py-2.5 text-gray-500">{s.role ? roleLabel(s.role) : '–'}</td>
                       <td className="px-5 py-2.5 text-right tabular-nums text-gray-700">{s.hours}</td>
                     </tr>
                   ))}

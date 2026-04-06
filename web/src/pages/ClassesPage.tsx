@@ -310,8 +310,8 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
               >
                 {s.name}
               </button>
-              <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusClasses(s.status)}`}>
-                {statusLabel(s.status)}
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusClasses(s.status ?? 'Draft')}`}>
+                {statusLabel(s.status ?? 'Draft')}
               </span>
               {s.isActive && (
                 <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-600 text-white">
@@ -338,7 +338,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
               </button>
               {!s.isActive && (
                 <button
-                  onClick={() => activateMutation.mutate(s.id)}
+                  onClick={() => activateMutation.mutate(s.id!)}
                   disabled={activateMutation.isPending}
                   className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50"
                 >
@@ -503,7 +503,7 @@ export default function ClassesPage() {
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate(cls.id)
+                    if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate(cls.id!)
                   }}
                   className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                   title="Slet"

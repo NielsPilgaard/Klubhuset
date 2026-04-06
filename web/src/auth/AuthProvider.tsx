@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userName =
     parsed?.['name'] ??
     parsed?.['preferred_username'] ??
-    null
+    undefined
 
   return (
     <AuthContext.Provider

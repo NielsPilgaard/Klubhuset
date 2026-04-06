@@ -284,7 +284,7 @@ export default function CoursesPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Slet faget "${c.name}"?`)) deleteMutation.mutate(c.id)
+                        if (confirm(`Slet faget "${c.name}"?`)) deleteMutation.mutate(c.id!)
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                     >
