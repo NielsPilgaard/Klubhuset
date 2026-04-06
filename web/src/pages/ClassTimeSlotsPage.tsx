@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, TimeSlotDto, ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -102,6 +102,7 @@ function validateForm(
 export default function ClassTimeSlotsPage() {
   usePageTitle('Lektionsstruktur')
   const { classId, schemaId } = useParams<{ classId: string; schemaId?: string }>()
+  const navigate = useNavigate()
   const qc = useQueryClient()
 
   const { data: cls } = useQuery<ClassDto[]>({
@@ -210,14 +211,15 @@ export default function ClassTimeSlotsPage() {
     <div className="flex flex-col h-full">
       <div className="shrink-0 bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
-          <Link
-            to={schemaId ? `/klasser/${classId}/skema/${schemaId}` : '/klasser'}
+          <button
+            onClick={() => schemaId ? navigate(`/klasser/${classId}/skema/${schemaId}`) : navigate(-1)}
             className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+            aria-label="Tilbage"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-          </Link>
+          </button>
           <h1 className="font-display text-base font-semibold text-gray-900 truncate">
             Lektionsstruktur{className ? ` — ${className}` : ''}
           </h1>

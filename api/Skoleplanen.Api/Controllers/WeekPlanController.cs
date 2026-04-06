@@ -78,7 +78,8 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
             .OrderBy(e => e.StartDate)
             .ToListAsync(ct);
 
-        var isHolidayWeek = holidays.Count > 0;
+        // Only treat the entire week as a holiday if the full Mon–Fri span is covered.
+        var isHolidayWeek = holidays.Count > 0 && IsFullWeekCovered(holidays, weekStart, weekEnd);
         var holidayTitle = holidays.FirstOrDefault()?.Title;
 
         var activeSchema = await db.Schemas
@@ -290,6 +291,28 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
         var schoolFile = await db.SchoolFiles.AsNoTracking().FirstAsync(f => f.Id == req.SchoolFileId, ct);
         return CreatedAtAction(nameof(AddFile), new { classId, slotId },
             new WeekPlanSlotFileDto(link.Id, link.SchoolFileId, schoolFile.FileName, schoolFile.Url));
+    }
+
+    private static bool IsFullWeekCovered(IEnumerable<CalendarEntry> holidays, DateOnly weekStart, DateOnly weekEnd)
+    {
+        // Build a set of covered days Mon–Fri
+        var coveredDays = new HashSet<DateOnly>();
+        foreach (var h in holidays)
+        {
+            for (var d = h.StartDate; d <= h.EndDate; d = d.AddDays(1))
+            {
+                if (d >= weekStart && d <= weekEnd)
+                    coveredDays.Add(d);
+            }
+        }
+
+        for (var d = weekStart; d <= weekEnd; d = d.AddDays(1))
+        {
+            if (!coveredDays.Contains(d))
+                return false;
+        }
+
+        return true;
     }
 
     [HttpDelete("slots/{slotId:guid}/files/{fileId:guid}")]

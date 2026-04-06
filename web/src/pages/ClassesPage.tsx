@@ -436,9 +436,13 @@ export default function ClassesPage() {
 
         {classes?.map((cls) => (
           <div key={cls.id}>
-            <div className="flex items-center justify-between px-5 py-4">
+            <div
+              className="flex items-center justify-between px-5 py-4 cursor-pointer"
+              onClick={() => toggleExpand(cls.id!)}
+              data-testid={`class-row-${cls.id}`}
+            >
               <button
-                onClick={() => toggleExpand(cls.id)}
+                onClick={(e) => { e.stopPropagation(); toggleExpand(cls.id!) }}
                 className="flex items-center gap-3 min-w-0 text-left group"
               >
                 <svg
@@ -458,7 +462,7 @@ export default function ClassesPage() {
                   <span className="text-sm text-gray-400 truncate">{cls.description}</span>
                 )}
               </button>
-              <div className="flex items-center gap-2 shrink-0 ml-4">
+              <div className="flex items-center gap-2 shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => navigate(`/klasser/${cls.id}/ugeplan`)}
                   className="px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-md transition-colors"

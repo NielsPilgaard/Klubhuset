@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { api, ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
@@ -345,8 +345,14 @@ export default function WeekPlanPage() {
     ? new Date(weekPlanData.weekStartDate + 'T00:00:00')
     : null
 
-  // Class name from query (we just show classId for now — could be extended)
-  const className = classId ?? ''
+  const { data: classData } = useQuery<ClassDto[], Error, ClassDto | undefined>({
+    queryKey: ['classes'],
+    queryFn: () => api.get('/classes'),
+    select: (all) => all.find((c) => c.id === classId),
+    enabled: !!classId,
+  })
+
+  const className = classData?.name ?? ''
 
   return (
     <div className="flex flex-col h-full">
