@@ -10,7 +10,8 @@ COPY infrastructure/aspire/Skoleplanen.ServiceDefaults/ infrastructure/aspire/Sk
 RUN dotnet publish api/Skoleplanen.Api/Skoleplanen.Api.csproj \
     --no-restore \
     --configuration Release \
-    --output /app/publish
+    --output /app/publish \
+    -p:CI=true
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
