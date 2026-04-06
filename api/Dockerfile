@@ -11,7 +11,7 @@ RUN dotnet publish api/Skoleplanen.Api/Skoleplanen.Api.csproj \
     --no-restore \
     --configuration Release \
     --output /app/publish \
-    -p:CI=true
+    -p:CI=true # Set CI=true to disable OpenAPI generation during publish, since it modifies source files
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
