@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
 import { usePageTitle } from '../hooks/usePageTitle'
+import keycloak from '../auth/keycloak'
 
 interface SchoolSettingsDto {
   name: string
@@ -411,9 +412,8 @@ function SkoledagCard() {
   )
 }
 
-// Helper: get current Keycloak token without importing keycloak directly
+// Helper: get current Keycloak token
 async function getToken(): Promise<string | undefined> {
-  const { default: keycloak } = await import('../auth/keycloak')
   try {
     await keycloak.updateToken(30)
   } catch {
