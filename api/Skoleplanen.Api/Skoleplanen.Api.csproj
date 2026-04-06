@@ -16,7 +16,7 @@
     <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(CI)' == 'true'">
+  <PropertyGroup Condition="'$(DOTNET_WATCH)' == '1' OR '$(CI)' == 'true'">
     <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
   </PropertyGroup>
 
