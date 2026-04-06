@@ -309,7 +309,7 @@ function PricingCard({
     'Op til 100 GB filer',
     'Konfliktregistrering',
     'Support via e-mail',
-    'Opsig når som helst',
+    'Ingen binding',
   ]
 
   return (

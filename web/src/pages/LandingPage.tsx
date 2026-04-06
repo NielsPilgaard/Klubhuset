@@ -51,7 +51,7 @@ export default function LandingPage() {
             </a>
           </div>
           <p className="mt-5 text-sm text-gray-400">
-            Intet kreditkort · Opsig når som helst · Data opbevares i EU
+            Intet kreditkort · Ingen binding · Data opbevares i EU
           </p>
         </div>
       </section>

@@ -42,11 +42,6 @@ For now: set `isHolidayWeek = false` unless the holiday covers the full Mon–Fr
 
 ---
 
-## 5. The ugeplan is not editable?
-
-Unsure what's up with this? not done? @tasks/completed/weekly-plan.md
-Don't reflect actual schema with breaks, cannot insert plans, homework or anything really
-
 ---
 
 ## Constraints
