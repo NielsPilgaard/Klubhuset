@@ -61,8 +61,16 @@ services:
       Keycloak__Audience: skoleplanen-api
       # Reach Keycloak internally for JWKS; issuer still validated against public URL.
       Keycloak__MetadataAddress: http://keycloak:8080/realms/Skoleplanen/.well-known/openid-configuration
-      ObjectStorage__AccessKey: ${ObjectStorage__AccessKey}
-      ObjectStorage__SecretKey: ${ObjectStorage__SecretKey}
+      ObjectStorage__AccessKey: ${ObjectStorage_AccessKey}
+      ObjectStorage__SecretKey: ${ObjectStorage_SecretKey}
+      Smtp__Username: ${SMTP_USERNAME}
+      Smtp__Password: ${SMTP_PASSWORD}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS}
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      Stripe__SecretKey: ${Stripe_SecretKey}
+      Stripe__PriceId: ${Stripe_PriceId}
+      Stripe__WebhookSecret: ${Stripe_WebhookSecret}
     networks:
       - internal
     depends_on:
