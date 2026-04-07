@@ -61,12 +61,12 @@ services:
       Keycloak__Audience: skoleplanen-api
       # Reach Keycloak internally for JWKS; issuer still validated against public URL.
       Keycloak__MetadataAddress: http://keycloak:8080/realms/Skoleplanen/.well-known/openid-configuration
-      Smtp__Username: ${SMTP_USERNAME}
-      Smtp__Password: ${SMTP_PASSWORD}
     networks:
       - internal
     depends_on:
       - keycloak
+    env_file:
+      - .env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`skoleplanen.dk`) && PathPrefix(`/api`)"
