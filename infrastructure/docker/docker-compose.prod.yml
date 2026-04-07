@@ -63,8 +63,8 @@ services:
       Keycloak__MetadataAddress: http://keycloak:8080/realms/Skoleplanen/.well-known/openid-configuration
       ObjectStorage__AccessKey: ${ObjectStorage_AccessKey}
       ObjectStorage__SecretKey: ${ObjectStorage_SecretKey}
-      Smtp__Username: ${SMTP_USERNAME}
-      Smtp__Password: ${SMTP_PASSWORD}
+      Smtp__Username: ${Smtp_Username}
+      Smtp__Password: ${Smtp_Password}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
       OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS}
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
