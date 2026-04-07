@@ -61,6 +61,8 @@ services:
       Keycloak__Audience: skoleplanen-api
       # Reach Keycloak internally for JWKS; issuer still validated against public URL.
       Keycloak__MetadataAddress: http://keycloak:8080/realms/Skoleplanen/.well-known/openid-configuration
+      ObjectStorage__AccessKey: ${ObjectStorage__AccessKey}
+      ObjectStorage__SecretKey: ${ObjectStorage__SecretKey}
     networks:
       - internal
     depends_on:
