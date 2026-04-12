@@ -5,6 +5,7 @@ import { api, ApiError } from '../api/client'
 import type { StaffRole } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { STANDARD_COURSES } from '../constants/courses'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,11 +28,6 @@ const STEPS: WizardStep[] = [
   { id: 8, title: 'Færdig', description: 'Din skole er klar til brug' },
 ]
 
-const STANDARD_COURSES = [
-  'Dansk', 'Matematik', 'Engelsk', 'Naturfag', 'Historie', 'Musik',
-  'Idræt', 'Kristendom', 'Billedkunst', 'Håndværk og design',
-  'Tysk', 'Fransk', 'Geografi', 'Biologi', 'Fysik/kemi', 'Samfundsfag',
-]
 
 // ---------------------------------------------------------------------------
 // Step components
@@ -356,6 +352,7 @@ function StepCreateItems({
 }) {
   const [items, setItems] = useState<string[]>([''])
   const [existingNames, setExistingNames] = useState<Set<string>>(new Set())
+  const [colorMap, setColorMap] = useState<Map<string, string>>(new Map())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [savedBefore, setSavedBefore] = useState(false)
@@ -384,8 +381,13 @@ function StepCreateItems({
   function importStandard() {
     setItems((prev) => {
       const existing = prev.filter(Boolean)
-      const toAdd = STANDARD_COURSES.filter((n) => !existing.includes(n))
+      const toAdd = STANDARD_COURSES.filter((c) => !existing.includes(c.name)).map((c) => c.name)
       return [...existing, ...toAdd, '']
+    })
+    setColorMap((prev) => {
+      const next = new Map(prev)
+      for (const c of STANDARD_COURSES) next.set(c.name, c.color)
+      return next
     })
   }
 
@@ -396,7 +398,7 @@ function StepCreateItems({
     setSaving(true)
     setError('')
     try {
-      await Promise.all(newNames.map((name) => api.post(apiPath, { name })))
+      await Promise.all(newNames.map((name) => api.post(apiPath, { name, color: colorMap.get(name) ?? null })))
       onNext()
     } catch {
       setError(`Kunne ikke oprette ${plural.toLowerCase()}. Prøv igen.`)

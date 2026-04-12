@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, CourseDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { STANDARD_COURSES } from '../constants/courses'
 
 const COURSE_COLOR_PALETTE = [
   '#3b82f6', // blue
@@ -16,12 +17,6 @@ const COURSE_COLOR_PALETTE = [
   '#f43f5e', // rose
   '#10b981', // emerald
   '#f59e0b', // amber
-]
-
-const PRESET_COURSES = [
-  'Dansk', 'Matematik', 'Engelsk', 'Naturfag', 'Historie', 'Musik',
-  'Idræt', 'Kristendom', 'Billedkunst', 'Håndværk og design',
-  'Tysk', 'Fransk', 'Geografi', 'Biologi', 'Fysik/kemi', 'Samfundsfag',
 ]
 
 interface CourseModalProps {
@@ -142,12 +137,12 @@ interface BulkCreateModalProps {
 
 function BulkCreateModal({ existingNames, onClose, onSaved }: BulkCreateModalProps) {
   const qc = useQueryClient()
-  const available = PRESET_COURSES.filter((p) => !existingNames.includes(p))
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(available))
+  const available = STANDARD_COURSES.filter((c) => !existingNames.includes(c.name))
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(available.map((c) => c.name)))
 
   const allSelected = selected.size === available.length
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(available))
+    setSelected(allSelected ? new Set() : new Set(available.map((c) => c.name)))
   }
   function toggle(name: string) {
     setSelected((prev) => {
@@ -163,7 +158,11 @@ function BulkCreateModal({ existingNames, onClose, onSaved }: BulkCreateModalPro
 
   const mutation = useMutation({
     mutationFn: () =>
-      Promise.all([...selected].map((name) => api.post('/courses', { name, description: null }))),
+      Promise.all(
+        available
+          .filter((c) => selected.has(c.name))
+          .map((c) => api.post('/courses', { name: c.name, color: c.color, description: null }))
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['courses'] })
       onSaved()
@@ -192,20 +191,24 @@ function BulkCreateModal({ existingNames, onClose, onSaved }: BulkCreateModalPro
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {available.map((preset) => {
-                  const isSelected = selected.has(preset)
+                {available.map((course) => {
+                  const isSelected = selected.has(course.name)
                   return (
                     <button
-                      key={preset}
+                      key={course.name}
                       type="button"
-                      onClick={() => toggle(preset)}
-                      className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                      onClick={() => toggle(course.name)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-colors ${
                         isSelected
                           ? 'bg-brand-600 text-white border-brand-600'
                           : 'border-gray-300 text-gray-600 hover:border-brand-400 hover:text-brand-700'
                       }`}
                     >
-                      {preset}
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: course.color, opacity: isSelected ? 0.85 : 1 }}
+                      />
+                      {course.name}
                     </button>
                   )
                 })}
