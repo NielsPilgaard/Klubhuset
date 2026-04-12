@@ -2607,7 +2607,10 @@ export interface components {
         };
         CreateTenantRequest: {
             name?: string | null;
-            contactEmail?: string | null;
+            adminEmail?: string | null;
+            adminFirstName?: string | null;
+            adminLastName?: string | null;
+            adminPassword?: string | null;
         };
         DashboardStats: {
             /** Format: int32 */
@@ -2809,7 +2812,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             name?: string | null;
-            contactEmail?: string | null;
+            adminEmail?: string | null;
         };
         TimeSlotDto: {
             /** Format: uuid */
