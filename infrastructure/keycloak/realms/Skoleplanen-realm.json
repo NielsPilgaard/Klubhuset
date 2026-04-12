@@ -221,6 +221,7 @@
             "user.attribute": "tenant_id",
             "claim.name": "tenant_id",
             "jsonType.label": "String",
+            "multivalued": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "userinfo.token.claim": "true"
