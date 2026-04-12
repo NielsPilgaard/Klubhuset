@@ -8,6 +8,7 @@ var pgPassword = builder.AddParameter("postgres-password", secret: true);
 
 var postgres = builder.AddPostgres("postgres", userName: pgUsername, password: pgPassword)
 					  .WithLifetime(ContainerLifetime.Persistent)
+					  .WithVolume("skoleplanen-pgdata", "/var/lib/postgresql/data")
 					  .WithPgAdmin(pgAdmin => pgAdmin.WithContainerRuntimeArgs(
 									   "--label",
 									   $"com.docker.compose.project={label}"))
@@ -39,6 +40,7 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
 // LocalStack (S3-compatible local emulation for OVHCloud Object Storage)
 builder.AddContainer("localstack", "localstack/localstack", "3")
 	   .WithLifetime(ContainerLifetime.Persistent)
+	   .WithVolume("skoleplanen-s3", "/var/lib/localstack/data")
 	   .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "gateway")
 	   .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
 
