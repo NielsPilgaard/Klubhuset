@@ -280,7 +280,16 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
   return (
     <div className="border-t border-gray-100 bg-brand-50/40">
       <div className="px-6 py-3 flex items-center justify-between">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Skemaer</p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Skemaer</p>
+          <button
+            data-testid={`class-ugeplan-${classId}`}
+            onClick={() => navigate(`/klasser/${classId}/ugeplan`)}
+            className="text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
+          >
+            Ugeplan
+          </button>
+        </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
@@ -372,13 +381,20 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
 
 export default function ClassesPage() {
   usePageTitle('Klasser')
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingClass, setEditingClass] = useState<ClassDto | null>(null)
   const [expandedClass, setExpandedClass] = useState<string | null>(null)
   const [newSchemaForClass, setNewSchemaForClass] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!openMenuId) return
+    const close = () => setOpenMenuId(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [openMenuId])
 
   const { data: classes, isLoading, isError, refetch } = useQuery<ClassDto[]>({
     queryKey: ['classes'],
@@ -484,37 +500,48 @@ export default function ClassesPage() {
                   <span className="text-sm text-gray-400 truncate">{cls.description}</span>
                 )}
               </button>
-              <div className="flex items-center gap-2 shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
+              <div className="relative shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
                 <button
-                  onClick={() => navigate(`/klasser/${cls.id}/ugeplan`)}
-                  className="px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-md transition-colors"
-                >
-                  Ugeplan
-                </button>
-                <button
-                  onClick={() => setEditingClass(cls)}
+                  data-testid={`class-menu-${cls.id}`}
+                  onClick={() => setOpenMenuId(openMenuId === cls.id ? null : cls.id!)}
                   className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-                  title="Rediger"
+                  title="Flere handlinger"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
                   </svg>
                 </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate(cls.id!)
-                  }}
-                  className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                  title="Slet"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                    <path d="M10 11v6M14 11v6" />
-                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                  </svg>
-                </button>
+                {openMenuId === cls.id && (
+                  <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
+                    <button
+                      data-testid={`class-edit-${cls.id}`}
+                      onClick={() => { setEditingClass(cls); setOpenMenuId(null) }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      Rediger
+                    </button>
+                    <button
+                      data-testid={`class-delete-${cls.id}`}
+                      onClick={() => {
+                        setOpenMenuId(null)
+                        if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate(cls.id!)
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                      Slet
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             {expandedClass === cls.id && (

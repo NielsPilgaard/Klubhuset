@@ -62,6 +62,23 @@ function getSchoolYearMonths(schoolStartYear: number): Array<{ year: number; mon
   return months
 }
 
+function getISOWeek(year: number, month: number, day: number): number {
+  const date = new Date(year, month - 1, day)
+  const thursday = new Date(date)
+  thursday.setDate(date.getDate() - ((date.getDay() + 6) % 7) + 3)
+  const firstThursday = new Date(thursday.getFullYear(), 0, 4)
+  firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3)
+  return Math.round((thursday.getTime() - firstThursday.getTime()) / 604800000) + 1
+}
+
+function isEntryInSchoolYear(entry: CalendarEntryDto, startYear: number): boolean {
+  const schoolStart = new Date(startYear, 7, 1)   // Aug 1
+  const schoolEnd = new Date(startYear + 1, 6, 31) // Jul 31 next year
+  const entryStart = new Date(`${entry.startDate}T00:00:00`)
+  const entryEnd = new Date(`${entry.endDate}T00:00:00`)
+  return entryStart <= schoolEnd && entryEnd >= schoolStart
+}
+
 function buildMonthGrid(year: number, month: number): (number | null)[][] {
   // month is 1-based
   const firstDay = new Date(year, month - 1, 1)
@@ -332,7 +349,7 @@ export default function CalendarPage() {
     ...entriesEndYear.filter((e) => !entriesStartYear.some((s) => s.id === e.id)),
   ]
 
-  const hasEntries = allEntries.length > 0
+  const hasEntries = allEntries.some((e) => isEntryInSchoolYear(e, schoolStartYear))
 
   const { data: defaults = [] } = useQuery<DefaultHolidayDto[]>({
     queryKey: ['calendar-defaults', schoolStartYear],
@@ -419,56 +436,64 @@ export default function CalendarPage() {
               <p className="font-display text-sm font-semibold text-gray-700 mb-3">
                 {MONTH_NAMES[month - 1]} {year}
               </p>
-              <div className="grid grid-cols-7 gap-0">
-                {WEEKDAY_HEADERS.map((h) => (
-                  <div key={h} className="text-xs text-gray-400 text-center pb-1">{h}</div>
+              <div className="grid gap-0" style={{ gridTemplateColumns: '1.5rem repeat(7, 1fr)' }}>
+                <div />
+                {WEEKDAY_HEADERS.map((h, hi) => (
+                  <div key={h} className={`text-xs text-center pb-1 ${hi >= 5 ? 'text-gray-400' : 'text-gray-600'}`}>{h}</div>
                 ))}
-                {weeks.map((week, wi) =>
-                  week.map((day, di) => {
-                    if (day === null) {
-                      return <div key={`${wi}-${di}`} />
-                    }
-                    const isWeekend = di >= 5 // Lø (5) or Sø (6)
-                    const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
-                    const firstEntry = dayEntries[0]
-                    const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type] ?? '' : ''
-                    const popoverKey = `${year}-${month}-${day}`
-                    const isOpen = openPopover === popoverKey
+                {weeks.map((week, wi) => {
+                  const firstDay = week.find((d) => d !== null)
+                  const weekNum = firstDay != null ? getISOWeek(year, month, firstDay) : null
+                  return [
+                    <div key={`wn-${wi}`} className="text-xs text-gray-400 text-right pr-1 py-0.5 leading-none flex items-center justify-end">
+                      {weekNum}
+                    </div>,
+                    ...week.map((day, di) => {
+                      if (day === null) {
+                        return <div key={`${wi}-${di}`} className={di >= 5 ? 'bg-gray-100 rounded' : ''} />
+                      }
+                      const isWeekend = di >= 5
+                      const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
+                      const firstEntry = dayEntries[0]
+                      const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type] ?? '' : ''
+                      const popoverKey = `${year}-${month}-${day}`
+                      const isOpen = openPopover === popoverKey
 
-                    return (
-                      <div
-                        key={`${wi}-${di}`}
-                        className="relative"
-                      >
+                      return (
                         <div
-                          onClick={() => handleDayClick(year, month, day, isWeekend)}
-                          className={[
-                            'text-xs text-center py-0.5 rounded select-none',
-                            isWeekend
-                              ? 'text-gray-300 cursor-default'
-                              : colorClass
-                                ? `${colorClass} cursor-pointer`
-                                : 'text-gray-700 cursor-pointer hover:bg-gray-100',
-                          ].join(' ')}
+                          key={`${wi}-${di}`}
+                          className="relative"
                         >
-                          {day}
+                          <div
+                            onClick={() => handleDayClick(year, month, day, isWeekend)}
+                            className={[
+                              'text-xs text-center py-0.5 rounded select-none',
+                              isWeekend
+                                ? 'bg-gray-100 text-gray-400 cursor-default'
+                                : colorClass
+                                  ? `${colorClass} cursor-pointer`
+                                  : 'text-gray-700 cursor-pointer hover:bg-gray-100',
+                            ].join(' ')}
+                          >
+                            {day}
+                          </div>
+                          {isOpen && (
+                            <DayPopover
+                              year={year}
+                              month={month}
+                              day={day}
+                              entries={allEntries}
+                              isAdmin={isAdmin}
+                              onCreateForDate={(dateStr) => setCreateDate(dateStr)}
+                              onEdit={(entry) => setEditingEntry(entry)}
+                              onClose={() => setOpenPopover(null)}
+                            />
+                          )}
                         </div>
-                        {isOpen && (
-                          <DayPopover
-                            year={year}
-                            month={month}
-                            day={day}
-                            entries={allEntries}
-                            isAdmin={isAdmin}
-                            onCreateForDate={(dateStr) => setCreateDate(dateStr)}
-                            onEdit={(entry) => setEditingEntry(entry)}
-                            onClose={() => setOpenPopover(null)}
-                          />
-                        )}
-                      </div>
-                    )
-                  })
-                )}
+                      )
+                    }),
+                  ]
+                })}
               </div>
             </div>
           )

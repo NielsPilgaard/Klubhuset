@@ -45,7 +45,7 @@ export default function SignupPage() {
         redirectingRef.current = true
         keycloak.login({
           loginHint: adminEmail,
-          redirectUri: window.location.origin + '/setup',
+          redirectUri: window.location.origin + '/setup?schoolName=' + encodeURIComponent(name),
         })
         return
       }

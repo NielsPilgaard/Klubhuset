@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
 import type { StaffRole } from '../api/client'
@@ -33,8 +33,8 @@ const STEPS: WizardStep[] = [
 // Step components
 // ---------------------------------------------------------------------------
 
-function StepSchoolName({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const [name, setName] = useState('')
+function StepSchoolName({ initialName, onNext, onSkip }: { initialName?: string; onNext: () => void; onSkip: () => void }) {
+  const [name, setName] = useState(initialName ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -710,6 +710,7 @@ export default function SchoolSetupWizardPage() {
   usePageTitle('Opsætning')
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
 
   const advance = () => setStep((s) => Math.min(s + 1, STEPS.length))
@@ -747,7 +748,7 @@ export default function SchoolSetupWizardPage() {
 
         {/* Step body */}
         <div className="px-8 pb-8 pt-4">
-          {step === 1 && <StepSchoolName onNext={advance} onSkip={skip} />}
+          {step === 1 && <StepSchoolName initialName={searchParams.get('schoolName') ?? undefined} onNext={advance} onSkip={skip} />}
           {step === 2 && <StepLogo onNext={advance} onSkip={skip} />}
           {step === 3 && <StepTimeSlots onNext={advance} onSkip={skip} />}
           {step === 4 && (
