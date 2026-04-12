@@ -82,9 +82,10 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
         var isHolidayWeek = holidays.Count > 0 && IsFullWeekCovered(holidays, weekStart, weekEnd);
         var holidayTitle = holidays.FirstOrDefault()?.Title;
 
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var activeSchema = await db.Schemas
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.ClassId == classId && s.IsActive, ct);
+            .FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today && s.EndDate >= today, ct);
 
         if (activeSchema is null)
         {
@@ -164,8 +165,9 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
         if (klass is null)
             return NotFound();
 
+        var today2 = DateOnly.FromDateTime(DateTime.UtcNow);
         var activeSchema = await db.Schemas
-            .FirstOrDefaultAsync(s => s.ClassId == classId && s.IsActive, ct);
+            .FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today2 && s.EndDate >= today2, ct);
 
         var schemaSlot = activeSchema is null
             ? null

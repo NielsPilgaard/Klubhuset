@@ -50,8 +50,9 @@ public sealed class ConflictDetectionService(AppDbContext db)
 		}
 
 		// Load all other active schema slots for the same tenant (for cross-class conflict detection)
+		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var otherSlots = await db.SchemaSlots
-								 .Where(s => s.SchemaId != schemaId && s.Schema.IsActive)
+								 .Where(s => s.SchemaId != schemaId && s.Schema.StartDate <= today && s.Schema.EndDate >= today)
 								 .Include(s => s.TimeSlot)
 								 .Include(s => s.Course)
 								 .Include(s => s.Teacher)

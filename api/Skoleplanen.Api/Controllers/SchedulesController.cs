@@ -36,9 +36,10 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 			return NotFound();
 		}
 
+		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var slots = await db.SchemaSlots
 							.AsNoTrackingWithIdentityResolution()
-							.Where(s => s.Schema.IsActive && s.Schema.ClassId == classId)
+							.Where(s => s.Schema.StartDate <= today && s.Schema.EndDate >= today && s.Schema.ClassId == classId)
 							.Include(s => s.TimeSlot)
 							.Include(s => s.Course)
 							.Include(s => s.Schema)
@@ -78,9 +79,10 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 			return NotFound();
 		}
 
+		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var slots = await db.SchemaSlots
 							.AsNoTrackingWithIdentityResolution()
-							.Where(s => s.Schema.IsActive && (s.TeacherId == staffId || s.AideId == staffId))
+							.Where(s => s.Schema.StartDate <= today && s.Schema.EndDate >= today && (s.TeacherId == staffId || s.AideId == staffId))
 							.Include(s => s.TimeSlot)
 							.Include(s => s.Course)
 							.Include(s => s.Schema)
@@ -120,9 +122,10 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 			return NotFound();
 		}
 
+		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var slots = await db.SchemaSlots
 							.AsNoTrackingWithIdentityResolution()
-							.Where(s => s.Schema.IsActive && s.RoomId == roomId)
+							.Where(s => s.Schema.StartDate <= today && s.Schema.EndDate >= today && s.RoomId == roomId)
 							.Include(s => s.TimeSlot)
 							.Include(s => s.Course)
 							.Include(s => s.Schema)

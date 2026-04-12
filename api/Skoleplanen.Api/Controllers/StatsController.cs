@@ -35,14 +35,15 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 		var courseCount = await db.Courses.CountAsync(ct);
 		var roomCount = await db.Rooms.CountAsync(ct);
 
+		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var allSchemas = await db.Schemas.AsNoTracking().ToListAsync(ct);
 		var schemasTotal = allSchemas.Count;
-		var schemasComplete = allSchemas.Count(s => s.Status == SchemaStatus.Complete);
+		var schemasComplete = allSchemas.Count(s => s.StartDate.HasValue && s.EndDate.HasValue);
 
 		// Hours per course per class (active schemas only)
 		var activeSlots = await db.SchemaSlots
 			.AsNoTrackingWithIdentityResolution()
-			.Where(s => s.Schema.IsActive)
+			.Where(s => s.Schema.StartDate <= today && s.Schema.EndDate >= today)
 			.Include(s => s.Course)
 			.Include(s => s.Schema).ThenInclude(sc => sc.Class)
 			.Include(s => s.TimeSlot)
@@ -80,7 +81,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 		// Unassigned slots: classes with no active schema, or active schemas with empty time slots
 		var activeSchemas = await db.Schemas
 			.AsNoTrackingWithIdentityResolution()
-			.Where(s => s.IsActive)
+			.Where(s => s.StartDate <= today && s.EndDate >= today)
 			.Include(s => s.Class)
 			.Include(s => s.Slots)
 			.ToListAsync(ct);

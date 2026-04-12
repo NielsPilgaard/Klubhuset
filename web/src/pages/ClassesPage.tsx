@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { api, ClassDto, SchemaDto, SchemaStatus } from '../api/client'
+import { api, ClassDto, SchemaDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 interface CopySchemaModalProps {
@@ -233,19 +233,26 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   )
 }
 
-function statusLabel(status: SchemaStatus) {
-  return status === 'Complete' ? 'Færdig' : 'Kladde'
+function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
+  if (!startDate && !endDate) return null
+  const fmt = (d: string) => {
+    const [, m, ] = d.split('-')
+    const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+    return `${months[parseInt(m, 10) - 1]} ${d.slice(0, 4)}`
+  }
+  if (startDate && endDate) return `${fmt(startDate)} – ${fmt(endDate)}`
+  if (startDate) return `fra ${fmt(startDate)}`
+  return `til ${fmt(endDate!)}`
 }
 
-function statusClasses(status: SchemaStatus) {
-  return status === 'Complete'
-    ? 'bg-brand-100 text-brand-700'
-    : 'bg-amber-100 text-amber-700'
+function isActiveNow(startDate?: string | null, endDate?: string | null): boolean {
+  if (!startDate || !endDate) return false
+  const today = new Date().toISOString().slice(0, 10)
+  return startDate <= today && endDate >= today
 }
 
 function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
-  const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
 
@@ -259,12 +266,6 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
   const { data: schemas, isLoading } = useQuery<SchemaDto[]>({
     queryKey: ['schemas', classId],
     queryFn: () => api.get(`/classes/${classId}/schemas`),
-  })
-
-  const activateMutation = useMutation({
-    mutationFn: (schemaId: string) =>
-      api.post(`/classes/${classId}/schemas/${schemaId}/activate`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['schemas', classId] }),
   })
 
   if (isLoading) {
@@ -307,7 +308,10 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
       )}
 
       <div className="px-4 pb-4 space-y-2">
-        {schemas?.map((s) => (
+        {schemas?.map((s) => {
+          const active = isActiveNow(s.startDate, s.endDate)
+          const dateRange = formatDateRange(s.startDate, s.endDate)
+          return (
           <div
             key={s.id}
             onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
@@ -317,12 +321,13 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
               <span className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate">
                 {s.name}
               </span>
-              <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusClasses(s.status ?? 'Draft')}`}>
-                {statusLabel(s.status ?? 'Draft')}
-              </span>
-              {s.isActive && (
-                <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-600 text-white">
-                  Aktiv
+              {dateRange && (
+                <span className="shrink-0 text-xs text-gray-400">{dateRange}</span>
+              )}
+              {active && (
+                <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                  Aktiv nu
                 </span>
               )}
             </div>
@@ -337,18 +342,10 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                 </svg>
               </button>
-              {!s.isActive && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); activateMutation.mutate(s.id!) }}
-                  disabled={activateMutation.isPending}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50"
-                >
-                  Aktivér
-                </button>
-              )}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {showCreate && (

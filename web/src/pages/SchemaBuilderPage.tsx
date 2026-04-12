@@ -92,12 +92,13 @@ interface SearchableSelectProps {
   onChange: (id: string) => void
   placeholder?: string
   emptyLabel?: string
+  autoFocus?: boolean
   'data-testid'?: string
 }
 
 function SearchableSelect({
   label, required, options, value, query, onQueryChange, onChange,
-  placeholder = 'Søg...', emptyLabel = '—', 'data-testid': testId,
+  placeholder = 'Søg...', emptyLabel = '—', autoFocus, 'data-testid': testId,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
 
@@ -135,15 +136,17 @@ function SearchableSelect({
       return
     }
     if (e.key === 'Enter') {
+      e.preventDefault()
       if (open && !value && filtered.length > 0) {
         // Dropdown open, no chip yet — select the first match
-        e.preventDefault()
         select(filtered[0])
         return
       }
       // Either dropdown closed or chip already selected — close dropdown and submit
       setOpen(false)
-      // Do NOT call e.preventDefault() — let the form's onSubmit fire
+      if (value || !required) {
+        e.currentTarget.form?.requestSubmit()
+      }
     }
   }
 
@@ -168,6 +171,7 @@ function SearchableSelect({
         <input
           type="text"
           autoComplete="off"
+          autoFocus={autoFocus}
           value={query}
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
@@ -291,6 +295,7 @@ function AssignmentPanel({
           <SearchableSelect
             label="Fag"
             required
+            autoFocus
             options={courses.map((c) => ({ id: c.id ?? '', label: c.name ?? '' }))}
             value={courseId}
             query={courseQuery}
@@ -535,16 +540,6 @@ export default function SchemaBuilderPage() {
     queryFn: () => api.get('/rooms'),
   })
 
-  const completeMutation = useMutation({
-    mutationFn: () => api.post(`/classes/${classId}/schemas/${schemaId}/complete`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] }),
-  })
-
-  const activateMutation = useMutation({
-    mutationFn: () => api.post(`/classes/${classId}/schemas/${schemaId}/activate`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] }),
-  })
-
   const upsertSlotMutation = useMutation({
     mutationFn: (payload: { timeSlotId: string; weekday: number; courseId: string; teacherId: string; roomId: string | null; aideId: string | null }) =>
       api.put<SlotsAndConflictsDto>(`/classes/${classId}/schemas/${schemaId}/slots`, payload),
@@ -728,11 +723,18 @@ export default function SchemaBuilderPage() {
           ) : (
             <>
               <h1 className="font-display text-base font-semibold text-gray-900 truncate">{schema?.name}</h1>
-              <span className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${schema?.status === 'Complete' ? 'bg-brand-100 text-brand-700' : 'bg-amber-100 text-amber-700'}`}>
-                {schema?.status === 'Complete' ? 'Færdig' : 'Kladde'}
-              </span>
-              {schema?.isActive && (
-                <span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-brand-600 text-white">Aktiv</span>
+              {(schema?.startDate || schema?.endDate) && (
+                <span className="shrink-0 text-xs text-gray-400">
+                  {schema.startDate && schema.endDate
+                    ? `${schema.startDate} – ${schema.endDate}`
+                    : schema.startDate ?? schema.endDate}
+                </span>
+              )}
+              {schema?.startDate && schema?.endDate && new Date().toISOString().slice(0, 10) >= schema.startDate && new Date().toISOString().slice(0, 10) <= schema.endDate && (
+                <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                  Aktiv nu
+                </span>
               )}
             </>
           )}
@@ -764,20 +766,6 @@ export default function SchemaBuilderPage() {
               </svg>
               {conflicts.length} konflikt{conflicts.length !== 1 ? 'er' : ''}
             </span>
-          )}
-          {schema?.status !== 'Complete' && (
-            <button onClick={() => completeMutation.mutate()}
-              disabled={hasConflicts || completeMutation.isPending}
-              title={hasConflicts ? 'Løs konflikter først' : undefined}
-              className="px-3 py-1.5 text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              Markér som færdig
-            </button>
-          )}
-          {!schema?.isActive && (
-            <button onClick={() => activateMutation.mutate()} disabled={activateMutation.isPending}
-              className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
-              Aktivér
-            </button>
           )}
         </div>
       </div>

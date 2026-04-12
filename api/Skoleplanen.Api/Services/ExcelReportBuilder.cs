@@ -10,10 +10,12 @@ public sealed class ExcelReportBuilder(AppDbContext db)
 {
     private const string XlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    public async Task<List<SchemaSlot>> GetActiveSlotsAsync(CancellationToken ct) =>
-        await db.SchemaSlots
+    public async Task<List<SchemaSlot>> GetActiveSlotsAsync(CancellationToken ct)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        return await db.SchemaSlots
             .AsNoTrackingWithIdentityResolution()
-            .Where(s => s.Schema.IsActive)
+            .Where(s => s.Schema.StartDate <= today && s.Schema.EndDate >= today)
             .Include(s => s.Course)
             .Include(s => s.Schema).ThenInclude(sc => sc.Class)
             .Include(s => s.TimeSlot)
@@ -21,6 +23,7 @@ public sealed class ExcelReportBuilder(AppDbContext db)
             .Include(s => s.Room)
             .Include(s => s.Aide)
             .ToListAsync(ct);
+    }
 
     public static void StyleHeader(IXLRow row)
     {

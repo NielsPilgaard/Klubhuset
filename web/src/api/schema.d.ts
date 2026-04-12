@@ -1185,7 +1185,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/classes/{classId}/schemas/{schemaId}/activate": {
+    "/api/v1/classes/{classId}/schemas/{schemaId}/daterange": {
         parameters: {
             query?: never;
             header?: never;
@@ -1193,8 +1193,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        post: {
+        put: {
             parameters: {
                 query?: never;
                 header?: never;
@@ -1204,7 +1203,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetDateRangeRequest"];
+                    "text/json": components["schemas"]["SetDateRangeRequest"];
+                    "application/*+json": components["schemas"]["SetDateRangeRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -1219,46 +1224,7 @@ export interface paths {
                 };
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/classes/{classId}/schemas/{schemaId}/complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    classId: string;
-                    schemaId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["SchemaDto"];
-                        "application/json": components["schemas"]["SchemaDto"];
-                        "text/json": components["schemas"]["SchemaDto"];
-                    };
-                };
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2738,16 +2704,22 @@ export interface components {
             /** Format: uuid */
             classId?: string;
             name?: string | null;
-            status?: components["schemas"]["SchemaStatus"];
-            isActive?: boolean;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            endDate?: string | null;
         };
-        /** @enum {string} */
-        SchemaStatus: "Draft" | "Complete";
         SchoolSettingsDto: {
             name?: string | null;
             contactEmail?: string | null;
             contactPhone?: string | null;
             logoUrl?: string | null;
+        };
+        SetDateRangeRequest: {
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            endDate?: string | null;
         };
         SlotDto: {
             /** Format: uuid */

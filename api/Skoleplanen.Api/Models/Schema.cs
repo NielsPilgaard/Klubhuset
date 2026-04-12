@@ -3,15 +3,10 @@ using Skoleplanen.Api.Data;
 
 namespace Skoleplanen.Api.Models;
 
-public enum SchemaStatus
-{
-	Draft,
-	Complete
-}
-
 /// <summary>
 /// Skema — the weekly schedule for a class.
-/// A class can have multiple schemas (e.g. one per term), but only one active at a time.
+/// A class can have multiple schemas (e.g. one per term).
+/// A schema is considered active when today falls within [StartDate, EndDate].
 /// </summary>
 public sealed class Schema : ITenantScoped
 {
@@ -23,8 +18,8 @@ public sealed class Schema : ITenantScoped
 
 	[StringLength(200, MinimumLength = 1)]
 	public required string Name { get; set; }
-	public SchemaStatus Status { get; set; } = SchemaStatus.Draft;
-	public bool IsActive { get; set; }
+	public DateOnly? StartDate { get; set; }
+	public DateOnly? EndDate { get; set; }
 
 	public ICollection<SchemaSlot> Slots { get; set; } = [];
 	public ICollection<TimeSlot> TimeSlots { get; set; } = [];

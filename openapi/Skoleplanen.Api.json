@@ -1413,8 +1413,8 @@
         }
       }
     },
-    "/api/v1/classes/{classId}/schemas/{schemaId}/activate": {
-      "post": {
+    "/api/v1/classes/{classId}/schemas/{schemaId}/daterange": {
+      "put": {
         "tags": [
           "Schemas"
         ],
@@ -1438,55 +1438,25 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaDto"
-                }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDateRangeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDateRangeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDateRangeRequest"
               }
             }
           }
-        }
-      }
-    },
-    "/api/v1/classes/{classId}/schemas/{schemaId}/complete": {
-      "post": {
-        "tags": [
-          "Schemas"
-        ],
-        "parameters": [
-          {
-            "name": "classId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "schemaId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -3771,21 +3741,18 @@
             "type": "string",
             "nullable": true
           },
-          "status": {
-            "$ref": "#/components/schemas/SchemaStatus"
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           },
-          "isActive": {
-            "type": "boolean"
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "additionalProperties": false
-      },
-      "SchemaStatus": {
-        "enum": [
-          "Draft",
-          "Complete"
-        ],
-        "type": "string"
       },
       "SchoolSettingsDto": {
         "type": "object",
@@ -3804,6 +3771,22 @@
           },
           "logoUrl": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetDateRangeRequest": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
             "nullable": true
           }
         },

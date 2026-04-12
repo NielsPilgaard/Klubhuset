@@ -620,3 +620,42 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412192147_AddSchemaDateRange') THEN
+    ALTER TABLE "Schemas" DROP COLUMN "IsActive";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412192147_AddSchemaDateRange') THEN
+    ALTER TABLE "Schemas" DROP COLUMN "Status";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412192147_AddSchemaDateRange') THEN
+    ALTER TABLE "Schemas" ADD "EndDate" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412192147_AddSchemaDateRange') THEN
+    ALTER TABLE "Schemas" ADD "StartDate" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412192147_AddSchemaDateRange') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260412192147_AddSchemaDateRange', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+

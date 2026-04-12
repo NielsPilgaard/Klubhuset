@@ -15,7 +15,9 @@ namespace Skoleplanen.Api.Controllers;
 public sealed class SchemasController(AppDbContext db, ITenantContext tenant, ConflictDetectionService conflicts)
 	: ControllerBase
 {
-	public record SchemaDto(Guid Id, Guid ClassId, string Name, SchemaStatus Status, bool IsActive);
+	public record SchemaDto(Guid Id, Guid ClassId, string Name, DateOnly? StartDate, DateOnly? EndDate);
+
+	public record SetDateRangeRequest(DateOnly? StartDate, DateOnly? EndDate);
 
 	public record SlotDto(
 		Guid Id,
@@ -56,7 +58,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 							  .AsNoTracking()
 							  .Where(s => s.ClassId == classId)
 							  .OrderByDescending(s => s.CreatedAt)
-							  .Select(s => new SchemaDto(s.Id, s.ClassId, s.Name, s.Status, s.IsActive))
+							  .Select(s => new SchemaDto(s.Id, s.ClassId, s.Name, s.StartDate, s.EndDate))
 							  .ToListAsync(ct);
 
 		return Ok(schemas);
@@ -75,7 +77,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		var conflictList = await conflicts.DetectAsync(schemaId, ct);
 
 		return Ok(new SchemaDetailDto(
-					  new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.Status, schema.IsActive),
+					  new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate),
 					  slots,
 					  conflictList));
 	}
@@ -129,12 +131,13 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		await db.SaveChangesAsync(ct);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId, schemaId = schema.Id },
-							   new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.Status, schema.IsActive));
+							   new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
 	}
 
-	[HttpPost("{schemaId:guid}/activate")]
+	[HttpPut("{schemaId:guid}/daterange")]
 	[Authorize(Roles = "admin")]
-	public async Task<ActionResult<SchemaDto>> Activate(Guid classId, Guid schemaId, CancellationToken ct)
+	public async Task<ActionResult<SchemaDto>> SetDateRange(Guid classId, Guid schemaId,
+		[FromBody] SetDateRangeRequest req, CancellationToken ct)
 	{
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -142,41 +145,19 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return NotFound();
 		}
 
-		// Deactivate all other schemas for this class
-		var others = await db.Schemas.Where(s => s.ClassId == classId && s.Id != schemaId).ToListAsync(ct);
-		foreach (var o in others)
-		{
-			o.IsActive = false;
-		}
-
-		schema.IsActive = true;
-
-		await db.SaveChangesAsync(ct);
-		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.Status, schema.IsActive));
-	}
-
-	[HttpPost("{schemaId:guid}/complete")]
-	[Authorize(Roles = "admin")]
-	public async Task<ActionResult<SchemaDto>> MarkComplete(Guid classId, Guid schemaId, CancellationToken ct)
-	{
-		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
-		if (schema is null)
-		{
-			return NotFound();
-		}
-
-		var conflictList = await conflicts.DetectAsync(schemaId, ct);
-		if (conflictList.Count > 0)
+		if (req.StartDate.HasValue && req.EndDate.HasValue && req.StartDate.Value > req.EndDate.Value)
 		{
 			return Problem(
-				title: "Schema har konflikter",
-				detail: $"Skemaet har {conflictList.Count} konflikt(er) og kan ikke markeres som færdigt.",
+				title: "Ugyldig datoperiode",
+				detail: "Startdato skal være før eller lig med slutdato.",
 				statusCode: 422);
 		}
 
-		schema.Status = SchemaStatus.Complete;
+		schema.StartDate = req.StartDate;
+		schema.EndDate = req.EndDate;
+
 		await db.SaveChangesAsync(ct);
-		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.Status, schema.IsActive));
+		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
 	}
 
 	[HttpPost("{schemaId:guid}/copy")]
@@ -241,7 +222,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		await db.SaveChangesAsync(ct);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId, schemaId = copy.Id },
-							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.Status, copy.IsActive));
+							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.StartDate, copy.EndDate));
 	}
 
 	[HttpPost("{schemaId:guid}/copy-to/{targetClassId:guid}")]
@@ -310,7 +291,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		await db.SaveChangesAsync(ct);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId = targetClassId, schemaId = copy.Id },
-							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.Status, copy.IsActive));
+							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.StartDate, copy.EndDate));
 	}
 
 	[HttpDelete("{schemaId:guid}")]
@@ -378,8 +359,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			slot.AideId = req.AideId;
 		}
 
-		// Reset to draft when modified
-		schema.Status = SchemaStatus.Draft;
 		await db.SaveChangesAsync(ct);
 
 		// Return updated slot list + conflicts

@@ -158,7 +158,8 @@ public static class TestDataBuilder
             TenantId = tenantId,
             ClassId = klass.Id,
             Name = schemaName,
-            IsActive = true,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-1),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(11),
         };
         db.Schemas.Add(schema);
         await db.SaveChangesAsync();
