@@ -87,8 +87,17 @@ function PrintGrid({ title, subtitle, slots }: {
                 return (
                   <td key={day} className="print-td">
                     {daySlots && daySlots.map((slot, idx) => (
-                      <div key={idx} className={`print-cell${hasConflict ? ' print-cell-conflict' : ''}`}>
-                        <span className="print-course">{slot.courseName}</span>
+                      <div
+                        key={idx}
+                        className={`print-cell${hasConflict ? ' print-cell-conflict' : ''}`}
+                        style={slot.courseColor ? {
+                          backgroundColor: slot.courseColor + '22',
+                          borderLeft: `3px solid ${slot.courseColor}`,
+                          paddingLeft: '5px',
+                          borderRadius: '4px',
+                        } : undefined}
+                      >
+                        <span className="print-course" style={slot.courseColor ? { color: slot.courseColor } : undefined}>{slot.courseName}</span>
                         {slot.teacherName && (
                           <span className="print-info">{slot.teacherName}</span>
                         )}
