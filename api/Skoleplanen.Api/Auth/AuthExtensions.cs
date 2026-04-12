@@ -24,8 +24,10 @@ public static class AuthExtensions
                     jwt.MapInboundClaims = false;
 
                     if (!string.IsNullOrEmpty(kc.Value.MetadataAddress))
-                        jwt.MetadataAddress = kc.Value.MetadataAddress;
-                });
+					{
+						jwt.MetadataAddress = kc.Value.MetadataAddress;
+					}
+				});
 
         services.AddAuthorization();
         services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();

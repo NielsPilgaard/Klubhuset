@@ -181,9 +181,21 @@ interface SchemaModalProps {
 function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
+  const dateInvalid = !!startDate && !!endDate && startDate > endDate
 
   const mutation = useMutation({
-    mutationFn: () => api.post(`/classes/${classId}/schemas`, { name }),
+    mutationFn: async () => {
+      const created: SchemaDto = await api.post(`/classes/${classId}/schemas`, { name })
+      if ((startDate || endDate) && created.id) {
+        await api.put(`/classes/${classId}/schemas/${created.id}/daterange`, {
+          startDate: startDate || null,
+          endDate: endDate || null,
+        })
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['schemas', classId] })
       onSaved()
@@ -191,7 +203,7 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   })
 
   function handleSave() {
-    if (!name.trim() || mutation.isPending) return
+    if (!name.trim() || mutation.isPending || dateInvalid) return
     mutation.mutate()
   }
 
@@ -212,6 +224,30 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          {dateInvalid && (
+            <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>
+          )}
           {mutation.isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
@@ -222,7 +258,7 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
+            disabled={!name.trim() || mutation.isPending || dateInvalid}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {mutation.isPending ? 'Opretter...' : 'Opret'}
@@ -251,10 +287,94 @@ function isActiveNow(startDate?: string | null, endDate?: string | null): boolea
   return startDate <= today && endDate >= today
 }
 
+interface DateRangeModalProps {
+  classId: string
+  schema: SchemaDto
+  onClose: () => void
+}
+
+function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
+  const qc = useQueryClient()
+  const [startDate, setStartDate] = useState(schema.startDate ?? '')
+  const [endDate, setEndDate] = useState(schema.endDate ?? '')
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      api.put(`/classes/${classId}/schemas/${schema.id}/daterange`, {
+        startDate: startDate || null,
+        endDate: endDate || null,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['schemas', classId] })
+      onClose()
+    },
+  })
+
+  function handleSave() {
+    if (mutation.isPending) return
+    if (startDate && endDate && startDate > endDate) return
+    mutation.mutate()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Sæt datoperiode</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{schema.name}</p>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          {startDate && endDate && startDate > endDate && (
+            <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>
+          )}
+          {mutation.isError && (
+            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Annuller
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={mutation.isPending || (!!startDate && !!endDate && startDate > endDate)}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {mutation.isPending ? 'Gemmer...' : 'Gem'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
+  const [editingDateRange, setEditingDateRange] = useState<SchemaDto | null>(null)
 
   useEffect(() => {
     if (autoOpenCreate) {
@@ -266,6 +386,11 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
   const { data: schemas, isLoading } = useQuery<SchemaDto[]>({
     queryKey: ['schemas', classId],
     queryFn: () => api.get(`/classes/${classId}/schemas`),
+  })
+
+  const deleteSchemaMutation = useMutation({
+    mutationFn: (schemaId: string) => api.delete(`/classes/${classId}/schemas/${schemaId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['schemas', classId] }),
   })
 
   if (isLoading) {
@@ -331,7 +456,19 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0 ml-4">
+            <div className="flex items-center gap-1 shrink-0 ml-4">
+              <button
+                onClick={(e) => { e.stopPropagation(); setEditingDateRange(s) }}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                title="Sæt datoperiode"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setCopyingSchema(s) }}
                 className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
@@ -340,6 +477,23 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (confirm(`Slet skemaet "${s.name}"? Alle lektioner i skemaet slettes også.`)) {
+                    deleteSchemaMutation.mutate(s.id!)
+                  }
+                }}
+                className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                title="Slet skema"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                 </svg>
               </button>
             </div>
@@ -362,6 +516,13 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
           sourceName={copyingSchema.name!}
           onClose={() => setCopyingSchema(null)}
           onSaved={() => setCopyingSchema(null)}
+        />
+      )}
+      {editingDateRange && (
+        <DateRangeModal
+          classId={classId}
+          schema={editingDateRange}
+          onClose={() => setEditingDateRange(null)}
         />
       )}
     </div>
@@ -446,7 +607,7 @@ export default function ClassesPage() {
       )}
 
       {/* List */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+      <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
         {isLoading &&
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="px-5 py-4 animate-pulse flex justify-between">

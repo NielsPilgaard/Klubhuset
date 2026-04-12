@@ -53,9 +53,11 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
     public async Task<ActionResult<CalendarEntryDto>> Create([FromBody] CreateCalendarEntryRequest req, CancellationToken ct)
     {
         if (req.StartDate > req.EndDate)
-            return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
+		{
+			return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
+		}
 
-        var entry = new CalendarEntry
+		var entry = new CalendarEntry
         {
             Id = Guid.NewGuid(),
             TenantId = tenant.TenantId,
@@ -74,13 +76,17 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
     public async Task<ActionResult<CalendarEntryDto>> Update(Guid id, [FromBody] UpdateCalendarEntryRequest req, CancellationToken ct)
     {
         if (req.StartDate > req.EndDate)
-            return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
+		{
+			return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
+		}
 
-        var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
         if (entry is null)
-            return NotFound();
+		{
+			return NotFound();
+		}
 
-        entry.Type = req.Type;
+		entry.Type = req.Type;
         entry.Title = req.Title;
         entry.StartDate = req.StartDate;
         entry.EndDate = req.EndDate;
@@ -94,9 +100,11 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
     {
         var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
         if (entry is null)
-            return NotFound();
+		{
+			return NotFound();
+		}
 
-        db.CalendarEntries.Remove(entry);
+		db.CalendarEntries.Remove(entry);
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -104,8 +112,8 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
     private static List<DefaultHolidayDto> ComputeDefaultHolidays(int year)
     {
         // year is treated as the school start year (e.g. 2025 = school year 2025/2026)
-        int schoolStartYear = year;
-        int schoolEndYear = schoolStartYear + 1;
+        var schoolStartYear = year;
+        var schoolEndYear = schoolStartYear + 1;
 
         var easter = ComputeEaster(schoolEndYear);
 
@@ -156,20 +164,20 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
     private static DateOnly ComputeEaster(int year)
     {
         // Anonymous Gregorian algorithm
-        int a = year % 19;
-        int b = year / 100;
-        int c = year % 100;
-        int d = b / 4;
-        int e = b % 4;
-        int f = (b + 8) / 25;
-        int g = (b - f + 1) / 3;
-        int h = (19 * a + b - d - g + 15) % 30;
-        int i = c / 4;
-        int k = c % 4;
-        int l = (32 + 2 * e + 2 * i - h - k) % 7;
-        int m = (a + 11 * h + 22 * l) / 451;
-        int month = (h + l - 7 * m + 114) / 31;
-        int day = ((h + l - 7 * m + 114) % 31) + 1;
+        var a = year % 19;
+        var b = year / 100;
+        var c = year % 100;
+        var d = b / 4;
+        var e = b % 4;
+        var f = (b + 8) / 25;
+        var g = (b - f + 1) / 3;
+        var h = (19 * a + b - d - g + 15) % 30;
+        var i = c / 4;
+        var k = c % 4;
+        var l = (32 + 2 * e + 2 * i - h - k) % 7;
+        var m = (a + 11 * h + 22 * l) / 451;
+        var month = (h + l - 7 * m + 114) / 31;
+        var day = (h + l - 7 * m + 114) % 31 + 1;
         return new DateOnly(year, month, day);
     }
 }

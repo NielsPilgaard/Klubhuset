@@ -30,6 +30,18 @@ interface WeekPlanSlotDto {
   files: WeekPlanSlotFileDto[]
 }
 
+interface HolidayDayDto {
+  weekday: number
+  title: string
+}
+
+interface BreakTimeSlotDto {
+  timeSlotId: string
+  timeSlotLabel: string
+  startTime: string
+  endTime: string
+}
+
 interface WeekPlanDto {
   id: string
   classId: string
@@ -39,6 +51,8 @@ interface WeekPlanDto {
   weekEndDate: string
   isHolidayWeek: boolean
   holidayTitle: string | null
+  holidayDays: HolidayDayDto[]
+  breakSlots: BreakTimeSlotDto[]
   slots: WeekPlanSlotDto[]
 }
 
@@ -82,6 +96,54 @@ function getISOWeeksInYear(year: number): number {
   const jan1 = new Date(Date.UTC(year, 0, 1)).getUTCDay()
   const dec31 = new Date(Date.UTC(year, 11, 31)).getUTCDay()
   return jan1 === 4 || dec31 === 4 ? 53 : 52
+}
+
+// Returns the Monday of the ISO week
+function isoWeekToMonday(isoYear: number, isoWeek: number): Date {
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4))
+  const dayOfWeek = jan4.getUTCDay() || 7
+  const weekOneMonday = new Date(jan4.getTime() - (dayOfWeek - 1) * 86400000)
+  return new Date(weekOneMonday.getTime() + (isoWeek - 1) * 7 * 86400000)
+}
+
+interface SchoolYearWeek {
+  isoYear: number
+  isoWeek: number
+  label: string
+}
+
+// School year: Aug 1 – Jun 30. Given current isoYear/isoWeek, generate all weeks.
+function getSchoolYearWeeks(isoYear: number, isoWeek: number): SchoolYearWeek[] {
+  // Determine which school year: if week is in Aug–Dec, school year starts that calendar year
+  const monday = isoWeekToMonday(isoYear, isoWeek)
+  const calYear = monday.getUTCFullYear()
+  const calMonth = monday.getUTCMonth() // 0-based
+  // School year start = Aug 1 of startYear
+  const startYear = calMonth >= 7 ? calYear : calYear - 1
+  const startDate = new Date(Date.UTC(startYear, 7, 1)) // Aug 1
+  const endDate = new Date(Date.UTC(startYear + 1, 5, 30)) // Jun 30
+
+  // Find ISO week of Aug 1 and Jun 30
+  const startWeek = getISOWeek(startDate)
+  const startWeekYear = getISOWeekYear(startDate)
+  const endWeek = getISOWeek(endDate)
+  const endWeekYear = getISOWeekYear(endDate)
+
+  const weeks: SchoolYearWeek[] = []
+  let y = startWeekYear
+  let w = startWeek
+  while (y < endWeekYear || (y === endWeekYear && w <= endWeek)) {
+    const label = y !== startWeekYear || w === 1
+      ? `Uge ${w}, ${y}`
+      : `Uge ${w}`
+    weeks.push({ isoYear: y, isoWeek: w, label })
+    w++
+    if (w > getISOWeeksInYear(y)) {
+      y++
+      w = 1
+    }
+  }
+  return weeks
 }
 
 // ─── Course colors (matches SchemaBuilderPage) ────────────────────────────────
@@ -334,10 +396,21 @@ export default function WeekPlanPage() {
   // Collect all unique course IDs for color assignment
   const allCourseIds = weekPlanData?.slots.map(s => s.courseId).filter((v, i, a) => a.indexOf(v) === i) ?? []
 
-  // Get unique time slots ordered by startTime
-  const uniqueTimeSlots = weekPlanData?.slots
-    .filter((s, i, a) => a.findIndex(x => x.timeSlotId === s.timeSlotId) === i)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime)) ?? []
+  // Build a combined sorted list of rows: regular lesson slots + break slots
+  type GridRow =
+    | { kind: 'slot'; timeSlotId: string; timeSlotLabel: string; startTime: string; endTime: string }
+    | { kind: 'break'; timeSlotId: string; timeSlotLabel: string; startTime: string; endTime: string }
+
+  const uniqueTimeSlots: GridRow[] = (() => {
+    if (!weekPlanData) return []
+    const lessonRows: GridRow[] = weekPlanData.slots
+      .filter((s, i, a) => a.findIndex(x => x.timeSlotId === s.timeSlotId) === i)
+      .map(s => ({ kind: 'slot' as const, timeSlotId: s.timeSlotId, timeSlotLabel: s.timeSlotLabel, startTime: s.startTime, endTime: s.endTime }))
+    const breakRows: GridRow[] = (weekPlanData.breakSlots ?? []).map(b => ({
+      kind: 'break' as const, timeSlotId: b.timeSlotId, timeSlotLabel: b.timeSlotLabel, startTime: b.startTime, endTime: b.endTime
+    }))
+    return [...lessonRows, ...breakRows].sort((a, b) => a.startTime.localeCompare(b.startTime))
+  })()
 
   // Parse weekStartDate to compute column dates
   const weekStartDate = weekPlanData?.weekStartDate
@@ -373,21 +446,31 @@ export default function WeekPlanPage() {
         </div>
 
         {/* Week navigator */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           <button
             onClick={prevWeek}
             className="text-sm text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
           >
-            ← Forrige uge
+            ←
           </button>
-          <span className="text-sm font-semibold text-gray-900 mx-3">
-            Uge {isoWeek}, {isoYear}
-          </span>
+          <select
+            value={`${isoYear}-${isoWeek}`}
+            onChange={(e) => {
+              const [y, w] = e.target.value.split('-').map(Number)
+              setIsoYear(y)
+              setIsoWeek(w)
+            }}
+            className="text-sm font-semibold text-gray-900 px-2 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            {getSchoolYearWeeks(isoYear, isoWeek).map(({ isoYear: y, isoWeek: w, label }) => (
+              <option key={`${y}-${w}`} value={`${y}-${w}`}>{label}</option>
+            ))}
+          </select>
           <button
             onClick={nextWeek}
             className="text-sm text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
           >
-            Næste uge →
+            →
           </button>
           <button
             onClick={goToThisWeek}
@@ -422,17 +505,22 @@ export default function WeekPlanPage() {
             {/* Header row */}
             <div className="bg-gray-50 border-b border-r border-gray-200 p-2" /> {/* empty corner */}
             {WEEKDAYS.map((label, i) => {
+              const weekday = WEEKDAY_NUMS[i]
               const date = weekStartDate ? new Date(weekStartDate.getTime() + i * 86400000) : null
               const dateLabel = date
                 ? date.toLocaleDateString('da-DK', { day: '2-digit', month: 'short' })
                 : ''
+              const holidayDay = (weekPlanData.holidayDays ?? []).find(h => h.weekday === weekday)
               return (
                 <div
                   key={label}
-                  className="bg-gray-50 border-b border-r border-gray-200 p-2 text-center"
+                  className={`border-b border-r border-gray-200 p-2 text-center ${holidayDay ? 'bg-amber-50' : 'bg-gray-50'}`}
                 >
                   <div className="text-xs font-semibold text-gray-700">{label}</div>
                   {dateLabel && <div className="text-xs text-gray-400">{dateLabel}</div>}
+                  {holidayDay && (
+                    <div className="text-xs text-amber-600 font-medium mt-0.5 leading-tight">{holidayDay.title}</div>
+                  )}
                 </div>
               )
             })}
@@ -443,23 +531,32 @@ export default function WeekPlanPage() {
                 {/* Time label */}
                 <div
                   key={`label-${ts.timeSlotId}`}
-                  className="border-b border-r border-gray-200 p-2 bg-gray-50 flex flex-col justify-center"
+                  className={`border-b border-r border-gray-200 p-2 flex flex-col justify-center ${ts.kind === 'break' ? 'bg-gray-100' : 'bg-gray-50'}`}
                 >
                   <span className="text-xs text-gray-500 font-mono whitespace-nowrap">{ts.timeSlotLabel}</span>
                   <span className="text-xs text-gray-400 font-mono">{ts.startTime.slice(0, 5)}</span>
                 </div>
 
-                {/* Day cells */}
-                {WEEKDAY_NUMS.map((dayNum, dayIdx) => {
+                {/* Break row: grey separator spanning all columns */}
+                {ts.kind === 'break' && WEEKDAY_NUMS.map((_, dayIdx) => (
+                  <div
+                    key={`break-${ts.timeSlotId}-${dayIdx}`}
+                    className="border-b border-r border-gray-200 bg-gray-100 min-h-[28px]"
+                  />
+                ))}
+
+                {/* Day cells (lesson rows only) */}
+                {ts.kind === 'slot' && WEEKDAY_NUMS.map((dayNum, dayIdx) => {
                   const slot = weekPlanData.slots.find(
                     s => s.timeSlotId === ts.timeSlotId && s.weekday === dayNum
                   )
+                  const isHolidayCol = (weekPlanData.holidayDays ?? []).some(h => h.weekday === dayNum)
 
                   if (!slot) {
                     return (
                       <div
                         key={`empty-${ts.timeSlotId}-${dayIdx}`}
-                        className="border-b border-r border-gray-200 bg-gray-50 min-h-[80px]"
+                        className={`border-b border-r border-gray-200 min-h-[80px] ${isHolidayCol ? 'bg-amber-50' : 'bg-gray-50'}`}
                       />
                     )
                   }
@@ -469,7 +566,7 @@ export default function WeekPlanPage() {
                   return (
                     <div
                       key={`slot-${slot.schemaSlotId}`}
-                      className="border-b border-r border-gray-200 bg-white p-2 min-h-[80px] relative group"
+                      className={`border-b border-r border-gray-200 p-2 min-h-[80px] relative group ${isHolidayCol ? 'bg-amber-50 pointer-events-none' : 'bg-white'}`}
                     >
                       {/* Course badge */}
                       <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium border ${colorClass}`}>
@@ -527,9 +624,9 @@ export default function WeekPlanPage() {
           </div>
         )}
 
-        {!isLoading && weekPlanData?.slots.length === 0 && (
+        {!isLoading && weekPlanData?.slots.length === 0 && weekPlanData?.breakSlots.length === 0 && (
           <div className="p-8 text-center text-gray-400 text-sm">
-            Ingen aktiv skema for denne klasse — opret og aktivér et skema under Klasser.
+            Ingen aktivt skema for denne klasse — opret et skema og sæt en datoperiode under Klasser.
           </div>
         )}
       </div>

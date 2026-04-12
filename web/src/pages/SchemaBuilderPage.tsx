@@ -80,132 +80,42 @@ function decodeDragId(id: string): { timeSlotId: string; weekday: number } {
   return { timeSlotId, weekday: parseInt(weekdayStr, 10) }
 }
 
-// ─── Searchable combobox ─────────────────────────────────────────────────────
+// ─── Select field ────────────────────────────────────────────────────────────
 
-interface SearchableSelectProps {
+interface SelectFieldProps {
   label: string
   required?: boolean
   options: { id: string; label: string }[]
   value: string
-  query: string
-  onQueryChange: (q: string) => void
   onChange: (id: string) => void
-  placeholder?: string
   emptyLabel?: string
   autoFocus?: boolean
   'data-testid'?: string
 }
 
-function SearchableSelect({
-  label, required, options, value, query, onQueryChange, onChange,
-  placeholder = 'Søg...', emptyLabel = '—', autoFocus, 'data-testid': testId,
-}: SearchableSelectProps) {
-  const [open, setOpen] = useState(false)
-
-  // When a value is selected, show full list; otherwise filter by query
-  const filtered = (value || query.trim() === '')
-    ? options
-    : options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
-
-  const selectedLabel = value ? (options.find((o) => o.id === value)?.label ?? '') : ''
-
-  function select(opt: { id: string; label: string } | null) {
-    if (opt) {
-      onChange(opt.id)
-      onQueryChange('')
-    } else {
-      onChange('')
-      onQueryChange('')
-    }
-    setOpen(false)
-  }
-
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    onQueryChange(e.target.value)
-    if (value) onChange('') // clear chip when user starts typing
-    setOpen(true)
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Escape') { setOpen(false); return }
-    if (e.key === 'Backspace' && value && query === '') {
-      // Clear chip on backspace when input is empty
-      onChange('')
-      onQueryChange('')
-      setOpen(true)
-      return
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (open && !value && filtered.length > 0) {
-        // Dropdown open, no chip yet — select the first match
-        select(filtered[0])
-        return
-      }
-      // Either dropdown closed or chip already selected — close dropdown and submit
-      setOpen(false)
-      if (value || !required) {
-        e.currentTarget.form?.requestSubmit()
-      }
-    }
-  }
-
+function SelectField({
+  label, required, options, value, onChange,
+  emptyLabel = '—', autoFocus, 'data-testid': testId,
+}: SelectFieldProps) {
   return (
-    <div className="relative">
+    <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div className={`flex items-center gap-1 flex-wrap w-full px-3 py-1.5 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent`}>
-        {value && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-100 text-brand-800 text-xs font-medium rounded-md shrink-0">
-            {selectedLabel}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => { e.preventDefault(); select(null) }}
-              className="ml-0.5 text-brand-500 hover:text-brand-800 leading-none"
-              aria-label="Fjern valg"
-            >×</button>
-          </span>
-        )}
-        <input
-          type="text"
-          autoComplete="off"
-          autoFocus={autoFocus}
-          value={query}
-          onChange={handleInputChange}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
-          onKeyDown={handleKeyDown}
-          placeholder={value ? '' : placeholder}
-          data-testid={testId}
-          className="flex-1 min-w-0 py-0.5 text-sm focus:outline-none bg-transparent"
-          style={{ minWidth: '4rem' }}
-        />
-        {!value && query === '' && (
-          <span className="pointer-events-none text-xs text-gray-400 ml-auto">{emptyLabel}</span>
-        )}
-      </div>
-      {open && (
-        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto text-sm">
-          {!required && (
-            <li
-              onMouseDown={() => select(null)}
-              className="px-3 py-2 text-gray-400 hover:bg-gray-50 cursor-pointer"
-            >{emptyLabel}</li>
-          )}
-          {filtered.map((o) => (
-            <li
-              key={o.id}
-              onMouseDown={() => select(o)}
-              className={`px-3 py-2 cursor-pointer hover:bg-brand-50 hover:text-brand-700 ${o.id === value ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-800'}`}
-            >{o.label}</li>
-          ))}
-          {filtered.length === 0 && (
-            <li className="px-3 py-2 text-gray-400 italic">Ingen resultater</li>
-          )}
-        </ul>
-      )}
+      <select
+        autoFocus={autoFocus}
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.form?.requestSubmit() } }}
+        data-testid={testId}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+      >
+        <option value="">{emptyLabel}</option>
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>{o.label}</option>
+        ))}
+      </select>
     </div>
   )
 }
@@ -261,13 +171,6 @@ function AssignmentPanel({
     onSuccess: onClose,
   })
 
-  // ─── Combobox state ─────────────────────────────────────────────────────────
-  // With chip design, query starts empty whenever the field already has a value
-  const [courseQuery, setCourseQuery] = useState('')
-  const [teacherQuery, setTeacherQuery] = useState('')
-  const [roomQuery, setRoomQuery] = useState('')
-  const [aideQuery, setAideQuery] = useState('')
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!(courseId && teacherId) || saveMutation.isPending) return
@@ -290,50 +193,39 @@ function AssignmentPanel({
           </button>
         </div>
 
-        <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
         <div className="px-6 py-5 space-y-4">
-          <SearchableSelect
+          <SelectField
             label="Fag"
             required
             autoFocus
             options={courses.map((c) => ({ id: c.id ?? '', label: c.name ?? '' }))}
             value={courseId}
-            query={courseQuery}
-            onQueryChange={setCourseQuery}
             onChange={(id) => setCourseId(id)}
-            placeholder="Søg efter fag..."
+            emptyLabel="Vælg fag..."
             data-testid="slot-course-input"
           />
-          <SearchableSelect
+          <SelectField
             label="Lærer"
             required
             options={teachers.map((s) => ({ id: s.id ?? '', label: s.name ?? '' }))}
             value={teacherId}
-            query={teacherQuery}
-            onQueryChange={setTeacherQuery}
             onChange={(id) => setTeacherId(id)}
-            placeholder="Søg efter lærer..."
+            emptyLabel="Vælg lærer..."
             data-testid="slot-teacher-input"
           />
-          <SearchableSelect
+          <SelectField
             label="Lokale"
             options={rooms.map((r) => ({ id: r.id ?? '', label: r.name ?? '' }))}
             value={roomId}
-            query={roomQuery}
-            onQueryChange={setRoomQuery}
             onChange={(id) => setRoomId(id)}
-            placeholder="Søg efter lokale..."
             emptyLabel="Intet lokale"
             data-testid="slot-room-input"
           />
-          <SearchableSelect
+          <SelectField
             label="Pædagog / Vikar"
             options={aides.map((s) => ({ id: s.id ?? '', label: s.name ?? '' }))}
             value={aideId}
-            query={aideQuery}
-            onQueryChange={setAideQuery}
             onChange={(id) => setAideId(id)}
-            placeholder="Søg efter pædagog..."
             emptyLabel="Ingen"
             data-testid="slot-aide-input"
           />
