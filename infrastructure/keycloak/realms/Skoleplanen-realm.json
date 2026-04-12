@@ -104,6 +104,18 @@
 
   "users": [
     {
+      "username": "service-account-skoleplanen-admin",
+      "enabled": true,
+      "serviceAccountClientId": "skoleplanen-admin",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users"
+        ]
+      }
+    },
+    {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "username": "admin@debugskolen.dk",
       "email": "admin@debugskolen.dk",

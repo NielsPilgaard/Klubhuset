@@ -59,8 +59,7 @@ export default function SignupPage() {
         }
         setErrors(fieldErrors)
       } else if (res.status === 502) {
-        const body = await res.json().catch(() => ({}))
-        setErrors({ general: body?.detail ?? 'Der opstod en fejl ved oprettelse af brugerkonto. Prøv igen.' })
+        setErrors({ general: 'Der opstod en fejl ved oprettelse af brugerkonto. Prøv igen.' })
       } else {
         setErrors({ general: 'Der opstod en fejl. Prøv igen.' })
       }
