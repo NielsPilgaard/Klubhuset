@@ -24,6 +24,47 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 		string? TeacherName);
 
 	/// <summary>
+	/// Weekly schedule for a class from its active schema.
+	/// </summary>
+	[HttpGet("classes/{classId:guid}/schedule")]
+	public async Task<ActionResult<List<ScheduleSlotDto>>> GetClassSchedule(Guid classId, CancellationToken ct)
+	{
+		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
+		if (!classExists)
+		{
+			return NotFound();
+		}
+
+		var slots = await db.SchemaSlots
+							.AsNoTrackingWithIdentityResolution()
+							.Where(s => s.Schema.IsActive && s.Schema.ClassId == classId)
+							.Include(s => s.TimeSlot)
+							.Include(s => s.Course)
+							.Include(s => s.Schema)
+							.ThenInclude(sc => sc.Class)
+							.Include(s => s.Room)
+							.Include(s => s.Teacher)
+							.Include(s => s.Aide)
+							.OrderBy(s => s.Weekday)
+							.ThenBy(s => s.TimeSlot.SortOrder)
+							.Select(s => new ScheduleSlotDto(
+										s.Weekday,
+										s.TimeSlot.StartTime.ToString("HH:mm"),
+										s.TimeSlot.EndTime.ToString("HH:mm"),
+										s.Course.Name,
+										s.Schema.Class.Name,
+										s.RoomId,
+										s.Room != null ? s.Room.Name : null,
+										s.AideId,
+										s.Aide != null ? s.Aide.Name : null,
+										s.TeacherId,
+										s.Teacher.Name))
+							.ToListAsync(ct);
+
+		return Ok(slots);
+	}
+
+	/// <summary>
 	/// Weekly schedule for a staff member (teacher or aide) across all active schemas.
 	/// </summary>
 	[HttpGet("staff/{staffId:guid}/schedule")]
