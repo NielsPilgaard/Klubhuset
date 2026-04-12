@@ -31,7 +31,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
         string? Lektier,
         IReadOnlyList<WeekPlanSlotFileDto> Files);
 
-    public record HolidayDayDto(int Weekday, string Title);
+    public record HolidayDayDto(DayOfWeek Weekday, string Title);
 
     public record BreakTimeSlotDto(Guid TimeSlotId, string TimeSlotLabel, TimeOnly StartTime, TimeOnly EndTime);
 
@@ -61,6 +61,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
         Guid classId,
         [FromQuery] int? isoYear,
         [FromQuery] int? isoWeek,
+        [FromQuery] Guid? schemaId,
         CancellationToken ct)
     {
         if (isoYear is null || isoWeek is null)
@@ -101,14 +102,14 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
             var covering = holidays.FirstOrDefault(h => h.StartDate <= date && h.EndDate >= date);
             if (covering is not null)
 			{
-				holidayDays.Add(new HolidayDayDto(d + 1, covering.Title));
+				holidayDays.Add(new HolidayDayDto(date.DayOfWeek, covering.Title));
 			}
 		}
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var activeSchema = await db.Schemas
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today && s.EndDate >= today, ct);
+        var activeSchema = schemaId.HasValue
+            ? await db.Schemas.AsNoTracking().FirstOrDefaultAsync(s => s.ClassId == classId && s.Id == schemaId.Value, ct)
+            : await db.Schemas.AsNoTracking().FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today && s.EndDate >= today, ct);
 
         if (activeSchema is null)
         {
@@ -190,6 +191,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
         Guid classId,
         [FromQuery] int? isoYear,
         [FromQuery] int? isoWeek,
+        [FromQuery] Guid? schemaId,
         [FromBody] UpsertWeekPlanSlotRequest req,
         CancellationToken ct)
     {
@@ -210,8 +212,10 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
 		}
 
 		var today2 = DateOnly.FromDateTime(DateTime.UtcNow);
-        var activeSchema = await db.Schemas
-            .FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today2 && s.EndDate >= today2, ct);
+        var activeSchema = schemaId.HasValue
+            ? await db.Schemas.FirstOrDefaultAsync(s => s.ClassId == classId && s.Id == schemaId.Value, ct)
+            : await db.Schemas
+                .FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today2 && s.EndDate >= today2, ct);
 
         var schemaSlot = activeSchema is null
             ? null

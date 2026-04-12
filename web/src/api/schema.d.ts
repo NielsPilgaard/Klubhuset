@@ -2506,6 +2506,15 @@ export interface components {
             /** Format: int32 */
             durationMinutes?: number;
         };
+        BreakTimeSlotDto: {
+            /** Format: uuid */
+            timeSlotId?: string;
+            timeSlotLabel?: string | null;
+            /** Format: time */
+            startTime?: string;
+            /** Format: time */
+            endTime?: string;
+        };
         CalendarEntryDto: {
             /** Format: uuid */
             id?: string;
@@ -2619,6 +2628,11 @@ export interface components {
             uploadedBy?: string | null;
             /** Format: date-time */
             uploadedAt?: string;
+        };
+        HolidayDayDto: {
+            /** Format: int32 */
+            weekday?: number;
+            title?: string | null;
         };
         HoursPerCourse: {
             /** Format: uuid */
@@ -2904,6 +2918,8 @@ export interface components {
             weekEndDate?: string;
             isHolidayWeek?: boolean;
             holidayTitle?: string | null;
+            holidayDays?: components["schemas"]["HolidayDayDto"][] | null;
+            breakSlots?: components["schemas"]["BreakTimeSlotDto"][] | null;
             slots?: components["schemas"]["WeekPlanSlotDto"][] | null;
         };
         WeekPlanSlotDto: {

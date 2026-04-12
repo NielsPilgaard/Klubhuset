@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import React, { useState, useRef } from 'react'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -16,7 +16,7 @@ interface WeekPlanSlotFileDto {
 interface WeekPlanSlotDto {
   id: string
   schemaSlotId: string
-  weekday: number
+  weekday: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
   timeSlotId: string
   timeSlotLabel: string
   startTime: string
@@ -31,7 +31,7 @@ interface WeekPlanSlotDto {
 }
 
 interface HolidayDayDto {
-  weekday: number
+  weekday: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
   title: string
 }
 
@@ -169,8 +169,7 @@ function getCourseColor(courseId: string, courseIds: string[]): string {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
-// Monday=1 … Friday=5 (DayOfWeek enum from C#)
-const WEEKDAY_NUMS = [1, 2, 3, 4, 5]
+const WEEKDAY_KEYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const
 
 // ─── Edit modal ───────────────────────────────────────────────────────────────
 
@@ -179,40 +178,76 @@ interface EditSlotModalProps {
   classId: string
   isoYear: number
   isoWeek: number
+  schemaId: string | null
   weekdayLabel: string
   courses: CourseDto[]
   files: FileDto[]
   onClose: () => void
 }
 
-function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses, files, onClose }: EditSlotModalProps) {
+function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel, courses, files, onClose }: EditSlotModalProps) {
   const qc = useQueryClient()
   const [beskrivelse, setBeskrivelse] = useState(slot.beskrivelse ?? '')
   const [lektier, setLektier] = useState(slot.lektier ?? '')
   const [fagSwapCourseId, setFagSwapCourseId] = useState(slot.originalCourseId ? slot.courseId : '')
+  const uploadInputRef = useRef<HTMLInputElement>(null)
+
+  const queryKey = ['weekplan', classId, schemaId, isoYear, isoWeek] as const
+
+  // Ensures the slot exists in the DB before attempting file operations.
+  // Returns the live slot id (may differ from the placeholder zero-guid on first save).
+  async function ensureSlotSaved(): Promise<string> {
+    if (slot.id !== '00000000-0000-0000-0000-000000000000') return slot.id
+    const updated = await api.put<WeekPlanSlotDto>(
+      `/classes/${classId}/ugeplan/slots?isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`,
+      { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null }
+    )
+    qc.setQueryData<WeekPlanDto>(queryKey, (old) => {
+      if (!old) return old
+      return { ...old, slots: old.slots.map(s => s.schemaSlotId === updated.schemaSlotId ? { ...s, ...updated } : s) }
+    })
+    return updated.id
+  }
 
   const upsertMutation = useMutation({
     mutationFn: (req: UpsertWeekPlanSlotRequest) =>
       api.put<WeekPlanSlotDto>(
-        `/classes/${classId}/ugeplan/slots?isoYear=${isoYear}&isoWeek=${isoWeek}`,
+        `/classes/${classId}/ugeplan/slots?isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`,
         req
       ),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['weekplan', classId, isoYear, isoWeek] })
-      onClose()
+    onSuccess: (updated) => {
+      qc.setQueryData<WeekPlanDto>(queryKey, (old) => {
+        if (!old) return old
+        return { ...old, slots: old.slots.map(s => s.schemaSlotId === updated.schemaSlotId ? { ...s, ...updated } : s) }
+      })
     },
   })
 
   const addFileMutation = useMutation({
     mutationFn: ({ slotId, schoolFileId }: { slotId: string; schoolFileId: string }) =>
       api.post(`/classes/${classId}/ugeplan/slots/${slotId}/files`, { schoolFileId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['weekplan', classId, isoYear, isoWeek] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
   })
 
   const removeFileMutation = useMutation({
     mutationFn: ({ slotId, fileId }: { slotId: string; fileId: string }) =>
       api.delete(`/classes/${classId}/ugeplan/slots/${slotId}/files/${fileId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['weekplan', classId, isoYear, isoWeek] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+  })
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const slotId = await ensureSlotSaved()
+      const form = new FormData()
+      form.append('file', file)
+      const uploaded = await api.postForm<{ id: string; fileName: string; sizeBytes: number; url: string }>('/files', form)
+      await api.post(`/classes/${classId}/ugeplan/slots/${slotId}/files`, { schoolFileId: uploaded.id })
+      return uploaded
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey })
+      qc.invalidateQueries({ queryKey: ['files'] })
+    },
   })
 
   function handleSave() {
@@ -225,13 +260,36 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
     })
   }
 
-  function handleFileToggle(fileId: string, checked: boolean) {
-    if (slot.id === '00000000-0000-0000-0000-000000000000') return // no slot id yet, save first
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') { onClose(); return }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave() }
+  }
+
+  function handleTextareaKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (!upsertMutation.isPending) {
+        upsertMutation.mutate(
+          { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null },
+          { onSuccess: (updated) => {
+            qc.setQueryData<WeekPlanDto>(queryKey, (old) => {
+              if (!old) return old
+              return { ...old, slots: old.slots.map(s => s.schemaSlotId === updated.schemaSlotId ? { ...s, ...updated } : s) }
+            })
+            onClose()
+          }}
+        )
+      }
+    }
+  }
+
+  async function handleFileToggle(fileId: string, checked: boolean) {
+    const slotId = await ensureSlotSaved()
     const existingLink = slot.files.find(f => f.schoolFileId === fileId)
     if (checked && !existingLink) {
-      addFileMutation.mutate({ slotId: slot.id, schoolFileId: fileId })
+      addFileMutation.mutate({ slotId, schoolFileId: fileId })
     } else if (!checked && existingLink) {
-      removeFileMutation.mutate({ slotId: slot.id, fileId: existingLink.id })
+      removeFileMutation.mutate({ slotId, fileId: existingLink.id })
     }
   }
 
@@ -239,6 +297,7 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
       onClick={onClose}
+      onKeyDown={handleKeyDown}
     >
       <div
         className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
@@ -246,8 +305,9 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
       >
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="font-display text-lg font-semibold text-gray-900">
-            Rediger lektion — {slot.courseName}, {weekdayLabel}
+            {slot.courseName} — {weekdayLabel}
           </h2>
+          <p className="text-xs text-gray-400 mt-0.5">{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</p>
         </div>
 
         <div className="px-6 py-5 space-y-5">
@@ -255,9 +315,11 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivelse</label>
             <textarea
-              rows={4}
+              autoFocus
+              rows={5}
               value={beskrivelse}
               onChange={(e) => setBeskrivelse(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
               placeholder="Hvad skal der ske i denne lektion?"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
             />
@@ -265,13 +327,14 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
 
           {/* Lektier */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lektier</label>
+            <label className="block text-sm font-medium text-blue-700 mb-1">Lektier</label>
             <textarea
-              rows={3}
+              rows={4}
               value={lektier}
               onChange={(e) => setLektier(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
               placeholder="Opgaver til næste gang..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-blue-50/40"
             />
           </div>
 
@@ -284,57 +347,97 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
             >
               <option value="">Intet fagbytte (brug skemaets fag)</option>
-              {courses.map((c) => (
+              {courses.filter((c) => c.id !== (slot.originalCourseId ?? slot.courseId)).map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
 
           {/* Filer */}
-          {files.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filer</label>
-              <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Filer</label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => uploadInputRef.current?.click()}
+                  disabled={uploadFileMutation.isPending}
+                  className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-50"
+                >
+                  {uploadFileMutation.isPending ? 'Uploader...' : '+ Upload ny fil'}
+                </button>
+                <Link
+                  to="/filer"
+                  target="_blank"
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Administrer filer ↗
+                </Link>
+              </div>
+            </div>
+            <input
+              ref={uploadInputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) uploadFileMutation.mutate(file)
+                e.target.value = ''
+              }}
+            />
+            {uploadFileMutation.isError && (
+              <p className="text-xs text-red-600 mb-2">Upload fejlede. Prøv igen.</p>
+            )}
+            {files.length === 0 ? (
+              <p className="text-xs text-gray-400 py-2">Ingen filer tilgængelige — upload en fil ovenfor.</p>
+            ) : (
+              <div className="space-y-1 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2">
                 {files.map((f) => {
                   const isChecked = slot.files.some(sf => sf.schoolFileId === f.id)
+                  const isAdding = addFileMutation.isPending
+                  const isRemoving = removeFileMutation.isPending
                   return (
                     <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isChecked}
+                        disabled={isAdding || isRemoving}
                         onChange={(e) => handleFileToggle(f.id, e.target.checked)}
                         className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                       />
                       <span className="text-sm text-gray-800 truncate flex-1">{f.fileName}</span>
-                      <span className="text-xs text-gray-500 shrink-0">
-                        {(f.sizeBytes / 1024).toFixed(0)} KB
+                      <span className="text-xs text-gray-400 shrink-0">
+                        {((f.sizeBytes ?? 0) / 1024).toFixed(0)} KB
                       </span>
                     </label>
                   )
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {upsertMutation.isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={upsertMutation.isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {upsertMutation.isPending ? 'Gemmer...' : 'Gem'}
-          </button>
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-xs text-gray-400">Enter for at gemme · Shift+Enter for linjeskift · Ctrl+S for at gemme</span>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Luk
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={upsertMutation.isPending}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {upsertMutation.isPending ? 'Gemmer...' : 'Gem'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -346,6 +449,8 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, weekdayLabel, courses,
 export default function WeekPlanPage() {
   usePageTitle('Ugeplan')
   const { classId } = useParams<{ classId: string }>()
+  const [searchParams] = useSearchParams()
+  const schemaId = searchParams.get('schemaId')
 
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
@@ -378,8 +483,8 @@ export default function WeekPlanPage() {
   }
 
   const { data: weekPlanData, isLoading } = useQuery<WeekPlanDto>({
-    queryKey: ['weekplan', classId, isoYear, isoWeek],
-    queryFn: () => api.get(`/classes/${classId}/ugeplan?isoYear=${isoYear}&isoWeek=${isoWeek}`),
+    queryKey: ['weekplan', classId, schemaId, isoYear, isoWeek],
+    queryFn: () => api.get(`/classes/${classId}/ugeplan?isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`),
     enabled: !!classId,
   })
 
@@ -505,7 +610,7 @@ export default function WeekPlanPage() {
             {/* Header row */}
             <div className="bg-gray-50 border-b border-r border-gray-200 p-2" /> {/* empty corner */}
             {WEEKDAYS.map((label, i) => {
-              const weekday = WEEKDAY_NUMS[i]
+              const weekday = WEEKDAY_KEYS[i]
               const date = weekStartDate ? new Date(weekStartDate.getTime() + i * 86400000) : null
               const dateLabel = date
                 ? date.toLocaleDateString('da-DK', { day: '2-digit', month: 'short' })
@@ -527,10 +632,9 @@ export default function WeekPlanPage() {
 
             {/* Data rows */}
             {uniqueTimeSlots.map((ts) => (
-              <>
+              <React.Fragment key={`row-${ts.timeSlotId}`}>
                 {/* Time label */}
                 <div
-                  key={`label-${ts.timeSlotId}`}
                   className={`border-b border-r border-gray-200 p-2 flex flex-col justify-center ${ts.kind === 'break' ? 'bg-gray-100' : 'bg-gray-50'}`}
                 >
                   <span className="text-xs text-gray-500 font-mono whitespace-nowrap">{ts.timeSlotLabel}</span>
@@ -538,7 +642,7 @@ export default function WeekPlanPage() {
                 </div>
 
                 {/* Break row: grey separator spanning all columns */}
-                {ts.kind === 'break' && WEEKDAY_NUMS.map((_, dayIdx) => (
+                {ts.kind === 'break' && WEEKDAY_KEYS.map((_, dayIdx) => (
                   <div
                     key={`break-${ts.timeSlotId}-${dayIdx}`}
                     className="border-b border-r border-gray-200 bg-gray-100 min-h-[28px]"
@@ -546,11 +650,11 @@ export default function WeekPlanPage() {
                 ))}
 
                 {/* Day cells (lesson rows only) */}
-                {ts.kind === 'slot' && WEEKDAY_NUMS.map((dayNum, dayIdx) => {
+                {ts.kind === 'slot' && WEEKDAY_KEYS.map((dayKey, dayIdx) => {
                   const slot = weekPlanData.slots.find(
-                    s => s.timeSlotId === ts.timeSlotId && s.weekday === dayNum
+                    s => s.timeSlotId === ts.timeSlotId && s.weekday === dayKey
                   )
-                  const isHolidayCol = (weekPlanData.holidayDays ?? []).some(h => h.weekday === dayNum)
+                  const isHolidayCol = (weekPlanData.holidayDays ?? []).some(h => h.weekday === dayKey)
 
                   if (!slot) {
                     return (
@@ -566,7 +670,8 @@ export default function WeekPlanPage() {
                   return (
                     <div
                       key={`slot-${slot.schemaSlotId}`}
-                      className={`border-b border-r border-gray-200 p-2 min-h-[80px] relative group ${isHolidayCol ? 'bg-amber-50 pointer-events-none' : 'bg-white'}`}
+                      onClick={() => setEditingSlot(slot)}
+                      className={`border-b border-r border-gray-200 p-2 min-h-[80px] cursor-pointer transition-colors ${isHolidayCol ? 'bg-amber-50 pointer-events-none' : 'bg-white hover:bg-gray-50'}`}
                     >
                       {/* Course badge */}
                       <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium border ${colorClass}`}>
@@ -582,16 +687,16 @@ export default function WeekPlanPage() {
 
                       {/* Beskrivelse */}
                       {slot.beskrivelse && (
-                        <p className="text-xs text-gray-700 line-clamp-2 mt-1">{slot.beskrivelse}</p>
+                        <p className="text-xs text-gray-700 line-clamp-3 mt-1 whitespace-pre-wrap">{slot.beskrivelse}</p>
                       )}
 
                       {/* Lektier indicator */}
                       {slot.lektier && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-600 shrink-0">
+                        <div className="flex items-start gap-1 mt-1">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-500 shrink-0 mt-0.5">
                             <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                           </svg>
-                          <span className="text-xs text-amber-700 line-clamp-1">{slot.lektier}</span>
+                          <span className="text-xs text-blue-700 line-clamp-2 whitespace-pre-wrap">{slot.lektier}</span>
                         </div>
                       )}
 
@@ -604,22 +709,10 @@ export default function WeekPlanPage() {
                           <span className="text-xs text-gray-500">{slot.files.length}</span>
                         </div>
                       )}
-
-                      {/* Edit button */}
-                      <button
-                        onClick={() => setEditingSlot(slot)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-1 right-1 p-1 rounded text-gray-400 hover:text-gray-700"
-                        title="Rediger lektion"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </button>
                     </div>
                   )
                 })}
-              </>
+              </React.Fragment>
             ))}
           </div>
         )}
@@ -638,7 +731,8 @@ export default function WeekPlanPage() {
           classId={classId}
           isoYear={isoYear}
           isoWeek={isoWeek}
-          weekdayLabel={WEEKDAYS[WEEKDAY_NUMS.indexOf(editingSlot.weekday)] ?? ''}
+          schemaId={schemaId}
+          weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(editingSlot.weekday)] ?? ''}
           courses={courses ?? []}
           files={files ?? []}
           onClose={() => setEditingSlot(null)}

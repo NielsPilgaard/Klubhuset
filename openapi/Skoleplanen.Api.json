@@ -3162,6 +3162,28 @@
         },
         "additionalProperties": false
       },
+      "BreakTimeSlotDto": {
+        "type": "object",
+        "properties": {
+          "timeSlotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timeSlotLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "format": "time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "time"
+          }
+        },
+        "additionalProperties": false
+      },
       "CalendarEntryDto": {
         "type": "object",
         "properties": {
@@ -3501,6 +3523,20 @@
           "uploadedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HolidayDayDto": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4308,6 +4344,20 @@
           },
           "holidayTitle": {
             "type": "string",
+            "nullable": true
+          },
+          "holidayDays": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HolidayDayDto"
+            },
+            "nullable": true
+          },
+          "breakSlots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreakTimeSlotDto"
+            },
             "nullable": true
           },
           "slots": {
