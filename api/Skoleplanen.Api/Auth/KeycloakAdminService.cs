@@ -14,19 +14,19 @@ public sealed class KeycloakAdminService(IConfiguration config, IHttpClientFacto
         [property: JsonPropertyName("access_token")] string AccessToken);
 
     private record CreateUserRequest(
-        string Username,
-        string Email,
-        string FirstName,
-        string LastName,
-        bool Enabled,
-        bool EmailVerified,
-        IReadOnlyList<CredentialRepresentation> Credentials,
-        Dictionary<string, IReadOnlyList<string>> Attributes);
+        [property: JsonPropertyName("username")] string Username,
+        [property: JsonPropertyName("email")] string Email,
+        [property: JsonPropertyName("firstName")] string FirstName,
+        [property: JsonPropertyName("lastName")] string LastName,
+        [property: JsonPropertyName("enabled")] bool Enabled,
+        [property: JsonPropertyName("emailVerified")] bool EmailVerified,
+        [property: JsonPropertyName("credentials")] IReadOnlyList<CredentialRepresentation> Credentials,
+        [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
 
     private record CredentialRepresentation(
-        string Type,
-        string Value,
-        bool Temporary);
+        [property: JsonPropertyName("type")] string Type,
+        [property: JsonPropertyName("value")] string Value,
+        [property: JsonPropertyName("temporary")] bool Temporary);
 
     private string AuthorityBase =>
         (config["Keycloak:Authority"] ?? throw new InvalidOperationException("Keycloak:Authority not configured"))
