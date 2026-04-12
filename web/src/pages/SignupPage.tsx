@@ -117,13 +117,14 @@ export default function SignupPage() {
           {/* Contact email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kontakt-e-mail <span className="text-gray-400 font-normal">(valgfrit)</span>
+              Kontakt e-mail
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="rektor@vores-friskole.dk"
+              required
               data-testid="signup-email"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
