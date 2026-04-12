@@ -3338,6 +3338,10 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3676,6 +3680,10 @@
             "nullable": true
           },
           "courseName": {
+            "type": "string",
+            "nullable": true
+          },
+          "courseColor": {
             "type": "string",
             "nullable": true
           },
@@ -4115,6 +4123,10 @@
             "nullable": true
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
             "type": "string",
             "nullable": true
           }

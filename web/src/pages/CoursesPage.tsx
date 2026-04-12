@@ -3,6 +3,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, CourseDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
+const COURSE_COLOR_PALETTE = [
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  '#14b8a6', // teal
+  '#f97316', // orange
+  '#ec4899', // pink
+  '#6366f1', // indigo
+  '#06b6d4', // cyan
+  '#eab308', // yellow
+  '#84cc16', // lime
+  '#f43f5e', // rose
+  '#10b981', // emerald
+  '#f59e0b', // amber
+]
+
 const PRESET_COURSES = [
   'Dansk', 'Matematik', 'Engelsk', 'Naturfag', 'Historie', 'Musik',
   'Idræt', 'Kristendom', 'Billedkunst', 'Håndværk og design',
@@ -19,10 +34,11 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
+  const [color, setColor] = useState<string | null>(initial?.color ?? null)
 
   const mutation = useMutation({
     mutationFn: () => {
-      const body = { name, description: description || null }
+      const body = { name, description: description || null, color }
       return initial
         ? api.put(`/courses/${initial.id}`, body)
         : api.post('/courses', body)
@@ -66,6 +82,36 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
               placeholder="Valgfri beskrivelse"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Farve</label>
+            <div className="flex flex-wrap gap-2">
+              {COURSE_COLOR_PALETTE.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(color === c ? null : c)}
+                  className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
+                  style={{
+                    backgroundColor: c,
+                    borderColor: color === c ? '#111827' : 'transparent',
+                    outline: color === c ? '2px solid white' : 'none',
+                    outlineOffset: '-3px',
+                  }}
+                  title={c}
+                />
+              ))}
+              {color && (
+                <button
+                  type="button"
+                  onClick={() => setColor(null)}
+                  className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xs"
+                  title="Fjern farve"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
           {mutation.isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
@@ -248,6 +294,7 @@ export default function CoursesPage() {
             <tr className="border-b border-gray-100 bg-gray-50">
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Navn</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Beskrivelse</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Farve</th>
               <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Handlinger</th>
             </tr>
           </thead>
@@ -257,20 +304,35 @@ export default function CoursesPage() {
                 <tr key={i} className="animate-pulse">
                   <td className="px-5 py-3"><div className="h-4 w-24 bg-gray-200 rounded" /></td>
                   <td className="px-5 py-3 hidden sm:table-cell"><div className="h-4 w-40 bg-gray-100 rounded" /></td>
+                  <td className="px-5 py-3 hidden sm:table-cell" />
                   <td className="px-5 py-3" />
                 </tr>
               ))}
             {!isLoading && courses?.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-5 py-10 text-center text-gray-400">
+                <td colSpan={4} className="px-5 py-10 text-center text-gray-400">
                   Ingen fag oprettet endnu
                 </td>
               </tr>
             )}
             {courses?.map((c) => (
               <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-5 py-3 font-medium text-gray-900">{c.name}</td>
+                <td className="px-5 py-3 font-medium text-gray-900">
+                  <div className="flex items-center gap-2">
+                    {c.color
+                      ? <span className="inline-block w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                      : <span className="inline-block w-3 h-3 rounded-full shrink-0 bg-gray-200" />
+                    }
+                    {c.name}
+                  </div>
+                </td>
                 <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{c.description ?? '—'}</td>
+                <td className="px-5 py-3 hidden sm:table-cell">
+                  {c.color
+                    ? <span className="inline-flex items-center gap-1.5 text-xs text-gray-500"><span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />{c.color}</span>
+                    : <span className="text-gray-300 text-xs">—</span>
+                  }
+                </td>
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button

@@ -2590,6 +2590,7 @@ export interface components {
             id?: string;
             name?: string | null;
             description?: string | null;
+            color?: string | null;
         };
         CreateCalendarEntryRequest: {
             title?: string | null;
@@ -2711,6 +2712,7 @@ export interface components {
             startTime?: string | null;
             endTime?: string | null;
             courseName?: string | null;
+            courseColor?: string | null;
             className?: string | null;
             /** Format: uuid */
             roomId?: string | null;
@@ -2857,6 +2859,7 @@ export interface components {
         UpsertCourseRequest: {
             name?: string | null;
             description?: string | null;
+            color?: string | null;
         };
         UpsertRoomRequest: {
             name?: string | null;

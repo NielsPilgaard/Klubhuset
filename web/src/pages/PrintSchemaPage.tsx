@@ -9,6 +9,7 @@ interface ScheduleSlotDto {
   startTime: string
   endTime: string
   courseName: string
+  courseColor?: string | null
   className: string
   roomName?: string | null
   aideName?: string | null

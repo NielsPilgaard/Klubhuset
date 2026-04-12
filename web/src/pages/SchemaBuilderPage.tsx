@@ -54,9 +54,21 @@ const COURSE_COLORS = [
   'bg-rose-100 text-rose-800 border-rose-200',
 ]
 
-function getCourseColor(courseId: string, courseIds: string[]): string {
+function getCourseColor(
+  courseId: string,
+  courseIds: string[],
+  courses?: import('../api/client').CourseDto[],
+): { colorClass: string; colorStyle?: React.CSSProperties } {
+  const hex = courses?.find((c) => c.id === courseId)?.color
+  if (hex) {
+    // Derive a readable text color: use a dark tint of the hex for text/border
+    return {
+      colorClass: 'border',
+      colorStyle: { backgroundColor: hex + '22', color: hex, borderColor: hex + '66' },
+    }
+  }
   const idx = courseIds.indexOf(courseId)
-  return COURSE_COLORS[idx % COURSE_COLORS.length]
+  return { colorClass: COURSE_COLORS[idx % COURSE_COLORS.length] }
 }
 
 // Encode/decode drag IDs as "timeSlotId:weekday"
@@ -331,10 +343,11 @@ interface SlotCardProps {
   slot: SlotDto
   isConflict: boolean
   colorClass: string
+  colorStyle?: React.CSSProperties
   isDragging?: boolean
 }
 
-function SlotCard({ slot, isConflict, colorClass, isDragging }: SlotCardProps) {
+function SlotCard({ slot, isConflict, colorClass, colorStyle, isDragging }: SlotCardProps) {
   if (isConflict) {
     return (
       <div className={`h-full w-full flex flex-col gap-0.5 p-2 rounded-lg border-2 border-red-300 bg-red-50 text-left select-none ${isDragging ? 'opacity-80 shadow-lg rotate-1' : ''}`}>
@@ -357,7 +370,7 @@ function SlotCard({ slot, isConflict, colorClass, isDragging }: SlotCardProps) {
   }
 
   return (
-    <div className={`h-full w-full flex flex-col gap-0.5 p-2 rounded-lg border text-left select-none ${colorClass} ${isDragging ? 'opacity-80 shadow-lg rotate-1' : ''}`}>
+    <div className={`h-full w-full flex flex-col gap-0.5 p-2 rounded-lg border text-left select-none ${colorClass} ${isDragging ? 'opacity-80 shadow-lg rotate-1' : ''}`} style={colorStyle}>
       <span className="text-xs font-semibold leading-tight line-clamp-2">{slot.courseName}</span>
       <div className="flex items-center gap-1">
         <span className="text-xs opacity-75 leading-tight line-clamp-1 flex-1">{slot.teacherName}</span>
@@ -377,11 +390,12 @@ interface DraggableCellProps {
   slot: SlotDto
   isConflict: boolean
   colorClass: string
+  colorStyle?: React.CSSProperties
   onClick: () => void
   isBeingDragged: boolean
 }
 
-function DraggableCell({ dragId, slot, isConflict, colorClass, onClick, isBeingDragged }: DraggableCellProps) {
+function DraggableCell({ dragId, slot, isConflict, colorClass, colorStyle, onClick, isBeingDragged }: DraggableCellProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: dragId })
 
   const style = transform
@@ -401,7 +415,7 @@ function DraggableCell({ dragId, slot, isConflict, colorClass, onClick, isBeingD
         e.stopPropagation()
       }}
     >
-      <SlotCard slot={slot} isConflict={isConflict} colorClass={colorClass} />
+      <SlotCard slot={slot} isConflict={isConflict} colorClass={colorClass} colorStyle={colorStyle} />
     </div>
   )
 }
@@ -645,8 +659,8 @@ export default function SchemaBuilderPage() {
   }, [activeDragId, slotMap])
 
   const activeDragColor = activeDragSlot
-    ? getCourseColor(activeDragSlot.courseId ?? '', courseIds)
-    : ''
+    ? getCourseColor(activeDragSlot.courseId ?? '', courseIds, courses)
+    : { colorClass: '' }
   const activeDragConflict = activeDragSlot
     ? conflictSlotIds.has(activeDragSlot.id ?? '')
     : false
@@ -809,7 +823,7 @@ export default function SchemaBuilderPage() {
                             const dropId = ts.id ? encodeDragId(ts.id, weekday) : ''
                             const dragId = dropId
                             const isConflict = slot ? conflictSlotIds.has(slot.id ?? '') : false
-                            const colorClass = slot ? getCourseColor(slot.courseId ?? '', courseIds) : ''
+                            const { colorClass, colorStyle } = slot ? getCourseColor(slot.courseId ?? '', courseIds, courses) : { colorClass: '' }
                             const isCurrentlyDragged = activeDragId === dragId
                             const isOver = overDropId === dropId
 
@@ -827,6 +841,7 @@ export default function SchemaBuilderPage() {
                                       slot={slot}
                                       isConflict={isConflict}
                                       colorClass={colorClass}
+                                      colorStyle={colorStyle}
                                       onClick={() => ts.id && setPanelCell({ timeSlotId: ts.id, weekday })}
                                       isBeingDragged={isCurrentlyDragged}
                                     />
@@ -864,7 +879,7 @@ export default function SchemaBuilderPage() {
                     <SlotCard
                       slot={activeDragSlot}
                       isConflict={activeDragConflict}
-                      colorClass={activeDragColor}
+                      {...activeDragColor}
                       isDragging
                     />
                   </div>

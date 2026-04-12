@@ -407,3 +407,216 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404223250_TimeSlot_IsBreak') THEN
+    ALTER TABLE "TimeSlots" ADD "IsBreak" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404223250_TimeSlot_IsBreak') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260404223250_TimeSlot_IsBreak', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405115552_AddCalendarEntry') THEN
+    CREATE TABLE "CalendarEntries" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Type" integer NOT NULL,
+        "Title" character varying(200) NOT NULL,
+        "StartDate" date NOT NULL,
+        "EndDate" date NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_CalendarEntries" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405115552_AddCalendarEntry') THEN
+    CREATE INDEX "IX_CalendarEntries_TenantId_StartDate_EndDate" ON "CalendarEntries" ("TenantId", "StartDate", "EndDate");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405115552_AddCalendarEntry') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260405115552_AddCalendarEntry', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE TABLE "WeekPlans" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "ClassId" uuid NOT NULL,
+        "IsoYear" integer NOT NULL,
+        "IsoWeek" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_WeekPlans" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_WeekPlans_Classes_ClassId" FOREIGN KEY ("ClassId") REFERENCES "Classes" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE TABLE "WeekPlanSlots" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "WeekPlanId" uuid NOT NULL,
+        "SchemaSlotId" uuid NOT NULL,
+        "Beskrivelse" character varying(8000),
+        "Lektier" character varying(8000),
+        "FagSwapCourseId" uuid,
+        "UpdatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_WeekPlanSlots" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_WeekPlanSlots_Courses_FagSwapCourseId" FOREIGN KEY ("FagSwapCourseId") REFERENCES "Courses" ("Id") ON DELETE SET NULL,
+        CONSTRAINT "FK_WeekPlanSlots_SchemaSlots_SchemaSlotId" FOREIGN KEY ("SchemaSlotId") REFERENCES "SchemaSlots" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_WeekPlanSlots_WeekPlans_WeekPlanId" FOREIGN KEY ("WeekPlanId") REFERENCES "WeekPlans" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE TABLE "WeekPlanSlotFiles" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "WeekPlanSlotId" uuid NOT NULL,
+        "SchoolFileId" uuid NOT NULL,
+        CONSTRAINT "PK_WeekPlanSlotFiles" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_WeekPlanSlotFiles_SchoolFiles_SchoolFileId" FOREIGN KEY ("SchoolFileId") REFERENCES "SchoolFiles" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_WeekPlanSlotFiles_WeekPlanSlots_WeekPlanSlotId" FOREIGN KEY ("WeekPlanSlotId") REFERENCES "WeekPlanSlots" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE INDEX "IX_WeekPlans_ClassId" ON "WeekPlans" ("ClassId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE UNIQUE INDEX "IX_WeekPlans_TenantId_ClassId_IsoYear_IsoWeek" ON "WeekPlans" ("TenantId", "ClassId", "IsoYear", "IsoWeek");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE INDEX "IX_WeekPlanSlotFiles_SchoolFileId" ON "WeekPlanSlotFiles" ("SchoolFileId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE UNIQUE INDEX "IX_WeekPlanSlotFiles_WeekPlanSlotId_SchoolFileId" ON "WeekPlanSlotFiles" ("WeekPlanSlotId", "SchoolFileId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE INDEX "IX_WeekPlanSlots_FagSwapCourseId" ON "WeekPlanSlots" ("FagSwapCourseId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE INDEX "IX_WeekPlanSlots_SchemaSlotId" ON "WeekPlanSlots" ("SchemaSlotId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    CREATE UNIQUE INDEX "IX_WeekPlanSlots_WeekPlanId_SchemaSlotId" ON "WeekPlanSlots" ("WeekPlanId", "SchemaSlotId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260405124740_Add_WeekPlan', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405204220_Add_TimeSlot_SchemaId') THEN
+    ALTER TABLE "TimeSlots" ADD "SchemaId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405204220_Add_TimeSlot_SchemaId') THEN
+    CREATE INDEX "IX_TimeSlots_SchemaId" ON "TimeSlots" ("SchemaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405204220_Add_TimeSlot_SchemaId') THEN
+    ALTER TABLE "TimeSlots" ADD CONSTRAINT "FK_TimeSlots_Schemas_SchemaId" FOREIGN KEY ("SchemaId") REFERENCES "Schemas" ("Id");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405204220_Add_TimeSlot_SchemaId') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260405204220_Add_TimeSlot_SchemaId', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412083208_Add_Course_Color') THEN
+    ALTER TABLE "Courses" ADD "Color" character varying(7);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412083208_Add_Course_Color') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260412083208_Add_Course_Color', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+

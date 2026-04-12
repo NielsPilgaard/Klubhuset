@@ -17,6 +17,10 @@ public sealed class Course : ITenantScoped, IEntityTypeConfiguration<Course>
 	[StringLength(8000)]
 	public string? Description { get; set; }
 
+	/// <summary>Hex color code, e.g. "#3b82f6". Null means use the auto-assigned palette color.</summary>
+	[StringLength(7)]
+	public string? Color { get; set; }
+
 	public DateTimeOffset CreatedAt { get; init; }
 
 	public void Configure(EntityTypeBuilder<Course> builder) => builder.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
