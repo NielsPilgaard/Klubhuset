@@ -30,6 +30,22 @@
 
   "clients": [
     {
+      "clientId": "skoleplanen-admin",
+      "name": "Skoleplanen Admin (service account)",
+      "enabled": true,
+      "protocol": "openid-connect",
+
+      "publicClient": false,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+
+      "secret": "skoleplanen-admin-secret",
+
+      "defaultClientScopes": []
+    },
+    {
       "clientId": "skoleplanen-api",
       "name": "Skoleplanen API",
       "enabled": true,

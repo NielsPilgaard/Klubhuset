@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Skoleplanen.Api;
@@ -23,6 +22,10 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder
 
 // Auth — validates Keycloak-issued JWTs
 builder.Services.AddKeycloakAuth(builder.Configuration, builder.Environment);
+
+// Keycloak Admin REST API client (for creating users during signup)
+builder.Services.AddHttpClient("keycloak-admin");
+builder.Services.AddScoped<KeycloakAdminService>();
 
 builder.Services.AddOpenApi();
 

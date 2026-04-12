@@ -484,34 +484,48 @@ const ROLE_OPTIONS: { value: StaffRole; label: string; hint: string }[] = [
   { value: 'Substitute', label: 'Vikar', hint: 'Vikarierer ved fravær' },
 ]
 
+interface StaffEntry {
+  name: string
+  email: string
+  role: StaffRole
+}
+
 function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const [emails, setEmails] = useState('')
-  const [role, setRole] = useState<StaffRole>('Teacher')
+  const [entries, setEntries] = useState<StaffEntry[]>([{ name: '', email: '', role: 'Teacher' }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [results, setResults] = useState<{ email: string; ok: boolean }[]>([])
+  const [results, setResults] = useState<{ name: string; email: string; ok: boolean }[]>([])
+
+  function addRow() {
+    setEntries((prev) => [...prev, { name: '', email: '', role: 'Teacher' }])
+  }
+
+  function updateEntry(i: number, field: keyof StaffEntry, value: string) {
+    setEntries((prev) => prev.map((e, idx) => idx === i ? { ...e, [field]: value } : e))
+  }
+
+  function removeRow(i: number) {
+    setEntries((prev) => prev.filter((_, idx) => idx !== i))
+  }
 
   async function invite() {
-    const list = emails
-      .split(/[\n,;]/)
-      .map((e) => e.trim())
-      .filter((e) => e.includes('@'))
-    if (list.length === 0) { onNext(); return }
+    const valid = entries.filter((e) => e.name.trim() && e.email.trim().includes('@'))
+    if (valid.length === 0) { onNext(); return }
     setSaving(true)
     setError('')
     try {
-      const outcome: { email: string; ok: boolean }[] = []
-      for (const email of list) {
+      const outcome: { name: string; email: string; ok: boolean }[] = []
+      for (const entry of valid) {
         try {
           const staff = await api.post<{ id: string }>('/staff', {
-            name: email.split('@')[0],
-            email,
-            role,
+            name: entry.name.trim(),
+            email: entry.email.trim(),
+            role: entry.role,
           })
           await api.post(`/staff-invitations/invite/${staff.id}`, {})
-          outcome.push({ email, ok: true })
+          outcome.push({ name: entry.name.trim(), email: entry.email.trim(), ok: true })
         } catch {
-          outcome.push({ email, ok: false })
+          outcome.push({ name: entry.name.trim(), email: entry.email.trim(), ok: false })
         }
       }
       setResults(outcome)
@@ -535,7 +549,7 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
                   ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
                   : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-red-500 shrink-0"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 }
-                <span className={r.ok ? 'text-gray-700' : 'text-red-600'}>{r.email}</span>
+                <span className={r.ok ? 'text-gray-700' : 'text-red-600'}>{r.name} — {r.email}</span>
               </li>
             ))}
           </ul>
@@ -553,41 +567,78 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
   return (
     <div className="space-y-5">
       <p className="text-sm text-gray-600">
-        Indsæt e-mailadresser på de medarbejdere, du vil invitere. Adskil med komma, semikolon eller linjeskift.
+        Tilføj de medarbejdere, du vil invitere. Du kan altid invitere flere fra medarbejdersiden.
       </p>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Rolle</label>
-        <div className="grid grid-cols-3 gap-2">
-          {ROLE_OPTIONS.map((r) => (
-            <button
-              key={r.value}
-              type="button"
-              onClick={() => setRole(r.value)}
-              className={`px-3 py-2.5 rounded-lg border text-left transition-colors ${
-                role === r.value
-                  ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <span className="block text-sm font-medium text-gray-800">{r.label}</span>
-              <span className="block text-xs text-gray-500 mt-0.5">{r.hint}</span>
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-gray-400 mt-1.5">Du kan ændre rollen på den enkelte medarbejder bagefter.</p>
+      <div className="space-y-3">
+        {entries.map((entry, i) => (
+          <div key={i} className="border border-gray-200 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-500">Medarbejder {i + 1}</span>
+              {entries.length > 1 && (
+                <button
+                  onClick={() => removeRow(i)}
+                  className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 transition-colors"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-0.5">Fulde navn</label>
+                <input
+                  value={entry.name}
+                  onChange={(e) => updateEntry(i, 'name', e.target.value)}
+                  placeholder="Anne Jensen"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-0.5">E-mail</label>
+                <input
+                  type="email"
+                  value={entry.email}
+                  onChange={(e) => updateEntry(i, 'email', e.target.value)}
+                  placeholder="anne@skole.dk"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Rolle</label>
+              <div className="flex gap-2">
+                {ROLE_OPTIONS.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => updateEntry(i, 'role', r.value)}
+                    className={`flex-1 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                      entry.role === r.value
+                        ? 'border-brand-500 bg-brand-50 text-brand-700 ring-1 ring-brand-500'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addRow}
+          className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Tilføj medarbejder
+        </button>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">E-mailadresser</label>
-        <textarea
-          value={emails}
-          onChange={(e) => setEmails(e.target.value)}
-          rows={4}
-          placeholder={"anne@skole.dk\nbrian@skole.dk\nchristina@skole.dk"}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-        />
-      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-3 pt-2">
         <button

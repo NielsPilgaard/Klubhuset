@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import keycloak from '../auth/keycloak'
 
 interface InvitationPreview {
   staffName: string
@@ -8,27 +9,34 @@ interface InvitationPreview {
   expiresAt: string
 }
 
-type PageState = 'loading' | 'invalid' | 'ready' | 'success' | 'error'
+type PageState = 'loading' | 'invalid' | 'ready' | 'accepting' | 'success' | 'error'
 
 export default function InvitationAcceptPage() {
   const { token } = useParams<{ token: string }>()
   const [state, setState] = useState<PageState>('loading')
   const [preview, setPreview] = useState<InvitationPreview | null>(null)
-  const [pending, setPending] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     if (!token) { setState('invalid'); return }
-    
+
     const controller = new AbortController()
-    
+
     fetch(`/api/v1/staff-invitations/preview?token=${encodeURIComponent(token)}`, {
       signal: controller.signal
     })
       .then(async (res) => {
         if (res.ok) {
-          setPreview(await res.json())
-          setState('ready')
+          const data: InvitationPreview = await res.json()
+          setPreview(data)
+
+          // If we're already authenticated, accept immediately
+          if (keycloak.authenticated && keycloak.token) {
+            setState('accepting')
+            await acceptInvitation(token, keycloak.token)
+          } else {
+            setState('ready')
+          }
         } else {
           setState('invalid')
         }
@@ -37,43 +45,51 @@ export default function InvitationAcceptPage() {
         if (err.name === 'AbortError') return
         setState('invalid')
       })
-    
+
     return () => controller.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  async function handleAccept() {
-    if (!token) return
-    setPending(true)
-    setErrorMsg('')
+  async function acceptInvitation(inviteToken: string, bearerToken: string) {
     try {
-      // The Keycloak subject is provided after the user logs in via Keycloak.
-      // For the invitation flow we mark the invite as accepted once the user
-      // has created their account. Here we pass a placeholder that will be
-      // overwritten when the user first logs in and the backend syncs their subject.
       const res = await fetch('/api/v1/staff-invitations/accept', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, keycloakSubject: '' }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${bearerToken}`,
+        },
+        body: JSON.stringify({ token: inviteToken, keycloakSubject: '' }),
       })
       if (res.ok || res.status === 204) {
         setState('success')
       } else {
         const body = await res.json().catch(() => ({}))
         setErrorMsg(body?.detail ?? 'Der opstod en fejl. Invitationen er muligvis allerede brugt eller udløbet.')
+        setState('error')
       }
     } catch {
       setErrorMsg('Kunne ikke oprette forbindelse til serveren.')
-    } finally {
-      setPending(false)
+      setState('error')
     }
   }
 
-  if (state === 'loading') {
+  function handleLogin() {
+    if (!token) return
+    // Redirect to Keycloak login, then return to this invitation page
+    keycloak.login({
+      loginHint: preview?.email,
+      redirectUri: window.location.origin + `/invitation/${token}`,
+    })
+  }
+
+  if (state === 'loading' || state === 'accepting') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center" role="status" aria-live="polite" aria-busy="true">
           <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="mt-4 text-sm text-gray-500">Indlæser invitation…</p>
+          <p className="mt-4 text-sm text-gray-500">
+            {state === 'accepting' ? 'Bekræfter invitation…' : 'Indlæser invitation…'}
+          </p>
         </div>
       </div>
     )
@@ -106,20 +122,36 @@ export default function InvitationAcceptPage() {
           </div>
           <h1 className="font-display text-xl font-semibold text-gray-900">Invitation accepteret!</h1>
           <p className="text-sm text-gray-500">
-            Din konto er klar. Du kan nu logge ind på <strong>{preview?.schoolName}</strong> med din e-mail{' '}
-            <strong>{preview?.email}</strong>.
+            Du er nu tilknyttet <strong>{preview?.schoolName}</strong>. Du kan gå til dit skema herunder.
           </p>
           <a
-            href="/"
+            href="/dashboard"
             className="inline-block mt-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
-            Gå til login
+            Gå til mit skema
           </a>
         </div>
       </div>
     )
   }
 
+  if (state === 'error') {
+    return (
+      <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-red-600">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </div>
+          <h1 className="font-display text-xl font-semibold text-gray-900">Noget gik galt</h1>
+          <p className="text-sm text-gray-500">{errorMsg}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // state === 'ready' — show invitation details and login button
   return (
     <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
@@ -148,19 +180,14 @@ export default function InvitationAcceptPage() {
           </div>
 
           <p className="text-sm text-gray-500">
-            Klik på knappen herunder for at bekræfte din invitation. Du vil herefter modtage en e-mail med login-oplysninger.
+            Klik på knappen herunder for at logge ind og bekræfte din invitation.
           </p>
 
-          {errorMsg && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{errorMsg}</p>
-          )}
-
           <button
-            onClick={handleAccept}
-            disabled={pending}
-            className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={handleLogin}
+            className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
-            {pending ? 'Bekræfter…' : 'Acceptér invitation'}
+            Log ind og acceptér
           </button>
         </div>
       </div>
