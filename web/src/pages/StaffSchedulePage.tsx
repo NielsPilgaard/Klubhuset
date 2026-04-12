@@ -2,17 +2,43 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, StaffDto } from '../api/client'
 
-const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
+const WEEKDAYS: { key: string; label: string; num: number }[] = [
+  { key: 'Monday',    label: 'Mandag',  num: 1 },
+  { key: 'Tuesday',   label: 'Tirsdag', num: 2 },
+  { key: 'Wednesday', label: 'Onsdag',  num: 3 },
+  { key: 'Thursday',  label: 'Torsdag', num: 4 },
+  { key: 'Friday',    label: 'Fredag',  num: 5 },
+]
+
+const WEEKDAY_NUM: Record<string, number> = {
+  Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6,
+}
 
 interface ScheduleSlotDto {
-  weekday: number
+  weekday: string | number
   startTime: string
   endTime: string
   courseName: string
+  courseColor?: string | null
   className: string
   roomName?: string | null
   aideName?: string | null
   teacherName?: string | null
+}
+
+function toNum(weekday: string | number): number {
+  return typeof weekday === 'string' ? (WEEKDAY_NUM[weekday] ?? -1) : weekday
+}
+
+function buildTimeAxis(slots: ScheduleSlotDto[]) {
+  const seen = new Map<string, { startTime: string; endTime: string; sort: number }>()
+  for (const s of slots) {
+    const key = `${s.startTime}-${s.endTime}`
+    if (!seen.has(key)) {
+      seen.set(key, { startTime: s.startTime, endTime: s.endTime, sort: parseInt(s.startTime.replace(':', ''), 10) })
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.sort - b.sort)
 }
 
 export default function StaffSchedulePage() {
@@ -24,26 +50,25 @@ export default function StaffSchedulePage() {
     enabled: !!staffId,
   })
 
-  const { data: slots, isLoading, isError } = useQuery<ScheduleSlotDto[]>({
+  const { data: slots = [], isLoading, isError } = useQuery<ScheduleSlotDto[]>({
     queryKey: ['staff-schedule', staffId],
     queryFn: () => api.get(`/staff/${staffId}/schedule`),
     enabled: !!staffId,
   })
 
-  // Group slots by weekday, sorted by startTime
-  const byDay: Record<number, ScheduleSlotDto[]> = {}
-  for (const slot of slots ?? []) {
-    if (!byDay[slot.weekday]) byDay[slot.weekday] = []
-    byDay[slot.weekday].push(slot)
-  }
-  
-  // Sort each day's slots by startTime
-  for (const day in byDay) {
-    byDay[parseInt(day)].sort((a, b) => a.startTime.localeCompare(b.startTime))
+  const timeAxis = buildTimeAxis(slots)
+
+  // slotMap: startTime → weekdayNum → slots[]
+  const slotMap: Record<string, Record<number, ScheduleSlotDto[]>> = {}
+  for (const s of slots) {
+    const day = toNum(s.weekday)
+    if (!slotMap[s.startTime]) slotMap[s.startTime] = {}
+    if (!slotMap[s.startTime][day]) slotMap[s.startTime][day] = []
+    slotMap[s.startTime][day].push(s)
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Link to="/medarbejdere" className="text-gray-400 hover:text-gray-600 transition-colors">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -80,65 +105,79 @@ export default function StaffSchedulePage() {
       )}
 
       {isLoading && (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
-              <div className="h-5 w-24 bg-gray-200 rounded mb-3" />
-              <div className="space-y-2">
-                <div className="h-12 bg-gray-100 rounded-lg" />
-                <div className="h-12 bg-gray-100 rounded-lg" />
-              </div>
-            </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse space-y-3">
+          <div className="h-5 w-48 bg-gray-200 rounded" />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-12 bg-gray-100 rounded-lg" />
           ))}
         </div>
       )}
 
-      {!isLoading && slots?.length === 0 && (
+      {!isLoading && slots.length === 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400 text-sm">
           Ingen aktive lektioner denne uge
         </div>
       )}
 
-      {!isLoading && [1, 2, 3, 4, 5].map((day) => {
-        const daySlots = byDay[day]
-        if (!daySlots?.length) return null
-        return (
-          <div key={day} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-sm font-semibold text-gray-700">{WEEKDAYS[day - 1]}</h2>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {daySlots.map((slot, i) => (
-                <div key={i} className="px-5 py-3 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <span className="shrink-0 text-xs font-medium text-gray-500 tabular-nums w-20">
-                      {slot.startTime}–{slot.endTime}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{slot.courseName}</p>
-                      <p className="text-xs text-gray-500">{slot.className}</p>
-                    </div>
-                  </div>
-                  <div className="shrink-0 flex items-center gap-3 text-xs text-gray-400">
-                    {slot.roomName && (
-                      <span className="flex items-center gap-1">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                          <polyline points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                        {slot.roomName}
-                      </span>
-                    )}
-                    {slot.aideName && (
-                      <span className="text-gray-400">{slot.aideName}</span>
-                    )}
-                  </div>
-                </div>
+      {!isLoading && slots.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide w-20 border-r border-gray-200">
+                  Tid
+                </th>
+                {WEEKDAYS.map((d) => (
+                  <th key={d.key} className="px-3 py-2.5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                    {d.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {timeAxis.map((ts) => (
+                <tr key={ts.startTime} className="hover:bg-gray-50/50">
+                  <td className="px-3 py-2 text-right align-top border-r border-gray-200 bg-gray-50/50 whitespace-nowrap">
+                    <span className="block text-xs font-semibold text-gray-600">{ts.startTime}</span>
+                    <span className="block text-xs text-gray-400">{ts.endTime}</span>
+                  </td>
+                  {WEEKDAYS.map((d) => {
+                    const daySlots = slotMap[ts.startTime]?.[d.num]
+                    return (
+                      <td key={d.key} className="px-2 py-2 align-top">
+                        {daySlots?.map((slot, i) => (
+                          <div
+                            key={i}
+                            className="rounded-lg px-2 py-1.5 mb-1 last:mb-0"
+                            style={slot.courseColor ? {
+                              backgroundColor: slot.courseColor + '22',
+                              borderLeft: `3px solid ${slot.courseColor}`,
+                            } : {
+                              backgroundColor: '#f3f4f6',
+                              borderLeft: '3px solid #d1d5db',
+                            }}
+                          >
+                            <p
+                              className="text-xs font-semibold leading-tight truncate"
+                              style={slot.courseColor ? { color: slot.courseColor } : { color: '#111827' }}
+                            >
+                              {slot.courseName}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">{slot.className}</p>
+                            {slot.roomName && (
+                              <p className="text-xs text-gray-400 truncate">{slot.roomName}</p>
+                            )}
+                          </div>
+                        ))}
+                      </td>
+                    )
+                  })}
+                </tr>
               ))}
-            </div>
-          </div>
-        )
-      })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
