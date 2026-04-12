@@ -15,27 +15,13 @@ interface ScheduleSlotDto {
   teacherName?: string | null
 }
 
-interface ClassSchemaSlot {
-  weekday: number
-  startTime: string
-  endTime: string
-  sortOrder: number
-  courseName: string
-  teacherName?: string | null
-  roomName?: string | null
-  aideName?: string | null
-}
-
-// Collects unique time labels across all active slots
-// Tolerates both ClassSchemaSlot (with sortOrder) and ScheduleSlotDto (without)
-function buildTimeAxis(slots: (ClassSchemaSlot | ScheduleSlotDto)[]): { startTime: string; endTime: string; sortOrder: number }[] {
+// Collects unique time labels across all active slots, sorted by start time
+function buildTimeAxis(slots: ScheduleSlotDto[]): { startTime: string; endTime: string; sortOrder: number }[] {
   const seen = new Map<string, { startTime: string; endTime: string; sortOrder: number }>()
   for (const s of slots) {
     const key = `${s.startTime}-${s.endTime}`
     if (!seen.has(key)) {
-      // Use sortOrder if available (ClassSchemaSlot), otherwise derive from startTime
-      const sortOrder = 'sortOrder' in s ? s.sortOrder : parseInt(s.startTime.replace(':', ''), 10)
-      seen.set(key, { startTime: s.startTime, endTime: s.endTime, sortOrder })
+      seen.set(key, { startTime: s.startTime, endTime: s.endTime, sortOrder: parseInt(s.startTime.replace(':', ''), 10) })
     }
   }
   return [...seen.values()].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -46,13 +32,13 @@ type PrintMode = 'class' | 'staff' | 'room'
 function PrintGrid({ title, subtitle, slots }: {
   title: string
   subtitle: string
-  slots: ScheduleSlotDto[] | ClassSchemaSlot[]
+  slots: ScheduleSlotDto[]
 }) {
   // Build time axis
   const timeAxis = buildTimeAxis(slots)
 
   // Build slot map: startTime → weekday → slots array (to preserve collisions)
-  const slotMap: Record<string, Record<number, Array<ScheduleSlotDto | ClassSchemaSlot>>> = {}
+  const slotMap: Record<string, Record<number, ScheduleSlotDto[]>> = {}
   for (const s of slots) {
     if (!slotMap[s.startTime]) slotMap[s.startTime] = {}
     if (!slotMap[s.startTime][s.weekday]) slotMap[s.startTime][s.weekday] = []
@@ -96,8 +82,8 @@ function PrintGrid({ title, subtitle, slots }: {
                         {slot.teacherName && (
                           <span className="print-info">{slot.teacherName}</span>
                         )}
-                        {'className' in slot && (slot as ScheduleSlotDto).className && (
-                          <span className="print-info">{(slot as ScheduleSlotDto).className}</span>
+                        {slot.className && (
+                          <span className="print-info">{slot.className}</span>
                         )}
                         {slot.roomName && (
                           <span className="print-info print-room">{slot.roomName}</span>
@@ -128,55 +114,13 @@ function ClassPrintPage({ classId }: { classId: string }) {
     queryFn: () => api.get(`/classes/${classId}`),
   })
 
-  // Get active schema slots via class schedule endpoint
-  const { data: schemas } = useQuery<{ id?: string; name?: string | null; isActive?: boolean }[]>({
-    queryKey: ['schemas', classId],
-    queryFn: () => api.get(`/classes/${classId}/schemas`),
+  const { data: slots = [], isLoading } = useQuery<ScheduleSlotDto[]>({
+    queryKey: ['class-schedule', classId],
+    queryFn: () => api.get(`/classes/${classId}/schedule`),
   })
-
-  const activeSchemaId = schemas?.find((s) => s.isActive)?.id
-
-  const { data: detail } = useQuery<{
-    slots?: { weekday: number; timeSlotId: string; courseName?: string | null; teacherName?: string | null; roomName?: string | null; aideName?: string | null }[]
-  }>({
-    queryKey: ['schema', classId, activeSchemaId],
-    queryFn: () => api.get(`/classes/${classId}/schemas/${activeSchemaId}`),
-    enabled: !!activeSchemaId,
-  })
-
-  // We also need time slot times — fetch them
-  const { data: timeSlots, isLoading: timeSlotsLoading } = useQuery<{ id?: string; startTime?: string; endTime?: string; sortOrder?: number }[]>({
-    queryKey: ['time-slots', classId],
-    queryFn: () => api.get(`/classes/${classId}/time-slots`),
-    enabled: !!classId,
-  })
-
-  const tsMap: Record<string, { startTime: string; endTime: string; sortOrder: number }> = {}
-  for (const ts of timeSlots ?? []) {
-    if (ts.id && typeof ts.startTime === 'string' && typeof ts.endTime === 'string') {
-      tsMap[ts.id] = {
-        startTime: ts.startTime.slice(0, 5),
-        endTime: ts.endTime.slice(0, 5),
-        sortOrder: ts.sortOrder ?? 0,
-      }
-    }
-  }
-
-  const slots: ClassSchemaSlot[] = (detail?.slots ?? []).map((s) => ({
-    weekday: s.weekday,
-    startTime: tsMap[s.timeSlotId]?.startTime ?? '',
-    endTime: tsMap[s.timeSlotId]?.endTime ?? '',
-    sortOrder: tsMap[s.timeSlotId]?.sortOrder ?? 0,
-    courseName: s.courseName ?? '',
-    teacherName: s.teacherName,
-    roomName: s.roomName,
-    aideName: s.aideName,
-  }))
-
-  // Wait for all queries to complete before rendering
-  const isLoading = detail?.slots === undefined || timeSlotsLoading
 
   if (isLoading) return <div className="p-8 text-gray-400">Henter skema…</div>
+  if (slots.length === 0) return <div className="p-8 text-gray-400">Ingen aktivt skema fundet</div>
 
   return (
     <PrintGrid
