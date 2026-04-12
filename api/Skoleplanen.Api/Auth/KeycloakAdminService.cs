@@ -1,73 +1,69 @@
-using System.Net.Http.Headers;
-using System.Text.Json;
+using Microsoft.Extensions.Options;
+using Refit;
 using System.Text.Json.Serialization;
 
 namespace Skoleplanen.Api.Auth;
+
+/// <summary>Token endpoint — base URL: {authority}/protocol/openid-connect</summary>
+public interface IKeycloakTokenApi
+{
+    [Post("/token")]
+    Task<TokenResponse> GetTokenAsync([Body(BodySerializationMethod.UrlEncoded)] TokenRequest request, CancellationToken ct);
+}
+
+/// <summary>Admin REST API — base URL: {adminBase}</summary>
+public interface IKeycloakAdminApi
+{
+    [Post("/users")]
+    Task<HttpResponseMessage> CreateUserAsync([Body] CreateUserRequest request, CancellationToken ct);
+
+    [Get("/roles/{roleName}")]
+    Task<HttpResponseMessage> GetRoleAsync(string roleName, CancellationToken ct);
+
+    [Post("/users/{userId}/role-mappings/realm")]
+    Task AssignRoleMappingsAsync(string userId, [Body] string roleJson, CancellationToken ct);
+}
+
+public record TokenRequest(
+    [property: AliasAs("grant_type")] string GrantType,
+    [property: AliasAs("client_id")] string ClientId,
+    [property: AliasAs("client_secret")] string ClientSecret);
+
+public record TokenResponse(
+    [property: JsonPropertyName("access_token")] string AccessToken);
+
+public record CreateUserRequest(
+    [property: JsonPropertyName("username")] string Username,
+    [property: JsonPropertyName("email")] string Email,
+    [property: JsonPropertyName("firstName")] string FirstName,
+    [property: JsonPropertyName("lastName")] string LastName,
+    [property: JsonPropertyName("enabled")] bool Enabled,
+    [property: JsonPropertyName("emailVerified")] bool EmailVerified,
+    [property: JsonPropertyName("credentials")] IReadOnlyList<CredentialRepresentation> Credentials,
+    [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
+
+public record CredentialRepresentation(
+    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("value")] string Value,
+    [property: JsonPropertyName("temporary")] bool Temporary);
+
+// ── Service ───────────────────────────────────────────────────────────────────
 
 /// <summary>
 /// Talks to the Keycloak Admin REST API to create users on behalf of the application.
 /// Uses client_credentials flow with the skoleplanen-admin service account.
 /// </summary>
-public sealed class KeycloakAdminService(IConfiguration config, IHttpClientFactory httpClientFactory)
+public sealed class KeycloakAdminService(
+    IOptions<KeycloakOptions> options,
+    IKeycloakTokenApi tokenApi,
+    IKeycloakAdminApi adminApi)
 {
-    private record TokenResponse(
-        [property: JsonPropertyName("access_token")] string AccessToken);
-
-    private record CreateUserRequest(
-        [property: JsonPropertyName("username")] string Username,
-        [property: JsonPropertyName("email")] string Email,
-        [property: JsonPropertyName("firstName")] string FirstName,
-        [property: JsonPropertyName("lastName")] string LastName,
-        [property: JsonPropertyName("enabled")] bool Enabled,
-        [property: JsonPropertyName("emailVerified")] bool EmailVerified,
-        [property: JsonPropertyName("credentials")] IReadOnlyList<CredentialRepresentation> Credentials,
-        [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
-
-    private record CredentialRepresentation(
-        [property: JsonPropertyName("type")] string Type,
-        [property: JsonPropertyName("value")] string Value,
-        [property: JsonPropertyName("temporary")] bool Temporary);
-
-    private string AuthorityBase =>
-        (config["Keycloak:Authority"] ?? throw new InvalidOperationException("Keycloak:Authority not configured"))
-        .TrimEnd('/');
-
-    // Derives the realm-admin base URL from the authority URL.
-    // Authority: https://auth.example.com/realms/MyRealm
-    // Admin base: https://auth.example.com/admin/realms/MyRealm
-    private string AdminBase
-    {
-        get
-        {
-            var uri = new Uri(AuthorityBase);
-            // path is /realms/RealmName
-            var realmSegment = uri.AbsolutePath.TrimStart('/'); // "realms/RealmName"
-            return $"{uri.Scheme}://{uri.Authority}/admin/{realmSegment}";
-        }
-    }
-
-    private string TokenUrl => $"{AuthorityBase}/protocol/openid-connect/token";
-
     private async Task<string> GetAccessTokenAsync(CancellationToken ct)
     {
-        var clientId = config["Keycloak:AdminClientId"]
-                       ?? throw new InvalidOperationException("Keycloak:AdminClientId not configured");
-        var clientSecret = config["Keycloak:AdminClientSecret"]
-                           ?? throw new InvalidOperationException("Keycloak:AdminClientSecret not configured");
-
-        var client = httpClientFactory.CreateClient("keycloak-admin");
-        var response = await client.PostAsync(TokenUrl, new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"] = "client_credentials",
-            ["client_id"] = clientId,
-            ["client_secret"] = clientSecret,
-        }), ct);
-
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync(ct);
-        var token = JsonSerializer.Deserialize<TokenResponse>(body)
-                    ?? throw new InvalidOperationException("Invalid token response from Keycloak");
-        return token.AccessToken;
+        var kc = options.Value;
+        var response = await tokenApi.GetTokenAsync(
+            new TokenRequest("client_credentials", kc.AdminClientId, kc.AdminClientSecret), ct);
+        return response.AccessToken;
     }
 
     /// <summary>
@@ -83,10 +79,10 @@ public sealed class KeycloakAdminService(IConfiguration config, IHttpClientFacto
         CancellationToken ct)
     {
         var token = await GetAccessTokenAsync(ct);
-        var client = httpClientFactory.CreateClient("keycloak-admin");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        // 1. Create the user
+        // Attach the bearer token for admin calls via the DelegatingHandler set up in Program.cs
+        using var scope = new BearerTokenScope(token);
+
         var payload = new CreateUserRequest(
             Username: email,
             Email: email,
@@ -100,10 +96,7 @@ public sealed class KeycloakAdminService(IConfiguration config, IHttpClientFacto
                 ["tenant_id"] = [tenantId.ToString()],
             });
 
-        var createResponse = await client.PostAsync(
-            $"{AdminBase}/users",
-            new StringContent(JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json"),
-            ct);
+        var createResponse = await adminApi.CreateUserAsync(payload, ct);
 
         if (!createResponse.IsSuccessStatusCode)
         {
@@ -111,21 +104,18 @@ public sealed class KeycloakAdminService(IConfiguration config, IHttpClientFacto
             throw new KeycloakException($"Failed to create Keycloak user: {createResponse.StatusCode} — {err}");
         }
 
-        // 2. Extract user ID from Location header
         var location = createResponse.Headers.Location
                        ?? throw new KeycloakException("Keycloak did not return a Location header after user creation");
         var keycloakUserId = location.Segments.Last().TrimEnd('/');
 
-        // 3. Assign admin realm role
-        await AssignRealmRoleAsync(client, keycloakUserId, "admin", ct);
+        await AssignRealmRoleAsync(keycloakUserId, "admin", ct);
 
         return keycloakUserId;
     }
 
-    private async Task AssignRealmRoleAsync(HttpClient client, string userId, string roleName, CancellationToken ct)
+    private async Task AssignRealmRoleAsync(string userId, string roleName, CancellationToken ct)
     {
-        // First fetch the role representation (we need id + name)
-        var roleResponse = await client.GetAsync($"{AdminBase}/roles/{roleName}", ct);
+        var roleResponse = await adminApi.GetRoleAsync(roleName, ct);
         if (!roleResponse.IsSuccessStatusCode)
         {
             // Non-critical — user is created, just missing the role
@@ -133,15 +123,56 @@ public sealed class KeycloakAdminService(IConfiguration config, IHttpClientFacto
         }
 
         var roleJson = await roleResponse.Content.ReadAsStringAsync(ct);
-
-        // POST role assignment
-        var assignResponse = await client.PostAsync(
-            $"{AdminBase}/users/{userId}/role-mappings/realm",
-            new StringContent($"[{roleJson}]", System.Text.Encoding.UTF8, "application/json"),
-            ct);
-
-        assignResponse.EnsureSuccessStatusCode();
+        await adminApi.AssignRoleMappingsAsync(userId, $"[{roleJson}]", ct);
     }
 }
 
 public sealed class KeycloakException(string message) : Exception(message);
+
+// ── Bearer token ambient scope (thread-static) ────────────────────────────────
+
+/// <summary>
+/// Stores the bearer token for the current async operation so the
+/// <see cref="KeycloakBearerHandler"/> can attach it without coupling
+/// the service to HttpClient internals.
+/// </summary>
+internal static class KeycloakBearerContext
+{
+    [ThreadStatic]
+    private static string? _token;
+
+    internal static string? Token => _token;
+
+    internal static IDisposable Set(string token)
+    {
+        _token = token;
+        return new Cleanup();
+    }
+
+    private sealed class Cleanup : IDisposable
+    {
+        public void Dispose() => _token = null;
+    }
+}
+
+internal sealed class BearerTokenScope : IDisposable
+{
+    private readonly IDisposable _cleanup;
+    public BearerTokenScope(string token) => _cleanup = KeycloakBearerContext.Set(token);
+    public void Dispose() => _cleanup.Dispose();
+}
+
+/// <summary>
+/// DelegatingHandler that picks up the ambient bearer token and injects it
+/// as an Authorization header for outgoing Keycloak Admin API requests.
+/// </summary>
+public sealed class KeycloakBearerHandler : DelegatingHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var token = KeycloakBearerContext.Token;
+        if (token is not null)
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return base.SendAsync(request, ct);
+    }
+}

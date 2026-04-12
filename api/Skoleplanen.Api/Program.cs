@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Refit;
 using Skoleplanen.Api;
 using Skoleplanen.Api.Auth;
 using Skoleplanen.Api.Data;
@@ -20,11 +21,34 @@ builder.Services.AddMemoryCache();
 // Database
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleplanen-db")));
 
-// Auth — validates Keycloak-issued JWTs
-builder.Services.AddKeycloakAuth(builder.Configuration, builder.Environment);
+// Keycloak
+builder.Services.AddOptions<KeycloakOptions>()
+       .BindConfiguration(KeycloakOptions.SectionName)
+       .ValidateDataAnnotations()
+       .ValidateOnStart();
 
-// Keycloak Admin REST API client (for creating users during signup)
-builder.Services.AddHttpClient("keycloak-admin");
+// Auth — validates Keycloak-issued JWTs
+builder.Services.AddKeycloakAuth(builder.Environment);
+
+// Keycloak Admin REST API clients (for creating users during signup)
+builder.Services
+    .AddRefitClient<IKeycloakTokenApi>()
+    .ConfigureHttpClient((sp, c) =>
+    {
+        var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
+        c.BaseAddress = new Uri(kc.TokenBaseUrl);
+    });
+
+builder.Services
+    .AddTransient<KeycloakBearerHandler>()
+    .AddRefitClient<IKeycloakAdminApi>()
+    .ConfigureHttpClient((sp, c) =>
+    {
+        var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
+        c.BaseAddress = new Uri(kc.AdminBaseUrl);
+    })
+    .AddHttpMessageHandler<KeycloakBearerHandler>();
+
 builder.Services.AddScoped<KeycloakAdminService>();
 
 builder.Services.AddOpenApi();

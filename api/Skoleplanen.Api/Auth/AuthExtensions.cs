@@ -1,30 +1,31 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 
 namespace Skoleplanen.Api.Auth;
 
 public static class AuthExtensions
 {
-    public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
+    public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, IWebHostEnvironment environment)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                .AddJwtBearer(options =>
                {
-                   options.Authority = configuration["Keycloak:Authority"];
-                   options.Audience = configuration["Keycloak:Audience"];
-                   options.RequireHttpsMetadata = !environment.IsDevelopment();
-                   // Preserve Keycloak's original claim names (e.g. "preferred_username", "name")
-                   // instead of mapping them to WS-Federation URIs.
-                   options.MapInboundClaims = false;
-
-                   // Allow API to reach Keycloak internally (container-to-container) while
-                   // still validating tokens issued by the public issuer URL.
-                   var metadataAddress = configuration["Keycloak:MetadataAddress"];
-                   if (!string.IsNullOrEmpty(metadataAddress))
-                   {
-                       options.MetadataAddress = metadataAddress;
-                   }
+                   // Resolve options at configuration time via IOptions<KeycloakOptions>
                });
+
+        // Configure JwtBearerOptions from KeycloakOptions after the options graph is built
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+                .Configure<IOptions<KeycloakOptions>>((jwt, kc) =>
+                {
+                    jwt.Authority = kc.Value.Authority;
+                    jwt.Audience = kc.Value.Audience;
+                    jwt.RequireHttpsMetadata = !environment.IsDevelopment();
+                    jwt.MapInboundClaims = false;
+
+                    if (!string.IsNullOrEmpty(kc.Value.MetadataAddress))
+                        jwt.MetadataAddress = kc.Value.MetadataAddress;
+                });
 
         services.AddAuthorization();
         services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
