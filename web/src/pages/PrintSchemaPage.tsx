@@ -5,7 +5,7 @@ import { api, StaffDto, RoomDto, ClassDto } from '../api/client'
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 
 interface ScheduleSlotDto {
-  weekday: number
+  weekday: number | string
   startTime: string
   endTime: string
   courseName: string
@@ -13,6 +13,14 @@ interface ScheduleSlotDto {
   roomName?: string | null
   aideName?: string | null
   teacherName?: string | null
+}
+
+const WEEKDAY_NAME_TO_NUMBER: Record<string, number> = {
+  Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6,
+}
+
+function toWeekdayNumber(weekday: number | string): number {
+  return typeof weekday === 'string' ? (WEEKDAY_NAME_TO_NUMBER[weekday] ?? -1) : weekday
 }
 
 // Collects unique time labels across all active slots, sorted by start time
@@ -40,9 +48,10 @@ function PrintGrid({ title, subtitle, slots }: {
   // Build slot map: startTime → weekday → slots array (to preserve collisions)
   const slotMap: Record<string, Record<number, ScheduleSlotDto[]>> = {}
   for (const s of slots) {
+    const day = toWeekdayNumber(s.weekday)
     if (!slotMap[s.startTime]) slotMap[s.startTime] = {}
-    if (!slotMap[s.startTime][s.weekday]) slotMap[s.startTime][s.weekday] = []
-    slotMap[s.startTime][s.weekday].push(s)
+    if (!slotMap[s.startTime][day]) slotMap[s.startTime][day] = []
+    slotMap[s.startTime][day].push(s)
   }
 
   return (
