@@ -72,11 +72,13 @@ function getISOWeek(year: number, month: number, day: number): number {
 }
 
 function isEntryInSchoolYear(entry: CalendarEntryDto, startYear: number): boolean {
-  const schoolStart = new Date(startYear, 7, 1)   // Aug 1
+  const schoolStart = new Date(startYear, 7, 1)    // Aug 1
   const schoolEnd = new Date(startYear + 1, 6, 31) // Jul 31 next year
   const entryStart = new Date(`${entry.startDate}T00:00:00`)
-  const entryEnd = new Date(`${entry.endDate}T00:00:00`)
-  return entryStart <= schoolEnd && entryEnd >= schoolStart
+  // An entry belongs to this school year if its start date falls within the year.
+  // Using overlap (entryEnd >= schoolStart) causes summer vacation (Jun 26 – Aug 7)
+  // to be counted for both the current and the following school year.
+  return entryStart >= schoolStart && entryStart <= schoolEnd
 }
 
 function buildMonthGrid(year: number, month: number): (number | null)[][] {

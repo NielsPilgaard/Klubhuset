@@ -101,14 +101,17 @@ function SearchableSelect({
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
 
-  const filtered = query.trim() === ''
+  // When a value is selected, show full list; otherwise filter by query
+  const filtered = (value || query.trim() === '')
     ? options
     : options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+
+  const selectedLabel = value ? (options.find((o) => o.id === value)?.label ?? '') : ''
 
   function select(opt: { id: string; label: string } | null) {
     if (opt) {
       onChange(opt.id)
-      onQueryChange(opt.label)
+      onQueryChange('')
     } else {
       onChange('')
       onQueryChange('')
@@ -118,18 +121,29 @@ function SearchableSelect({
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     onQueryChange(e.target.value)
-    onChange('')
+    if (value) onChange('') // clear chip when user starts typing
     setOpen(true)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Escape') { setOpen(false); return }
+    if (e.key === 'Backspace' && value && query === '') {
+      // Clear chip on backspace when input is empty
+      onChange('')
+      onQueryChange('')
+      setOpen(true)
+      return
+    }
     if (e.key === 'Enter') {
-      if (open && filtered.length > 0) {
+      if (open && !value && filtered.length > 0) {
+        // Dropdown open, no chip yet — select the first match
         e.preventDefault()
         select(filtered[0])
+        return
       }
-      // If dropdown is closed, let the event bubble so the form's onSubmit fires
+      // Either dropdown closed or chip already selected — close dropdown and submit
+      setOpen(false)
+      // Do NOT call e.preventDefault() — let the form's onSubmit fire
     }
   }
 
@@ -138,21 +152,36 @@ function SearchableSelect({
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <input
-        type="text"
-        autoComplete="off"
-        value={query}
-        onChange={handleInputChange}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        data-testid={testId}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
-      />
-      {!value && query === '' && (
-        <span className="pointer-events-none absolute right-3 top-[calc(50%+10px)] -translate-y-1/2 text-xs text-gray-400">{emptyLabel}</span>
-      )}
+      <div className={`flex items-center gap-1 flex-wrap w-full px-3 py-1.5 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent`}>
+        {value && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-100 text-brand-800 text-xs font-medium rounded-md shrink-0">
+            {selectedLabel}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => { e.preventDefault(); select(null) }}
+              className="ml-0.5 text-brand-500 hover:text-brand-800 leading-none"
+              aria-label="Fjern valg"
+            >×</button>
+          </span>
+        )}
+        <input
+          type="text"
+          autoComplete="off"
+          value={query}
+          onChange={handleInputChange}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={handleKeyDown}
+          placeholder={value ? '' : placeholder}
+          data-testid={testId}
+          className="flex-1 min-w-0 py-0.5 text-sm focus:outline-none bg-transparent"
+          style={{ minWidth: '4rem' }}
+        />
+        {!value && query === '' && (
+          <span className="pointer-events-none text-xs text-gray-400 ml-auto">{emptyLabel}</span>
+        )}
+      </div>
       {open && (
         <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto text-sm">
           {!required && (
@@ -229,18 +258,11 @@ function AssignmentPanel({
   })
 
   // ─── Combobox state ─────────────────────────────────────────────────────────
-  const [courseQuery, setCourseQuery] = useState(
-    courses.find((c) => c.id === courseId)?.name ?? ''
-  )
-  const [teacherQuery, setTeacherQuery] = useState(
-    staff.find((s) => s.id === teacherId)?.name ?? ''
-  )
-  const [roomQuery, setRoomQuery] = useState(
-    rooms.find((r) => r.id === roomId)?.name ?? ''
-  )
-  const [aideQuery, setAideQuery] = useState(
-    [...teachers, ...aides].find((s) => s.id === aideId)?.name ?? ''
-  )
+  // With chip design, query starts empty whenever the field already has a value
+  const [courseQuery, setCourseQuery] = useState('')
+  const [teacherQuery, setTeacherQuery] = useState('')
+  const [roomQuery, setRoomQuery] = useState('')
+  const [aideQuery, setAideQuery] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -264,6 +286,7 @@ function AssignmentPanel({
           </button>
         </div>
 
+        <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
         <div className="px-6 py-5 space-y-4">
           <SearchableSelect
             label="Fag"
@@ -637,7 +660,15 @@ export default function SchemaBuilderPage() {
         aideId: dstSlot.aideId ?? null,
       })
     } else {
-      // Move: put src's assignment in dst's cell, then delete from src
+      // Move: optimistically remove from source immediately so no ghost appears
+      setLocalSlots((prev) => {
+        const base = prev ?? detail?.slots ?? []
+        return base.filter(
+          (s) => !(s.timeSlotId === src.timeSlotId && (
+            (typeof s.weekday === 'number' ? s.weekday : WEEKDAY_NAMES.indexOf(s.weekday as WeekdayName) + 1) === src.weekday
+          ))
+        )
+      })
       upsertSlotMutation.mutate({
         timeSlotId: dst.timeSlotId,
         weekday: dst.weekday,

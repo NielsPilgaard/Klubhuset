@@ -310,15 +310,13 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
         {schemas?.map((s) => (
           <div
             key={s.id}
-            className="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 transition-colors group"
+            onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
+            className="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <button
-                onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
-                className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate"
-              >
+              <span className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate">
                 {s.name}
-              </button>
+              </span>
               <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusClasses(s.status ?? 'Draft')}`}>
                 {statusLabel(s.status ?? 'Draft')}
               </span>
@@ -330,13 +328,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
             </div>
             <div className="flex items-center gap-2 shrink-0 ml-4">
               <button
-                onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
-                className="px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-md transition-colors"
-              >
-                Rediger
-              </button>
-              <button
-                onClick={() => setCopyingSchema(s)}
+                onClick={(e) => { e.stopPropagation(); setCopyingSchema(s) }}
                 className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                 title="Kopiér skema"
               >
@@ -347,7 +339,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
               </button>
               {!s.isActive && (
                 <button
-                  onClick={() => activateMutation.mutate(s.id!)}
+                  onClick={(e) => { e.stopPropagation(); activateMutation.mutate(s.id!) }}
                   disabled={activateMutation.isPending}
                   className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50"
                 >
