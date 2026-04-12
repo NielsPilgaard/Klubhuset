@@ -3389,7 +3389,19 @@
             "type": "string",
             "nullable": true
           },
-          "contactEmail": {
+          "adminEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminFirstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminLastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminPassword": {
             "type": "string",
             "nullable": true
           }
@@ -3986,7 +3998,7 @@
             "type": "string",
             "nullable": true
           },
-          "contactEmail": {
+          "adminEmail": {
             "type": "string",
             "nullable": true
           }
