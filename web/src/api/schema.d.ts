@@ -2325,6 +2325,7 @@ export interface paths {
                 query?: {
                     isoYear?: number;
                     isoWeek?: number;
+                    schemaId?: string;
                 };
                 header?: never;
                 path: {
@@ -2368,6 +2369,7 @@ export interface paths {
                 query?: {
                     isoYear?: number;
                     isoWeek?: number;
+                    schemaId?: string;
                 };
                 header?: never;
                 path: {
@@ -2630,8 +2632,7 @@ export interface components {
             uploadedAt?: string;
         };
         HolidayDayDto: {
-            /** Format: int32 */
-            weekday?: number;
+            weekday?: components["schemas"]["DayOfWeek"];
             title?: string | null;
         };
         HoursPerCourse: {

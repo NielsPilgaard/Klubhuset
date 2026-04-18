@@ -144,8 +144,10 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
             .OrderBy(b => b.StartTime)
             .ToList();
 
+        var holidayWeekdays = holidayDays.Select(h => h.Weekday).ToHashSet();
+
         var slotDtos = schemaSlots
-            .Where(ss => !ss.TimeSlot.IsBreak)
+            .Where(ss => !ss.TimeSlot.IsBreak && !holidayWeekdays.Contains(ss.Weekday))
             .Select(ss =>
         {
             var wps = weekPlan?.Slots.FirstOrDefault(s => s.SchemaSlotId == ss.Id);
