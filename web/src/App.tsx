@@ -11,6 +11,11 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import InvitationAcceptPage from './pages/InvitationAcceptPage'
+import OmPage from './pages/OmPage'
+import KontaktPage from './pages/KontaktPage'
+
+// Lazy load legal/info pages
+const PrivatlivspolitikPage = lazy(() => import('./pages/PrivatlivspolitikPage'))
 
 // Lazy load all other pages
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
@@ -60,6 +65,9 @@ export default function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
           <Route path="invitation/:token" element={<InvitationAcceptPage />} />
+          <Route path="om" element={<OmPage />} />
+          <Route path="privatlivspolitik" element={<PrivatlivspolitikPage />} />
+          <Route path="kontakt" element={<KontaktPage />} />
           <Route path="udskriv/klasse/:classId" element={<PrintSchemaPage />} />
           <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
           <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />

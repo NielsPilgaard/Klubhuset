@@ -1,4 +1,6 @@
 import Logo from '../components/Logo'
+import Footer from '../components/Footer'
+import CookieBanner from '../components/CookieBanner'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function LandingPage() {
@@ -214,17 +216,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Page footer */}
-      <footer className="py-8 px-6 bg-brand-900 text-brand-300 text-sm text-center">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Logo variant="dark" size={22} />
-            <span className="font-display text-white font-semibold">Skoleplanen</span>
-          </div>
-          <span>© {new Date().getFullYear()} Skoleplanen · Data opbevares i EU</span>
-          <a href="/login" className="hover:text-white transition-colors">Log ind</a>
-        </div>
-      </footer>
+      <Footer />
+      <CookieBanner />
 
     </div>
   )
