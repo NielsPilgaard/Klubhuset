@@ -26,7 +26,7 @@
 
     <#if message?has_content>
       <div class="alert alert-${message.type}">
-        ${message.summary?no_esc}
+        ${message.summary}
       </div>
     </#if>
 
@@ -40,7 +40,7 @@
           type="email"
           id="username"
           name="username"
-          value="${(login.username!'')?html}"
+          value="${login.username!''}"
           autocomplete="email"
           autofocus
           spellcheck="false"

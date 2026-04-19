@@ -17,6 +17,13 @@ var postgres = builder.AddPostgres("postgres", userName: pgUsername, password: p
 var db = postgres.AddDatabase("skoleplanen-db");
 postgres.AddDatabase("keycloak-db");
 
+// Mailpit — local SMTP catch-all (captures all outbound email in dev)
+var mailpit = builder.AddContainer("mailpit", "axllent/mailpit", "latest")
+					 .WithLifetime(ContainerLifetime.Persistent)
+					 .WithHttpEndpoint(port: 8025, targetPort: 8025, name: "ui")
+					 .WithEndpoint(port: 1025, targetPort: 1025, name: "smtp", scheme: "tcp")
+					 .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
+
 // Keycloak (raw container — no first-party Aspire hosting package)
 var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26.2")
 					  .WithLifetime(ContainerLifetime.Persistent)
@@ -34,11 +41,19 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
 									 "/opt/keycloak/data/import",
 									 isReadOnly: true)
 					  .WithBindMount("../../../infrastructure/keycloak/themes",
-									 "/opt/keycloak/data/themes",
+									 "/opt/keycloak/themes",
 									 isReadOnly: true)
+					  .WithEnvironment("KC_SMTP_HOST", "mailpit")
+					  .WithEnvironment("KC_SMTP_PORT", "1025")
+					  .WithEnvironment("KC_SMTP_FROM", "no-reply@skoleplanen.dk")
+					  .WithEnvironment("KC_SMTP_FROM_DISPLAY_NAME", "Skoleplanen")
+					  .WithEnvironment("KC_SMTP_AUTH", "false")
+					  .WithEnvironment("KC_SMTP_SSL", "false")
+					  .WithEnvironment("KC_SMTP_STARTTLS", "false")
 					  .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
 					  .WithArgs("start-dev", "--import-realm")
-					  .WaitFor(postgres);
+					  .WaitFor(postgres)
+					  .WaitFor(mailpit);
 
 // LocalStack (S3-compatible local emulation for OVHCloud Object Storage)
 builder.AddContainer("localstack", "localstack/localstack", "3")

@@ -4,6 +4,9 @@
   "displayName": "Skoleplanen",
   "sslRequired": "external",
   "loginTheme": "skoleplanen",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["da"],
+  "defaultLocale": "da",
 
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,

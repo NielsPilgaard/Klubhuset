@@ -41,7 +41,7 @@ services:
       KC_HTTP_ENABLED: "true"
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
-      - ../keycloak/themes:/opt/keycloak/data/themes:ro
+      - ../keycloak/themes:/opt/keycloak/themes:ro
     networks:
       - internal
     labels:
