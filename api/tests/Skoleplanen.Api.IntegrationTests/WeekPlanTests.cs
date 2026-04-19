@@ -44,13 +44,11 @@ public sealed class WeekPlanTests
         await _factory.DisposeAsync();
     }
 
-    // ─── GET ─────────────────────────────────────────────────────────────────
-
     [Test]
     public async Task GetWeekPlan_NoActiveSchema_ReturnsEmptySlots()
     {
         // A class with no schema at all
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "1.a", "Skema");
+        _ = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "1.a", "Skema");
         // Deactivate the schema by re-creating without IsActive=true — actually CreateClassWithSchemaAsync creates it active.
         // We create a class without a schema instead by using the DB directly.
         using var scope = _factory.Services.CreateScope();
@@ -116,8 +114,6 @@ public sealed class WeekPlanTests
         var response = await _client.GetAsync($"/api/v1/classes/{klass.Id}/ugeplan");
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
-
-    // ─── PUT upsert slot ─────────────────────────────────────────────────────
 
     [Test]
     public async Task UpsertSlot_CreatesBeskrivelse_AndReturnsMergedSlot()
@@ -186,8 +182,6 @@ public sealed class WeekPlanTests
             new WeekPlanController.UpsertWeekPlanSlotRequest(Guid.NewGuid(), null, null, null));
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
-
-    // ─── Files ───────────────────────────────────────────────────────────────
 
     private async Task<(Guid classId, Guid schemaSlotId)> SetupClassWithSlotAsync(string className = "2.b")
     {
@@ -268,8 +262,6 @@ public sealed class WeekPlanTests
             $"/api/v1/classes/{classId}/ugeplan/slots/{slotId}/files", addRequest);
         await Assert.That(second.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
     }
-
-    // ─── Tenant isolation ─────────────────────────────────────────────────────
 
     [Test]
     public async Task TenantIsolation_WeekPlanNotVisibleToOtherTenant()

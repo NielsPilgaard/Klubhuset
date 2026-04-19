@@ -72,6 +72,47 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
         return await tokenApi.GetPasswordTokenAsync(request, ct);
     }
 
+    /// <summary>
+    /// Assigns or removes the Keycloak 'admin' realm role for an existing user.
+    /// Throws <see cref="KeycloakException"/> on failure so callers can roll back DB changes.
+    /// </summary>
+    public async Task SetAdminRoleAsync(string keycloakUserId, bool grant, CancellationToken ct)
+    {
+        RoleRepresentation role;
+        try
+        {
+            role = await adminApi.GetRoleAsync("admin", ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new KeycloakException($"Failed to fetch 'admin' role from Keycloak: {ex.Message}");
+        }
+
+        try
+        {
+            if (grant)
+            {
+                await adminApi.AssignRoleMappingsAsync(keycloakUserId, [role], ct);
+            }
+            else
+            {
+                await adminApi.RemoveRoleMappingsAsync(keycloakUserId, [role], ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new KeycloakException($"Failed to {(grant ? "assign" : "remove")} 'admin' role for user {keycloakUserId}: {ex.Message}");
+        }
+    }
+
     private async Task AssignRealmRoleAsync(string userId, string roleName, CancellationToken ct)
     {
         try

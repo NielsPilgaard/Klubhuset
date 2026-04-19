@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api, StaffDto, StaffRole } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
+import keycloak from '../auth/keycloak'
 
 const ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
   { value: 'Teacher', label: 'Lærer' },
@@ -43,22 +44,62 @@ function inviteStatusLabel(status: InvitationDto['status']): string {
   return 'Afventer'
 }
 
+function AdminToggle({
+  value,
+  onChange,
+  disabled,
+  disabledTooltip,
+}: {
+  value: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+  disabledTooltip?: string
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-sm font-medium text-gray-700">Administratoradgang</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={value}
+        disabled={disabled}
+        title={disabled ? disabledTooltip : undefined}
+        onClick={() => !disabled && onChange(!value)}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 ${
+          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+        } ${value ? 'bg-brand-600' : 'bg-gray-200'}`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+            value ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
 interface StaffModalProps {
   initial?: StaffDto
   onClose: () => void
   onSaved: () => void
+  currentUserKeycloakSubject?: string
 }
 
-function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
+function StaffModal({ initial, onClose, onSaved, currentUserKeycloakSubject }: StaffModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState(initial?.name ?? '')
   const [email, setEmail] = useState(initial?.email ?? '')
   const [phone, setPhone] = useState(initial?.phone ?? '')
   const [role, setRole] = useState<StaffRole>(initial?.role ?? 'Teacher')
+  const [isAdmin, setIsAdmin] = useState(initial?.isAdmin ?? false)
+
+  const isEditingSelf = initial?.keycloakSubject != null && initial.keycloakSubject === currentUserKeycloakSubject
+  const inviteNotAccepted = initial !== undefined && !initial.keycloakSubject
 
   const mutation = useMutation({
     mutationFn: () => {
-      const body = { name, email: email || null, phone: phone || null, role }
+      const body = { name, email: email || null, phone: phone || null, role, isAdmin }
       return initial
         ? api.put(`/staff/${initial.id}`, body)
         : api.post('/staff', body)
@@ -127,6 +168,16 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
+          <AdminToggle
+            value={isAdmin}
+            onChange={setIsAdmin}
+            disabled={isEditingSelf || inviteNotAccepted}
+            disabledTooltip={
+              isEditingSelf
+                ? 'Du kan ikke ændre din egen administratoradgang'
+                : 'Medarbejderen skal acceptere invitationen først'
+            }
+          />
           {mutation.isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
@@ -267,6 +318,8 @@ export default function StaffPage() {
   const [editingStaff, setEditingStaff] = useState<StaffDto | null>(null)
   const [invitingStaff, setInvitingStaff] = useState<StaffDto | null>(null)
 
+  const currentUserKeycloakSubject = (keycloak.tokenParsed as Record<string, string> | undefined)?.sub
+
   const { data: staff, isLoading, isError, refetch } = useQuery<StaffDto[]>({
     queryKey: ['staff'],
     queryFn: () => api.get('/staff'),
@@ -349,7 +402,18 @@ export default function StaffPage() {
               const invite = getLatestInvite(s.id ?? '')
               return (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 font-medium text-gray-900">{s.name}</td>
+                  <td className="px-5 py-3 font-medium text-gray-900">
+                    <div className="flex items-center gap-2">
+                      {s.name}
+                      {s.isAdmin && (
+                        <span title="Administrator" className="text-brand-600">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleBadge(s.role ?? 'Teacher')}`}>
                       {roleLabel(s.role ?? 'Teacher')}
@@ -423,13 +487,18 @@ export default function StaffPage() {
       </div>
 
       {showCreate && (
-        <StaffModal onClose={() => setShowCreate(false)} onSaved={() => setShowCreate(false)} />
+        <StaffModal
+          onClose={() => setShowCreate(false)}
+          onSaved={() => setShowCreate(false)}
+          currentUserKeycloakSubject={currentUserKeycloakSubject}
+        />
       )}
       {editingStaff && (
         <StaffModal
           initial={editingStaff}
           onClose={() => setEditingStaff(null)}
           onSaved={() => setEditingStaff(null)}
+          currentUserKeycloakSubject={currentUserKeycloakSubject}
         />
       )}
       {invitingStaff && (

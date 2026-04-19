@@ -27,7 +27,13 @@ public static class TestDataBuilder
         return school;
     }
 
-    public static async Task<Staff> CreateStaffAsync(IServiceProvider services, Guid tenantId, string name = "Anders Lærer", StaffRole role = StaffRole.Teacher)
+    public static async Task<Staff> CreateStaffAsync(
+        IServiceProvider services,
+        Guid tenantId,
+        string name = "Anders Lærer",
+        StaffRole role = StaffRole.Teacher,
+        bool isAdmin = false,
+        string? keycloakSubject = null)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -37,6 +43,8 @@ public static class TestDataBuilder
             TenantId = tenantId,
             Name = name,
             Role = role,
+            IsAdmin = isAdmin,
+            KeycloakSubject = keycloakSubject,
         };
         db.Staff.Add(staff);
         await db.SaveChangesAsync();

@@ -14,6 +14,9 @@ public interface IKeycloakAdminApi
 
     [Post("/users/{userId}/role-mappings/realm")]
     Task AssignRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
+
+    [Delete("/users/{userId}/role-mappings/realm")]
+    Task RemoveRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
 }
 
 public record RoleRepresentation(

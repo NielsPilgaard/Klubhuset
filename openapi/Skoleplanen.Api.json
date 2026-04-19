@@ -2230,6 +2230,65 @@
         }
       }
     },
+    "/api/v1/staff/{id}/admin-permission": {
+      "patch": {
+        "tags": [
+          "Staff"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchAdminPermissionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchAdminPermissionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchAdminPermissionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/staff-invitations": {
       "get": {
         "tags": [
@@ -3675,6 +3734,15 @@
         },
         "additionalProperties": false
       },
+      "PatchAdminPermissionRequest": {
+        "type": "object",
+        "properties": {
+          "isAdmin": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "RoomDto": {
         "type": "object",
         "properties": {
@@ -3935,6 +4003,13 @@
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "keycloakSubject": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4258,6 +4333,9 @@
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
+          },
+          "isAdmin": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
