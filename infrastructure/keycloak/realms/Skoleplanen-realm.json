@@ -8,6 +8,16 @@
   "supportedLocales": ["da"],
   "defaultLocale": "da",
 
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@skoleplanen.dk",
+    "fromDisplayName": "Skoleplanen",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
+
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
