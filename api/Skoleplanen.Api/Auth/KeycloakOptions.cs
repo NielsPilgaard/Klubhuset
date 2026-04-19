@@ -24,6 +24,9 @@ public sealed class KeycloakOptions
     [Required(AllowEmptyStrings = false)]
     public string AdminClientSecret { get; init; } = null!;
 
+    [Required(AllowEmptyStrings = false)]
+    public string WebClientId { get; init; } = null!;
+
     /// <summary>Base URL for the token endpoint (parent of /token).</summary>
     public string TokenBaseUrl => $"{Authority.TrimEnd('/')}/protocol/openid-connect";
 

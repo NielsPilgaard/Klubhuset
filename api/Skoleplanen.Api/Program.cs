@@ -81,12 +81,17 @@ builder.Services.AddScoped<SubscriptionService>();
 
 builder.Services.AddStripe(builder.Configuration);
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<MissingTenantClaimExceptionHandler>();
+
 builder.Services.AddControllers()
 	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 
 app.UseSwaggerInDevelopment();
+
+app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();

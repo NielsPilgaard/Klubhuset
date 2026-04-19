@@ -10,11 +10,15 @@ public interface IKeycloakAdminApi
     Task<HttpResponseMessage> CreateUserAsync([Body] CreateUserRequest request, CancellationToken ct);
 
     [Get("/roles/{roleName}")]
-    Task<HttpResponseMessage> GetRoleAsync(string roleName, CancellationToken ct);
+    Task<RoleRepresentation> GetRoleAsync(string roleName, CancellationToken ct);
 
     [Post("/users/{userId}/role-mappings/realm")]
-    Task AssignRoleMappingsAsync(string userId, [Body] string roleJson, CancellationToken ct);
+    Task AssignRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
 }
+
+public record RoleRepresentation(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("name")] string Name);
 
 public record CreateUserRequest(
     [property: JsonPropertyName("username")] string Username,

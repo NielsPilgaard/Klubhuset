@@ -2061,9 +2061,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["TenantDto"];
-                        "application/json": components["schemas"]["TenantDto"];
-                        "text/json": components["schemas"]["TenantDto"];
+                        "text/plain": components["schemas"]["TenantCreatedDto"];
+                        "application/json": components["schemas"]["TenantCreatedDto"];
+                        "text/json": components["schemas"]["TenantCreatedDto"];
                     };
                 };
             };
@@ -2795,11 +2795,15 @@ export interface components {
             activeDays?: string | null;
             breaks?: components["schemas"]["BreakDto"][] | null;
         };
-        TenantDto: {
+        TenantCreatedDto: {
             /** Format: uuid */
             id?: string;
             name?: string | null;
             adminEmail?: string | null;
+            accessToken?: string | null;
+            refreshToken?: string | null;
+            /** Format: int32 */
+            expiresIn?: number;
         };
         TimeSlotDto: {
             /** Format: uuid */
