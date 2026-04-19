@@ -33,6 +33,9 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
 					  .WithBindMount("../../../infrastructure/keycloak/realms",
 									 "/opt/keycloak/data/import",
 									 isReadOnly: true)
+					  .WithBindMount("../../../infrastructure/keycloak/themes",
+									 "/opt/keycloak/data/themes",
+									 isReadOnly: true)
 					  .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
 					  .WithArgs("start-dev", "--import-realm")
 					  .WaitFor(postgres);
