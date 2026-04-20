@@ -17,6 +17,9 @@ public interface IKeycloakAdminApi
 
     [Delete("/users/{userId}/role-mappings/realm")]
     Task RemoveRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
+
+    [Put("/users/{userId}")]
+    Task<HttpResponseMessage> UpdateUserAsync(string userId, [Body] UpdateUserRequest request, CancellationToken ct);
 }
 
 public record RoleRepresentation(
@@ -31,4 +34,7 @@ public record CreateUserRequest(
     [property: JsonPropertyName("enabled")] bool Enabled,
     [property: JsonPropertyName("emailVerified")] bool EmailVerified,
     [property: JsonPropertyName("credentials")] IReadOnlyList<CredentialRepresentation> Credentials,
+    [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
+
+public record UpdateUserRequest(
     [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);

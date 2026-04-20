@@ -239,7 +239,8 @@
             "multivalued": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
-            "userinfo.token.claim": "true"
+            "userinfo.token.claim": "true",
+            "include.in.token.scope": "false"
           }
         }
       ]

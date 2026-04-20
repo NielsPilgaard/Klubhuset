@@ -51,6 +51,22 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
                        ?? throw new KeycloakException("Keycloak did not return a Location header after user creation");
         var keycloakUserId = location.Segments.Last().TrimEnd('/');
 
+        // Keycloak 24+ declarative user profile silently drops unknown attributes on POST /users.
+        // Set tenant_id via a separate PUT so the attribute is saved and included in tokens.
+        var updateResponse = await adminApi.UpdateUserAsync(
+            keycloakUserId,
+            new UpdateUserRequest(new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["tenant_id"] = [tenantId.ToString()],
+            }),
+            ct);
+
+        if (!updateResponse.IsSuccessStatusCode)
+        {
+            var err = await updateResponse.Content.ReadAsStringAsync(ct);
+            throw new KeycloakException($"Failed to set tenant_id attribute on Keycloak user: {updateResponse.StatusCode} — {err}");
+        }
+
         await AssignRealmRoleAsync(keycloakUserId, "admin", ct);
 
         return keycloakUserId;
