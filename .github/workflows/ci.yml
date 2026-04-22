@@ -75,7 +75,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Install Aspire CLI
-        uses: timheuer/setup-aspire@v1
+        run: dotnet tool install -g aspire
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
