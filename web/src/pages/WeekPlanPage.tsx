@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, ClassDto } from '../api/client'
+import { uploadFile } from '../api/upload'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
@@ -238,9 +239,7 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const slotId = await ensureSlotSaved()
-      const form = new FormData()
-      form.append('file', file)
-      const uploaded = await api.postForm<{ id: string; fileName: string; sizeBytes: number; url: string }>('/files', form)
+      const uploaded = await uploadFile({ file })
       await api.post(`/classes/${classId}/ugeplan/slots/${slotId}/files`, { schoolFileId: uploaded.id })
       return uploaded
     },

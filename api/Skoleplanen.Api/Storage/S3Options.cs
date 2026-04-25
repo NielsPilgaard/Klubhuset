@@ -20,4 +20,7 @@ public sealed class S3Options
 
 	[Required(AllowEmptyStrings = false)]
 	public required string PublicEndpoint { get; init; }
+
+	[Required(AllowEmptyStrings = false)]
+	public required string PresignedUploadSigningKey { get; init; }
 }
