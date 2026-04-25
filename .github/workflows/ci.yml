@@ -95,7 +95,7 @@ jobs:
       - name: Start Aspire stack
         env:
           ASPNETCORE_ENVIRONMENT: Development
-          Parameters__keycloak-admin-password: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
+          Parameters__keycloak-admin-password: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD || 'ci-test-password' }}
         run: aspire start
 
       - name: Wait for Keycloak
