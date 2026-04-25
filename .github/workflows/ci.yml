@@ -96,7 +96,16 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           Parameters__keycloak-admin-password: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
-        run: aspire run --project infrastructure/aspire/Skoleplanen.AppHost &
+        run: aspire start
+
+      - name: Wait for Keycloak
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8080/realms/master && break
+            echo "Waiting for Keycloak... ($i/60)"
+            sleep 5
+          done
+          curl -sf http://127.0.0.1:8080/realms/master || (echo "Keycloak did not start in time" && exit 1)
 
       - name: Wait for frontend
         run: |
@@ -110,6 +119,7 @@ jobs:
       - name: Run Playwright tests
         env:
           SKIP_ASPIRE: "1"
+          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
         run: npm run test:e2e
         working-directory: web
 
