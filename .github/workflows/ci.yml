@@ -119,7 +119,7 @@ jobs:
       - name: Run Playwright tests
         env:
           SKIP_ASPIRE: "1"
-          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
+          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD || 'ci-test-password' }}
         run: npm run test:e2e
         working-directory: web
 

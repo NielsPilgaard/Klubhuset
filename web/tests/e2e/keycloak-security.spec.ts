@@ -21,7 +21,7 @@ async function getAdminToken(request: APIRequestContext): Promise<string> {
         grant_type: 'password',
         client_id: 'admin-cli',
         username: 'admin',
-        password: process.env.KEYCLOAK_ADMIN_PASSWORD ?? 'your-dev-password',
+        password: process.env.KEYCLOAK_ADMIN_PASSWORD ?? 'ci-test-password',
       },
     },
   )
