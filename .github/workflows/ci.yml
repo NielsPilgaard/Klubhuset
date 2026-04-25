@@ -96,7 +96,7 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           Parameters__keycloak-admin-password: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
-        run: aspire run --project infrastructure/aspire/Skoleplanen.AppHost &
+        run: aspire start
 
       - name: Wait for Keycloak
         run: |
