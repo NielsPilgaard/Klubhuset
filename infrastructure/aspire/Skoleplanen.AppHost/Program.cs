@@ -55,8 +55,9 @@ builder.AddContainer("localstack", "localstack/localstack", "3")
 	   .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "gateway")
 	   .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
 
-// API
+// API — port 5000 is pinned so the Vite proxy target (http://127.0.0.1:5000) always resolves correctly.
 var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
+				 .WithHttpEndpoint(port: 5000, name: "http")
 				 .WithReference(db)
 				 .WithReference(keycloak.GetEndpoint("http"))
 				 .WaitFor(db)
