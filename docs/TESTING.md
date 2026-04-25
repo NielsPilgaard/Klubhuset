@@ -58,7 +58,17 @@ For user flows that span frontend + backend and where a broken UI is a broken pr
 
 **Location**: `web/tests/e2e/`
 
-**Run against**: real frontend + real API, using the Docker Compose dev stack with a seeded test database. No mocking.
+**Run against**: real frontend + real API, using the Aspire dev stack with a seeded test database. No mocking.
+
+**How to run:**
+
+```bash
+# Stack already running (e.g. you started Aspire manually):
+cd web && npm run test:e2e:skip-aspire
+
+# Let Playwright start the Aspire stack for you:
+cd web && npm run test:e2e
+```
 
 ---
 
