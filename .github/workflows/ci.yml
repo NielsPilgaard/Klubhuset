@@ -96,16 +96,19 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           Parameters__keycloak-admin-password: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD || 'ci-test-password' }}
-        run: aspire start
+          Parameters__postgres-password: ci-pg-password
+        run: |
+          aspire start \
+            --apphost infrastructure/aspire/Skoleplanen.AppHost/Skoleplanen.AppHost.csproj
 
       - name: Wait for Keycloak
         run: |
           for i in $(seq 1 60); do
-            curl -sf http://127.0.0.1:8080/realms/master && break
-            echo "Waiting for Keycloak... ($i/60)"
+            curl -sf http://127.0.0.1:8080/realms/Skoleplanen && break
+            echo "Waiting for Keycloak Skoleplanen realm... ($i/60)"
             sleep 5
           done
-          curl -sf http://127.0.0.1:8080/realms/master || (echo "Keycloak did not start in time" && exit 1)
+          curl -sf http://127.0.0.1:8080/realms/Skoleplanen || (echo "Keycloak Skoleplanen realm did not start in time" && exit 1)
 
       - name: Wait for frontend
         run: |

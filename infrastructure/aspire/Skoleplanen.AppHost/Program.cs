@@ -57,7 +57,7 @@ builder.AddContainer("localstack", "localstack/localstack", "3")
 
 // API — port 5000 is pinned so the Vite proxy target (http://127.0.0.1:5000) always resolves correctly.
 var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
-				 .WithHttpEndpoint(port: 5000, name: "http")
+				 .WithEndpoint("http", e => e.Port = 5000)
 				 .WithReference(db)
 				 .WithReference(keycloak.GetEndpoint("http"))
 				 .WaitFor(db)
