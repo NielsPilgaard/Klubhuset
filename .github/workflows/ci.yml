@@ -110,6 +110,15 @@ jobs:
           done
           curl -sf http://127.0.0.1:8080/realms/Skoleplanen || (echo "Keycloak Skoleplanen realm did not start in time" && exit 1)
 
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            curl -s --max-time 3 http://localhost:5000/ -o /dev/null && break
+            echo "Waiting for API... ($i/60)"
+            sleep 5
+          done
+          curl -s --max-time 3 http://localhost:5000/ -o /dev/null || (echo "API did not start in time" && exit 1)
+
       - name: Wait for frontend
         run: |
           for i in $(seq 1 60); do
