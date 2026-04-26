@@ -363,3 +363,4 @@ media/**/*.png
 media/
 .vscode/settings.json
 test-results/
+.claude/settings.json
