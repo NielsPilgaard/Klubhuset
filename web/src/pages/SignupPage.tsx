@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import keycloak from '../auth/keycloak'
+import keycloak, { seedPostSignupToken } from '../auth/keycloak'
 
 interface ValidationErrors {
   name?: string
@@ -41,12 +41,10 @@ export default function SignupPage() {
       })
 
       if (res.ok) {
-        // Account created — log in automatically
+        const body = await res.json()
         redirectingRef.current = true
-        keycloak.login({
-          loginHint: adminEmail,
-          redirectUri: window.location.origin + '/setup?schoolName=' + encodeURIComponent(name),
-        })
+        seedPostSignupToken(body.accessToken, body.refreshToken)
+        window.location.href = '/setup?schoolName=' + encodeURIComponent(name)
         return
       }
 

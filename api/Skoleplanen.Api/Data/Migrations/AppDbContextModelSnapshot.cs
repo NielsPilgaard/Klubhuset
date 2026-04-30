@@ -276,6 +276,9 @@ namespace Skoleplanen.Api.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("FolderId")
+                        .HasColumnType("uuid");
+
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
 
@@ -306,7 +309,38 @@ namespace Skoleplanen.Api.Data.Migrations
 
                     b.HasIndex("CourseId");
 
+                    b.HasIndex("FolderId");
+
                     b.ToTable("SchoolFiles");
+                });
+
+            modelBuilder.Entity("Skoleplanen.Api.Models.SchoolFileFolder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("SchoolFileFolders");
                 });
 
             modelBuilder.Entity("Skoleplanen.Api.Models.Staff", b =>
@@ -321,6 +355,9 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Property<string>("Email")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("KeycloakSubject")
                         .HasMaxLength(500)
@@ -700,7 +737,24 @@ namespace Skoleplanen.Api.Data.Migrations
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Skoleplanen.Api.Models.SchoolFileFolder", "Folder")
+                        .WithMany("Files")
+                        .HasForeignKey("FolderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Course");
+
+                    b.Navigation("Folder");
+                });
+
+            modelBuilder.Entity("Skoleplanen.Api.Models.SchoolFileFolder", b =>
+                {
+                    b.HasOne("Skoleplanen.Api.Models.SchoolFileFolder", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Skoleplanen.Api.Models.StaffInvitation", b =>
@@ -801,6 +855,13 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("Slots");
 
                     b.Navigation("TimeSlots");
+                });
+
+            modelBuilder.Entity("Skoleplanen.Api.Models.SchoolFileFolder", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlotTemplate", b =>

@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
+    
     <!-- Required for Microsoft.Testing.Platform -->
     <OutputType>Exe</OutputType>
   </PropertyGroup>
@@ -13,14 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- tUnit framework -->
     <PackageReference Include="TUnit" Version="1.28.0" />
     <PackageReference Include="TUnit.AspNetCore" Version="1.28.0" />
-
-    <!-- Testcontainers PostgreSQL -->
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
-
-    <!-- ASP.NET Core test host -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.5" />
 
     <!-- Npgsql 10.0.1 depends on EFCore.Relational 10.0.4, but the API uses 10.0.5.

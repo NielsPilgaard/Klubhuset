@@ -85,14 +85,17 @@ function PrintGrid({ title, subtitle, slots }: {
           {timeAxis.map((ts) => (
             <tr key={ts.startTime}>
               <td className="print-td print-td-time">
-                <span className="print-time">{ts.startTime}</span>
-                <span className="print-time-end">{ts.endTime}</span>
+                <div className="print-td-inner">
+                  <span className="print-time">{ts.startTime}</span>
+                  <span className="print-time-end">{ts.endTime}</span>
+                </div>
               </td>
               {[1, 2, 3, 4, 5].map((day) => {
                 const daySlots = slotMap[ts.startTime]?.[day]
                 const hasConflict = daySlots && daySlots.length > 1
                 return (
                   <td key={day} className="print-td">
+                    <div className="print-td-inner">
                     {daySlots && daySlots.map((slot, idx) => (
                       <div
                         key={idx}
@@ -119,6 +122,7 @@ function PrintGrid({ title, subtitle, slots }: {
                         )}
                       </div>
                     ))}
+                    </div>
                   </td>
                 )
               })}
@@ -209,34 +213,44 @@ export default function PrintSchemaPage() {
   return (
     <>
       <style>{`
+        @page {
+          size: A4 landscape;
+          margin: 10mm;
+        }
         @media print {
-          body { margin: 0; }
+          html, body { margin: 0; height: 100%; }
           .no-print { display: none !important; }
+          .print-page {
+            height: calc(100vh - 0px);
+          }
+          .print-table {
+            height: calc(100% - 72px) !important;
+          }
         }
         .print-page {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          padding: 24px;
-          max-width: 210mm;
+          padding: 16px 20px;
+          max-width: 277mm;
           margin: 0 auto;
         }
         .print-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
-          margin-bottom: 16px;
-          padding-bottom: 12px;
+          margin-bottom: 10px;
+          padding-bottom: 8px;
           border-bottom: 2px solid #1e3a5f;
         }
         .print-title {
-          font-size: 20px;
+          font-size: 16px;
           font-weight: 700;
           color: #111827;
           margin: 0;
         }
         .print-subtitle {
-          font-size: 13px;
+          font-size: 11px;
           color: #6b7280;
-          margin: 2px 0 0;
+          margin: 1px 0 0;
         }
         .print-date {
           font-size: 11px;
@@ -247,35 +261,41 @@ export default function PrintSchemaPage() {
           width: 100%;
           border-collapse: collapse;
           font-size: 11px;
+          table-layout: fixed;
         }
         .print-th {
           background: #f3f4f6;
           text-align: center;
-          padding: 6px 4px;
+          padding: 4px 4px;
           font-weight: 600;
           color: #374151;
           border: 1px solid #e5e7eb;
-          font-size: 11px;
+          font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
         .print-th-time {
-          width: 64px;
+          width: 52px;
           text-align: right;
         }
         .print-td {
           border: 1px solid #e5e7eb;
-          padding: 4px 6px;
+          padding: 0;
           vertical-align: top;
-          min-height: 48px;
-          width: calc((100% - 64px) / 5);
+          width: calc((100% - 52px) / 5);
+        }
+        .print-td-inner {
+          padding: 4px 6px;
+          box-sizing: border-box;
         }
         .print-td-time {
           text-align: right;
-          padding: 4px 8px 4px 4px;
           background: #f9fafb;
           white-space: nowrap;
-          width: 64px;
+          width: 52px;
+        }
+        .print-td-time .print-td-inner {
+          padding: 4px 6px 4px 4px;
         }
         .print-time {
           display: block;

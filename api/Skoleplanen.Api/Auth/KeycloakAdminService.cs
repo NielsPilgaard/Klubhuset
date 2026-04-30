@@ -1,4 +1,6 @@
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Skoleplanen.Api.Auth;
 
@@ -11,11 +13,10 @@ public record CredentialRepresentation(
 /// Talks to the Keycloak Admin REST API to create users on behalf of the application.
 /// Uses client_credentials flow with the skoleplanen-admin service account.
 /// </summary>
-public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi)
+public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTokenApi tokenApi, IOptions<KeycloakOptions> options, ILogger<KeycloakAdminService> logger)
 {
     /// <summary>
-    /// Creates a Keycloak user and returns the new user's Keycloak subject (UUID).
-    /// Sets the tenant_id attribute and assigns the admin realm role.
+    /// Creates a Keycloak user, assigns the admin realm role, and returns the new user's Keycloak subject (UUID).
     /// </summary>
     public async Task<string> CreateAdminUserAsync(
         string email,
@@ -31,7 +32,7 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi)
             FirstName: firstName,
             LastName: lastName,
             Enabled: true,
-            EmailVerified: false,
+            EmailVerified: true,
             Credentials: [new CredentialRepresentation("password", password, Temporary: false)],
             Attributes: new Dictionary<string, IReadOnlyList<string>>
             {
@@ -55,17 +56,78 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi)
         return keycloakUserId;
     }
 
-    private async Task AssignRealmRoleAsync(string userId, string roleName, CancellationToken ct)
+    /// <summary>
+    /// Exchanges user credentials for a token via the password grant on the web client.
+    /// Used immediately after signup so the frontend gets a JWT with tenant_id already embedded.
+    /// </summary>
+    public async Task<TokenResponse> GetTokenForUserAsync(string email, string password, CancellationToken ct)
     {
-        var roleResponse = await adminApi.GetRoleAsync(roleName, ct);
-        if (!roleResponse.IsSuccessStatusCode)
+        var request = new PasswordTokenRequest(
+            GrantType: "password",
+            ClientId: options.Value.WebClientId,
+            Username: email,
+            Password: password,
+            Scope: "openid profile roles tenant");
+
+        return await tokenApi.GetPasswordTokenAsync(request, ct);
+    }
+
+    /// <summary>
+    /// Assigns or removes the Keycloak 'admin' realm role for an existing user.
+    /// Throws <see cref="KeycloakException"/> on failure so callers can roll back DB changes.
+    /// </summary>
+    public async Task SetAdminRoleAsync(string keycloakUserId, bool grant, CancellationToken ct)
+    {
+        RoleRepresentation role;
+        try
         {
-            // Non-critical — user is created, just missing the role
-            return;
+            role = await adminApi.GetRoleAsync("admin", ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new KeycloakException($"Failed to fetch 'admin' role from Keycloak: {ex.Message}");
         }
 
-        var roleJson = await roleResponse.Content.ReadAsStringAsync(ct);
-        await adminApi.AssignRoleMappingsAsync(userId, $"[{roleJson}]", ct);
+        try
+        {
+            if (grant)
+            {
+                await adminApi.AssignRoleMappingsAsync(keycloakUserId, [role], ct);
+            }
+            else
+            {
+                await adminApi.RemoveRoleMappingsAsync(keycloakUserId, [role], ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new KeycloakException($"Failed to {(grant ? "assign" : "remove")} 'admin' role for user {keycloakUserId}: {ex.Message}");
+        }
+    }
+
+    private async Task AssignRealmRoleAsync(string userId, string roleName, CancellationToken ct)
+    {
+        try
+        {
+            var role = await adminApi.GetRoleAsync(roleName, ct);
+            await adminApi.AssignRoleMappingsAsync(userId, [role], ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to assign role {RoleName} to user {UserId}", roleName, userId);
+        }
     }
 }
 

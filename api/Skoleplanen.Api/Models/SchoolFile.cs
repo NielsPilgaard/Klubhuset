@@ -31,6 +31,10 @@ public sealed class SchoolFile : ITenantScoped, IEntityTypeConfiguration<SchoolF
     public Guid? CourseId { get; set; }
     public Course? Course { get; set; }
 
+    /// <summary>Optional folder this file lives in. Null = root.</summary>
+    public Guid? FolderId { get; set; }
+    public SchoolFileFolder? Folder { get; set; }
+
     [StringLength(200)]
     public required string UploadedBy { get; set; }
 
@@ -42,6 +46,10 @@ public sealed class SchoolFile : ITenantScoped, IEntityTypeConfiguration<SchoolF
         builder.HasOne(f => f.Course)
                .WithMany()
                .HasForeignKey(f => f.CourseId)
+               .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(f => f.Folder)
+               .WithMany(fo => fo.Files)
+               .HasForeignKey(f => f.FolderId)
                .OnDelete(DeleteBehavior.SetNull);
     }
 }

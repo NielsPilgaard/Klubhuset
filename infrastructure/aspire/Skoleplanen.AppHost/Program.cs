@@ -17,6 +17,13 @@ var postgres = builder.AddPostgres("postgres", userName: pgUsername, password: p
 var db = postgres.AddDatabase("skoleplanen-db");
 postgres.AddDatabase("keycloak-db");
 
+// Mailpit — local SMTP catch-all (captures all outbound email in dev)
+var mailpit = builder.AddContainer("mailpit", "axllent/mailpit", "latest")
+					 .WithLifetime(ContainerLifetime.Persistent)
+					 .WithHttpEndpoint(port: 8025, targetPort: 8025, name: "ui")
+					 .WithEndpoint(port: 1025, targetPort: 1025, name: "smtp", scheme: "tcp")
+					 .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
+
 // Keycloak (raw container — no first-party Aspire hosting package)
 var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26.2")
 					  .WithLifetime(ContainerLifetime.Persistent)
@@ -33,9 +40,13 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
 					  .WithBindMount("../../../infrastructure/keycloak/realms",
 									 "/opt/keycloak/data/import",
 									 isReadOnly: true)
+					  .WithBindMount("../../../infrastructure/keycloak/themes",
+									 "/opt/keycloak/themes",
+									 isReadOnly: true)
 					  .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
 					  .WithArgs("start-dev", "--import-realm")
-					  .WaitFor(postgres);
+					  .WaitFor(postgres)
+					  .WaitFor(mailpit);
 
 // LocalStack (S3-compatible local emulation for OVHCloud Object Storage)
 builder.AddContainer("localstack", "localstack/localstack", "3")
@@ -44,8 +55,9 @@ builder.AddContainer("localstack", "localstack/localstack", "3")
 	   .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "gateway")
 	   .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
 
-// API
+// API — port 5000 is pinned so the Vite proxy target (http://127.0.0.1:5000) always resolves correctly.
 var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
+				 .WithEndpoint("http", e => e.Port = 5000)
 				 .WithReference(db)
 				 .WithReference(keycloak.GetEndpoint("http"))
 				 .WaitFor(db)

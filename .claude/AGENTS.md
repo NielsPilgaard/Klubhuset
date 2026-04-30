@@ -58,6 +58,15 @@ See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. Summary of rule
 - **One test file per feature flow**, not per class.
 - When in doubt whether something needs a test: does a silent break block Hanne? If yes, test it.
 
+## After completing a feature
+
+After finishing any feature or fix, **always run the full test suite** before declaring the work done:
+
+1. **Playwright e2e**: `cd web && npx playwright test --reporter=line` — this starts the Aspire stack automatically via `webServer` in `playwright.config.ts`. If the stack is already running, pass `SKIP_ASPIRE=1` to skip startup.
+2. **API integration tests**: `dotnet test`
+
+Do not report a task as complete until both suites pass. Or use the `/test` skill which handles this for you.
+
 ## What agents must never do
 
 - Write database queries without tenant scoping
