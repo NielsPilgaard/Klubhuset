@@ -7,36 +7,10 @@ import {
   postApiV1FilesMutation,
   deleteApiV1FilesByIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { CourseDto } from '../api/generated/types.gen'
+import type { CourseDto, FileDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface FileDto {
-  id: string
-  fileName: string
-  contentType: string
-  sizeBytes: number
-  url: string
-  courseId?: string | null
-  courseName?: string | null
-  folderId?: string | null
-  uploadedBy: string
-  uploadedAt: string
-}
-
-interface FolderDto {
-  id: string
-  name: string
-  parentId?: string | null
-  createdAt: string
-}
-
-interface FilesResponse {
-  files: FileDto[]
-  folders: FolderDto[]
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -96,13 +70,6 @@ function fileIcon(contentType: string) {
   )
 }
 
-function folderIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-500">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-    </svg>
-  )
-}
 
 // ─── Upload modal ─────────────────────────────────────────────────────────────
 
@@ -123,12 +90,14 @@ function UploadModal({ courses, currentFolderId, onClose, onUploaded }: UploadMo
   const dragRef = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
 
+  const { mutationFn: uploadMutationFn } = postApiV1FilesMutation()
   const mutation = useMutation({
-    ...postApiV1FilesMutation(),
+    mutationFn: uploadMutationFn,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
       onUploaded()
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       setProgress(null)
       try {
         const body = JSON.parse((err as Error).message)
@@ -137,8 +106,10 @@ function UploadModal({ courses, currentFolderId, onClose, onUploaded }: UploadMo
       } catch {
         setError('Der opstod en fejl under upload. Prøv igen.')
       }
-    }
-  }
+    },
+  })
+
+  const isPending = mutation.isPending
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
@@ -244,62 +215,6 @@ function UploadModal({ courses, currentFolderId, onClose, onUploaded }: UploadMo
   )
 }
 
-// ─── New folder modal ─────────────────────────────────────────────────────────
-
-interface NewFolderModalProps {
-  parentId: string | null
-  onClose: () => void
-  onCreated: () => void
-}
-
-function NewFolderModal({ parentId, onClose, onCreated }: NewFolderModalProps) {
-  const qc = useQueryClient()
-  const [name, setName] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  const mutation = useMutation({
-    mutationFn: () => api.post('/files/folders', { name: name.trim(), parentId: parentId || null }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['files'] })
-      onCreated()
-    },
-    onError: () => setError('Kunne ikke oprette mappen. Prøv igen.'),
-  })
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Ny mappe</h2>
-        </div>
-        <div className="px-6 py-5">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mappenavn *</label>
-          <input
-            autoFocus
-            type="text"
-            value={name}
-            onChange={(e) => { setName(e.target.value); setError(null) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) mutation.mutate() }}
-            placeholder="F.eks. Matematik"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
-          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Annuller</button>
-          <button
-            onClick={() => mutation.mutate()}
-            disabled={!name.trim() || mutation.isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {mutation.isPending ? 'Opretter…' : 'Opret'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FilesPage() {
@@ -307,48 +222,23 @@ export default function FilesPage() {
   const qc = useQueryClient()
   const isAdmin = keycloak.hasRealmRole('admin')
 
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
-  const [breadcrumb, setBreadcrumb] = useState<FolderDto[]>([])
   const [filterCourseId, setFilterCourseId] = useState<string>('')
   const [showUpload, setShowUpload] = useState(false)
-  const [showNewFolder, setShowNewFolder] = useState(false)
 
   const { data: courses } = useQuery(getApiV1CoursesOptions())
 
-  const { data: files, isLoading, isError, refetch } = useQuery(
+  const { data, isLoading, isError, refetch } = useQuery(
     getApiV1FilesOptions(filterCourseId ? { query: { courseId: filterCourseId } } : undefined)
   )
 
+  const { mutationFn: deleteFileMutationFn } = deleteApiV1FilesByIdMutation()
   const deleteMutation = useMutation({
-    ...deleteApiV1FilesByIdMutation(),
+    mutationFn: deleteFileMutationFn,
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
   })
 
-  const deleteFolderMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/files/folders/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['files'] }),
-  })
-
-  function openFolder(folder: FolderDto) {
-    setCurrentFolderId(folder.id)
-    setBreadcrumb((prev) => [...prev, folder])
-    setFilterCourseId('')
-  }
-
-  function navigateBreadcrumb(index: number) {
-    if (index === -1) {
-      setCurrentFolderId(null)
-      setBreadcrumb([])
-    } else {
-      const target = breadcrumb[index]
-      setCurrentFolderId(target.id)
-      setBreadcrumb((prev) => prev.slice(0, index + 1))
-    }
-  }
-
-  const folders = data?.folders ?? []
-  const files = data?.files ?? []
-  const isEmpty = !isLoading && folders.length === 0 && files.length === 0
+  const files = data ?? []
+  const isEmpty = !isLoading && files.length === 0
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
@@ -358,81 +248,36 @@ export default function FilesPage() {
           <h1 className="font-display text-2xl font-semibold text-gray-900">Filer</h1>
           <p className="mt-1 text-sm text-gray-500">Filer og mapper tilknyttet skolen og dens fag</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowNewFolder(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              <line x1="12" y1="11" x2="12" y2="17" />
-              <line x1="9" y1="14" x2="15" y2="14" />
-            </svg>
-            Ny mappe
-          </button>
-          <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            Upload fil
-          </button>
-        </div>
+        <button
+          onClick={() => setShowUpload(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Upload fil
+        </button>
       </div>
 
-      {/* Breadcrumb + course filter row */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-sm min-w-0">
-          <button
-            onClick={() => navigateBreadcrumb(-1)}
-            className={`flex items-center gap-1 hover:text-brand-600 transition-colors ${breadcrumb.length === 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            Alle filer
-          </button>
-          {breadcrumb.map((folder, i) => (
-            <span key={folder.id} className="flex items-center gap-1 min-w-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 shrink-0">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-              <button
-                onClick={() => navigateBreadcrumb(i)}
-                className={`truncate hover:text-brand-600 transition-colors ${i === breadcrumb.length - 1 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}
-              >
-                {folder.name}
-              </button>
-            </span>
+      {/* Course filter */}
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-600">Filtrer efter fag:</label>
+        <select
+          value={filterCourseId}
+          onChange={(e) => setFilterCourseId(e.target.value)}
+          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        >
+          <option value="">Alle fag</option>
+          {courses?.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
-        </nav>
-
-        {/* Course filter (only at root) */}
-        {!currentFolderId && (
-          <div className="flex items-center gap-2 shrink-0">
-            <label className="text-sm text-gray-600">Filtrer efter fag:</label>
-            <select
-              value={filterCourseId}
-              onChange={(e) => setFilterCourseId(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            >
-              <option value="">Alle fag</option>
-              {courses?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            {filterCourseId && (
-              <button onClick={() => setFilterCourseId('')} className="text-xs text-brand-600 hover:text-brand-800">
-                Ryd filter
-              </button>
-            )}
-          </div>
+        </select>
+        {filterCourseId && (
+          <button onClick={() => setFilterCourseId('')} className="text-xs text-brand-600 hover:text-brand-800">
+            Ryd filter
+          </button>
         )}
       </div>
 
@@ -443,7 +288,7 @@ export default function FilesPage() {
         </div>
       )}
 
-      {/* File / folder listing */}
+      {/* File listing */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -467,48 +312,6 @@ export default function FilesPage() {
                 </tr>
               ))}
 
-            {/* Folders */}
-            {folders.map((folder) => (
-              <tr
-                key={`folder-${folder.id}`}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
-                data-testid={`folder-row-${folder.id}`}
-                onClick={() => openFolder(folder)}
-              >
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0">{folderIcon()}</span>
-                    <span className="font-medium text-gray-900 truncate">{folder.name}</span>
-                  </div>
-                </td>
-                <td className="px-5 py-3 hidden md:table-cell"><span className="text-gray-300">—</span></td>
-                <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{formatDate(folder.createdAt)}</td>
-                <td className="px-5 py-3 hidden lg:table-cell"><span className="text-gray-300">—</span></td>
-                <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                  {isAdmin && (
-                    <button
-                      data-testid={`delete-folder-${folder.id}`}
-                      onClick={() => {
-                        if (confirm(`Slet mappen "${folder.name}" og alle dens indhold?`)) {
-                          deleteFolderMutation.mutate(folder.id)
-                        }
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                      title="Slet mappe"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-
-            {/* Files */}
             {files.map((f) => (
               <tr key={f.id} className="hover:bg-gray-50 transition-colors" data-testid={`file-row-${f.id}`}>
                 <td className="px-5 py-3">
@@ -571,7 +374,7 @@ export default function FilesPage() {
             {isEmpty && (
               <tr>
                 <td colSpan={5} className="px-5 py-12 text-center">
-                  <p className="text-gray-400 text-sm">Ingen filer eller mapper her endnu</p>
+                  <p className="text-gray-400 text-sm">Ingen filer her endnu</p>
                   <p className="text-gray-300 text-xs mt-1">Klik "Upload fil" for at komme i gang</p>
                 </td>
               </tr>
@@ -583,17 +386,9 @@ export default function FilesPage() {
       {showUpload && (
         <UploadModal
           courses={courses ?? []}
-          currentFolderId={currentFolderId}
+          currentFolderId={null}
           onClose={() => setShowUpload(false)}
           onUploaded={() => setShowUpload(false)}
-        />
-      )}
-
-      {showNewFolder && (
-        <NewFolderModal
-          parentId={currentFolderId}
-          onClose={() => setShowNewFolder(false)}
-          onCreated={() => setShowNewFolder(false)}
         />
       )}
     </div>

@@ -113,7 +113,7 @@ function StaffModal({ initial, onClose, onSaved, currentUserKeycloakSubject }: S
 
   function handleSave() {
     if (!name.trim() || isPending) return
-    const body = { name, email: email || null, phone: phone || null, role }
+    const body = { name, email: email || null, phone: phone || null, role, isAdmin }
     if (initial) {
       updateMutation.mutate({ path: { id: initial.id! }, body })
     } else {
@@ -174,6 +174,16 @@ function StaffModal({ initial, onClose, onSaved, currentUserKeycloakSubject }: S
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
+          <AdminToggle
+            value={isAdmin}
+            onChange={setIsAdmin}
+            disabled={isEditingSelf || inviteNotAccepted}
+            disabledTooltip={
+              isEditingSelf
+                ? 'Du kan ikke ændre din egen administratoradgang'
+                : 'Medarbejderen skal acceptere invitationen først'
+            }
+          />
           {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
@@ -313,6 +323,8 @@ export default function StaffPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [editingStaff, setEditingStaff] = useState<StaffDto | null>(null)
   const [invitingStaff, setInvitingStaff] = useState<StaffDto | null>(null)
+
+  const currentUserKeycloakSubject = (keycloak.tokenParsed as Record<string, string> | undefined)?.sub
 
   const { data: staff, isLoading, isError, refetch } = useQuery(getApiV1StaffOptions())
 
