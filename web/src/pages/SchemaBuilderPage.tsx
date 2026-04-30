@@ -417,7 +417,7 @@ export default function SchemaBuilderPage() {
     ...getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsOptions({ path: { classId: classId!, schemaId: schemaId! } }),
     enabled: !!classId && !!schemaId,
   })
-  const timeSlots = (rawTimeSlots ?? []) as TimeSlotDto[]
+  const timeSlots = useMemo(() => (rawTimeSlots ?? []) as TimeSlotDto[], [rawTimeSlots])
 
   const { data: rawCourses } = useQuery(getApiV1CoursesOptions())
   const courses = (rawCourses ?? []) as CourseDto[]
@@ -557,7 +557,7 @@ export default function SchemaBuilderPage() {
       deleteSlot!({ path: { classId: classId!, schemaId: schemaId!, timeSlotId: src.timeSlotId, weekday: src.weekday } }, undefined as never)
         .then(() => qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({ path: { classId: classId!, schemaId: schemaId! } }) }))
     }
-  }, [slotMap, sortedTimeSlots, upsertSlotMutation, classId, schemaId, qc])
+  }, [slotMap, sortedTimeSlots, upsertSlotMutation, classId, schemaId, qc, detail?.slots])
 
   // Active drag slot (for overlay)
   const activeDragSlot = useMemo(() => {

@@ -569,7 +569,7 @@ export default function ClassesPage() {
   }, [openMenuId])
 
   const { data: rawClasses, isLoading, isError, refetch } = useQuery(getApiV1ClassesOptions())
-  const classes = (rawClasses ?? []) as ClassDto[]
+  const classes = useMemo(() => (rawClasses ?? []) as ClassDto[], [rawClasses])
 
   useEffect(() => {
     const action = searchParams.get('action')

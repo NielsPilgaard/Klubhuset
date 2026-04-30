@@ -133,7 +133,10 @@ export default function ClassTimeSlotsPage() {
     enabled: !!classId && !!schemaId,
   })
   const isLoading = schemaId ? isLoadingSchema : isLoadingClass
-  const timeSlots = ((schemaId ? rawSchemaTimeSlots : rawClassTimeSlots) ?? []) as TimeSlotDto[]
+  const timeSlots = useMemo(
+    () => ((schemaId ? rawSchemaTimeSlots : rawClassTimeSlots) ?? []) as TimeSlotDto[],
+    [schemaId, rawSchemaTimeSlots, rawClassTimeSlots],
+  )
 
   const isSchemaCustom = timeSlots?.some((s) => s.classId != null)
   const isCustom = schemaId ? isSchemaCustom : isSchemaCustom
