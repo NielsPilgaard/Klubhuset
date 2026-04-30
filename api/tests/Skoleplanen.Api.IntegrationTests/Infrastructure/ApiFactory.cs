@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Tenancy;
 using Testcontainers.PostgreSql;
@@ -25,56 +26,33 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
 	public TestTenantContext TenantContext { get; } = new();
 
-	public async Task StartAsync() => await _postgres.StartAsync();
+	public async Task StartAsync()
+	{
+		await _postgres.StartAsync();
+		await using var scope = Services.CreateAsyncScope();
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		await db.Database.MigrateAsync();
+	}
 
 	protected override void ConfigureWebHost(IWebHostBuilder builder)
 	{
 		builder.UseEnvironment("Testing");
 
-		// Provide stub values for required config that isn't needed in tests
-		builder.UseSetting("Stripe:SecretKey", "sk_test_stub");
-		builder.UseSetting("Stripe:PriceId", "price_stub");
-		builder.UseSetting("Stripe:WebhookSecret", "whsec_stub");
-		builder.UseSetting("Smtp:Host", "localhost");
-		builder.UseSetting("Smtp:Port", "25");
-		builder.UseSetting("Smtp:Username", "test");
-		builder.UseSetting("Smtp:Password", "test");
-
 		builder.ConfigureServices(services =>
 		{
 			// Replace DB with the Testcontainers instance
-			var descriptor = services.SingleOrDefault(
-				d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-			if (descriptor != null)
-			{
-				services.Remove(descriptor);
-			}
-
+			services.RemoveAll<DbContextOptions<AppDbContext>>();
 			services.AddDbContext<AppDbContext>(options =>
 				options.UseNpgsql(_postgres.GetConnectionString()));
 
 			// Replace tenant context — tests control TenantId directly
-			var tenantDescriptor = services.SingleOrDefault(
-				d => d.ServiceType == typeof(ITenantContext));
-			if (tenantDescriptor != null)
-			{
-				services.Remove(tenantDescriptor);
-			}
-
+			services.RemoveAll<ITenantContext>();
 			services.AddScoped<ITenantContext>(_ => TenantContext);
 
 			// Replace JWT auth with a no-op test scheme so [Authorize] passes
 			services.AddAuthentication(TestAuthHandler.SchemeName)
 					.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
 						TestAuthHandler.SchemeName, _ => { });
-		});
-
-		builder.ConfigureServices(services =>
-		{
-			// Run EF migrations on first boot
-			using var scope = services.BuildServiceProvider().CreateScope();
-			var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-			db.Database.Migrate();
 		});
 	}
 

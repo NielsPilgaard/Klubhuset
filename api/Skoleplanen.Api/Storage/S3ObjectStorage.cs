@@ -22,7 +22,29 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 
         await s3.PutObjectAsync(request, ct);
 
-        // URL-encode the key to ensure reserved/special characters are properly escaped
+        return BuildPublicUrl(key);
+    }
+
+    public Task<(string UploadUrl, string PublicUrl)> GeneratePresignedUploadUrlAsync(
+        string key, string contentType, long contentLength, TimeSpan expiry, CancellationToken ct = default)
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = _options.DefaultBucketName,
+            Key = key,
+            Verb = HttpVerb.PUT,
+            Expires = DateTime.UtcNow.Add(expiry),
+            ContentType = contentType,
+        };
+
+        var uploadUrl = s3.GetPreSignedURL(request);
+        var publicUrl = BuildPublicUrl(key);
+
+        return Task.FromResult((uploadUrl, publicUrl));
+    }
+
+    private string BuildPublicUrl(string key)
+    {
         var encodedKey = WebUtility.UrlEncode(key.TrimStart('/'));
         return $"{_options.PublicEndpoint.TrimEnd('/')}/{_options.DefaultBucketName}/{encodedKey}";
     }

@@ -41,6 +41,7 @@ services:
       KC_HTTP_ENABLED: "true"
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
+      - ../keycloak/themes:/opt/keycloak/themes:ro
     networks:
       - internal
     labels:
@@ -59,8 +60,12 @@ services:
       ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
       Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
       Keycloak__Audience: skoleplanen-api
+      ObjectStorage__ServiceUrl: ${ObjectStorage_ServiceUrl}
       ObjectStorage__AccessKey: ${ObjectStorage_AccessKey}
       ObjectStorage__SecretKey: ${ObjectStorage_SecretKey}
+      ObjectStorage__DefaultBucketName: ${ObjectStorage_DefaultBucketName}
+      ObjectStorage__PublicEndpoint: ${ObjectStorage_PublicEndpoint}
+      ObjectStorage__PresignedUploadSigningKey: ${ObjectStorage_PresignedUploadSigningKey}
       Smtp__Username: ${Smtp_Username}
       Smtp__Password: ${Smtp_Password}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}

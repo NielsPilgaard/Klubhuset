@@ -29,15 +29,16 @@ public sealed class TenantsController(AppDbContext db, KeycloakAdminService keyc
 		[MinLength(8)]
 		string AdminPassword);
 
-	public record TenantDto(Guid Id, string Name, string AdminEmail);
+	public record TenantCreatedDto(Guid Id, string Name, string AdminEmail, string AccessToken, string? RefreshToken, int ExpiresIn);
 
 	/// <summary>
 	/// Create a new tenant (school) and its first admin user.
+	/// Returns a JWT so the frontend can initialise Keycloak immediately — no separate login redirect needed.
 	/// Called anonymously during school signup.
 	/// </summary>
 	[HttpPost]
 	[AllowAnonymous]
-	public async Task<ActionResult<TenantDto>> Create([FromBody] CreateTenantRequest req, CancellationToken ct)
+	public async Task<ActionResult<TenantCreatedDto>> Create([FromBody] CreateTenantRequest req, CancellationToken ct)
 	{
 		var school = new School
 		{
@@ -79,6 +80,19 @@ public sealed class TenantsController(AppDbContext db, KeycloakAdminService keyc
 
 		await db.SaveChangesAsync(ct);
 
-		return Ok(new TenantDto(school.Id, school.Name, school.ContactEmail));
+		TokenResponse token;
+		try
+		{
+			token = await keycloakAdmin.GetTokenForUserAsync(req.AdminEmail, req.AdminPassword, ct);
+		}
+		catch (Exception ex)
+		{
+			return Problem(
+				title: "Skole oprettet, men login fejlede",
+				detail: ex.Message,
+				statusCode: 502);
+		}
+
+		return Ok(new TenantCreatedDto(school.Id, school.Name, school.ContactEmail, token.AccessToken, token.RefreshToken, token.ExpiresIn));
 	}
 }

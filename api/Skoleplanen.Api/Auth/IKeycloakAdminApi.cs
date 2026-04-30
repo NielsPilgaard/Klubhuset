@@ -10,11 +10,21 @@ public interface IKeycloakAdminApi
     Task<HttpResponseMessage> CreateUserAsync([Body] CreateUserRequest request, CancellationToken ct);
 
     [Get("/roles/{roleName}")]
-    Task<HttpResponseMessage> GetRoleAsync(string roleName, CancellationToken ct);
+    Task<RoleRepresentation> GetRoleAsync(string roleName, CancellationToken ct);
 
     [Post("/users/{userId}/role-mappings/realm")]
-    Task AssignRoleMappingsAsync(string userId, [Body] string roleJson, CancellationToken ct);
+    Task AssignRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
+
+    [Delete("/users/{userId}/role-mappings/realm")]
+    Task RemoveRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
+
+    [Put("/users/{userId}")]
+    Task<HttpResponseMessage> UpdateUserAsync(string userId, [Body] UpdateUserRequest request, CancellationToken ct);
 }
+
+public record RoleRepresentation(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("name")] string Name);
 
 public record CreateUserRequest(
     [property: JsonPropertyName("username")] string Username,
@@ -24,4 +34,7 @@ public record CreateUserRequest(
     [property: JsonPropertyName("enabled")] bool Enabled,
     [property: JsonPropertyName("emailVerified")] bool EmailVerified,
     [property: JsonPropertyName("credentials")] IReadOnlyList<CredentialRepresentation> Credentials,
+    [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
+
+public record UpdateUserRequest(
     [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);

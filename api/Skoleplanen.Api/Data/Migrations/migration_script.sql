@@ -659,3 +659,75 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260419074357_Add_Staff_IsAdmin') THEN
+    ALTER TABLE "Staff" ADD "IsAdmin" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260419074357_Add_Staff_IsAdmin') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260419074357_Add_Staff_IsAdmin', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
+    ALTER TABLE "SchoolFiles" ADD "FolderId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
+    CREATE TABLE "SchoolFileFolders" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "ParentId" uuid,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_SchoolFileFolders" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SchoolFileFolders_SchoolFileFolders_ParentId" FOREIGN KEY ("ParentId") REFERENCES "SchoolFileFolders" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
+    CREATE INDEX "IX_SchoolFiles_FolderId" ON "SchoolFiles" ("FolderId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
+    CREATE INDEX "IX_SchoolFileFolders_ParentId" ON "SchoolFileFolders" ("ParentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
+    ALTER TABLE "SchoolFiles" ADD CONSTRAINT "FK_SchoolFiles_SchoolFileFolders_FolderId" FOREIGN KEY ("FolderId") REFERENCES "SchoolFileFolders" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260425064641_Add_SchoolFileFolder_And_Presign', '10.0.5');
+    END IF;
+END $EF$;
+COMMIT;
+

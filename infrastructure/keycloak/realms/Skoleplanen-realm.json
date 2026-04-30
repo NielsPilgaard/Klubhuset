@@ -3,13 +3,42 @@
   "enabled": true,
   "displayName": "Skoleplanen",
   "sslRequired": "external",
+  "loginTheme": "skoleplanen",
+  "emailTheme": "skoleplanen",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["da"],
+  "defaultLocale": "da",
+
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@skoleplanen.dk",
+    "fromDisplayName": "Skoleplanen",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
 
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
+
   "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "permanentLockout": false,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanUserAction": 300,
 
   "roles": {
     "realm": [
@@ -58,7 +87,6 @@
       "directAccessGrantsEnabled": false,
 
       "defaultClientScopes": [
-        "profile",
         "roles"
       ]
     },
@@ -71,7 +99,7 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
 
       "redirectUris": [
         "http://localhost:5173/*",
@@ -111,7 +139,8 @@
         "realm-management": [
           "manage-users",
           "view-users",
-          "query-users"
+          "query-users",
+          "view-realm"
         ]
       }
     },
@@ -146,16 +175,6 @@
       "protocol": "openid-connect",
       "protocolMappers": [
         {
-          "name": "full name",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-full-name-mapper",
-          "config": {
-            "id.token.claim": "true",
-            "access.token.claim": "true",
-            "userinfo.token.claim": "true"
-          }
-        },
-        {
           "name": "given name",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-property-mapper",
@@ -163,7 +182,7 @@
             "user.attribute": "firstName",
             "claim.name": "given_name",
             "id.token.claim": "true",
-            "access.token.claim": "true",
+            "access.token.claim": "false",
             "userinfo.token.claim": "true"
           }
         },
@@ -175,19 +194,7 @@
             "user.attribute": "lastName",
             "claim.name": "family_name",
             "id.token.claim": "true",
-            "access.token.claim": "true",
-            "userinfo.token.claim": "true"
-          }
-        },
-        {
-          "name": "username",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-usermodel-property-mapper",
-          "config": {
-            "user.attribute": "username",
-            "claim.name": "preferred_username",
-            "id.token.claim": "true",
-            "access.token.claim": "true",
+            "access.token.claim": "false",
             "userinfo.token.claim": "true"
           }
         }
@@ -204,7 +211,9 @@
           "config": {
             "multivalued": "true",
             "claim.name": "realm_access.roles",
-            "access.token.claim": "true"
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
           }
         }
       ]
@@ -222,9 +231,10 @@
             "claim.name": "tenant_id",
             "jsonType.label": "String",
             "multivalued": "false",
-            "id.token.claim": "true",
+            "id.token.claim": "false",
             "access.token.claim": "true",
-            "userinfo.token.claim": "true"
+            "userinfo.token.claim": "false",
+            "include.in.token.scope": "false"
           }
         }
       ]

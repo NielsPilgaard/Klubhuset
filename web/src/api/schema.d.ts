@@ -1772,6 +1772,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/{id}/admin-permission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PatchAdminPermissionRequest"];
+                    "text/json": components["schemas"]["PatchAdminPermissionRequest"];
+                    "application/*+json": components["schemas"]["PatchAdminPermissionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StaffDto"];
+                        "application/json": components["schemas"]["StaffDto"];
+                        "text/json": components["schemas"]["StaffDto"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/staff-invitations": {
         parameters: {
             query?: never;
@@ -2061,9 +2106,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["TenantDto"];
-                        "application/json": components["schemas"]["TenantDto"];
-                        "text/json": components["schemas"]["TenantDto"];
+                        "text/plain": components["schemas"]["TenantCreatedDto"];
+                        "application/json": components["schemas"]["TenantCreatedDto"];
+                        "text/json": components["schemas"]["TenantCreatedDto"];
                     };
                 };
             };
@@ -2683,6 +2728,9 @@ export interface components {
             /** Format: int32 */
             stepsTotal?: number;
         };
+        PatchAdminPermissionRequest: {
+            isAdmin?: boolean;
+        };
         RoomDto: {
             /** Format: uuid */
             id?: string;
@@ -2766,6 +2814,8 @@ export interface components {
             email?: string | null;
             phone?: string | null;
             role?: components["schemas"]["StaffRole"];
+            isAdmin?: boolean;
+            keycloakSubject?: string | null;
         };
         /** @enum {string} */
         StaffRole: "Teacher" | "Aide" | "Substitute";
@@ -2795,11 +2845,15 @@ export interface components {
             activeDays?: string | null;
             breaks?: components["schemas"]["BreakDto"][] | null;
         };
-        TenantDto: {
+        TenantCreatedDto: {
             /** Format: uuid */
             id?: string;
             name?: string | null;
             adminEmail?: string | null;
+            accessToken?: string | null;
+            refreshToken?: string | null;
+            /** Format: int32 */
+            expiresIn?: number;
         };
         TimeSlotDto: {
             /** Format: uuid */
@@ -2875,6 +2929,7 @@ export interface components {
             email?: string | null;
             phone?: string | null;
             role?: components["schemas"]["StaffRole"];
+            isAdmin?: boolean;
         };
         UpsertTemplateRequest: {
             /** Format: int32 */

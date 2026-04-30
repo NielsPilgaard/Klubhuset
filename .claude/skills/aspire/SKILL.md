@@ -1,118 +1,106 @@
 ---
 name: aspire
-description: Reference guide for .NET Aspire orchestration in this project. Use this skill whenever the user mentions Aspire, the local dev stack, adding/modifying services in the orchestrator, running the local environment, or asks about docker containers for local development. Also trigger when the user wants to add a new infrastructure service (database, cache, message broker, etc.) to the local dev environment, even if they don't mention Aspire by name.
+description: "Orchestrates Aspire distributed applications using the Aspire CLI for running, debugging, and managing distributed apps. USE FOR: aspire start, aspire stop, start aspire app, aspire describe, list aspire integrations, debug aspire issues, view aspire logs, add aspire resource, aspire dashboard, update aspire apphost. DO NOT USE FOR: non-Aspire .NET apps (use dotnet CLI), container-only deployments (use docker/podman), Azure deployment after local testing (use azure-deploy skill). INVOKES: Aspire CLI commands (aspire start, aspire describe, aspire otel logs, aspire docs search, aspire add), bash. FOR SINGLE OPERATIONS: Use Aspire CLI commands directly for quick resource status or doc lookups."
 ---
 
-# .NET Aspire — Local Orchestration
+# Aspire Skill
 
-Aspire v13 orchestrates the entire local dev stack. One command — `aspire run` — starts PostgreSQL, pgAdmin, Keycloak, and LocalStack with a built-in dashboard for logs, traces, and health.
+This repository uses Aspire to orchestrate its distributed application. Resources are defined in the AppHost project (`apphost.cs` or `apphost.ts`).
 
-## Quick reference
+## CLI command reference
 
-| Item | Value |
-|------|-------|
-| Aspire version | **13.2.1** |
-| AppHost | `infrastructure/aspire/Skoleplanen.AppHost/` |
-| ServiceDefaults | `infrastructure/aspire/Skoleplanen.ServiceDefaults/` |
-| Config | `aspire.config.json` (repo root, points to AppHost) |
-| Solution format | `.slnx` (not `.sln`) |
-| Run command | `aspire run` from repo root |
+| Task | Command |
+|---|---|
+| Start the app | `aspire start` |
+| Start isolated (worktrees) | `aspire start --isolated` |
+| Restart the app | `aspire start` (stops previous automatically) |
+| Wait for resource healthy | `aspire wait <resource>` |
+| Stop the app | `aspire stop` |
+| List resources | `aspire describe` or `aspire resources` |
+| Run resource command | `aspire resource <resource> <command>` |
+| Start/stop/restart resource | `aspire resource <resource> start|stop|restart` |
+| Rebuild a .NET project resource | `aspire resource <resource> rebuild` |
+| View console logs | `aspire logs [resource]` |
+| View structured logs | `aspire otel logs [resource]` |
+| View traces | `aspire otel traces [resource]` |
+| Logs for a trace | `aspire otel logs --trace-id <id>` |
+| Add an integration | `aspire add` |
+| List running AppHosts | `aspire ps` |
+| Update AppHost packages | `aspire update` |
+| Search docs | `aspire docs search <query>` |
+| Get doc page | `aspire docs get <slug>` |
+| List doc pages | `aspire docs list` |
+| Environment diagnostics | `aspire doctor` |
+| List resource MCP tools | `aspire mcp tools` |
+| Call resource MCP tool | `aspire mcp call <resource> <tool> --input <json>` |
 
-## Installation
+Most commands support `--format Json` for machine-readable output. Use `--apphost <path>` to target a specific AppHost.
 
-```powershell
-irm https://aspire.dev/install.ps1 | iex
-```
+## Key workflows
 
-This installs the `aspire` CLI globally. The setup script (`scripts/setup.ps1`) handles this automatically.
+### Running in agent environments
 
-## Running the stack
+Use `aspire start` to run the AppHost in the background. When working in a git worktree, use `--isolated` to avoid port conflicts and to prevent sharing user secrets or other local state with other running instances:
 
 ```bash
-aspire run
+aspire start --isolated
 ```
 
-This reads `aspire.config.json` in the repo root, which points to the AppHost project. The Aspire dashboard opens in the browser automatically showing all resources, logs, and traces.
+Use `aspire wait <resource>` to block until a resource is healthy before interacting with it:
 
-## Container labels
-
-Every container resource in the AppHost must carry the project label so all containers are grouped and identifiable. A `const string label = "skoleplanen"` is defined at the top of `Program.cs`.
-
-Apply it with:
-```csharp
-.WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
+```bash
+aspire start --isolated
+aspire wait myapi
 ```
 
-For child containers created via callbacks (like pgAdmin), apply inside the callback:
-```csharp
-.WithPgAdmin(pgAdmin => pgAdmin.WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}"))
+### Applying code changes
+
+Choose the right action based on what changed:
+
+| What changed | Action | Why |
+|---|---|---|
+| AppHost project (`apphost.cs`/`apphost.ts`) | `aspire start` | Resource graph changed; full restart required |
+| Compiled .NET project resource | `aspire resource <name> rebuild` | Rebuilds and restarts only that resource |
+| Interpreted resource (JavaScript, Python) | Typically nothing — most run with file watchers | Restart the resource if no watch mode is configured |
+
+**Never restart the entire AppHost just because a single resource changed.** Use `aspire resource <name> rebuild` for .NET project resources — it coordinates stop, build, and restart for just that resource. Use `aspire describe --format Json` to check which commands a resource supports.
+
+### Debugging issues
+
+Before making code changes, inspect the app state:
+
+1. `aspire describe` — check resource status
+2. `aspire otel logs <resource>` — view structured logs
+3. `aspire logs <resource>` — view console output
+4. `aspire otel traces <resource>` — view distributed traces
+
+### Adding integrations
+
+Use `aspire docs search` to find integration documentation, then `aspire docs get` to read the full guide. Use `aspire add` to add the integration package to the AppHost.
+
+After adding an integration, restart the app with `aspire start` for the new resource to take effect.
+
+### Using resource MCP tools
+
+Some resources expose MCP tools (e.g. `WithPostgresMcp()` adds SQL query tools). Discover and call them via CLI:
+
+```bash
+aspire mcp tools                                              # list available tools
+aspire mcp tools --format Json                                # includes input schemas
+aspire mcp call <resource> <tool> --input '{"key":"value"}'   # invoke a tool
 ```
 
-## Adding a new service
+## Important rules
 
-When adding any new container or resource to the AppHost, always include:
+- **Always start the app first** (`aspire start`) before making changes to verify the starting state.
+- **To restart, just run `aspire start` again** — it automatically stops the previous instance. NEVER use `aspire stop` then `aspire run`. NEVER use `aspire run` at all.
+- **Only restart the AppHost when AppHost code changes.** For .NET project resources, use `aspire resource <name> rebuild` instead.
+- Use `--isolated` when working in a worktree.
+- **Avoid persistent containers** early in development to prevent state management issues.
+- **Never install the Aspire workload** — it is obsolete.
+- **For Aspire API reference and documentation, prefer `aspire docs search <query>` and `aspire docs get <slug>`** over searching NuGet package caches or XML doc files. The CLI provides up-to-date content from aspire.dev.
+- Prefer `aspire.dev` and `learn.microsoft.com/microsoft/aspire` for official documentation.
 
-1. **Persistent lifetime** — `.WithLifetime(ContainerLifetime.Persistent)` so the container survives AppHost restarts during development
-2. **Project label** — `.WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")` for grouping in Docker Desktop
-3. **Named endpoint** — `.WithHttpEndpoint(port: ..., targetPort: ..., name: "...")` so other resources can reference it
-4. **WaitFor dependencies** — `.WaitFor(dependency)` if the service depends on another being ready first
+## Playwright CLI
 
-Example pattern:
-```csharp
-var myService = builder.AddContainer("myservice", "image/name", "tag")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithHttpEndpoint(port: 1234, targetPort: 1234, name: "http")
-    .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
-    .WaitFor(postgres);
-```
-
-## Current services
-
-### PostgreSQL
-- Shared server with two databases: `skoleplanen` (API) and `keycloak` (Keycloak's own schema)
-- pgAdmin included via `.WithPgAdmin()`
-- Both postgres and pgAdmin containers carry the project label
-
-### Keycloak
-- Runs as a raw container (`quay.io/keycloak/keycloak:26.2`) — there is no first-party Aspire hosting package for Keycloak
-- Has its own `keycloak` database on the shared postgres server (Keycloak manages its own schema/migrations internally — never share a database between Keycloak and the API)
-- Connected to postgres via `KC_DB_URL` (JDBC format), `KC_DB_USERNAME`, and `KC_DB_PASSWORD` environment variables
-- Uses `ReferenceExpression.Create()` to build the JDBC URL from Aspire endpoint references at runtime
-
-### LocalStack
-- S3-compatible local emulation for OVHCloud Object Storage
-- **Must use v3** (not v4+) — v4 requires a license and account
-- Gateway endpoint on port 4566
-
-## NuGet packages
-
-All Aspire hosting packages should use version **13.2.1**:
-- `Aspire.AppHost.Sdk` (SDK in csproj)
-- `Aspire.Hosting.AppHost`
-- `Aspire.Hosting.PostgreSQL`
-- `Aspire.Hosting.JavaScript` (for React+Vite frontend, replaces the old `Aspire.Hosting.NodeJs`)
-
-ServiceDefaults uses:
-- `Microsoft.Extensions.ServiceDiscovery` (latest stable, currently 10.4.0)
-- `OpenTelemetry.*` packages for tracing, metrics, and OTLP export
-- `Microsoft.Extensions.Http.Resilience` for HTTP client resilience
-
-## Wiring up new projects
-
-When the API or web projects are created, uncomment and adjust the placeholder blocks in `Program.cs`:
-
-```csharp
-// API project
-var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
-    .WithReference(db)
-    .WaitFor(db)
-    .WaitFor(keycloak);
-
-// React + Vite frontend
-var web = builder.AddNpmApp("web", workingDirectory: "../../../web", scriptName: "dev")
-    .WithHttpEndpoint(port: 5173, env: "PORT")
-    .WithExternalHttpEndpoints()
-    .WithReference(api);
-```
-
-The API project should reference `Skoleplanen.ServiceDefaults` and call `builder.AddServiceDefaults()` and `app.MapDefaultEndpoints()` to get OpenTelemetry, health checks, and service discovery wired up automatically.
+If configured, use Playwright CLI for functional testing of resources. Get endpoints via `aspire describe`. Run `playwright-cli --help` for available commands.

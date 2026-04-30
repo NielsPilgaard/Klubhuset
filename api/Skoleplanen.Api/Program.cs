@@ -81,6 +81,9 @@ builder.Services.AddScoped<SubscriptionService>();
 
 builder.Services.AddStripe(builder.Configuration);
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<MissingTenantClaimExceptionHandler>();
+
 builder.Services.AddControllers()
 	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -88,31 +91,32 @@ var app = builder.Build();
 
 app.UseSwaggerInDevelopment();
 
+app.UseExceptionHandler();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
-if (!isOpenApiGeneration)
+if (app.Environment.IsDevelopment() && !isOpenApiGeneration)
 {
-	if (!builder.Environment.IsProduction())
-	{
-        await using var scope = app.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await using var scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
 
-        await db.Database.MigrateAsync();
-	}
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    // Seed well-known dev/prod fixtures (idempotent — skipped if already present).
+    if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
+    {
+        _ = Task.Run(() => app.Services.SeedAsync());
+    }
 
-	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
-	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
-	{
-		_ = Task.Run(() => app.Services.SeedAsync());
-	}
-
-	if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
-	{
-		_ = Task.Run(() => app.Services.EnsureS3BucketAsync());
-	}
+    if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
+    {
+        _ = Task.Run(() => app.Services.EnsureS3BucketAsync());
+    }
 }
 
 app.Run();

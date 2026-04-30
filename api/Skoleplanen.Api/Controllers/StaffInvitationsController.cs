@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Skoleplanen.Api.Auth;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Models;
 using Skoleplanen.Api.Services;
@@ -12,7 +13,8 @@ namespace Skoleplanen.Api.Controllers;
 [Authorize]
 public sealed class StaffInvitationsController(
 	AppDbContext db,
-	StaffInvitationService invitationService) : ControllerBase
+	StaffInvitationService invitationService,
+	KeycloakAdminService keycloak) : ControllerBase
 {
 	public record InvitationDto(
 		Guid Id,
@@ -126,6 +128,19 @@ public sealed class StaffInvitationsController(
 		}
 
 		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, ct);
+
+		if (invitation.Staff.IsAdmin)
+		{
+			try
+			{
+				await keycloak.SetAdminRoleAsync(keycloakSubject, grant: true, ct);
+			}
+			catch (KeycloakException ex)
+			{
+				return Problem(title: "Keycloak-synkronisering fejlede", detail: ex.Message, statusCode: 502);
+			}
+		}
+
 		return NoContent();
 	}
 
