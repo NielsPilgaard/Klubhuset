@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, TimeSlotDto, ClassDto } from '../api/client'
+import {
+  getApiV1ClassesOptions,
+  getApiV1ClassesByClassIdTimeSlotsOptions,
+  getApiV1ClassesByClassIdTimeSlotsQueryKey,
+  putApiV1ClassesByClassIdTimeSlotsMutation,
+  getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsOptions,
+  getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsQueryKey,
+  putApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { TimeSlotDto, ClassDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { TimeInput } from '../components/TimeInput'
 
@@ -105,32 +114,39 @@ export default function ClassTimeSlotsPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
 
-  const { data: cls } = useQuery<ClassDto[]>({
-    queryKey: ['classes'],
-    queryFn: () => api.get('/classes'),
-    select: (all) => all.filter((c) => c.id === classId),
+  const { data: cls } = useQuery({
+    ...getApiV1ClassesOptions(),
+    select: (all) => (all ?? []).filter((c) => c.id === classId) as ClassDto[],
   })
   const className = cls?.[0]?.name
 
-  const timeSlotsUrl = schemaId
-    ? `/classes/${classId}/schemas/${schemaId}/time-slots`
-    : `/classes/${classId}/time-slots`
-  const timeSlotsKey = schemaId ? ['time-slots', classId, schemaId] : ['time-slots', classId]
+  const timeSlotsKey = schemaId
+    ? getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsQueryKey({ path: { classId: classId!, schemaId } })
+    : getApiV1ClassesByClassIdTimeSlotsQueryKey({ path: { classId: classId! } })
 
-  const { data: timeSlots, isLoading } = useQuery<TimeSlotDto[]>({
-    queryKey: timeSlotsKey,
-    queryFn: () => api.get(timeSlotsUrl),
-    enabled: !!classId,
+  const { data: rawClassTimeSlots, isLoading: isLoadingClass } = useQuery({
+    ...getApiV1ClassesByClassIdTimeSlotsOptions({ path: { classId: classId! } }),
+    enabled: !!classId && !schemaId,
   })
+  const { data: rawSchemaTimeSlots, isLoading: isLoadingSchema } = useQuery({
+    ...getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsOptions({ path: { classId: classId!, schemaId: schemaId! } }),
+    enabled: !!classId && !!schemaId,
+  })
+  const isLoading = schemaId ? isLoadingSchema : isLoadingClass
+  const timeSlots = ((schemaId ? rawSchemaTimeSlots : rawClassTimeSlots) ?? []) as TimeSlotDto[]
 
   const isSchemaCustom = timeSlots?.some((s) => s.classId != null)
   const isCustom = schemaId ? isSchemaCustom : isSchemaCustom
 
   const resetMutation = useMutation({
-    mutationFn: () =>
-      schemaId
-        ? api.put<TimeSlotDto[]>(`/classes/${classId}/schemas/${schemaId}/time-slots`, [])
-        : api.put<TimeSlotDto[]>(`/classes/${classId}/time-slots`, []),
+    mutationFn: () => {
+      if (schemaId) {
+        const { mutationFn } = putApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsMutation()
+        return mutationFn!({ path: { classId: classId!, schemaId }, body: [] }, undefined as never)
+      }
+      const { mutationFn } = putApiV1ClassesByClassIdTimeSlotsMutation()
+      return mutationFn!({ path: { classId: classId! }, body: [] }, undefined as never)
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: timeSlotsKey }),
   })
 
@@ -175,19 +191,9 @@ export default function ClassTimeSlotsPage() {
   }, [schemaId, timeSlots, initialized])
 
   const saveMutation = useMutation({
-    mutationFn: () => {
-      const slots = generateSlots(dayStart, dayEnd, lessonDuration, breaks).map((s, i) => ({
-        sortOrder: i + 1,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        label: s.label ?? null,
-        isBreak: s.isBreak,
-      }))
-      return api.put<TimeSlotDto[]>(`/classes/${classId}/schemas/${schemaId}/time-slots`, slots)
-    },
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsMutation(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: timeSlotsKey })
-      qc.invalidateQueries({ queryKey: ['time-slots', classId, schemaId] })
       setSaveError(null)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -204,7 +210,14 @@ export default function ClassTimeSlotsPage() {
   function handleSave() {
     const err = validateForm(dayStart, dayEnd, lessonDuration, breaks)
     if (err) { setSaveError(err); return }
-    saveMutation.mutate()
+    const slots = generateSlots(dayStart, dayEnd, lessonDuration, breaks).map((s, i) => ({
+      sortOrder: i + 1,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      label: s.label ?? null,
+      isBreak: s.isBreak,
+    }))
+    saveMutation.mutate({ path: { classId: classId!, schemaId: schemaId! }, body: slots })
   }
 
   return (

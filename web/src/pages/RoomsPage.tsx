@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { api, RoomDto } from '../api/client'
+import {
+  getApiV1RoomsOptions,
+  getApiV1RoomsQueryKey,
+  postApiV1RoomsMutation,
+  putApiV1RoomsByIdMutation,
+  deleteApiV1RoomsByIdMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { RoomDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 interface RoomModalProps {
@@ -16,26 +23,25 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
   const [capacity, setCapacity] = useState(initial?.capacity?.toString() ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
 
-  const mutation = useMutation({
-    mutationFn: () => {
-      const body = {
-        name,
-        capacity: capacity ? parseInt(capacity, 10) : null,
-        description: description || null,
-      }
-      return initial
-        ? api.put(`/rooms/${initial.id}`, body)
-        : api.post('/rooms', body)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['rooms'] })
-      onSaved()
-    },
+  const createMutation = useMutation({
+    ...postApiV1RoomsMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1RoomsQueryKey() }); onSaved() },
   })
+  const updateMutation = useMutation({
+    ...putApiV1RoomsByIdMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1RoomsQueryKey() }); onSaved() },
+  })
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isError = createMutation.isError || updateMutation.isError
 
   function handleSave() {
-    if (!name.trim() || mutation.isPending) return
-    mutation.mutate()
+    if (!name.trim() || isPending) return
+    const body = { name, capacity: capacity ? parseInt(capacity, 10) : null, description: description || null }
+    if (initial) {
+      updateMutation.mutate({ path: { id: initial.id! }, body })
+    } else {
+      createMutation.mutate({ body })
+    }
   }
 
   return (
@@ -80,7 +86,7 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
-          {mutation.isError && (
+          {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
         </div>
@@ -90,10 +96,10 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
+            disabled={!name.trim() || isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
+            {isPending ? 'Gemmer...' : 'Gem'}
           </button>
         </div>
       </div>
@@ -108,14 +114,11 @@ export default function RoomsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [editingRoom, setEditingRoom] = useState<RoomDto | null>(null)
 
-  const { data: rooms, isLoading, isError, refetch } = useQuery<RoomDto[]>({
-    queryKey: ['rooms'],
-    queryFn: () => api.get('/rooms'),
-  })
+  const { data: rooms, isLoading, isError, refetch } = useQuery(getApiV1RoomsOptions())
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/rooms/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['rooms'] }),
+    ...deleteApiV1RoomsByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1RoomsQueryKey() }),
   })
 
   return (
@@ -206,7 +209,7 @@ export default function RoomsPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (r.id && confirm(`Slet lokalet "${r.name ?? 'lokale'}"?`)) deleteMutation.mutate(r.id)
+                        if (r.id && confirm(`Slet lokalet "${r.name ?? 'lokale'}"?`)) deleteMutation.mutate({ path: { id: r.id } })
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                     >

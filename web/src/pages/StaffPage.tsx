@@ -1,7 +1,19 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { api, StaffDto, StaffRole } from '../api/client'
+import {
+  getApiV1StaffOptions,
+  getApiV1StaffQueryKey,
+  postApiV1StaffMutation,
+  putApiV1StaffByIdMutation,
+  deleteApiV1StaffByIdMutation,
+  getApiV1StaffInvitationsOptions,
+  getApiV1StaffInvitationsQueryKey,
+  getApiV1StaffInvitationsByStaffByStaffIdOptions,
+  getApiV1StaffInvitationsByStaffByStaffIdQueryKey,
+  postApiV1StaffInvitationsInviteByStaffIdMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { StaffDto, StaffRole, InvitationDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 const ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
@@ -20,24 +32,15 @@ function roleBadge(role: StaffRole): string {
   return 'bg-gray-100 text-gray-600'
 }
 
-interface InvitationDto {
-  id: string
-  staffId: string
-  staffName: string
-  email: string
-  status: 'Pending' | 'Accepted' | 'Expired'
-  expiresAt: string
-  acceptedAt: string | null
-  createdAt: string
-}
+type InviteStatus = 'Pending' | 'Accepted' | 'Expired'
 
-function inviteStatusBadge(status: InvitationDto['status']): string {
+function inviteStatusBadge(status: InviteStatus): string {
   if (status === 'Accepted') return 'bg-green-100 text-green-700'
   if (status === 'Expired') return 'bg-red-100 text-red-700'
   return 'bg-amber-100 text-amber-700'
 }
 
-function inviteStatusLabel(status: InvitationDto['status']): string {
+function inviteStatusLabel(status: InviteStatus): string {
   if (status === 'Accepted') return 'Accepteret'
   if (status === 'Expired') return 'Udløbet'
   return 'Afventer'
@@ -56,22 +59,25 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
   const [phone, setPhone] = useState(initial?.phone ?? '')
   const [role, setRole] = useState<StaffRole>(initial?.role ?? 'Teacher')
 
-  const mutation = useMutation({
-    mutationFn: () => {
-      const body = { name, email: email || null, phone: phone || null, role }
-      return initial
-        ? api.put(`/staff/${initial.id}`, body)
-        : api.post('/staff', body)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['staff'] })
-      onSaved()
-    },
+  const createMutation = useMutation({
+    ...postApiV1StaffMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }); onSaved() },
   })
+  const updateMutation = useMutation({
+    ...putApiV1StaffByIdMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }); onSaved() },
+  })
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isError = createMutation.isError || updateMutation.isError
 
   function handleSave() {
-    if (!name.trim() || mutation.isPending) return
-    mutation.mutate()
+    if (!name.trim() || isPending) return
+    const body = { name, email: email || null, phone: phone || null, role }
+    if (initial) {
+      updateMutation.mutate({ path: { id: initial.id! }, body })
+    } else {
+      createMutation.mutate({ body })
+    }
   }
 
   return (
@@ -127,7 +133,7 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
-          {mutation.isError && (
+          {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
         </div>
@@ -137,10 +143,10 @@ function StaffModal({ initial, onClose, onSaved }: StaffModalProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
+            disabled={!name.trim() || isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
+            {isPending ? 'Gemmer...' : 'Gem'}
           </button>
         </div>
       </div>
@@ -158,19 +164,18 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
   const [sent, setSent] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const { data: invitations, isLoading } = useQuery<InvitationDto[]>({
-    queryKey: ['invitations', 'staff', staff.id],
-    queryFn: () => api.get(`/staff-invitations/by-staff/${staff.id}`),
-  })
+  const { data: invitations, isLoading } = useQuery(
+    getApiV1StaffInvitationsByStaffByStaffIdOptions({ path: { staffId: staff.id! } })
+  )
 
   const sendMutation = useMutation({
-    mutationFn: () => api.post(`/staff-invitations/invite/${staff.id}`, {}),
+    ...postApiV1StaffInvitationsInviteByStaffIdMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['invitations', 'staff', staff.id] })
-      qc.invalidateQueries({ queryKey: ['invitations'] })
+      qc.invalidateQueries({ queryKey: getApiV1StaffInvitationsByStaffByStaffIdQueryKey({ path: { staffId: staff.id! } }) })
+      qc.invalidateQueries({ queryKey: getApiV1StaffInvitationsQueryKey() })
       setSent(true)
     },
-    onError: async (err: unknown) => {
+    onError: (err) => {
       const msg = err instanceof Error ? err.message : 'Ukendt fejl'
       setErrorMsg(msg)
     },
@@ -178,6 +183,7 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
 
   const latestInvite = invitations?.[0]
   const canResend = !latestInvite || latestInvite.status === 'Expired'
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
@@ -214,10 +220,10 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
                 {invitations.map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between text-sm py-1.5 px-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">
-                      {new Date(inv.createdAt).toLocaleDateString('da-DK')}
+                      {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('da-DK') : '—'}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inviteStatusBadge(inv.status)}`}>
-                      {inviteStatusLabel(inv.status)}
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inviteStatusBadge((inv.status ?? 'Pending') as InviteStatus)}`}>
+                      {inviteStatusLabel((inv.status ?? 'Pending') as InviteStatus)}
                     </span>
                   </div>
                 ))}
@@ -242,13 +248,13 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
           </button>
           {staff.email && (canResend || sent) && (
             <button
-              onClick={() => { setSent(false); sendMutation.mutate() }}
+              onClick={() => { setSent(false); sendMutation.mutate({ path: { staffId: staff.id! } }) }}
               disabled={sendMutation.isPending}
               className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {sendMutation.isPending
                 ? 'Sender…'
-                : latestInvite?.status === 'Expired'
+                : (latestInvite?.status as InviteStatus | undefined) === 'Expired'
                   ? 'Send ny invitation'
                   : 'Send invitation'}
             </button>
@@ -267,19 +273,13 @@ export default function StaffPage() {
   const [editingStaff, setEditingStaff] = useState<StaffDto | null>(null)
   const [invitingStaff, setInvitingStaff] = useState<StaffDto | null>(null)
 
-  const { data: staff, isLoading, isError, refetch } = useQuery<StaffDto[]>({
-    queryKey: ['staff'],
-    queryFn: () => api.get('/staff'),
-  })
+  const { data: staff, isLoading, isError, refetch } = useQuery(getApiV1StaffOptions())
 
-  const { data: allInvitations } = useQuery<InvitationDto[]>({
-    queryKey: ['invitations'],
-    queryFn: () => api.get('/staff-invitations'),
-  })
+  const { data: allInvitations } = useQuery(getApiV1StaffInvitationsOptions())
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/staff/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['staff'] }),
+    ...deleteApiV1StaffByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }),
   })
 
   function getLatestInvite(staffId: string): InvitationDto | undefined {
@@ -358,8 +358,8 @@ export default function StaffPage() {
                   <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{s.email ?? '—'}</td>
                   <td className="px-5 py-3 hidden lg:table-cell">
                     {invite ? (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inviteStatusBadge(invite.status)}`}>
-                        {inviteStatusLabel(invite.status)}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inviteStatusBadge((invite.status ?? 'Pending') as InviteStatus)}`}>
+                        {inviteStatusLabel((invite.status ?? 'Pending') as InviteStatus)}
                       </span>
                     ) : (
                       <span className="text-xs text-gray-400">Ikke inviteret</span>
@@ -401,7 +401,7 @@ export default function StaffPage() {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`Slet "${s.name}"?`)) deleteMutation.mutate(s.id ?? '')
+                          if (confirm(`Slet "${s.name}"?`)) deleteMutation.mutate({ path: { id: s.id ?? '' } })
                         }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         title="Slet"

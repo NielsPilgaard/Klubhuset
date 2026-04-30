@@ -17,7 +17,16 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { usePageTitle } from '../hooks/usePageTitle'
 import {
-  api,
+  getApiV1ClassesByClassIdSchemasBySchemaIdOptions,
+  getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey,
+  getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsOptions,
+  getApiV1CoursesOptions,
+  getApiV1StaffOptions,
+  getApiV1RoomsOptions,
+  putApiV1ClassesByClassIdSchemasBySchemaIdSlotsMutation,
+  deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type {
   SchemaDetailDto,
   SlotsAndConflictsDto,
   TimeSlotDto,
@@ -26,7 +35,7 @@ import {
   RoomDto,
   SlotDto,
   ConflictInfo,
-} from '../api/client'
+} from '../api/generated/types.gen'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const
@@ -57,7 +66,7 @@ const COURSE_COLORS = [
 function getCourseColor(
   courseId: string,
   courseIds: string[],
-  courses?: import('../api/client').CourseDto[],
+  courses?: CourseDto[],
 ): { colorClass: string; colorStyle?: React.CSSProperties } {
   const hex = courses?.find((c) => c.id === courseId)?.color
   if (hex) {
@@ -152,29 +161,23 @@ function AssignmentPanel({
   const aides = staff.filter((s) => s.role === 'Aide' || s.role === 'Substitute')
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      api.put<SlotsAndConflictsDto>(`/classes/${classId}/schemas/${schemaId}/slots`, {
-        timeSlotId, weekday, courseId, teacherId,
-        roomId: roomId || null,
-        aideId: aideId || null,
-      }),
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdSlotsMutation(),
     onSuccess: (data) => {
       sessionStorage.setItem(SESSION_KEY_COURSE, courseId)
       sessionStorage.setItem(SESSION_KEY_TEACHER, teacherId)
-      onSaved(data)
+      onSaved(data as SlotsAndConflictsDto)
     },
   })
 
   const deleteMutation = useMutation({
-    mutationFn: () =>
-      api.delete(`/classes/${classId}/schemas/${schemaId}/slots/${timeSlotId}/${weekday}`),
+    ...deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayMutation(),
     onSuccess: onClose,
   })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!(courseId && teacherId) || saveMutation.isPending) return
-    saveMutation.mutate()
+    saveMutation.mutate({ path: { classId, schemaId }, body: { timeSlotId, weekday: WEEKDAY_NAMES[weekday - 1], courseId, teacherId, roomId: roomId || null, aideId: aideId || null } })
   }
 
   return (
@@ -236,7 +239,7 @@ function AssignmentPanel({
 
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
           {existing ? (
-            <button type="button" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
+            <button type="button" onClick={() => deleteMutation.mutate({ path: { classId, schemaId, timeSlotId, weekday } })} disabled={deleteMutation.isPending}
               className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50">
               {deleteMutation.isPending ? 'Sletter...' : 'Slet lektion'}
             </button>
@@ -405,41 +408,35 @@ export default function SchemaBuilderPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   )
 
-  const { data: detail, isLoading: loadingDetail, isError: errorDetail } = useQuery<SchemaDetailDto>({
-    queryKey: ['schema', classId, schemaId],
-    queryFn: () => api.get(`/classes/${classId}/schemas/${schemaId}`),
+  const { data: detail, isLoading: loadingDetail, isError: errorDetail } = useQuery({
+    ...getApiV1ClassesByClassIdSchemasBySchemaIdOptions({ path: { classId: classId!, schemaId: schemaId! } }),
     enabled: !!classId && !!schemaId,
   })
 
-  const { data: timeSlots, isLoading: loadingTs } = useQuery<TimeSlotDto[]>({
-    queryKey: ['time-slots', classId, schemaId],
-    queryFn: () => api.get(`/classes/${classId}/schemas/${schemaId}/time-slots`),
+  const { data: rawTimeSlots, isLoading: loadingTs } = useQuery({
+    ...getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsOptions({ path: { classId: classId!, schemaId: schemaId! } }),
     enabled: !!classId && !!schemaId,
   })
+  const timeSlots = (rawTimeSlots ?? []) as TimeSlotDto[]
 
-  const { data: courses } = useQuery<CourseDto[]>({
-    queryKey: ['courses'],
-    queryFn: () => api.get('/courses'),
-  })
+  const { data: rawCourses } = useQuery(getApiV1CoursesOptions())
+  const courses = (rawCourses ?? []) as CourseDto[]
 
-  const { data: staff } = useQuery<StaffDto[]>({
-    queryKey: ['staff'],
-    queryFn: () => api.get('/staff'),
-  })
+  const { data: rawStaff } = useQuery(getApiV1StaffOptions())
+  const staff = (rawStaff ?? []) as StaffDto[]
 
-  const { data: rooms } = useQuery<RoomDto[]>({
-    queryKey: ['rooms'],
-    queryFn: () => api.get('/rooms'),
-  })
+  const { data: rawRooms } = useQuery(getApiV1RoomsOptions())
+  const rooms = (rawRooms ?? []) as RoomDto[]
 
   const upsertSlotMutation = useMutation({
-    mutationFn: (payload: { timeSlotId: string; weekday: number; courseId: string; teacherId: string; roomId: string | null; aideId: string | null }) =>
-      api.put<SlotsAndConflictsDto>(`/classes/${classId}/schemas/${schemaId}/slots`, payload),
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdSlotsMutation(),
     onSuccess: (data) => {
-      setLocalSlots(data.slots ?? null)
-      setLocalConflicts(data.conflicts ?? null)
-      qc.setQueryData<SchemaDetailDto>(['schema', classId, schemaId], (old) =>
-        old ? { ...old, slots: data.slots, conflicts: data.conflicts } : old
+      const result = data as SlotsAndConflictsDto
+      setLocalSlots(result.slots ?? null)
+      setLocalConflicts(result.conflicts ?? null)
+      qc.setQueryData(
+        getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({ path: { classId: classId!, schemaId: schemaId! } }),
+        (old: SchemaDetailDto | undefined) => old ? { ...old, slots: result.slots, conflicts: result.conflicts } : old
       )
     },
   })
@@ -487,14 +484,15 @@ export default function SchemaBuilderPage() {
     setLocalSlots(updated.slots ?? null)
     setLocalConflicts(updated.conflicts ?? null)
     setPanelCell(null)
-    qc.setQueryData<SchemaDetailDto>(['schema', classId, schemaId], (old) =>
-      old ? { ...old, slots: updated.slots, conflicts: updated.conflicts } : old
+    qc.setQueryData(
+      getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({ path: { classId: classId!, schemaId: schemaId! } }),
+      (old: SchemaDetailDto | undefined) => old ? { ...old, slots: updated.slots, conflicts: updated.conflicts } : old
     )
   }, [qc, classId, schemaId])
 
   const handleCellDeleted = useCallback(() => {
     setPanelCell(null)
-    qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] })
+    qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({ path: { classId: classId!, schemaId: schemaId! } }) })
     setLocalSlots(null)
     setLocalConflicts(null)
   }, [qc, classId, schemaId])
@@ -530,22 +528,16 @@ export default function SchemaBuilderPage() {
 
     if (dstSlot) {
       // Swap: put dst's assignment into src's cell, src's into dst's cell
-      upsertSlotMutation.mutate({
-        timeSlotId: dst.timeSlotId,
-        weekday: dst.weekday,
-        courseId: srcSlot.courseId ?? '',
-        teacherId: srcSlot.teacherId ?? '',
-        roomId: srcSlot.roomId ?? null,
-        aideId: srcSlot.aideId ?? null,
-      })
-      upsertSlotMutation.mutate({
-        timeSlotId: src.timeSlotId,
-        weekday: src.weekday,
-        courseId: dstSlot.courseId ?? '',
-        teacherId: dstSlot.teacherId ?? '',
-        roomId: dstSlot.roomId ?? null,
-        aideId: dstSlot.aideId ?? null,
-      })
+      upsertSlotMutation.mutate({ path: { classId: classId!, schemaId: schemaId! }, body: {
+        timeSlotId: dst.timeSlotId, weekday: WEEKDAY_NAMES[dst.weekday - 1],
+        courseId: srcSlot.courseId ?? '', teacherId: srcSlot.teacherId ?? '',
+        roomId: srcSlot.roomId ?? null, aideId: srcSlot.aideId ?? null,
+      }})
+      upsertSlotMutation.mutate({ path: { classId: classId!, schemaId: schemaId! }, body: {
+        timeSlotId: src.timeSlotId, weekday: WEEKDAY_NAMES[src.weekday - 1],
+        courseId: dstSlot.courseId ?? '', teacherId: dstSlot.teacherId ?? '',
+        roomId: dstSlot.roomId ?? null, aideId: dstSlot.aideId ?? null,
+      }})
     } else {
       // Move: optimistically remove from source immediately so no ghost appears
       setLocalSlots((prev) => {
@@ -556,16 +548,14 @@ export default function SchemaBuilderPage() {
           ))
         )
       })
-      upsertSlotMutation.mutate({
-        timeSlotId: dst.timeSlotId,
-        weekday: dst.weekday,
-        courseId: srcSlot.courseId ?? '',
-        teacherId: srcSlot.teacherId ?? '',
-        roomId: srcSlot.roomId ?? null,
-        aideId: srcSlot.aideId ?? null,
-      })
-      api.delete(`/classes/${classId}/schemas/${schemaId}/slots/${src.timeSlotId}/${src.weekday}`)
-        .then(() => qc.invalidateQueries({ queryKey: ['schema', classId, schemaId] }))
+      upsertSlotMutation.mutate({ path: { classId: classId!, schemaId: schemaId! }, body: {
+        timeSlotId: dst.timeSlotId, weekday: WEEKDAY_NAMES[dst.weekday - 1],
+        courseId: srcSlot.courseId ?? '', teacherId: srcSlot.teacherId ?? '',
+        roomId: srcSlot.roomId ?? null, aideId: srcSlot.aideId ?? null,
+      }})
+      const { mutationFn: deleteSlot } = deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayMutation()
+      deleteSlot!({ path: { classId: classId!, schemaId: schemaId!, timeSlotId: src.timeSlotId, weekday: src.weekday } }, undefined as never)
+        .then(() => qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({ path: { classId: classId!, schemaId: schemaId! } }) }))
     }
   }, [slotMap, sortedTimeSlots, upsertSlotMutation, classId, schemaId, qc])
 
@@ -837,7 +827,7 @@ export default function SchemaBuilderPage() {
       </div>
 
       {/* Assignment panel */}
-      {openPanel && courses && staff && rooms && (
+      {openPanel && (
         <AssignmentPanel
           classId={classId!}
           schemaId={schemaId!}

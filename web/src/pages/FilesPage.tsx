@@ -1,6 +1,13 @@
 import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, FileDto, CourseDto } from '../api/client'
+import {
+  getApiV1CoursesOptions,
+  getApiV1FilesOptions,
+  getApiV1FilesQueryKey,
+  postApiV1FilesMutation,
+  deleteApiV1FilesByIdMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { CourseDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 
@@ -58,15 +65,9 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const mutation = useMutation({
-    mutationFn: () => {
-      if (!selectedFile) throw new Error('Ingen fil valgt')
-      const form = new FormData()
-      form.append('file', selectedFile)
-      if (courseId) form.append('courseId', courseId)
-      return api.postForm<FileDto>('/files', form)
-    },
+    ...postApiV1FilesMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['files'] })
+      qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
       onUploaded()
     },
     onError: (err: Error) => {
@@ -140,7 +141,10 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
             Annuller
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={() => {
+              if (!selectedFile) return
+              mutation.mutate({ body: { file: selectedFile, courseId: courseId || undefined } })
+            }}
             disabled={!selectedFile || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -160,19 +164,15 @@ export default function FilesPage() {
   const [showUpload, setShowUpload] = useState(false)
   const [filterCourseId, setFilterCourseId] = useState<string>('')
 
-  const { data: courses } = useQuery<CourseDto[]>({
-    queryKey: ['courses'],
-    queryFn: () => api.get('/courses'),
-  })
+  const { data: courses } = useQuery(getApiV1CoursesOptions())
 
-  const { data: files, isLoading, isError, refetch } = useQuery<FileDto[]>({
-    queryKey: ['files', filterCourseId],
-    queryFn: () => api.get(`/files${filterCourseId ? `?courseId=${filterCourseId}` : ''}`),
-  })
+  const { data: files, isLoading, isError, refetch } = useQuery(
+    getApiV1FilesOptions(filterCourseId ? { query: { courseId: filterCourseId } } : undefined)
+  )
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/files/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['files'] }),
+    ...deleteApiV1FilesByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
   })
 
   return (
@@ -297,7 +297,7 @@ export default function FilesPage() {
                       <button
                         data-testid={`delete-${f.id}`}
                         onClick={() => {
-                          if (f.id && confirm(`Slet filen "${f.fileName ?? 'fil'}"?`)) deleteMutation.mutate(f.id)
+                          if (f.id && confirm(`Slet filen "${f.fileName ?? 'fil'}"?`)) deleteMutation.mutate({ path: { id: f.id } })
                         }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         title="Slet fil"

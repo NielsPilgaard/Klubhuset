@@ -1,20 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '../api/client'
+import {
+  getApiV1SchoolsSettingsOptions,
+  getApiV1SchoolsOnboardingStatusOptions,
+} from '../api/generated/@tanstack/react-query.gen'
 import { useAuth } from '../auth/useAuth'
 import Logo from './Logo'
-
-interface SchoolSettingsDto {
-  name: string
-  contactEmail: string | null
-  contactPhone: string | null
-  logoUrl: string | null
-}
-
-interface OnboardingStatus {
-  stepsCompleted: number
-  stepsTotal: number
-}
 
 const navItems = [
   {
@@ -112,17 +103,13 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { logout, userName } = useAuth()
-  const { data: school } = useQuery<SchoolSettingsDto>({
-    queryKey: ['school-settings'],
-    queryFn: () => api.get('/schools/settings'),
-  })
-  const { data: onboarding } = useQuery<OnboardingStatus>({
-    queryKey: ['onboarding-status'],
-    queryFn: () => api.get('/schools/onboarding-status'),
+  const { data: school } = useQuery(getApiV1SchoolsSettingsOptions())
+  const { data: onboarding } = useQuery({
+    ...getApiV1SchoolsOnboardingStatusOptions(),
     retry: false,
     staleTime: 60_000,
   })
-  const wizardDone = onboarding != null && onboarding.stepsCompleted >= onboarding.stepsTotal
+  const wizardDone = onboarding != null && (onboarding.stepsCompleted ?? 0) >= (onboarding.stepsTotal ?? 0)
 
   return (
     <>
