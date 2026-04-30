@@ -1,6 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { api, StaffDto } from '../api/client'
+import {
+  getApiV1StaffByIdOptions,
+  getApiV1StaffByStaffIdScheduleOptions,
+} from '../api/generated/@tanstack/react-query.gen'
 
 const WEEKDAYS: { key: string; label: string; num: number }[] = [
   { key: 'Monday',    label: 'Mandag',  num: 1 },
@@ -44,17 +47,16 @@ function buildTimeAxis(slots: ScheduleSlotDto[]) {
 export default function StaffSchedulePage() {
   const { staffId } = useParams<{ staffId: string }>()
 
-  const { data: staff } = useQuery<StaffDto>({
-    queryKey: ['staff', staffId],
-    queryFn: () => api.get(`/staff/${staffId}`),
+  const { data: staff } = useQuery({
+    ...getApiV1StaffByIdOptions({ path: { id: staffId! } }),
     enabled: !!staffId,
   })
 
-  const { data: slots = [], isLoading, isError } = useQuery<ScheduleSlotDto[]>({
-    queryKey: ['staff-schedule', staffId],
-    queryFn: () => api.get(`/staff/${staffId}/schedule`),
+  const { data: rawSlots, isLoading, isError } = useQuery({
+    ...getApiV1StaffByStaffIdScheduleOptions({ path: { staffId: staffId! } }),
     enabled: !!staffId,
   })
+  const slots: ScheduleSlotDto[] = (rawSlots ?? []) as ScheduleSlotDto[]
 
   const timeAxis = buildTimeAxis(slots)
 

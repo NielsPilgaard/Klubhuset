@@ -1,6 +1,13 @@
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { api, StaffDto, RoomDto, ClassDto } from '../api/client'
+import {
+  getApiV1ClassesByIdOptions,
+  getApiV1ClassesByClassIdScheduleOptions,
+  getApiV1StaffByIdOptions,
+  getApiV1StaffByStaffIdScheduleOptions,
+  getApiV1RoomsByIdOptions,
+  getApiV1RoomsByRoomIdScheduleOptions,
+} from '../api/generated/@tanstack/react-query.gen'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 
@@ -128,15 +135,12 @@ function PrintGrid({ title, subtitle, slots }: {
 }
 
 function ClassPrintPage({ classId }: { classId: string }) {
-  const { data: klass } = useQuery<ClassDto>({
-    queryKey: ['class', classId],
-    queryFn: () => api.get(`/classes/${classId}`),
-  })
+  const { data: klass } = useQuery(getApiV1ClassesByIdOptions({ path: { id: classId } }))
 
-  const { data: slots = [], isLoading } = useQuery<ScheduleSlotDto[]>({
-    queryKey: ['class-schedule', classId],
-    queryFn: () => api.get(`/classes/${classId}/schedule`),
-  })
+  const { data: rawSlots, isLoading } = useQuery(
+    getApiV1ClassesByClassIdScheduleOptions({ path: { classId } })
+  )
+  const slots: ScheduleSlotDto[] = (rawSlots ?? []) as ScheduleSlotDto[]
 
   if (isLoading) return <div className="p-8 text-gray-400">Henter skema…</div>
   if (slots.length === 0) return <div className="p-8 text-gray-400">Ingen aktivt skema fundet</div>
@@ -151,15 +155,12 @@ function ClassPrintPage({ classId }: { classId: string }) {
 }
 
 function StaffPrintPage({ staffId }: { staffId: string }) {
-  const { data: staff } = useQuery<StaffDto>({
-    queryKey: ['staff', staffId],
-    queryFn: () => api.get(`/staff/${staffId}`),
-  })
+  const { data: staff } = useQuery(getApiV1StaffByIdOptions({ path: { id: staffId } }))
 
-  const { data: slots = [], isLoading } = useQuery<ScheduleSlotDto[]>({
-    queryKey: ['staff-schedule', staffId],
-    queryFn: () => api.get(`/staff/${staffId}/schedule`),
-  })
+  const { data: rawSlots, isLoading } = useQuery(
+    getApiV1StaffByStaffIdScheduleOptions({ path: { staffId } })
+  )
+  const slots: ScheduleSlotDto[] = (rawSlots ?? []) as ScheduleSlotDto[]
 
   if (isLoading) return <div className="p-8 text-gray-400">Henter skema…</div>
 
@@ -173,15 +174,12 @@ function StaffPrintPage({ staffId }: { staffId: string }) {
 }
 
 function RoomPrintPage({ roomId }: { roomId: string }) {
-  const { data: room } = useQuery<RoomDto>({
-    queryKey: ['room', roomId],
-    queryFn: () => api.get(`/rooms/${roomId}`),
-  })
+  const { data: room } = useQuery(getApiV1RoomsByIdOptions({ path: { id: roomId } }))
 
-  const { data: slots = [], isLoading } = useQuery<ScheduleSlotDto[]>({
-    queryKey: ['room-schedule', roomId],
-    queryFn: () => api.get(`/rooms/${roomId}/schedule`),
-  })
+  const { data: rawSlots, isLoading } = useQuery(
+    getApiV1RoomsByRoomIdScheduleOptions({ path: { roomId } })
+  )
+  const slots: ScheduleSlotDto[] = (rawSlots ?? []) as ScheduleSlotDto[]
 
   if (isLoading) return <div className="p-8 text-gray-400">Henter lokaleplan…</div>
 
