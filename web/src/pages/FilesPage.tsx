@@ -7,7 +7,7 @@ import {
   postApiV1FilesMutation,
   deleteApiV1FilesByIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { CourseDto, FileDto } from '../api/generated/types.gen'
+import type { CourseDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 
@@ -80,7 +80,7 @@ interface UploadModalProps {
   onUploaded: () => void
 }
 
-function UploadModal({ courses, currentFolderId, onClose, onUploaded }: UploadModalProps) {
+function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
   const qc = useQueryClient()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [courseId, setCourseId] = useState<string>('')
