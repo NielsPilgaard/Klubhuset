@@ -1,23 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import {
+  getApiV1CalendarOptions,
+  getApiV1CalendarQueryKey,
+  getApiV1CalendarDefaultsOptions,
+  postApiV1CalendarMutation,
+  putApiV1CalendarByIdMutation,
+  deleteApiV1CalendarByIdMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { CalendarEntryDto, DefaultHolidayDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
-
-interface CalendarEntryDto {
-  id: string
-  type: string
-  title: string
-  startDate: string
-  endDate: string
-}
-
-interface DefaultHolidayDto {
-  type: string
-  title: string
-  startDate: string
-  endDate: string
-}
 
 const TYPE_LABELS: Record<string, string> = {
   Ferie: 'Ferie',
@@ -110,7 +103,7 @@ function getDayEntries(
 ): CalendarEntryDto[] {
   const pad = (n: number) => n.toString().padStart(2, '0')
   const dateStr = `${year}-${pad(month)}-${pad(day)}`
-  return entries.filter((e) => e.startDate <= dateStr && dateStr <= e.endDate)
+  return entries.filter((e) => (e.startDate ?? '') <= dateStr && dateStr <= (e.endDate ?? ''))
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -175,8 +168,8 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
         )}
         {dayEntries.map((entry) => (
           <div key={entry.id} className="flex items-center gap-1.5">
-            <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type] ?? 'bg-gray-100 text-gray-700'}`}>
-              {TYPE_LABELS[entry.type] ?? entry.type}
+            <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
+              {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
             </span>
             <span className="text-xs text-gray-800 flex-1 truncate">{entry.title}</span>
             {isAdmin && (
@@ -222,29 +215,35 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
   const todayStr = toDateString(today.getFullYear(), today.getMonth() + 1, today.getDate())
   const initialDate = defaultDate ?? todayStr
 
-  const [type, setType] = useState(initial?.type ?? 'Ferie')
+  type EntryType = 'Ferie' | 'Lukkedag' | 'Arbejdsdag' | 'Begivenhed'
+  const [type, setType] = useState<EntryType>((initial?.type as EntryType) ?? 'Ferie')
   const [title, setTitle] = useState(initial?.title ?? '')
   const [startDate, setStartDate] = useState(initial?.startDate ?? initialDate)
   const [endDate, setEndDate] = useState(initial?.endDate ?? initialDate)
 
   const dateError = endDate < startDate ? 'Slutdato skal være efter eller lig startdato' : null
 
-  const mutation = useMutation({
-    mutationFn: () => {
-      const body = { title, type, startDate, endDate }
-      return initial
-        ? api.put(`/calendar/${initial.id}`, body)
-        : api.post('/calendar', body)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['calendar'] })
-      onSaved()
-    },
+  const createMutation = useMutation({
+    ...postApiV1CalendarMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() }); onSaved() },
   })
+  const updateMutation = useMutation({
+    ...putApiV1CalendarByIdMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() }); onSaved() },
+  })
+  const mutation = initial ? updateMutation : createMutation
+
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isError = createMutation.isError || updateMutation.isError
 
   function handleSave() {
-    if (!title.trim() || dateError || mutation.isPending) return
-    mutation.mutate()
+    if (!title.trim() || dateError || isPending) return
+    const body = { title, type, startDate, endDate }
+    if (initial) {
+      updateMutation.mutate({ path: { id: initial.id! }, body })
+    } else {
+      createMutation.mutate({ body })
+    }
   }
 
   return (
@@ -260,7 +259,7 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
             <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => setType(e.target.value as EntryType)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             >
               {Object.keys(TYPE_LABELS).map((t) => (
@@ -299,7 +298,7 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
             />
             {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
           </div>
-          {mutation.isError && (
+          {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
         </div>
@@ -336,13 +335,13 @@ export default function CalendarPage() {
   const [openPopover, setOpenPopover] = useState<string | null>(null) // "year-month-day"
 
   // Fetch entries for both years of the school year
-  const { data: entriesStartYear = [] } = useQuery<CalendarEntryDto[]>({
-    queryKey: ['calendar', startYear],
-    queryFn: () => api.get(`/calendar?year=${startYear}`),
+  const { data: entriesStartYear = [] } = useQuery({
+    ...getApiV1CalendarOptions({ query: { year: startYear } }),
+    select: (d) => (d ?? []) as CalendarEntryDto[],
   })
-  const { data: entriesEndYear = [] } = useQuery<CalendarEntryDto[]>({
-    queryKey: ['calendar', endYear],
-    queryFn: () => api.get(`/calendar?year=${endYear}`),
+  const { data: entriesEndYear = [] } = useQuery({
+    ...getApiV1CalendarOptions({ query: { year: endYear } }),
+    select: (d) => (d ?? []) as CalendarEntryDto[],
   })
 
   // Merge and deduplicate entries from both years
@@ -353,23 +352,25 @@ export default function CalendarPage() {
 
   const hasEntries = allEntries.some((e) => isEntryInSchoolYear(e, schoolStartYear))
 
-  const { data: defaults = [] } = useQuery<DefaultHolidayDto[]>({
-    queryKey: ['calendar-defaults', schoolStartYear],
-    queryFn: () => api.get(`/calendar/defaults?year=${schoolStartYear}`),
+  const { data: defaults = [] } = useQuery({
+    ...getApiV1CalendarDefaultsOptions({ query: { year: schoolStartYear } }),
     enabled: isAdmin && !hasEntries,
+    select: (d) => (d ?? []) as DefaultHolidayDto[],
   })
 
   const seedMutation = useMutation({
-    mutationFn: (items: DefaultHolidayDto[]) =>
-      Promise.all(items.map((d) => api.post('/calendar', d))),
+    mutationFn: (items: DefaultHolidayDto[]) => {
+      const { mutationFn } = postApiV1CalendarMutation()
+      return Promise.all(items.map((d) => mutationFn!({ body: d }, undefined as never)))
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['calendar'] })
+      qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() })
     },
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/calendar/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar'] }),
+    ...deleteApiV1CalendarByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() }),
   })
 
   // School year options: 5 years around current
@@ -457,7 +458,7 @@ export default function CalendarPage() {
                       const isWeekend = di >= 5
                       const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
                       const firstEntry = dayEntries[0]
-                      const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type] ?? '' : ''
+                      const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type ?? ''] ?? '' : ''
                       const popoverKey = `${year}-${month}-${day}`
                       const isOpen = openPopover === popoverKey
 
@@ -520,13 +521,13 @@ export default function CalendarPage() {
               {allEntries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {TYPE_LABELS[entry.type] ?? entry.type}
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
                     </span>
                   </td>
                   <td className="px-5 py-3 font-medium text-gray-900">{entry.title}</td>
                   <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
-                    {formatDateRange(entry.startDate, entry.endDate)}
+                    {formatDateRange(entry.startDate ?? '', entry.endDate ?? '')}
                   </td>
                   {isAdmin && (
                     <td className="px-5 py-3 text-right">
@@ -543,7 +544,7 @@ export default function CalendarPage() {
                         </button>
                         <button
                           onClick={() => {
-                            if (confirm(`Slet "${entry.title}"?`)) deleteMutation.mutate(entry.id)
+                            if (confirm(`Slet "${entry.title}"?`)) deleteMutation.mutate({ path: { id: entry.id! } })
                           }}
                           className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                           title="Slet"

@@ -1,7 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { api, ClassDto, SchemaDto } from '../api/client'
+import {
+  getApiV1ClassesOptions,
+  getApiV1ClassesQueryKey,
+  postApiV1ClassesMutation,
+  putApiV1ClassesByIdMutation,
+  deleteApiV1ClassesByIdMutation,
+  getApiV1ClassesByClassIdSchemasOptions,
+  getApiV1ClassesByClassIdSchemasQueryKey,
+  postApiV1ClassesByClassIdSchemasMutation,
+  deleteApiV1ClassesByClassIdSchemasBySchemaIdMutation,
+  putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation,
+  postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation,
+  postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { ClassDto, SchemaDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 interface CopySchemaModalProps {
@@ -17,21 +31,23 @@ function CopySchemaModal({ classId, schemaId, sourceName, onClose, onSaved }: Co
   const [name, setName] = useState(`Kopi af ${sourceName}`)
   const [targetClassId, setTargetClassId] = useState(classId)
 
-  const { data: allClasses } = useQuery<ClassDto[]>({
-    queryKey: ['classes'],
-    queryFn: () => api.get('/classes'),
+  const { data: allClasses } = useQuery({
+    ...getApiV1ClassesOptions(),
+    select: (d) => (d ?? []) as ClassDto[],
   })
 
   const mutation = useMutation({
     mutationFn: () => {
       if (targetClassId === classId) {
-        return api.post(`/classes/${classId}/schemas/${schemaId}/copy`, { name })
+        const { mutationFn } = postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation()
+        return mutationFn!({ path: { classId, schemaId }, body: { name } }, undefined as never)
       }
-      return api.post(`/classes/${classId}/schemas/${schemaId}/copy-to/${targetClassId}`, { name })
+      const { mutationFn } = postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation()
+      return mutationFn!({ path: { classId, schemaId, targetClassId }, body: { name } }, undefined as never)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['schemas', classId] })
-      qc.invalidateQueries({ queryKey: ['schemas', targetClassId] })
+      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
+      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId: targetClassId } }) })
       onSaved()
     },
   })
@@ -103,20 +119,25 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
 
-  const mutation = useMutation({
-    mutationFn: () =>
-      initial
-        ? api.put(`/classes/${initial.id}`, { name, description: description || null })
-        : api.post('/classes', { name, description: description || null }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['classes'] })
-      onSaved()
-    },
+  const createMutation = useMutation({
+    ...postApiV1ClassesMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() }); onSaved() },
   })
+  const updateMutation = useMutation({
+    ...putApiV1ClassesByIdMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() }); onSaved() },
+  })
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isError = createMutation.isError || updateMutation.isError
 
   function handleSave() {
-    if (!name.trim() || mutation.isPending) return
-    mutation.mutate()
+    if (!name.trim() || isPending) return
+    const body = { name, description: description || null }
+    if (initial) {
+      updateMutation.mutate({ path: { id: initial.id! }, body })
+    } else {
+      createMutation.mutate({ body })
+    }
   }
 
   return (
@@ -148,7 +169,7 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
-          {mutation.isError && (
+          {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
         </div>
@@ -161,10 +182,10 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
+            disabled={!name.trim() || isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
+            {isPending ? 'Gemmer...' : 'Gem'}
           </button>
         </div>
       </div>
@@ -188,16 +209,15 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const created: SchemaDto = await api.post(`/classes/${classId}/schemas`, { name })
+      const { mutationFn: createSchema } = postApiV1ClassesByClassIdSchemasMutation()
+      const created: SchemaDto = await createSchema!({ path: { classId }, body: { name } }, undefined as never)
       if ((startDate || endDate) && created.id) {
-        await api.put(`/classes/${classId}/schemas/${created.id}/daterange`, {
-          startDate: startDate || null,
-          endDate: endDate || null,
-        })
+        const { mutationFn: setDaterange } = putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation()
+        await setDaterange!({ path: { classId, schemaId: created.id }, body: { startDate: startDate || null, endDate: endDate || null } }, undefined as never)
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['schemas', classId] })
+      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
       onSaved()
     },
   })
@@ -299,13 +319,9 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
   const [endDate, setEndDate] = useState(schema.endDate ?? '')
 
   const mutation = useMutation({
-    mutationFn: () =>
-      api.put(`/classes/${classId}/schemas/${schema.id}/daterange`, {
-        startDate: startDate || null,
-        endDate: endDate || null,
-      }),
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['schemas', classId] })
+      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
       onClose()
     },
   })
@@ -313,7 +329,7 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
   function handleSave() {
     if (mutation.isPending) return
     if (startDate && endDate && startDate > endDate) return
-    mutation.mutate()
+    mutation.mutate({ path: { classId, schemaId: schema.id! }, body: { startDate: startDate || null, endDate: endDate || null } })
   }
 
   return (
@@ -383,14 +399,14 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
     }
   }, [autoOpenCreate, onAutoOpenHandled])
 
-  const { data: schemas, isLoading } = useQuery<SchemaDto[]>({
-    queryKey: ['schemas', classId],
-    queryFn: () => api.get(`/classes/${classId}/schemas`),
-  })
+  const { data: rawSchemas, isLoading } = useQuery(
+    getApiV1ClassesByClassIdSchemasOptions({ path: { classId } })
+  )
+  const schemas = (rawSchemas ?? []) as SchemaDto[]
 
   const deleteSchemaMutation = useMutation({
-    mutationFn: (schemaId: string) => api.delete(`/classes/${classId}/schemas/${schemaId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['schemas', classId] }),
+    ...deleteApiV1ClassesByClassIdSchemasBySchemaIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) }),
   })
 
   if (isLoading) {
@@ -489,7 +505,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 onClick={(e) => {
                   e.stopPropagation()
                   if (confirm(`Slet skemaet "${s.name}"? Alle lektioner i skemaet slettes også.`)) {
-                    deleteSchemaMutation.mutate(s.id!)
+                    deleteSchemaMutation.mutate({ path: { classId, schemaId: s.id! } })
                   }
                 }}
                 className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
@@ -552,10 +568,8 @@ export default function ClassesPage() {
     return () => document.removeEventListener('click', close)
   }, [openMenuId])
 
-  const { data: classes, isLoading, isError, refetch } = useQuery<ClassDto[]>({
-    queryKey: ['classes'],
-    queryFn: () => api.get('/classes'),
-  })
+  const { data: rawClasses, isLoading, isError, refetch } = useQuery(getApiV1ClassesOptions())
+  const classes = useMemo(() => (rawClasses ?? []) as ClassDto[], [rawClasses])
 
   useEffect(() => {
     const action = searchParams.get('action')
@@ -571,8 +585,8 @@ export default function ClassesPage() {
   }, [searchParams, classes, setSearchParams])
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/classes/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['classes'] }),
+    ...deleteApiV1ClassesByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() }),
   })
 
   const toggleExpand = (id: string) => {
@@ -684,7 +698,7 @@ export default function ClassesPage() {
                       data-testid={`class-delete-${cls.id}`}
                       onClick={() => {
                         setOpenMenuId(null)
-                        if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate(cls.id!)
+                        if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate({ path: { id: cls.id! } })
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >

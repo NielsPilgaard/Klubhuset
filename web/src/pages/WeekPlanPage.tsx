@@ -1,8 +1,18 @@
 import React, { useState, useRef } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, ClassDto } from '../api/client'
-import { uploadFile } from '../api/upload'
+import {
+  getApiV1ClassesByClassIdUgeplanOptions,
+  getApiV1ClassesByClassIdUgeplanQueryKey,
+  putApiV1ClassesByClassIdUgeplanSlotsMutation,
+  postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation,
+  deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdMutation,
+  getApiV1CoursesOptions,
+  getApiV1FilesOptions,
+  getApiV1ClassesOptions,
+  postApiV1FilesMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { ClassDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
@@ -67,13 +77,6 @@ interface FileDto {
   fileName: string
   sizeBytes: number
   url: string
-}
-
-interface UpsertWeekPlanSlotRequest {
-  schemaSlotId: string
-  beskrivelse: string | null
-  lektier: string | null
-  fagSwapCourseId: string | null
 }
 
 // ─── ISO week helpers ─────────────────────────────────────────────────────────
@@ -193,70 +196,58 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
   const [fagSwapCourseId, setFagSwapCourseId] = useState(slot.originalCourseId ? slot.courseId : '')
   const uploadInputRef = useRef<HTMLInputElement>(null)
 
-  const queryKey = ['weekplan', classId, schemaId, isoYear, isoWeek] as const
+  const ugeplanQueryKey = getApiV1ClassesByClassIdUgeplanQueryKey({ path: { classId }, query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) } })
 
   // Ensures the slot exists in the DB before attempting file operations.
-  // Returns the live slot id (may differ from the placeholder zero-guid on first save).
   async function ensureSlotSaved(): Promise<string> {
     if (slot.id !== '00000000-0000-0000-0000-000000000000') return slot.id
-    const updated = await api.put<WeekPlanSlotDto>(
-      `/classes/${classId}/ugeplan/slots?isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`,
-      { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null }
-    )
-    qc.setQueryData<WeekPlanDto>(queryKey, (old) => {
+    const { mutationFn } = putApiV1ClassesByClassIdUgeplanSlotsMutation()
+    const updated = await mutationFn!({ path: { classId }, query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) }, body: { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null } }, undefined as never)
+    qc.setQueryData(ugeplanQueryKey, (old: WeekPlanDto | undefined) => {
       if (!old) return old
-      return { ...old, slots: old.slots.map(s => s.schemaSlotId === updated.schemaSlotId ? { ...s, ...updated } : s) }
+      return { ...old, slots: old.slots.map(s => s.schemaSlotId === (updated as WeekPlanSlotDto).schemaSlotId ? { ...s, ...(updated as WeekPlanSlotDto) } : s) }
     })
-    return updated.id
+    return (updated as WeekPlanSlotDto).id
   }
 
   const upsertMutation = useMutation({
-    mutationFn: (req: UpsertWeekPlanSlotRequest) =>
-      api.put<WeekPlanSlotDto>(
-        `/classes/${classId}/ugeplan/slots?isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`,
-        req
-      ),
+    ...putApiV1ClassesByClassIdUgeplanSlotsMutation(),
     onSuccess: (updated) => {
-      qc.setQueryData<WeekPlanDto>(queryKey, (old) => {
+      qc.setQueryData(ugeplanQueryKey, (old: WeekPlanDto | undefined) => {
         if (!old) return old
-        return { ...old, slots: old.slots.map(s => s.schemaSlotId === updated.schemaSlotId ? { ...s, ...updated } : s) }
+        return { ...old, slots: old.slots.map(s => s.schemaSlotId === (updated as WeekPlanSlotDto).schemaSlotId ? { ...s, ...(updated as WeekPlanSlotDto) } : s) }
       })
     },
   })
 
   const addFileMutation = useMutation({
-    mutationFn: ({ slotId, schoolFileId }: { slotId: string; schoolFileId: string }) =>
-      api.post(`/classes/${classId}/ugeplan/slots/${slotId}/files`, { schoolFileId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    ...postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ugeplanQueryKey }),
   })
 
   const removeFileMutation = useMutation({
-    mutationFn: ({ slotId, fileId }: { slotId: string; fileId: string }) =>
-      api.delete(`/classes/${classId}/ugeplan/slots/${slotId}/files/${fileId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    ...deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ugeplanQueryKey }),
   })
 
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const slotId = await ensureSlotSaved()
-      const uploaded = await uploadFile({ file })
-      await api.post(`/classes/${classId}/ugeplan/slots/${slotId}/files`, { schoolFileId: uploaded.id })
+      const { mutationFn: uploadFile } = postApiV1FilesMutation()
+      const uploaded = await uploadFile!({ body: { file } }, undefined as never)
+      const { mutationFn: addFile } = postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation()
+      await addFile!({ path: { classId, slotId }, body: { schoolFileId: (uploaded as { id: string }).id } }, undefined as never)
       return uploaded
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey })
-      qc.invalidateQueries({ queryKey: ['files'] })
+      qc.invalidateQueries({ queryKey: ugeplanQueryKey })
+      qc.invalidateQueries({ queryKey: getApiV1FilesOptions().queryKey })
     },
   })
 
   function handleSave() {
     if (upsertMutation.isPending) return
-    upsertMutation.mutate({
-      schemaSlotId: slot.schemaSlotId,
-      beskrivelse: beskrivelse || null,
-      lektier: lektier || null,
-      fagSwapCourseId: fagSwapCourseId || null,
-    })
+    upsertMutation.mutate({ path: { classId }, query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) }, body: { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null } })
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -269,11 +260,11 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
       e.preventDefault()
       if (!upsertMutation.isPending) {
         upsertMutation.mutate(
-          { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null },
+          { path: { classId }, query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) }, body: { schemaSlotId: slot.schemaSlotId, beskrivelse: beskrivelse || null, lektier: lektier || null, fagSwapCourseId: fagSwapCourseId || null } },
           { onSuccess: (updated) => {
-            qc.setQueryData<WeekPlanDto>(queryKey, (old) => {
+            qc.setQueryData(ugeplanQueryKey, (old: WeekPlanDto | undefined) => {
               if (!old) return old
-              return { ...old, slots: old.slots.map(s => s.schemaSlotId === updated.schemaSlotId ? { ...s, ...updated } : s) }
+              return { ...old, slots: old.slots.map(s => s.schemaSlotId === (updated as WeekPlanSlotDto).schemaSlotId ? { ...s, ...(updated as WeekPlanSlotDto) } : s) }
             })
             onClose()
           }}
@@ -286,9 +277,9 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
     const slotId = await ensureSlotSaved()
     const existingLink = slot.files.find(f => f.schoolFileId === fileId)
     if (checked && !existingLink) {
-      addFileMutation.mutate({ slotId, schoolFileId: fileId })
+      addFileMutation.mutate({ path: { classId, slotId }, body: { schoolFileId: fileId } })
     } else if (!checked && existingLink) {
-      removeFileMutation.mutate({ slotId, fileId: existingLink.id })
+      removeFileMutation.mutate({ path: { classId, slotId, fileId: existingLink.id } })
     }
   }
 
@@ -481,21 +472,17 @@ export default function WeekPlanPage() {
     setIsoWeek(getISOWeek(now))
   }
 
-  const { data: weekPlanData, isLoading } = useQuery<WeekPlanDto>({
-    queryKey: ['weekplan', classId, schemaId, isoYear, isoWeek],
-    queryFn: () => api.get(`/classes/${classId}/ugeplan?isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`),
+  const { data: rawWeekPlanData, isLoading } = useQuery({
+    ...getApiV1ClassesByClassIdUgeplanOptions({ path: { classId: classId! }, query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) } }),
     enabled: !!classId,
   })
+  const weekPlanData = rawWeekPlanData as WeekPlanDto | undefined
 
-  const { data: courses } = useQuery<CourseDto[]>({
-    queryKey: ['courses'],
-    queryFn: () => api.get('/courses'),
-  })
+  const { data: rawCourses } = useQuery(getApiV1CoursesOptions())
+  const courses = (rawCourses ?? []) as CourseDto[]
 
-  const { data: files } = useQuery<FileDto[]>({
-    queryKey: ['files'],
-    queryFn: () => api.get('/files'),
-  })
+  const { data: rawFiles } = useQuery(getApiV1FilesOptions())
+  const files = (rawFiles ?? []) as FileDto[]
 
   // Collect all unique course IDs for color assignment
   const allCourseIds = weekPlanData?.slots.map(s => s.courseId).filter((v, i, a) => a.indexOf(v) === i) ?? []
@@ -521,10 +508,9 @@ export default function WeekPlanPage() {
     ? new Date(weekPlanData.weekStartDate + 'T00:00:00')
     : null
 
-  const { data: classData } = useQuery<ClassDto[], Error, ClassDto | undefined>({
-    queryKey: ['classes'],
-    queryFn: () => api.get('/classes'),
-    select: (all) => all.find((c) => c.id === classId),
+  const { data: classData } = useQuery({
+    ...getApiV1ClassesOptions(),
+    select: (all) => (all ?? []).find((c) => c.id === classId) as ClassDto | undefined,
     enabled: !!classId,
   })
 
@@ -732,8 +718,8 @@ export default function WeekPlanPage() {
           isoWeek={isoWeek}
           schemaId={schemaId}
           weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(editingSlot.weekday)] ?? ''}
-          courses={courses ?? []}
-          files={files ?? []}
+          courses={courses}
+          files={files}
           onClose={() => setEditingSlot(null)}
         />
       )}

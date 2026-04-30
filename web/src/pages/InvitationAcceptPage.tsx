@@ -47,7 +47,6 @@ export default function InvitationAcceptPage() {
       })
 
     return () => controller.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
   async function acceptInvitation(inviteToken: string, bearerToken: string) {

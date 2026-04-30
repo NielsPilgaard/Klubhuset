@@ -1,10 +1,34 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { execSync } from 'child_process'
 import path from 'path'
+import fs from 'fs'
+
+function codegenWatchPlugin() {
+  const openApiSpec = path.resolve(__dirname, '../openapi/Skoleplanen.Api.json')
+
+  return {
+    name: 'codegen-watch',
+    configureServer(server: import('vite').ViteDevServer) {
+      const watcher = fs.watch(path.dirname(openApiSpec), (_event, filename) => {
+        if (filename !== 'Skoleplanen.Api.json') return
+        console.log('\n[codegen] OpenAPI spec changed — regenerating...')
+        try {
+          execSync('npm run api:generate --silent', { cwd: __dirname, stdio: 'inherit' })
+          console.log('[codegen] Done.')
+          server.ws.send({ type: 'full-reload' })
+        } catch (e) {
+          console.error('[codegen] Failed:', e)
+        }
+      })
+      server.httpServer?.on('close', () => watcher.close())
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), codegenWatchPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

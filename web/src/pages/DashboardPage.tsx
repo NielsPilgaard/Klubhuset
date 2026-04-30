@@ -1,26 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { api, DashboardStats, StaffRole } from '../api/client'
+import {
+  getApiV1StatsDashboardOptions,
+  getApiV1SchoolsOnboardingStatusOptions,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { StaffRole, OnboardingStatusDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
-interface OnboardingStatus {
-  hasLogo: boolean
-  staffCount: number
-  classCount: number
-  courseCount: number
-  roomCount: number
-  stepsCompleted: number
-  stepsTotal: number
-  progressPercent: number
-}
-
-function OnboardingCard({ status }: { status: OnboardingStatus }) {
+function OnboardingCard({ status }: { status: OnboardingStatusDto }) {
   const steps = [
     { label: 'Logo uploadet', done: status.hasLogo },
-    { label: 'Medarbejdere oprettet', done: status.staffCount > 0 },
-    { label: 'Klasser oprettet', done: status.classCount > 0 },
-    { label: 'Fag oprettet', done: status.courseCount > 0 },
-    { label: 'Lokaler oprettet', done: status.roomCount > 0 },
+    { label: 'Medarbejdere oprettet', done: (status.staffCount ?? 0) > 0 },
+    { label: 'Klasser oprettet', done: (status.classCount ?? 0) > 0 },
+    { label: 'Fag oprettet', done: (status.courseCount ?? 0) > 0 },
+    { label: 'Lokaler oprettet', done: (status.roomCount ?? 0) > 0 },
   ]
 
   const stepsCompleted = steps.filter(s => s.done).length
@@ -110,14 +103,10 @@ function SkeletonTable({ rows = 4 }: { rows?: number }) {
 
 export default function DashboardPage() {
   usePageTitle('Oversigt')
-  const { data, isLoading, isError, refetch } = useQuery<DashboardStats>({
-    queryKey: ['stats', 'dashboard'],
-    queryFn: () => api.get('/stats/dashboard'),
-  })
+  const { data, isLoading, isError, refetch } = useQuery(getApiV1StatsDashboardOptions())
 
-  const { data: onboarding } = useQuery<OnboardingStatus>({
-    queryKey: ['onboarding-status'],
-    queryFn: () => api.get('/schools/onboarding-status'),
+  const { data: onboarding } = useQuery({
+    ...getApiV1SchoolsOnboardingStatusOptions(),
     retry: false,
   })
 

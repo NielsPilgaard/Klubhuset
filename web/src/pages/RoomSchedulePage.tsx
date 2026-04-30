@@ -1,6 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { api, RoomDto } from '../api/client'
+import {
+  getApiV1RoomsByIdOptions,
+  getApiV1RoomsByRoomIdScheduleOptions,
+} from '../api/generated/@tanstack/react-query.gen'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 
@@ -17,21 +20,20 @@ interface ScheduleSlotDto {
 export default function RoomSchedulePage() {
   const { roomId } = useParams<{ roomId: string }>()
 
-  const { data: room } = useQuery<RoomDto>({
-    queryKey: ['room', roomId],
-    queryFn: () => api.get(`/rooms/${roomId}`),
+  const { data: room } = useQuery({
+    ...getApiV1RoomsByIdOptions({ path: { id: roomId! } }),
     enabled: !!roomId,
   })
 
-  const { data: slots, isLoading, isError } = useQuery<ScheduleSlotDto[]>({
-    queryKey: ['room-schedule', roomId],
-    queryFn: () => api.get(`/rooms/${roomId}/schedule`),
+  const { data: rawSlots, isLoading, isError } = useQuery({
+    ...getApiV1RoomsByRoomIdScheduleOptions({ path: { roomId: roomId! } }),
     enabled: !!roomId,
   })
+  const slots: ScheduleSlotDto[] = (rawSlots ?? []) as unknown as ScheduleSlotDto[]
 
   // Group slots by weekday, sorted by startTime
   const byDay: Record<number, ScheduleSlotDto[]> = {}
-  for (const slot of slots ?? []) {
+  for (const slot of slots) {
     if (!byDay[slot.weekday]) byDay[slot.weekday] = []
     byDay[slot.weekday].push(slot)
   }

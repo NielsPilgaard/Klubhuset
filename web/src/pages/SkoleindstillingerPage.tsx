@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, ApiError } from '../api/client'
+import {
+  getApiV1SchoolsSettingsOptions,
+  getApiV1SchoolsSettingsQueryKey,
+  putApiV1SchoolsSettingsMutation,
+  postApiV1SchoolsLogoMutation,
+  getApiV1TimeSlotTemplateOptions,
+  getApiV1TimeSlotTemplateQueryKey,
+  putApiV1TimeSlotTemplateMutation,
+} from '../api/generated/@tanstack/react-query.gen'
 import { TimeInput } from '../components/TimeInput'
 import { usePageTitle } from '../hooks/usePageTitle'
-import keycloak from '../auth/keycloak'
-
-interface SchoolSettingsDto {
-  name: string
-  contactEmail: string | null
-  contactPhone: string | null
-  logoUrl: string | null
-}
 
 interface TimeSlotTemplateDto {
   id: string
@@ -31,10 +31,7 @@ export default function SkoleindstillingerPage() {
   const qc = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const { data, isLoading } = useQuery<SchoolSettingsDto>({
-    queryKey: ['school-settings'],
-    queryFn: () => api.get('/schools/settings'),
-  })
+  const { data, isLoading } = useQuery(getApiV1SchoolsSettingsOptions())
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -44,7 +41,7 @@ export default function SkoleindstillingerPage() {
   // Pre-fill form once data arrives
   useEffect(() => {
     if (data && !initialized) {
-      setName(data.name)
+      setName(data.name ?? '')
       setEmail(data.contactEmail ?? '')
       setPhone(data.contactPhone ?? '')
       setInitialized(true)
@@ -56,52 +53,29 @@ export default function SkoleindstillingerPage() {
   const [logoError, setLogoError] = useState<string | null>(null)
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      api.put('/schools/settings', {
-        name,
-        contactEmail: email || null,
-        contactPhone: phone || null,
-      }),
+    ...putApiV1SchoolsSettingsMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['school-settings'] })
+      qc.invalidateQueries({ queryKey: getApiV1SchoolsSettingsQueryKey() })
       setInitialized(false)
       setSaveError(null)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
     },
     onError: (err) => {
-      setSaveError(err instanceof ApiError ? err.message : 'Der opstod en fejl.')
+      setSaveError(err instanceof Error ? err.message : 'Der opstod en fejl.')
       setSaveSuccess(false)
     },
   })
 
   const logoMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const token = await getToken()
-      const form = new FormData()
-      form.append('file', file)
-      const res = await fetch('/api/v1/schools/logo', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: form,
-      })
-      if (!res.ok) {
-        const text = await res.text().catch(() => res.statusText)
-        throw new ApiError(res.status, text)
-      }
-      // Handle empty or non-JSON responses (e.g., 204 No Content)
-      if (res.status === 204 || !res.headers.get('content-length') || res.headers.get('content-type') === null) {
-        return undefined
-      }
-      return res.json() as Promise<SchoolSettingsDto | undefined>
-    },
+    ...postApiV1SchoolsLogoMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['school-settings'] })
+      qc.invalidateQueries({ queryKey: getApiV1SchoolsSettingsQueryKey() })
       setLogoError(null)
       if (fileRef.current) fileRef.current.value = ''
     },
     onError: (err) => {
-      setLogoError(err instanceof ApiError ? err.message : 'Logoet kunne ikke uploades.')
+      setLogoError(err instanceof Error ? err.message : 'Logoet kunne ikke uploades.')
     },
   })
 
@@ -132,7 +106,7 @@ export default function SkoleindstillingerPage() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate() } }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } }) } }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
@@ -142,7 +116,7 @@ export default function SkoleindstillingerPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate() } }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } }) } }}
               placeholder="kontakt@skolen.dk"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -153,7 +127,7 @@ export default function SkoleindstillingerPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate() } }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } }) } }}
               placeholder="+45 12 34 56 78"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -163,7 +137,7 @@ export default function SkoleindstillingerPage() {
         </div>
         <div className="px-6 py-4 flex justify-end">
           <button
-            onClick={() => saveMutation.mutate()}
+            onClick={() => saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } })}
             disabled={!name.trim() || saveMutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -193,7 +167,7 @@ export default function SkoleindstillingerPage() {
             data-testid="logo-upload"
             onChange={(e) => {
               const file = e.target.files?.[0]
-              if (file) logoMutation.mutate(file)
+              if (file) logoMutation.mutate({ body: { file } })
             }}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
           />
@@ -213,13 +187,13 @@ export default function SkoleindstillingerPage() {
 function SkoledagCard() {
   const qc = useQueryClient()
 
-  const { data: template } = useQuery<TimeSlotTemplateDto | null>({
-    queryKey: ['time-slot-template'],
-    queryFn: () =>
-      api.get<TimeSlotTemplateDto>('/time-slot-template').catch((err) => {
-        if (err?.status === 404 || err?.response?.status === 404) return null
-        throw err
-      }),
+  const { data: template } = useQuery({
+    ...getApiV1TimeSlotTemplateOptions(),
+    retry: (failureCount, err: unknown) => {
+      if ((err as { status?: number })?.status === 404) return false
+      return failureCount < 3
+    },
+    select: (d) => d as TimeSlotTemplateDto | null,
   })
 
   const [lessonDuration, setLessonDuration] = useState(45)
@@ -272,19 +246,9 @@ function SkoledagCard() {
   }, [template, initialized])
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      api.put('/time-slot-template', {
-        lessonDurationMinutes: lessonDuration,
-        dayStartTime: dayStart + ':00',
-        dayEndTime: dayEnd + ':00',
-        activeDays: '1,2,3,4,5',
-        breaks: breaks.map(b => ({
-          startTime: b.startTime + ':00',
-          durationMinutes: b.durationMinutes,
-        })),
-      }),
+    ...putApiV1TimeSlotTemplateMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['time-slot-template'] })
+      qc.invalidateQueries({ queryKey: getApiV1TimeSlotTemplateQueryKey() })
       setSaveError(null)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -412,7 +376,13 @@ function SkoledagCard() {
               const err = validateSkoledagForm()
               if (err) { setSaveError(err); return }
               if (!window.confirm('Er du sikker? Ændringer i skoledag-indstillingerne sletter alle eksisterende skemaer. Dette kan ikke fortrydes.')) return
-              saveMutation.mutate()
+              saveMutation.mutate({ body: {
+                lessonDurationMinutes: lessonDuration,
+                dayStartTime: dayStart + ':00',
+                dayEndTime: dayEnd + ':00',
+                activeDays: '1,2,3,4,5',
+                breaks: breaks.map(b => ({ startTime: b.startTime + ':00', durationMinutes: b.durationMinutes })),
+              } })
             }}
             disabled={saveMutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -425,13 +395,3 @@ function SkoledagCard() {
   )
 }
 
-// Helper: get current Keycloak token
-async function getToken(): Promise<string | undefined> {
-  try {
-    await keycloak.updateToken(30)
-  } catch {
-    keycloak.login()
-    return undefined
-  }
-  return keycloak.token
-}

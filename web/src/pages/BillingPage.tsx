@@ -1,16 +1,11 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { api, ApiError } from '../api/client'
+import {
+  getApiV1BillingSubscriptionOptions,
+  postApiV1BillingCheckoutMutation,
+  postApiV1BillingPortalMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { SubscriptionDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
-
-interface SubscriptionStatus {
-  status: 'Trialing' | 'Active' | 'PastDue' | 'Canceled' | 'Unpaid'
-  trialEnd: string
-  currentPeriodEnd: string | null
-  isTrialing: boolean
-  isActive: boolean
-  hasAccess: boolean
-  trialDaysLeft: number
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('da-DK', {
@@ -49,37 +44,27 @@ function CheckIcon() {
 
 export default function BillingPage() {
   usePageTitle('Abonnement')
-  const { data, isLoading, isError, refetch } = useQuery<SubscriptionStatus>({
-    queryKey: ['billing', 'subscription'],
-    queryFn: () => api.get('/billing/subscription'),
-  })
+  const { data, isLoading, isError, refetch } = useQuery(getApiV1BillingSubscriptionOptions())
 
   const checkoutMutation = useMutation({
-    mutationFn: () =>
-      api.post('/billing/checkout', {
-        successUrl: window.location.href,
-        cancelUrl: window.location.href,
-      }) as Promise<{ url: string }>,
-    onSuccess: ({ url }) => {
-      window.location.href = url
+    ...postApiV1BillingCheckoutMutation(),
+    onSuccess: (result) => {
+      if (result?.url) window.location.href = result.url
     },
-    onError: (error: ApiError) => {
-      const errorMessage = error instanceof ApiError ? error.message : 'Kunne ikke oprette checkoutsession'
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Kunne ikke oprette checkoutsession'
       console.error('Checkout error:', error)
       alert(errorMessage)
     },
   })
 
   const portalMutation = useMutation({
-    mutationFn: () =>
-      api.post('/billing/portal', {
-        returnUrl: window.location.href,
-      }) as Promise<{ url: string }>,
-    onSuccess: ({ url }) => {
-      window.location.href = url
+    ...postApiV1BillingPortalMutation(),
+    onSuccess: (result) => {
+      if (result?.url) window.location.href = result.url
     },
-    onError: (error: ApiError) => {
-      const errorMessage = error instanceof ApiError ? error.message : 'Kunne ikke åbne administrationsportal'
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Kunne ikke åbne administrationsportal'
       console.error('Portal error:', error)
       alert(errorMessage)
     },
@@ -113,8 +98,8 @@ export default function BillingPage() {
       ) : data ? (
         <StatusCard
           data={data}
-          onCheckout={() => checkoutMutation.mutate()}
-          onPortal={() => portalMutation.mutate()}
+          onCheckout={() => checkoutMutation.mutate({})}
+          onPortal={() => portalMutation.mutate({})}
           isRedirecting={isRedirecting}
         />
       ) : null}
@@ -124,7 +109,7 @@ export default function BillingPage() {
         isActive={data?.isActive ?? false}
         isTrialing={data?.isTrialing ?? false}
         trialEnd={data?.trialEnd}
-        onCheckout={() => checkoutMutation.mutate()}
+        onCheckout={() => checkoutMutation.mutate({})}
         isRedirecting={isRedirecting}
       />
     </div>
@@ -137,7 +122,7 @@ function StatusCard({
   onPortal,
   isRedirecting,
 }: {
-  data: SubscriptionStatus
+  data: SubscriptionDto
   onCheckout: () => void
   onPortal: () => void
   isRedirecting: boolean
@@ -163,12 +148,12 @@ function StatusCard({
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-brand-900">Gratis prøveperiode</h2>
             <p className="mt-1 text-sm text-brand-700">
-              {data.trialDaysLeft > 0
+              {(data.trialDaysLeft ?? 0) > 0
                 ? `${data.trialDaysLeft} ${data.trialDaysLeft === 1 ? 'dag' : 'dage'} tilbage — ingen betaling endnu`
                 : 'Prøveperioden udløber i dag'}
             </p>
             <p className="mt-0.5 text-sm text-brand-600">
-              Du kan bruge alle funktioner gratis frem til den {formatDate(data.trialEnd)}.
+              Du kan bruge alle funktioner gratis frem til den {formatDate(data.trialEnd ?? '')}.
               Herefter koster det 299 kr/md.
             </p>
           </div>
@@ -298,8 +283,8 @@ function PricingCard({
   onCheckout,
   isRedirecting,
 }: {
-  isActive: boolean
-  isTrialing: boolean
+  isActive?: boolean
+  isTrialing?: boolean
   trialEnd?: string
   onCheckout: () => void
   isRedirecting: boolean

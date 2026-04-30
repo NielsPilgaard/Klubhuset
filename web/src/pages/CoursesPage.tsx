@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, CourseDto } from '../api/client'
+import {
+  getApiV1CoursesOptions,
+  getApiV1CoursesQueryKey,
+  postApiV1CoursesMutation,
+  putApiV1CoursesByIdMutation,
+  deleteApiV1CoursesByIdMutation,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { CourseDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { STANDARD_COURSES } from '../constants/courses'
 
@@ -31,22 +38,25 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
   const [description, setDescription] = useState(initial?.description ?? '')
   const [color, setColor] = useState<string | null>(initial?.color ?? null)
 
-  const mutation = useMutation({
-    mutationFn: () => {
-      const body = { name, description: description || null, color }
-      return initial
-        ? api.put(`/courses/${initial.id}`, body)
-        : api.post('/courses', body)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses'] })
-      onSaved()
-    },
+  const createMutation = useMutation({
+    ...postApiV1CoursesMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1CoursesQueryKey() }); onSaved() },
   })
+  const updateMutation = useMutation({
+    ...putApiV1CoursesByIdMutation(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1CoursesQueryKey() }); onSaved() },
+  })
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isError = createMutation.isError || updateMutation.isError
 
   function handleSave() {
-    if (!name.trim() || mutation.isPending) return
-    mutation.mutate()
+    if (!name.trim() || isPending) return
+    const body = { name, description: description || null, color }
+    if (initial) {
+      updateMutation.mutate({ path: { id: initial.id! }, body })
+    } else {
+      createMutation.mutate({ body })
+    }
   }
 
   return (
@@ -108,7 +118,7 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
               )}
             </div>
           </div>
-          {mutation.isError && (
+          {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
         </div>
@@ -118,10 +128,10 @@ function CourseModal({ initial, onClose, onSaved }: CourseModalProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
+            disabled={!name.trim() || isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
+            {isPending ? 'Gemmer...' : 'Gem'}
           </button>
         </div>
       </div>
@@ -161,10 +171,13 @@ function BulkCreateModal({ existingNames, onClose, onSaved }: BulkCreateModalPro
       Promise.all(
         available
           .filter((c) => selected.has(c.name))
-          .map((c) => api.post('/courses', { name: c.name, color: c.color, description: null }))
+          .map((c) => {
+            const { mutationFn } = postApiV1CoursesMutation()
+            return mutationFn!({ body: { name: c.name, color: c.color, description: null } }, undefined as never)
+          })
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses'] })
+      qc.invalidateQueries({ queryKey: getApiV1CoursesQueryKey() })
       onSaved()
     },
   })
@@ -243,14 +256,11 @@ export default function CoursesPage() {
   const [showBulk, setShowBulk] = useState(false)
   const [editingCourse, setEditingCourse] = useState<CourseDto | null>(null)
 
-  const { data: courses, isLoading, isError, refetch } = useQuery<CourseDto[]>({
-    queryKey: ['courses'],
-    queryFn: () => api.get('/courses'),
-  })
+  const { data: courses, isLoading, isError, refetch } = useQuery(getApiV1CoursesOptions())
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/courses/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['courses'] }),
+    ...deleteApiV1CoursesByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1CoursesQueryKey() }),
   })
 
   const existingNames = courses?.map((c) => c.name).filter((n): n is string => n !== null && n !== undefined) ?? []
@@ -349,7 +359,7 @@ export default function CoursesPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Slet faget "${c.name}"?`)) deleteMutation.mutate(c.id!)
+                        if (confirm(`Slet faget "${c.name}"?`)) deleteMutation.mutate({ path: { id: c.id! } })
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                     >
