@@ -6,6 +6,7 @@ import type { StaffRole } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { STANDARD_COURSES } from '../constants/courses'
+import { useAuth } from '../auth/useAuth'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -712,6 +713,15 @@ export default function SchoolSetupWizardPage() {
   const qc = useQueryClient()
   const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
+  const { authenticated } = useAuth()
+
+  useEffect(() => {
+    if (!authenticated) {
+      import('../auth/keycloak').then(({ default: keycloak }) => keycloak.login())
+    }
+  }, [authenticated])
+
+  if (!authenticated) return null
 
   const advance = () => setStep((s) => Math.min(s + 1, STEPS.length))
   const skip = () => setStep((s) => Math.min(s + 1, STEPS.length))

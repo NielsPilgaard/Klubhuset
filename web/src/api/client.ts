@@ -3,13 +3,22 @@ import { client } from './generated/client.gen'
 
 export const API_BASE = '/api/v1'
 
+async function getToken(): Promise<string> {
+  await keycloak.updateToken(30).catch(() => {
+    keycloak.login()
+    throw new Error('Not authenticated')
+  })
+  if (!keycloak.token) {
+    keycloak.login()
+    throw new Error('Not authenticated')
+  }
+  return keycloak.token
+}
+
 // Configure the generated client with Keycloak bearer auth and the correct base URL.
 client.setConfig({
   baseUrl: '',
-  auth: async () => {
-    await keycloak.updateToken(30).catch(() => keycloak.login())
-    return keycloak.token
-  },
+  auth: getToken,
 })
 
 export class ApiError extends Error {
@@ -19,12 +28,12 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  await keycloak.updateToken(30).catch(() => keycloak.login())
+  const token = await getToken()
 
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
+      Authorization: `Bearer ${token}`,
     },
     ...options,
   })
@@ -37,11 +46,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function requestForm<T>(path: string, body: FormData): Promise<T> {
-  await keycloak.updateToken(30).catch(() => keycloak.login())
+  const token = await getToken()
 
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {},
+    headers: { Authorization: `Bearer ${token}` },
     body,
   })
   if (!res.ok) {

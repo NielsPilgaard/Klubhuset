@@ -46,6 +46,10 @@ export type ClassDto = {
     description?: string | null;
 };
 
+export type ConfirmRequest = {
+    confirmToken?: string | null;
+};
+
 export type ConflictInfo = {
     type?: ConflictType;
     slotAId?: string;
@@ -79,6 +83,11 @@ export type CreateCalendarEntryRequest = {
     type?: CalendarEntryType;
     startDate?: string;
     endDate?: string;
+};
+
+export type CreateFolderRequest = {
+    name?: string | null;
+    parentId?: string | null;
 };
 
 export type CreateSchemaRequest = {
@@ -123,8 +132,21 @@ export type FileDto = {
     url?: string | null;
     courseId?: string | null;
     courseName?: string | null;
+    folderId?: string | null;
     uploadedBy?: string | null;
     uploadedAt?: string;
+};
+
+export type FilesResponseDto = {
+    files?: Array<FileDto> | null;
+    folders?: Array<FolderDto> | null;
+};
+
+export type FolderDto = {
+    id?: string;
+    name?: string | null;
+    parentId?: string | null;
+    createdAt?: string;
 };
 
 export type HolidayDayDto = {
@@ -166,6 +188,27 @@ export type OnboardingStatusDto = {
     roomCount?: number;
     stepsCompleted?: number;
     stepsTotal?: number;
+};
+
+export type PatchAdminPermissionRequest = {
+    isAdmin?: boolean;
+};
+
+export type PresignRequest = {
+    fileName?: string | null;
+    fileSizeBytes?: number;
+    courseId?: string | null;
+    folderId?: string | null;
+};
+
+export type PresignResponse = {
+    fileId?: string;
+    uploadUrl?: string | null;
+    confirmToken?: string | null;
+};
+
+export type RenameFolderRequest = {
+    name?: string | null;
 };
 
 export type RoomDto = {
@@ -241,6 +284,8 @@ export type StaffDto = {
     email?: string | null;
     phone?: string | null;
     role?: StaffRole;
+    isAdmin?: boolean;
+    keycloakSubject?: string | null;
 };
 
 export type StaffRole = 'Teacher' | 'Aide' | 'Substitute';
@@ -266,10 +311,13 @@ export type TemplateDto = {
     breaks?: Array<BreakDto> | null;
 };
 
-export type TenantDto = {
+export type TenantCreatedDto = {
     id?: string;
     name?: string | null;
     adminEmail?: string | null;
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    expiresIn?: number;
 };
 
 export type TimeSlotDto = {
@@ -338,6 +386,7 @@ export type UpsertStaffRequest = {
     email?: string | null;
     phone?: string | null;
     role?: StaffRole;
+    isAdmin?: boolean;
 };
 
 export type UpsertTemplateRequest = {
@@ -708,6 +757,7 @@ export type GetApiV1FilesData = {
     path?: never;
     query?: {
         courseId?: string;
+        folderId?: string;
     };
     url: '/api/v1/files';
 };
@@ -716,29 +766,42 @@ export type GetApiV1FilesResponses = {
     /**
      * OK
      */
-    200: Array<FileDto>;
+    200: FilesResponseDto;
 };
 
 export type GetApiV1FilesResponse = GetApiV1FilesResponses[keyof GetApiV1FilesResponses];
 
-export type PostApiV1FilesData = {
-    body?: {
-        file?: Blob | File;
-        courseId?: string;
-    };
+export type PostApiV1FilesPresignData = {
+    body?: PresignRequest;
     path?: never;
     query?: never;
-    url: '/api/v1/files';
+    url: '/api/v1/files/presign';
 };
 
-export type PostApiV1FilesResponses = {
+export type PostApiV1FilesPresignResponses = {
+    /**
+     * OK
+     */
+    200: PresignResponse;
+};
+
+export type PostApiV1FilesPresignResponse = PostApiV1FilesPresignResponses[keyof PostApiV1FilesPresignResponses];
+
+export type PostApiV1FilesConfirmData = {
+    body?: ConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/files/confirm';
+};
+
+export type PostApiV1FilesConfirmResponses = {
     /**
      * OK
      */
     200: FileDto;
 };
 
-export type PostApiV1FilesResponse = PostApiV1FilesResponses[keyof PostApiV1FilesResponses];
+export type PostApiV1FilesConfirmResponse = PostApiV1FilesConfirmResponses[keyof PostApiV1FilesConfirmResponses];
 
 export type DeleteApiV1FilesByIdData = {
     body?: never;
@@ -755,6 +818,56 @@ export type DeleteApiV1FilesByIdResponses = {
      */
     200: unknown;
 };
+
+export type PostApiV1FilesFoldersData = {
+    body?: CreateFolderRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/files/folders';
+};
+
+export type PostApiV1FilesFoldersResponses = {
+    /**
+     * OK
+     */
+    200: FolderDto;
+};
+
+export type PostApiV1FilesFoldersResponse = PostApiV1FilesFoldersResponses[keyof PostApiV1FilesFoldersResponses];
+
+export type DeleteApiV1FilesFoldersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/files/folders/{id}';
+};
+
+export type DeleteApiV1FilesFoldersByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiV1FilesFoldersByIdData = {
+    body?: RenameFolderRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/files/folders/{id}';
+};
+
+export type PatchApiV1FilesFoldersByIdResponses = {
+    /**
+     * OK
+     */
+    200: FolderDto;
+};
+
+export type PatchApiV1FilesFoldersByIdResponse = PatchApiV1FilesFoldersByIdResponses[keyof PatchApiV1FilesFoldersByIdResponses];
 
 export type GetApiV1ReportsHoursStaffXlsxData = {
     body?: never;
@@ -1294,6 +1407,24 @@ export type PutApiV1StaffByIdResponses = {
 
 export type PutApiV1StaffByIdResponse = PutApiV1StaffByIdResponses[keyof PutApiV1StaffByIdResponses];
 
+export type PatchApiV1StaffByIdAdminPermissionData = {
+    body?: PatchAdminPermissionRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/staff/{id}/admin-permission';
+};
+
+export type PatchApiV1StaffByIdAdminPermissionResponses = {
+    /**
+     * OK
+     */
+    200: StaffDto;
+};
+
+export type PatchApiV1StaffByIdAdminPermissionResponse = PatchApiV1StaffByIdAdminPermissionResponses[keyof PatchApiV1StaffByIdAdminPermissionResponses];
+
 export type GetApiV1StaffInvitationsData = {
     body?: never;
     path?: never;
@@ -1417,7 +1548,7 @@ export type PostApiV1TenantsResponses = {
     /**
      * OK
      */
-    200: TenantDto;
+    200: TenantCreatedDto;
 };
 
 export type PostApiV1TenantsResponse = PostApiV1TenantsResponses[keyof PostApiV1TenantsResponses];

@@ -204,32 +204,6 @@ function SkoledagCard() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
-  function validateSkoledagForm(): string | null {
-    if (dayStart >= dayEnd) return 'Skoledagen skal slutte efter den starter.'
-    if (lessonDuration <= 0) return 'Lektionslængde skal være større end 0.'
-
-    // Each break must start exactly on a module boundary: dayStart + N * lessonDuration
-    const [sh, sm] = dayStart.split(':').map(Number)
-    const dayStartMinutes = sh * 60 + sm
-    for (const b of breaks) {
-      const [bh, bm] = b.startTime.split(':').map(Number)
-      const breakMinutes = bh * 60 + bm
-      if (breakMinutes < dayStartMinutes) {
-        return `Pausen kl. ${b.startTime} starter før skoledagen.`
-      }
-      const minutesFromStart = breakMinutes - dayStartMinutes
-      if (minutesFromStart % lessonDuration !== 0) {
-        const moduleNumber = Math.floor(minutesFromStart / lessonDuration) + 1
-        const modStartMin = dayStartMinutes + (moduleNumber - 1) * lessonDuration
-        const modEndMin = dayStartMinutes + moduleNumber * lessonDuration
-        const fmt = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-        return `Pausen kl. ${b.startTime} falder midt i modul ${moduleNumber} (${fmt(modStartMin)}–${fmt(modEndMin)}). Pauser skal starte præcis ved en lektionsovergang.`
-      }
-    }
-
-    return null
-  }
-
   useEffect(() => {
     if (template !== undefined && !initialized) {
       if (template) {
@@ -253,8 +227,9 @@ function SkoledagCard() {
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
     },
-    onError: () => {
-      setSaveError('Kunne ikke gemme skoledag. Prøv igen.')
+    onError: (err) => {
+      const detail = err && typeof err === 'object' && 'detail' in err ? (err as { detail: string }).detail : 'Kunne ikke gemme skoledag. Prøv igen.'
+      setSaveError(detail)
       setSaveSuccess(false)
     },
   })
@@ -373,8 +348,6 @@ function SkoledagCard() {
         <div className="flex justify-end">
           <button
             onClick={() => {
-              const err = validateSkoledagForm()
-              if (err) { setSaveError(err); return }
               if (!window.confirm('Er du sikker? Ændringer i skoledag-indstillingerne sletter alle eksisterende skemaer. Dette kan ikke fortrydes.')) return
               saveMutation.mutate({ body: {
                 lessonDurationMinutes: lessonDuration,

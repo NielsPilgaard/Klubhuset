@@ -4,9 +4,9 @@ import {
   getApiV1CoursesOptions,
   getApiV1FilesOptions,
   getApiV1FilesQueryKey,
-  postApiV1FilesMutation,
   deleteApiV1FilesByIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
+import { postApiV1FilesPresign, postApiV1FilesConfirm } from '../api/generated/sdk.gen'
 import type { CourseDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
@@ -90,22 +90,27 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
   const dragRef = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
 
-  const { mutationFn: uploadMutationFn } = postApiV1FilesMutation()
   const mutation = useMutation({
-    mutationFn: uploadMutationFn,
+    mutationFn: async ({ file, courseId }: { file: File; courseId?: string }) => {
+      const { data: presign } = await postApiV1FilesPresign({
+        body: { fileName: file.name, fileSizeBytes: file.size, courseId: courseId || undefined },
+        throwOnError: true,
+      })
+      await fetch(presign!.uploadUrl!, { method: 'PUT', body: file })
+      setProgress(100)
+      const { data: confirmed } = await postApiV1FilesConfirm({
+        body: { confirmToken: presign!.confirmToken },
+        throwOnError: true,
+      })
+      return confirmed
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
       onUploaded()
     },
-    onError: (err: unknown) => {
+    onError: () => {
       setProgress(null)
-      try {
-        const body = JSON.parse((err as Error).message)
-        const msgs = Object.values(body.errors ?? {}).flat() as string[]
-        setError(msgs[0] ?? 'Der opstod en fejl.')
-      } catch {
-        setError('Der opstod en fejl under upload. Prøv igen.')
-      }
+      setError('Der opstod en fejl under upload. Prøv igen.')
     },
   })
 
@@ -202,7 +207,7 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
           <button
             onClick={() => {
               if (!selectedFile) return
-              mutation.mutate({ body: { file: selectedFile, courseId: courseId || undefined } })
+              mutation.mutate({ file: selectedFile, courseId: courseId || undefined })
             }}
             disabled={!selectedFile || mutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -237,7 +242,7 @@ export default function FilesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
   })
 
-  const files = data ?? []
+  const files = data?.files ?? []
   const isEmpty = !isLoading && files.length === 0
 
   return (

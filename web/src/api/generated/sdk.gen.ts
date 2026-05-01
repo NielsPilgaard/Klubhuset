@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiV1CalendarByIdData, DeleteApiV1CalendarByIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponses, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdData, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdResponses, DeleteApiV1ClassesByIdData, DeleteApiV1ClassesByIdResponses, DeleteApiV1CoursesByIdData, DeleteApiV1CoursesByIdResponses, DeleteApiV1FilesByIdData, DeleteApiV1FilesByIdResponses, DeleteApiV1RoomsByIdData, DeleteApiV1RoomsByIdResponses, DeleteApiV1StaffByIdData, DeleteApiV1StaffByIdResponses, GetApiV1BillingSubscriptionData, GetApiV1BillingSubscriptionResponses, GetApiV1CalendarData, GetApiV1CalendarDefaultsData, GetApiV1CalendarDefaultsResponses, GetApiV1CalendarResponses, GetApiV1ClassesByClassIdScheduleData, GetApiV1ClassesByClassIdScheduleResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsData, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdData, GetApiV1ClassesByClassIdSchemasBySchemaIdResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, GetApiV1ClassesByClassIdSchemasData, GetApiV1ClassesByClassIdSchemasResponses, GetApiV1ClassesByClassIdTimeSlotsData, GetApiV1ClassesByClassIdTimeSlotsResponses, GetApiV1ClassesByClassIdUgeplanData, GetApiV1ClassesByClassIdUgeplanResponses, GetApiV1ClassesByIdData, GetApiV1ClassesByIdResponses, GetApiV1ClassesData, GetApiV1ClassesResponses, GetApiV1CoursesByIdData, GetApiV1CoursesByIdResponses, GetApiV1CoursesData, GetApiV1CoursesResponses, GetApiV1FilesData, GetApiV1FilesResponses, GetApiV1ReportsHoursCoursesXlsxData, GetApiV1ReportsHoursCoursesXlsxResponses, GetApiV1ReportsHoursStaffXlsxData, GetApiV1ReportsHoursStaffXlsxResponses, GetApiV1ReportsSchemaXlsxData, GetApiV1ReportsSchemaXlsxResponses, GetApiV1RoomsByIdData, GetApiV1RoomsByIdResponses, GetApiV1RoomsByRoomIdScheduleData, GetApiV1RoomsByRoomIdScheduleResponses, GetApiV1RoomsData, GetApiV1RoomsResponses, GetApiV1SchoolsOnboardingStatusData, GetApiV1SchoolsOnboardingStatusResponses, GetApiV1SchoolsSettingsData, GetApiV1SchoolsSettingsResponses, GetApiV1StaffByIdData, GetApiV1StaffByIdResponses, GetApiV1StaffByStaffIdScheduleData, GetApiV1StaffByStaffIdScheduleResponses, GetApiV1StaffData, GetApiV1StaffInvitationsByStaffByStaffIdData, GetApiV1StaffInvitationsByStaffByStaffIdResponses, GetApiV1StaffInvitationsData, GetApiV1StaffInvitationsPreviewData, GetApiV1StaffInvitationsPreviewResponses, GetApiV1StaffInvitationsResponses, GetApiV1StaffResponses, GetApiV1StatsDashboardData, GetApiV1StatsDashboardResponses, GetApiV1TimeSlotsData, GetApiV1TimeSlotsResponses, GetApiV1TimeSlotTemplateData, GetApiV1TimeSlotTemplateResponses, PostApiV1BillingCheckoutData, PostApiV1BillingCheckoutResponses, PostApiV1BillingPortalData, PostApiV1BillingPortalResponses, PostApiV1CalendarData, PostApiV1CalendarResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses, PostApiV1ClassesByClassIdSchemasData, PostApiV1ClassesByClassIdSchemasResponses, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses, PostApiV1ClassesData, PostApiV1ClassesResponses, PostApiV1CoursesData, PostApiV1CoursesResponses, PostApiV1FilesData, PostApiV1FilesResponses, PostApiV1RoomsData, PostApiV1RoomsResponses, PostApiV1SchoolsLogoData, PostApiV1SchoolsLogoResponses, PostApiV1StaffData, PostApiV1StaffInvitationsAcceptData, PostApiV1StaffInvitationsAcceptResponses, PostApiV1StaffInvitationsInviteByStaffIdData, PostApiV1StaffInvitationsInviteByStaffIdResponses, PostApiV1StaffResponses, PostApiV1StripeWebhookData, PostApiV1StripeWebhookResponses, PostApiV1TenantsData, PostApiV1TenantsResponses, PutApiV1CalendarByIdData, PutApiV1CalendarByIdResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, PutApiV1ClassesByClassIdTimeSlotsData, PutApiV1ClassesByClassIdTimeSlotsResponses, PutApiV1ClassesByClassIdUgeplanSlotsData, PutApiV1ClassesByClassIdUgeplanSlotsResponses, PutApiV1ClassesByIdData, PutApiV1ClassesByIdResponses, PutApiV1CoursesByIdData, PutApiV1CoursesByIdResponses, PutApiV1RoomsByIdData, PutApiV1RoomsByIdResponses, PutApiV1SchoolsSettingsData, PutApiV1SchoolsSettingsResponses, PutApiV1StaffByIdData, PutApiV1StaffByIdResponses, PutApiV1TimeSlotTemplateData, PutApiV1TimeSlotTemplateResponses } from './types.gen';
+import type { DeleteApiV1CalendarByIdData, DeleteApiV1CalendarByIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponses, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdData, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdResponses, DeleteApiV1ClassesByIdData, DeleteApiV1ClassesByIdResponses, DeleteApiV1CoursesByIdData, DeleteApiV1CoursesByIdResponses, DeleteApiV1FilesByIdData, DeleteApiV1FilesByIdResponses, DeleteApiV1FilesFoldersByIdData, DeleteApiV1FilesFoldersByIdResponses, DeleteApiV1RoomsByIdData, DeleteApiV1RoomsByIdResponses, DeleteApiV1StaffByIdData, DeleteApiV1StaffByIdResponses, GetApiV1BillingSubscriptionData, GetApiV1BillingSubscriptionResponses, GetApiV1CalendarData, GetApiV1CalendarDefaultsData, GetApiV1CalendarDefaultsResponses, GetApiV1CalendarResponses, GetApiV1ClassesByClassIdScheduleData, GetApiV1ClassesByClassIdScheduleResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsData, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdData, GetApiV1ClassesByClassIdSchemasBySchemaIdResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, GetApiV1ClassesByClassIdSchemasData, GetApiV1ClassesByClassIdSchemasResponses, GetApiV1ClassesByClassIdTimeSlotsData, GetApiV1ClassesByClassIdTimeSlotsResponses, GetApiV1ClassesByClassIdUgeplanData, GetApiV1ClassesByClassIdUgeplanResponses, GetApiV1ClassesByIdData, GetApiV1ClassesByIdResponses, GetApiV1ClassesData, GetApiV1ClassesResponses, GetApiV1CoursesByIdData, GetApiV1CoursesByIdResponses, GetApiV1CoursesData, GetApiV1CoursesResponses, GetApiV1FilesData, GetApiV1FilesResponses, GetApiV1ReportsHoursCoursesXlsxData, GetApiV1ReportsHoursCoursesXlsxResponses, GetApiV1ReportsHoursStaffXlsxData, GetApiV1ReportsHoursStaffXlsxResponses, GetApiV1ReportsSchemaXlsxData, GetApiV1ReportsSchemaXlsxResponses, GetApiV1RoomsByIdData, GetApiV1RoomsByIdResponses, GetApiV1RoomsByRoomIdScheduleData, GetApiV1RoomsByRoomIdScheduleResponses, GetApiV1RoomsData, GetApiV1RoomsResponses, GetApiV1SchoolsOnboardingStatusData, GetApiV1SchoolsOnboardingStatusResponses, GetApiV1SchoolsSettingsData, GetApiV1SchoolsSettingsResponses, GetApiV1StaffByIdData, GetApiV1StaffByIdResponses, GetApiV1StaffByStaffIdScheduleData, GetApiV1StaffByStaffIdScheduleResponses, GetApiV1StaffData, GetApiV1StaffInvitationsByStaffByStaffIdData, GetApiV1StaffInvitationsByStaffByStaffIdResponses, GetApiV1StaffInvitationsData, GetApiV1StaffInvitationsPreviewData, GetApiV1StaffInvitationsPreviewResponses, GetApiV1StaffInvitationsResponses, GetApiV1StaffResponses, GetApiV1StatsDashboardData, GetApiV1StatsDashboardResponses, GetApiV1TimeSlotsData, GetApiV1TimeSlotsResponses, GetApiV1TimeSlotTemplateData, GetApiV1TimeSlotTemplateResponses, PatchApiV1FilesFoldersByIdData, PatchApiV1FilesFoldersByIdResponses, PatchApiV1StaffByIdAdminPermissionData, PatchApiV1StaffByIdAdminPermissionResponses, PostApiV1BillingCheckoutData, PostApiV1BillingCheckoutResponses, PostApiV1BillingPortalData, PostApiV1BillingPortalResponses, PostApiV1CalendarData, PostApiV1CalendarResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses, PostApiV1ClassesByClassIdSchemasData, PostApiV1ClassesByClassIdSchemasResponses, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses, PostApiV1ClassesData, PostApiV1ClassesResponses, PostApiV1CoursesData, PostApiV1CoursesResponses, PostApiV1FilesConfirmData, PostApiV1FilesConfirmResponses, PostApiV1FilesFoldersData, PostApiV1FilesFoldersResponses, PostApiV1FilesPresignData, PostApiV1FilesPresignResponses, PostApiV1RoomsData, PostApiV1RoomsResponses, PostApiV1SchoolsLogoData, PostApiV1SchoolsLogoResponses, PostApiV1StaffData, PostApiV1StaffInvitationsAcceptData, PostApiV1StaffInvitationsAcceptResponses, PostApiV1StaffInvitationsInviteByStaffIdData, PostApiV1StaffInvitationsInviteByStaffIdResponses, PostApiV1StaffResponses, PostApiV1StripeWebhookData, PostApiV1StripeWebhookResponses, PostApiV1TenantsData, PostApiV1TenantsResponses, PutApiV1CalendarByIdData, PutApiV1CalendarByIdResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, PutApiV1ClassesByClassIdTimeSlotsData, PutApiV1ClassesByClassIdTimeSlotsResponses, PutApiV1ClassesByClassIdUgeplanSlotsData, PutApiV1ClassesByClassIdUgeplanSlotsResponses, PutApiV1ClassesByIdData, PutApiV1ClassesByIdResponses, PutApiV1CoursesByIdData, PutApiV1CoursesByIdResponses, PutApiV1RoomsByIdData, PutApiV1RoomsByIdResponses, PutApiV1SchoolsSettingsData, PutApiV1SchoolsSettingsResponses, PutApiV1StaffByIdData, PutApiV1StaffByIdResponses, PutApiV1TimeSlotTemplateData, PutApiV1TimeSlotTemplateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -156,13 +156,22 @@ export const getApiV1Files = <ThrowOnError extends boolean = false>(options?: Op
     ...options
 });
 
-export const postApiV1Files = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1FilesData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1FilesResponses, unknown, ThrowOnError>({
-    ...formDataBodySerializer,
+export const postApiV1FilesPresign = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1FilesPresignData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1FilesPresignResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/files',
+    url: '/api/v1/files/presign',
     ...options,
     headers: {
-        'Content-Type': null,
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const postApiV1FilesConfirm = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1FilesConfirmData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1FilesConfirmResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/confirm',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
         ...options?.headers
     }
 });
@@ -171,6 +180,32 @@ export const deleteApiV1FilesById = <ThrowOnError extends boolean = false>(optio
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/files/{id}',
     ...options
+});
+
+export const postApiV1FilesFolders = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1FilesFoldersData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1FilesFoldersResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/folders',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const deleteApiV1FilesFoldersById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiV1FilesFoldersByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiV1FilesFoldersByIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/folders/{id}',
+    ...options
+});
+
+export const patchApiV1FilesFoldersById = <ThrowOnError extends boolean = false>(options: Options<PatchApiV1FilesFoldersByIdData, ThrowOnError>) => (options.client ?? client).patch<PatchApiV1FilesFoldersByIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/folders/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 export const getApiV1ReportsHoursStaffXlsx = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1ReportsHoursStaffXlsxData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1ReportsHoursStaffXlsxResponses, unknown, ThrowOnError>({
@@ -397,6 +432,16 @@ export const getApiV1StaffById = <ThrowOnError extends boolean = false>(options:
 export const putApiV1StaffById = <ThrowOnError extends boolean = false>(options: Options<PutApiV1StaffByIdData, ThrowOnError>) => (options.client ?? client).put<PutApiV1StaffByIdResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/staff/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const patchApiV1StaffByIdAdminPermission = <ThrowOnError extends boolean = false>(options: Options<PatchApiV1StaffByIdAdminPermissionData, ThrowOnError>) => (options.client ?? client).patch<PatchApiV1StaffByIdAdminPermissionResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/staff/{id}/admin-permission',
     ...options,
     headers: {
         'Content-Type': 'application/json',

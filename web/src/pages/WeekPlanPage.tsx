@@ -10,8 +10,8 @@ import {
   getApiV1CoursesOptions,
   getApiV1FilesOptions,
   getApiV1ClassesOptions,
-  postApiV1FilesMutation,
 } from '../api/generated/@tanstack/react-query.gen'
+import { postApiV1FilesPresign, postApiV1FilesConfirm } from '../api/generated/sdk.gen'
 import type { ClassDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -233,10 +233,17 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const slotId = await ensureSlotSaved()
-      const { mutationFn: uploadFile } = postApiV1FilesMutation()
-      const uploaded = await uploadFile!({ body: { file } }, undefined as never)
+      const { data: presign } = await postApiV1FilesPresign({
+        body: { fileName: file.name, fileSizeBytes: file.size },
+        throwOnError: true,
+      })
+      await fetch(presign!.uploadUrl!, { method: 'PUT', body: file })
+      const { data: uploaded } = await postApiV1FilesConfirm({
+        body: { confirmToken: presign!.confirmToken },
+        throwOnError: true,
+      })
       const { mutationFn: addFile } = postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation()
-      await addFile!({ path: { classId, slotId }, body: { schoolFileId: (uploaded as { id: string }).id } }, undefined as never)
+      await addFile!({ path: { classId, slotId }, body: { schoolFileId: uploaded!.id } }, undefined as never)
       return uploaded
     },
     onSuccess: () => {
@@ -482,7 +489,7 @@ export default function WeekPlanPage() {
   const courses = (rawCourses ?? []) as CourseDto[]
 
   const { data: rawFiles } = useQuery(getApiV1FilesOptions())
-  const files = (rawFiles ?? []) as FileDto[]
+  const files = (rawFiles?.files ?? []) as FileDto[]
 
   // Collect all unique course IDs for color assignment
   const allCourseIds = weekPlanData?.slots.map(s => s.courseId).filter((v, i, a) => a.indexOf(v) === i) ?? []
