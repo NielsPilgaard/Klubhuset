@@ -97,3 +97,11 @@ jobs:
           tags: ghcr.io/nielspilgaard/skoleplanen-web:latest
           build-args: |
             VITE_KEYCLOAK_URL=https://auth.skoleplanen.dk
+
+      - name: Build and push Keycloak image
+        uses: docker/build-push-action@v6
+        with:
+          context: infrastructure/keycloak
+          file: infrastructure/keycloak/Dockerfile
+          push: true
+          tags: ghcr.io/nielspilgaard/skoleplanen-keycloak:latest

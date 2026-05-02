@@ -26,7 +26,7 @@ name:
 
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
     restart: unless-stopped
     command: start --import-realm
     environment:
@@ -41,9 +41,6 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
-    volumes:
-      - ../keycloak/realms:/opt/keycloak/data/import:ro
-      - ../keycloak/themes:/opt/keycloak/themes:ro
     networks:
       - dokploy-network
     labels:
