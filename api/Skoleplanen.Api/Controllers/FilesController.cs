@@ -154,7 +154,8 @@ public sealed class FilesController(
     public record PresignResponse(
         Guid FileId,
         string UploadUrl,
-        string ConfirmToken);
+        string ConfirmToken,
+        string ContentType);
 
     [HttpPost("presign")]
     public async Task<ActionResult<PresignResponse>> Presign(
@@ -237,7 +238,7 @@ public sealed class FilesController(
 
         var confirmToken = SignToken(tokenPayload, GetSigningKey());
 
-        return Ok(new PresignResponse(fileId, uploadUrl, confirmToken));
+        return Ok(new PresignResponse(fileId, uploadUrl, confirmToken, contentType));
     }
 
     public record ConfirmRequest([Required] string ConfirmToken);

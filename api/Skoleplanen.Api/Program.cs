@@ -10,8 +10,11 @@ using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
+using Skoleplanen.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Multi-tenancy
 builder.Services.AddHttpContextAccessor();
@@ -96,6 +99,7 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
 if (app.Environment.IsDevelopment() && !isOpenApiGeneration)

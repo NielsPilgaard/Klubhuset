@@ -96,7 +96,11 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
         body: { fileName: file.name, fileSizeBytes: file.size, courseId: courseId || undefined },
         throwOnError: true,
       })
-      await fetch(presign!.uploadUrl!, { method: 'PUT', body: file })
+      await fetch(presign!.uploadUrl!, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': presign!.contentType! },
+      })
       setProgress(100)
       const { data: confirmed } = await postApiV1FilesConfirm({
         body: { confirmToken: presign!.confirmToken },

@@ -59,7 +59,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     environment:
-      ASPNETCORE__ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
       Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
       Keycloak__Audience: skoleplanen-api
