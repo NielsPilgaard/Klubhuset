@@ -13,6 +13,7 @@ import {
 import type { TimeSlotDto, ClassDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { TimeInput } from '../components/TimeInput'
+import { LessonDurationSlider } from '../components/LessonDurationSlider'
 
 interface BreakEntry {
   startTime: string
@@ -281,25 +282,7 @@ export default function ClassTimeSlotsPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Lektionslængde — {lessonDuration} minutter
-              </label>
-              <input
-                type="range"
-                min={20}
-                max={90}
-                step={5}
-                value={lessonDuration}
-                onChange={(e) => setLessonDuration(Number(e.target.value))}
-                className="w-full accent-brand-600"
-                data-testid="schema-lesson-duration"
-              />
-              <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-                <span>20 min</span>
-                <span>90 min</span>
-              </div>
-            </div>
+            <LessonDurationSlider value={lessonDuration} onChange={setLessonDuration} data-testid="schema-lesson-duration" />
 
             <div>
               <div className="flex items-center justify-between mb-2">

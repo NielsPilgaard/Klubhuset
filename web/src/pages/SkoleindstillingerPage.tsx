@@ -10,6 +10,7 @@ import {
   putApiV1TimeSlotTemplateMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import { TimeInput } from '../components/TimeInput'
+import { LessonDurationSlider } from '../components/LessonDurationSlider'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 interface TimeSlotTemplateDto {
@@ -262,24 +263,7 @@ function SkoledagCard() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Lektionslængde — {lessonDuration} minutter
-          </label>
-          <input
-            type="range"
-            min={20}
-            max={90}
-            step={5}
-            value={lessonDuration}
-            onChange={(e) => setLessonDuration(Number(e.target.value))}
-            className="w-full accent-brand-600"
-          />
-          <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-            <span>20 min</span>
-            <span>90 min</span>
-          </div>
-        </div>
+        <LessonDurationSlider value={lessonDuration} onChange={setLessonDuration} />
 
         <div>
           <div className="flex items-center justify-between mb-2">
