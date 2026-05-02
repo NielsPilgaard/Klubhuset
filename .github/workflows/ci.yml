@@ -62,34 +62,44 @@ jobs:
         run: npm run build
         working-directory: web
 
-  publish:
-    name: Publish container images
+  publish-api:
+    name: Publish API image
     runs-on: ubuntu-latest
-    needs: [api, web]
+    needs: [api]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push API image
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         with:
           context: .
           file: api/Dockerfile
           push: true
           tags: ghcr.io/nielspilgaard/skoleplanen-api:latest
 
-      - name: Build and push web image
-        uses: docker/build-push-action@v6
+  publish-web:
+    name: Publish web image
+    runs-on: ubuntu-latest
+    needs: [web]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
         with:
           context: .
           file: web/Dockerfile
@@ -98,8 +108,22 @@ jobs:
           build-args: |
             VITE_KEYCLOAK_URL=https://auth.skoleplanen.dk
 
-      - name: Build and push Keycloak image
-        uses: docker/build-push-action@v6
+  publish-keycloak:
+    name: Publish Keycloak image
+    runs-on: ubuntu-latest
+    needs: [api, web]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
         with:
           context: infrastructure/keycloak
           file: infrastructure/keycloak/Dockerfile
