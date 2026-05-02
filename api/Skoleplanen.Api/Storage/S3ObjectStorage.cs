@@ -9,7 +9,21 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 {
     private readonly S3Options _options = opts.Value;
 
-    public async Task<string> UploadAsync(string key, string contentType, Stream content, CancellationToken ct = default)
+    public async Task UploadAsync(string key, string contentType, Stream content, CancellationToken ct = default)
+    {
+        var request = new PutObjectRequest
+        {
+            BucketName = _options.DefaultBucketName,
+            Key = key,
+            InputStream = content,
+            ContentType = contentType,
+            CannedACL = S3CannedACL.NoACL,
+        };
+
+        await s3.PutObjectAsync(request, ct);
+    }
+
+    public async Task<string> UploadPublicAsync(string key, string contentType, Stream content, CancellationToken ct = default)
     {
         var request = new PutObjectRequest
         {

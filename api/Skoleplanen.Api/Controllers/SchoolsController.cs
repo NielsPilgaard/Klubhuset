@@ -144,7 +144,7 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 		await using var stream = file.OpenReadStream();
 		var key = $"logos/{tenant.TenantId}{ext}";
-		var url = await storage.UploadAsync(key, mimeType, stream, ct);
+		var url = await storage.UploadPublicAsync(key, mimeType, stream, ct);
 
 		school.LogoUrl = url;
 		await db.SaveChangesAsync(ct);
