@@ -27,6 +27,7 @@ name:
 services:
   keycloak:
     image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
+    pull_policy: always
     restart: unless-stopped
     command: start --import-realm
     environment:
@@ -53,6 +54,7 @@ services:
 
   api:
     image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       ASPNETCORE__ENVIRONMENT: Production
@@ -87,6 +89,7 @@ services:
 
   web:
     image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
+    pull_policy: always
     restart: unless-stopped
     networks:
       - dokploy-network
