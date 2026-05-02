@@ -4023,6 +4023,10 @@
           "confirmToken": {
             "type": "string",
             "nullable": true
+          },
+          "contentType": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
