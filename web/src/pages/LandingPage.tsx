@@ -138,7 +138,7 @@ export default function LandingPage() {
             <div className="px-8 py-6 space-y-3">
               {[
                 'Ubegrænset antal klasser og lærere',
-                'Skemabygger med konfliktkontrol',
+                'Konfliktkontrol – ingen dobbeltbookede lærere eller lokaler',
                 'Medarbejder- og lokaleskemaer',
                 'Printbare skemaer',
                 'Filhåndtering (100 GB)',
