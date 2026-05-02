@@ -220,6 +220,8 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
   const [title, setTitle] = useState(initial?.title ?? '')
   const [startDate, setStartDate] = useState(initial?.startDate ?? initialDate)
   const [endDate, setEndDate] = useState(initial?.endDate ?? initialDate)
+  const [recurrenceRule, setRecurrenceRule] = useState<string>(initial?.recurrenceRule ?? '')
+  const [recurrenceEnd, setRecurrenceEnd] = useState<string>(initial?.recurrenceEnd ?? '')
 
   const dateError = endDate < startDate ? 'Slutdato skal være efter eller lig startdato' : null
 
@@ -238,7 +240,14 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
 
   function handleSave() {
     if (!title.trim() || dateError || isPending) return
-    const body = { title, type, startDate, endDate }
+    const body = {
+      title,
+      type,
+      startDate,
+      endDate,
+      recurrenceRule: recurrenceRule || null,
+      recurrenceEnd: recurrenceRule && recurrenceEnd ? recurrenceEnd : null,
+    }
     if (initial) {
       updateMutation.mutate({ path: { id: initial.id! }, body })
     } else {
@@ -298,6 +307,31 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
             />
             {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Gentagelse</label>
+            <select
+              value={recurrenceRule}
+              onChange={(e) => setRecurrenceRule(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            >
+              <option value="">Ingen gentagelse</option>
+              <option value="FREQ=WEEKLY">Ugentlig</option>
+              <option value="FREQ=WEEKLY;INTERVAL=2">Hver 2. uge</option>
+              <option value="FREQ=MONTHLY">Månedlig</option>
+            </select>
+          </div>
+          {recurrenceRule && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gentag indtil</label>
+              <input
+                type="date"
+                value={recurrenceEnd}
+                onChange={(e) => setRecurrenceEnd(e.target.value)}
+                min={endDate}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+            </div>
+          )}
           {isError && (
             <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
           )}
