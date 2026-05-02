@@ -7,6 +7,8 @@ import {
 import type { SubscriptionDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
+const SELF_SERVE_ENABLED = false
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('da-DK', {
     day: 'numeric',
@@ -263,13 +265,15 @@ function StatusCard({
           <p className="mt-1 text-sm text-red-700">
             Dit abonnement er ikke aktivt. Forny for at få fuld adgang igen.
           </p>
-          <button
-            onClick={onCheckout}
-            disabled={isRedirecting}
-            className="mt-4 px-4 py-2 text-sm font-medium bg-red-700 text-white rounded-lg hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isRedirecting ? 'Vent...' : 'Forny abonnement'}
-          </button>
+          {SELF_SERVE_ENABLED && (
+            <button
+              onClick={onCheckout}
+              disabled={isRedirecting}
+              className="mt-4 px-4 py-2 text-sm font-medium bg-red-700 text-white rounded-lg hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isRedirecting ? 'Vent...' : 'Forny abonnement'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -331,7 +335,7 @@ function PricingCard({
           ))}
         </ul>
       </div>
-      {!isActive && (
+      {!isActive && SELF_SERVE_ENABLED && (
         <div className="px-6 py-4">
           <button
             onClick={onCheckout}

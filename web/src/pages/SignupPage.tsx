@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import keycloak, { seedPostSignupToken } from '../auth/keycloak'
 
+const SELF_SERVE_ENABLED = false
+
 interface ValidationErrors {
   name?: string
   adminEmail?: string
@@ -68,6 +70,24 @@ export default function SignupPage() {
         setPending(false)
       }
     }
+  }
+
+  if (!SELF_SERVE_ENABLED) {
+    return (
+      <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-md text-center px-8 py-12">
+          <span className="font-display text-2xl font-semibold text-brand-800">Skoleplanen</span>
+          <h1 className="mt-4 text-lg font-semibold text-gray-900">Kommer snart</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Tilmelding er ikke åben endnu. Følg med for opdateringer.
+          </p>
+          <p className="mt-6 text-xs text-gray-400">
+            Har du allerede en konto?{' '}
+            <a href="/login" className="text-brand-600 hover:underline">Log ind</a>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
