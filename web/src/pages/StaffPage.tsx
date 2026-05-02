@@ -85,7 +85,7 @@ function AdminToggle({
 interface StaffModalProps {
   initial?: StaffDto
   onClose: () => void
-  onSaved: () => void
+  onSaved: (created?: StaffDto) => void
   currentUserKeycloakSubject?: string
 }
 
@@ -102,12 +102,13 @@ function StaffModal({ initial, onClose, onSaved, currentUserKeycloakSubject }: S
 
   const createMutation = useMutation({
     ...postApiV1StaffMutation(),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }); onSaved() },
+    onSuccess: (created) => { qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }); onSaved(created) },
   })
   const updateMutation = useMutation({
     ...putApiV1StaffByIdMutation(),
     onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }); onSaved() },
   })
+
   const isPending = createMutation.isPending || updateMutation.isPending
   const isError = createMutation.isError || updateMutation.isError
 
@@ -233,7 +234,6 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
   })
 
   const latestInvite = invitations?.[0]
-  const canResend = !latestInvite || latestInvite.status === 'Expired'
 
 
   return (
@@ -297,7 +297,7 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
             Luk
           </button>
-          {staff.email && (canResend || sent) && (
+          {staff.email && (
             <button
               onClick={() => { setSent(false); sendMutation.mutate({ path: { staffId: staff.id! } }) }}
               disabled={sendMutation.isPending}
@@ -305,8 +305,8 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
             >
               {sendMutation.isPending
                 ? 'Sender…'
-                : (latestInvite?.status as InviteStatus | undefined) === 'Expired'
-                  ? 'Send ny invitation'
+                : latestInvite && !sent
+                  ? 'Send invitation igen'
                   : 'Send invitation'}
             </button>
           )}
@@ -489,7 +489,10 @@ export default function StaffPage() {
       {showCreate && (
         <StaffModal
           onClose={() => setShowCreate(false)}
-          onSaved={() => setShowCreate(false)}
+          onSaved={(created) => {
+            setShowCreate(false)
+            if (created?.email) setInvitingStaff(created)
+          }}
           currentUserKeycloakSubject={currentUserKeycloakSubject}
         />
       )}
