@@ -7,11 +7,14 @@
 # See the security checklist in tasks/phase-0-foundation.md before going live.
 #
 # Required environment variables (set in Dokploy dashboard):
-#   DATABASE_URL             — connection string from Dokploy Postgres database resource
-#   KEYCLOAK_DB_URL          — connection string for Keycloak's Postgres database (JDBC format)
-#   KEYCLOAK_ADMIN_PASSWORD  — strong random secret
-#   SMTP_USERNAME            — Scaleway TEM SMTP username
-#   SMTP_PASSWORD            — Scaleway TEM SMTP API key
+#   DATABASE_URL                  — connection string from Dokploy Postgres database resource
+#   KEYCLOAK_DB_URL               — connection string for Keycloak's Postgres database (JDBC format)
+#   KEYCLOAK_ADMIN_PASSWORD       — strong random secret
+#   SMTP_USERNAME                 — Scaleway TEM SMTP username
+#   SMTP_PASSWORD                 — Scaleway TEM SMTP API key
+#   Keycloak_AdminClientId        — Keycloak service account client ID (skoleplanen-admin)
+#   Keycloak_AdminClientSecret    — rotate via Keycloak admin UI → Clients → skoleplanen-admin → Credentials
+#   Keycloak_WebClientId          — Keycloak public client ID (skoleplanen-web)
 #
 # Optional overrides:
 #   API_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-api:latest
@@ -61,6 +64,9 @@ services:
       ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
       Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
       Keycloak__Audience: skoleplanen-api
+      Keycloak__WebClientId: ${Keycloak_WebClientId}
+      Keycloak__AdminClientId: ${Keycloak_AdminClientId}
+      Keycloak__AdminClientSecret: ${Keycloak_AdminClientSecret}
       ObjectStorage__ServiceUrl: ${ObjectStorage_ServiceUrl}
       ObjectStorage__AccessKey: ${ObjectStorage_AccessKey}
       ObjectStorage__SecretKey: ${ObjectStorage_SecretKey}
