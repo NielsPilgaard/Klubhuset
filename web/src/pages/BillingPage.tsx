@@ -296,7 +296,7 @@ function PricingCard({
   const features = [
     'Ubegrænsede skemaer',
     'Op til 100 GB filer',
-    'Konfliktregistrering',
+    'Konfliktkontrol – ingen dobbeltbookede lærere eller lokaler',
     'Support via e-mail',
     'Ingen binding',
   ]
