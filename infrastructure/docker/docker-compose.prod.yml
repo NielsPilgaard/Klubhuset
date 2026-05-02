@@ -49,8 +49,7 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      # Expose only /realms and /resources — block /admin at the proxy level.
-      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleplanen.dk`) && !PathPrefix(`/admin`)"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleplanen.dk`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
