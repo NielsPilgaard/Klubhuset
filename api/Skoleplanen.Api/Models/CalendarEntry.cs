@@ -20,6 +20,12 @@ public sealed class CalendarEntry : ITenantScoped, IEntityTypeConfiguration<Cale
 	public DateOnly EndDate { get; set; }
 	public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
+	// RRULE string, e.g. "FREQ=WEEKLY;INTERVAL=2" or "FREQ=MONTHLY"
+	public string? RecurrenceRule { get; set; }
+
+	// Inclusive end date for recurrence expansion (null = no recurrence)
+	public DateOnly? RecurrenceEnd { get; set; }
+
 	public void Configure(EntityTypeBuilder<CalendarEntry> builder)
 	{
 		builder.Property(e => e.CreatedAt).HasDefaultValueSql("now()");

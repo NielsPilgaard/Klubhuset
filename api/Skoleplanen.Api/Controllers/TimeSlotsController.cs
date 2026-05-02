@@ -1,20 +1,45 @@
+using Amazon.S3;
+using Amazon.S3.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Skoleplanen.Api.Data;
 using Skoleplanen.Api.Models;
+using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
+using System.Text.Json;
 
 namespace Skoleplanen.Api.Controllers;
 
 [ApiController]
 [Route("api/v1")]
 [Authorize]
-public sealed class TimeSlotsController(AppDbContext context, ITenantContext tenant) : ControllerBase
+public sealed class TimeSlotsController(
+    AppDbContext context,
+    ITenantContext tenant,
+    IObjectStorage storage,
+    IAmazonS3 s3,
+    IOptions<S3Options> s3Opts) : ControllerBase
 {
 	public record BreakDto(Guid Id, TimeOnly StartTime, int DurationMinutes);
 	public record TemplateDto(Guid Id, int LessonDurationMinutes, TimeOnly DayStartTime, TimeOnly DayEndTime,
 		string ActiveDays, IReadOnlyList<BreakDto> Breaks);
+
+	private record BackupTimeSlotDto(Guid Id, Guid TenantId, Guid? ClassId, Guid? SchemaId, int SortOrder,
+		TimeOnly StartTime, TimeOnly EndTime, string? Label, bool IsBreak);
+	private record BackupSchemaSlotDto(Guid Id, Guid TenantId, Guid SchemaId, Guid TimeSlotId,
+		DayOfWeek Weekday, Guid CourseId, Guid TeacherId, Guid? RoomId, Guid? AideId);
+	private record BackupBreakDto(Guid Id, Guid TenantId, Guid TimeSlotTemplateId, TimeOnly StartTime, int DurationMinutes);
+	private record BackupTemplateDto(Guid Id, Guid TenantId, int LessonDurationMinutes, TimeOnly DayStartTime,
+		TimeOnly DayEndTime, string ActiveDays, IReadOnlyList<BackupBreakDto> Breaks);
+	private record DefaultScheduleBackup(
+		BackupTemplateDto Template,
+		IReadOnlyList<BackupTimeSlotDto> SchoolLevelSlots,
+		IReadOnlyList<BackupTimeSlotDto> SchemaLevelSlots,
+		IReadOnlyList<BackupSchemaSlotDto> SchemaSlots);
+
+	private static readonly JsonSerializerOptions BackupJsonOptions = new() { PropertyNameCaseInsensitive = true };
 
 	public record UpsertBreakRequest(TimeOnly StartTime, int DurationMinutes);
 	public record UpsertTemplateRequest(int LessonDurationMinutes, TimeOnly DayStartTime, TimeOnly DayEndTime,
@@ -37,7 +62,6 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<TemplateDto>> UpsertTemplate([FromBody] UpsertTemplateRequest req, CancellationToken ct)
 	{
-		// Validate that every break starts exactly on a module boundary
 		if (req.Breaks.Count > 0)
 		{
 			var breakValidationError = ValidateBreaksAgainstModules(req.DayStartTime, req.LessonDurationMinutes, req.Breaks);
@@ -56,6 +80,9 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 			timeSlotTemplate = new TimeSlotTemplate { Id = Guid.NewGuid(), TenantId = tenant.TenantId };
 			context.TimeSlotTemplates.Add(timeSlotTemplate);
 		}
+
+		// Back up current state to S3 before any destructive changes
+		await CreateBackupAsync(timeSlotTemplate, ct);
 
 		timeSlotTemplate.LessonDurationMinutes = req.LessonDurationMinutes;
 		timeSlotTemplate.DayStartTime = req.DayStartTime;
@@ -88,6 +115,184 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 
 		await context.SaveChangesAsync(ct);
 		return Ok(ToTemplateDto(timeSlotTemplate));
+	}
+
+	[HttpPost("time-slot-template/restore")]
+	[Authorize(Roles = "admin")]
+	public async Task<IActionResult> RestoreTemplate(CancellationToken ct)
+	{
+		var key = $"backups/{tenant.TenantId}/default-schedule-backup.json";
+
+		GetObjectResponse s3Response;
+		try
+		{
+			s3Response = await s3.GetObjectAsync(s3Opts.Value.DefaultBucketName, key, ct);
+		}
+		catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		{
+			return Problem(
+				title: "Ingen sikkerhedskopi fundet",
+				detail: "Der findes ingen sikkerhedskopi at gendanne.",
+				statusCode: 404);
+		}
+
+		DefaultScheduleBackup backup;
+		try
+		{
+			using var stream = s3Response.ResponseStream;
+			backup = await JsonSerializer.DeserializeAsync<DefaultScheduleBackup>(stream, BackupJsonOptions, ct)
+				?? throw new InvalidOperationException("Backup JSON var null.");
+		}
+		catch (Exception ex)
+		{
+			return Problem(
+				title: "Ugyldig sikkerhedskopi",
+				detail: $"Sikkerhedskopien kunne ikke læses: {ex.Message}",
+				statusCode: 422);
+		}
+
+		await using var transaction = await context.Database.BeginTransactionAsync(ct);
+		try
+		{
+			var schoolSlots = await context.TimeSlots.Where(s => s.ClassId == null && s.SchemaId == null).ToListAsync(ct);
+			context.TimeSlots.RemoveRange(schoolSlots);
+
+			var schemaLevelSlots = await context.TimeSlots.Where(s => s.SchemaId != null).ToListAsync(ct);
+			context.TimeSlots.RemoveRange(schemaLevelSlots);
+
+			var schemaSlotRefs = await context.SchemaSlots.ToListAsync(ct);
+			context.SchemaSlots.RemoveRange(schemaSlotRefs);
+
+			await context.SaveChangesAsync(ct);
+
+			var restoredSchoolSlots = backup.SchoolLevelSlots.Select(s => new TimeSlot
+			{
+				Id = s.Id,
+				TenantId = s.TenantId,
+				ClassId = s.ClassId,
+				SchemaId = s.SchemaId,
+				SortOrder = s.SortOrder,
+				StartTime = s.StartTime,
+				EndTime = s.EndTime,
+				Label = s.Label,
+				IsBreak = s.IsBreak,
+			}).ToList();
+			context.TimeSlots.AddRange(restoredSchoolSlots);
+
+			var restoredSchemaSlots = backup.SchemaLevelSlots.Select(s => new TimeSlot
+			{
+				Id = s.Id,
+				TenantId = s.TenantId,
+				ClassId = s.ClassId,
+				SchemaId = s.SchemaId,
+				SortOrder = s.SortOrder,
+				StartTime = s.StartTime,
+				EndTime = s.EndTime,
+				Label = s.Label,
+				IsBreak = s.IsBreak,
+			}).ToList();
+			context.TimeSlots.AddRange(restoredSchemaSlots);
+
+			var restoredSchemaSlotRefs = backup.SchemaSlots.Select(ss => new SchemaSlot
+			{
+				Id = ss.Id,
+				TenantId = ss.TenantId,
+				SchemaId = ss.SchemaId,
+				TimeSlotId = ss.TimeSlotId,
+				Weekday = ss.Weekday,
+				CourseId = ss.CourseId,
+				TeacherId = ss.TeacherId,
+				RoomId = ss.RoomId,
+				AideId = ss.AideId,
+			}).ToList();
+			context.SchemaSlots.AddRange(restoredSchemaSlotRefs);
+
+			var template = await context.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(ct);
+			if (template is not null)
+			{
+				template.LessonDurationMinutes = backup.Template.LessonDurationMinutes;
+				template.DayStartTime = backup.Template.DayStartTime;
+				template.DayEndTime = backup.Template.DayEndTime;
+				template.ActiveDays = backup.Template.ActiveDays;
+
+				var oldBreaks = template.Breaks.ToList();
+				context.TimeSlotTemplateBreaks.RemoveRange(oldBreaks);
+				template.Breaks.Clear();
+
+				var restoredBreaks = backup.Template.Breaks.Select(b => new TimeSlotTemplateBreak
+				{
+					Id = b.Id,
+					TenantId = b.TenantId,
+					TimeSlotTemplateId = b.TimeSlotTemplateId,
+					StartTime = b.StartTime,
+					DurationMinutes = b.DurationMinutes,
+				}).ToList();
+				context.TimeSlotTemplateBreaks.AddRange(restoredBreaks);
+			}
+
+			await context.SaveChangesAsync(ct);
+			await transaction.CommitAsync(ct);
+		}
+		catch (Exception ex)
+		{
+			await transaction.RollbackAsync(ct);
+			return Problem(
+				title: "Gendannelse mislykkedes",
+				detail: $"Kunne ikke gendanne sikkerhedskopien: {ex.Message}",
+				statusCode: 500);
+		}
+
+		return Ok();
+	}
+
+	private async Task CreateBackupAsync(TimeSlotTemplate currentTemplate, CancellationToken ct)
+	{
+		var schoolLevelSlots = await context.TimeSlots
+			.AsNoTracking()
+			.Where(s => s.ClassId == null && s.SchemaId == null)
+			.ToListAsync(ct);
+
+		var schemaLevelSlots = await context.TimeSlots
+			.AsNoTracking()
+			.Where(s => s.SchemaId != null)
+			.ToListAsync(ct);
+
+		var schemaSlots = await context.SchemaSlots
+			.AsNoTracking()
+			.ToListAsync(ct);
+
+		var backup = new DefaultScheduleBackup(
+			Template: new BackupTemplateDto(
+				Id: currentTemplate.Id,
+				TenantId: currentTemplate.TenantId,
+				LessonDurationMinutes: currentTemplate.LessonDurationMinutes,
+				DayStartTime: currentTemplate.DayStartTime,
+				DayEndTime: currentTemplate.DayEndTime,
+				ActiveDays: currentTemplate.ActiveDays,
+				Breaks: currentTemplate.Breaks.Select(b => new BackupBreakDto(
+					Id: b.Id,
+					TenantId: b.TenantId,
+					TimeSlotTemplateId: b.TimeSlotTemplateId,
+					StartTime: b.StartTime,
+					DurationMinutes: b.DurationMinutes)).ToList()),
+			SchoolLevelSlots: schoolLevelSlots.Select(s => new BackupTimeSlotDto(
+				Id: s.Id, TenantId: s.TenantId, ClassId: s.ClassId, SchemaId: s.SchemaId,
+				SortOrder: s.SortOrder, StartTime: s.StartTime, EndTime: s.EndTime,
+				Label: s.Label, IsBreak: s.IsBreak)).ToList(),
+			SchemaLevelSlots: schemaLevelSlots.Select(s => new BackupTimeSlotDto(
+				Id: s.Id, TenantId: s.TenantId, ClassId: s.ClassId, SchemaId: s.SchemaId,
+				SortOrder: s.SortOrder, StartTime: s.StartTime, EndTime: s.EndTime,
+				Label: s.Label, IsBreak: s.IsBreak)).ToList(),
+			SchemaSlots: schemaSlots.Select(ss => new BackupSchemaSlotDto(
+				Id: ss.Id, TenantId: ss.TenantId, SchemaId: ss.SchemaId,
+				TimeSlotId: ss.TimeSlotId, Weekday: ss.Weekday,
+				CourseId: ss.CourseId, TeacherId: ss.TeacherId,
+				RoomId: ss.RoomId, AideId: ss.AideId)).ToList());
+
+		var json = JsonSerializer.Serialize(backup);
+		var key = $"backups/{tenant.TenantId}/default-schedule-backup.json";
+		using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+		await storage.UploadAsync(key, "application/json", stream, ct);
 	}
 
 	/// <summary>
@@ -301,7 +506,6 @@ public sealed class TimeSlotsController(AppDbContext context, ITenantContext ten
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForClass(Guid classId, [FromBody] IReadOnlyList<UpsertTimeSlotRequest> req, CancellationToken ct)
 	{
-		// Verify class belongs to tenant
 		var exists = await context.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!exists)
 		{

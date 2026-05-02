@@ -330,6 +330,29 @@ export default function CalendarPage() {
   const { startYear, endYear } = getSchoolYears(schoolStartYear)
   const schoolYearMonths = getSchoolYearMonths(schoolStartYear)
 
+  const [exportPending, setExportPending] = useState(false)
+
+  async function handleExportIcs() {
+    if (exportPending) return
+    setExportPending(true)
+    try {
+      await keycloak.updateToken(30)
+      const res = await fetch('/api/v1/calendar/export.ics', {
+        headers: { Authorization: `Bearer ${keycloak.token}` },
+      })
+      if (!res.ok) throw new Error('Export fejlede')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'skoleplanen-kalender.ics'
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExportPending(false)
+    }
+  }
+
   const [createDate, setCreateDate] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
   const [openPopover, setOpenPopover] = useState<string | null>(null) // "year-month-day"
@@ -397,6 +420,14 @@ export default function CalendarPage() {
               <option key={y} value={y}>{y}/{y + 1}</option>
             ))}
           </select>
+          <button
+            onClick={handleExportIcs}
+            disabled={exportPending}
+            title="Åbn filen i Google Calendar, Outlook eller Kalender (iPhone/Mac) for at importere begivenhederne."
+            className="border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg px-3 py-1.5 text-sm disabled:opacity-50 transition-colors"
+          >
+            {exportPending ? 'Eksporterer...' : 'Eksportér til kalender'}
+          </button>
           {isAdmin && !hasEntries && defaults.length > 0 && (
             <button
               onClick={() => seedMutation.mutate(defaults)}

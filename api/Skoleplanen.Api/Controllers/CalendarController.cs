@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,9 +15,9 @@ namespace Skoleplanen.Api.Controllers;
 [Authorize]
 public sealed class CalendarController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
-    public record CalendarEntryDto(Guid Id, CalendarEntryType Type, string Title, DateOnly StartDate, DateOnly EndDate);
-    public record CreateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
-    public record UpdateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
+    public record CalendarEntryDto(Guid Id, CalendarEntryType Type, string Title, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
+    public record CreateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
+    public record UpdateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
     public record DefaultHolidayDto(string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
 
     [HttpGet]
@@ -26,15 +27,34 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 
         if (year.HasValue)
         {
-            query = query.Where(e => e.StartDate.Year == year.Value || e.EndDate.Year == year.Value);
+            // Include base entries that fall in the year, plus recurring entries whose range may produce occurrences in the year
+            query = query.Where(e =>
+                e.StartDate.Year == year.Value || e.EndDate.Year == year.Value ||
+                (e.RecurrenceRule != null && (e.RecurrenceEnd == null || e.RecurrenceEnd.Value.Year >= year.Value) && e.StartDate.Year <= year.Value));
         }
 
-        var entries = await query
+        var rawEntries = await query
             .OrderBy(e => e.StartDate)
-            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate))
+            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd))
             .ToListAsync(ct);
 
-        return Ok(entries);
+        var result = new List<CalendarEntryDto>(rawEntries.Count);
+        var filterStart = year.HasValue ? new DateOnly(year.Value, 1, 1) : (DateOnly?)null;
+        var filterEnd   = year.HasValue ? new DateOnly(year.Value, 12, 31) : (DateOnly?)null;
+
+        foreach (var entry in rawEntries)
+        {
+            result.Add(entry);
+            if (entry.RecurrenceRule is not null)
+            {
+                var expansionEnd = entry.RecurrenceEnd ?? entry.StartDate.AddYears(2);
+                var occurrences = ExpandRecurrence(entry, expansionEnd, filterStart, filterEnd);
+                result.AddRange(occurrences);
+            }
+        }
+
+        result.Sort((a, b) => a.StartDate.CompareTo(b.StartDate));
+        return Ok(result);
     }
 
     [HttpGet("defaults")]
@@ -65,10 +85,12 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
             Title = req.Title,
             StartDate = req.StartDate,
             EndDate = req.EndDate,
+            RecurrenceRule = req.RecurrenceRule,
+            RecurrenceEnd = req.RecurrenceEnd,
         };
         db.CalendarEntries.Add(entry);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate));
+        return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd));
     }
 
     [HttpPut("{id:guid}")]
@@ -90,8 +112,10 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
         entry.Title = req.Title;
         entry.StartDate = req.StartDate;
         entry.EndDate = req.EndDate;
+        entry.RecurrenceRule = req.RecurrenceRule;
+        entry.RecurrenceEnd = req.RecurrenceEnd;
         await db.SaveChangesAsync(ct);
-        return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate));
+        return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd));
     }
 
     [HttpDelete("{id:guid}")]
@@ -107,6 +131,126 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 		db.CalendarEntries.Remove(entry);
         await db.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    [HttpGet("export.ics")]
+    public async Task<IActionResult> ExportIcs(CancellationToken ct)
+    {
+        var entries = await db.CalendarEntries
+            .AsNoTracking()
+            .OrderBy(e => e.StartDate)
+            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd))
+            .ToListAsync(ct);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var sb = new StringBuilder();
+        sb.AppendLine("BEGIN:VCALENDAR");
+        sb.AppendLine("VERSION:2.0");
+        sb.AppendLine("PRODID:-//Skoleplanen//Skoleplanen//DA");
+        sb.AppendLine("CALSCALE:GREGORIAN");
+        sb.AppendLine("METHOD:PUBLISH");
+
+        foreach (var entry in entries)
+        {
+            var occurrencesToWrite = new List<(DateOnly Start, DateOnly End)> { (entry.StartDate, entry.EndDate) };
+            if (entry.RecurrenceRule is not null)
+            {
+                var expansionEnd = entry.RecurrenceEnd ?? entry.StartDate.AddYears(2);
+                var expanded = ExpandRecurrence(entry, expansionEnd, filterStart: null, filterEnd: null);
+                occurrencesToWrite.AddRange(expanded.Select(o => (o.StartDate, o.EndDate)));
+            }
+
+            foreach (var (start, end) in occurrencesToWrite)
+            {
+                sb.AppendLine("BEGIN:VEVENT");
+                sb.AppendLine($"UID:{entry.Id}@skoleplanen");
+                sb.AppendLine($"SUMMARY:{EscapeIcsText(entry.Title)}");
+                sb.AppendLine($"DTSTART;VALUE=DATE:{start:yyyyMMdd}");
+                sb.AppendLine($"DTEND;VALUE=DATE:{end.AddDays(1):yyyyMMdd}");
+                sb.AppendLine("END:VEVENT");
+            }
+        }
+
+        sb.AppendLine("END:VCALENDAR");
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleplanen-kalender.ics\"");
+        return File(bytes, "text/calendar; charset=utf-8");
+    }
+
+    private static string EscapeIcsText(string text) =>
+        text.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\n", "\\n");
+
+    // Expands a recurring entry into additional occurrences after its base occurrence.
+    // Returns only the extra occurrences (not the original). Each occurrence keeps the same Id.
+    private static List<CalendarEntryDto> ExpandRecurrence(
+        CalendarEntryDto entry,
+        DateOnly expansionEnd,
+        DateOnly? filterStart,
+        DateOnly? filterEnd)
+    {
+        var result = new List<CalendarEntryDto>();
+        var rule = entry.RecurrenceRule ?? string.Empty;
+
+        // Parse FREQ and INTERVAL from rule string, e.g. "FREQ=WEEKLY;INTERVAL=2"
+        var freq = string.Empty;
+        var interval = 1;
+        foreach (var part in rule.Split(';'))
+        {
+            if (part.StartsWith("FREQ=", StringComparison.OrdinalIgnoreCase))
+            {
+                freq = part[5..].Trim().ToUpperInvariant();
+            }
+            else if (part.StartsWith("INTERVAL=", StringComparison.OrdinalIgnoreCase) &&
+                     int.TryParse(part[9..].Trim(), out var parsed))
+            {
+                interval = parsed;
+            }
+        }
+
+        // Treat BIWEEKLY as WEEKLY with interval 2
+        if (freq == "BIWEEKLY")
+        {
+            freq = "WEEKLY";
+            interval = 2;
+        }
+
+        if (freq is not ("WEEKLY" or "MONTHLY"))
+        {
+            return result;
+        }
+
+        var duration = entry.EndDate.DayNumber - entry.StartDate.DayNumber;
+        var current = entry.StartDate;
+
+        for (var safety = 0; safety < 500; safety++)
+        {
+            current = freq == "WEEKLY"
+                ? current.AddDays(7 * interval)
+                : current.AddMonths(interval);
+
+            if (current > expansionEnd)
+            {
+                break;
+            }
+
+            var occEnd = DateOnly.FromDayNumber(current.DayNumber + duration);
+
+            // Apply year filter clamping if requested
+            if (filterEnd.HasValue && current > filterEnd.Value)
+            {
+                break;
+            }
+
+            if (filterStart.HasValue && occEnd < filterStart.Value)
+            {
+                continue;
+            }
+
+            result.Add(entry with { StartDate = current, EndDate = occEnd });
+        }
+
+        return result;
     }
 
     private static List<DefaultHolidayDto> ComputeDefaultHolidays(int year)
