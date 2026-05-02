@@ -129,7 +129,7 @@ export default function LandingPage() {
           <div className="max-w-sm mx-auto bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
             <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100">
               <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
-              <div className="mt-2 flex items-end gap-1">
+              <div className="mt-2 flex items-end gap-1 justify-center">
                 <span className="font-display text-5xl font-semibold text-brand-900">299</span>
                 <span className="text-lg text-gray-500 mb-2">kr/md</span>
               </div>
