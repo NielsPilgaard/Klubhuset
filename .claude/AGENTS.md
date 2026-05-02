@@ -49,7 +49,7 @@ Never bypass this filter. Never trust a slug string as an authorization signal â
 
 ## Testing
 
-See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. Summary of rules agents must follow:
+See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. For testing Stripe subscription flows locally with the Stripe CLI, see [docs/STRIPE_LOCAL.md](../docs/STRIPE_LOCAL.md). Summary of rules agents must follow:
 
 - **Two layers only**: API integration tests (tUnit + WebApplicationFactory + Testcontainers) and Playwright e2e for critical flows. Nothing else.
 - **Never mock `DbContext` or `ITenantContext`** â€” use a real PostgreSQL test database via Testcontainers. Mocks bypass the global query filter.
