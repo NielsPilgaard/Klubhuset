@@ -278,7 +278,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403183219_Initial') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260403183219_Initial', '10.0.5');
+    VALUES ('20260403183219_Initial', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -303,7 +303,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260403205521_Remove_Slugs') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260403205521_Remove_Slugs', '10.0.5');
+    VALUES ('20260403205521_Remove_Slugs', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -341,7 +341,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404051806_Add_SchoolFile') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260404051806_Add_SchoolFile', '10.0.5');
+    VALUES ('20260404051806_Add_SchoolFile', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -352,7 +352,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404060432_Add_Subscription') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260404060432_Add_Subscription', '10.0.5');
+    VALUES ('20260404060432_Add_Subscription', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -402,7 +402,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404065008_Transactions') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260404065008_Transactions', '10.0.5');
+    VALUES ('20260404065008_Transactions', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -420,7 +420,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260404223250_TimeSlot_IsBreak') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260404223250_TimeSlot_IsBreak', '10.0.5');
+    VALUES ('20260404223250_TimeSlot_IsBreak', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -454,7 +454,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405115552_AddCalendarEntry') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260405115552_AddCalendarEntry', '10.0.5');
+    VALUES ('20260405115552_AddCalendarEntry', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -565,7 +565,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405124740_Add_WeekPlan') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260405124740_Add_WeekPlan', '10.0.5');
+    VALUES ('20260405124740_Add_WeekPlan', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -597,7 +597,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260405204220_Add_TimeSlot_SchemaId') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260405204220_Add_TimeSlot_SchemaId', '10.0.5');
+    VALUES ('20260405204220_Add_TimeSlot_SchemaId', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -615,7 +615,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412083208_Add_Course_Color') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260412083208_Add_Course_Color', '10.0.5');
+    VALUES ('20260412083208_Add_Course_Color', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -654,7 +654,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260412192147_AddSchemaDateRange') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260412192147_AddSchemaDateRange', '10.0.5');
+    VALUES ('20260412192147_AddSchemaDateRange', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -672,7 +672,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260419074357_Add_Staff_IsAdmin') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260419074357_Add_Staff_IsAdmin', '10.0.5');
+    VALUES ('20260419074357_Add_Staff_IsAdmin', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -726,7 +726,32 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260425064641_Add_SchoolFileFolder_And_Presign') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260425064641_Add_SchoolFileFolder_And_Presign', '10.0.5');
+    VALUES ('20260425064641_Add_SchoolFileFolder_And_Presign', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260502101634_CalendarRecurrence') THEN
+    ALTER TABLE "CalendarEntries" ADD "RecurrenceEnd" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260502101634_CalendarRecurrence') THEN
+    ALTER TABLE "CalendarEntries" ADD "RecurrenceRule" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260502101634_CalendarRecurrence') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260502101634_CalendarRecurrence', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;

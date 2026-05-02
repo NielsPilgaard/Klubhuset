@@ -314,6 +314,18 @@
         }
       }
     },
+    "/api/v1/calendar/export.ics": {
+      "get": {
+        "tags": [
+          "Calendar"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/classes": {
       "get": {
         "tags": [
@@ -2801,6 +2813,18 @@
         }
       }
     },
+    "/api/v1/time-slot-template/restore": {
+      "post": {
+        "tags": [
+          "TimeSlots"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/classes/{classId}/time-slots": {
       "get": {
         "tags": [
@@ -3449,6 +3473,15 @@
           "endDate": {
             "type": "string",
             "format": "date"
+          },
+          "recurrenceRule": {
+            "type": "string",
+            "nullable": true
+          },
+          "recurrenceEnd": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3609,6 +3642,15 @@
           "endDate": {
             "type": "string",
             "format": "date"
+          },
+          "recurrenceRule": {
+            "type": "string",
+            "nullable": true
+          },
+          "recurrenceEnd": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4492,6 +4534,15 @@
           "endDate": {
             "type": "string",
             "format": "date"
+          },
+          "recurrenceRule": {
+            "type": "string",
+            "nullable": true
+          },
+          "recurrenceEnd": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "additionalProperties": false
