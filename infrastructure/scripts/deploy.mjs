@@ -46,9 +46,9 @@ async function saveEnvironment() {
 
     const updated = {
         ...existing,
-        API_IMAGE: `ghcr.io/nielspilgaard/skoleplanen-api:${IMAGE_TAG}`,
-        WEB_IMAGE: `ghcr.io/nielspilgaard/skoleplanen-web:${IMAGE_TAG}`,
-        KEYCLOAK_IMAGE: `ghcr.io/nielspilgaard/skoleplanen-keycloak:${IMAGE_TAG}`,
+        API_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-api:${IMAGE_TAG}`,
+        WEB_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-web:${IMAGE_TAG}`,
+        KEYCLOAK_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-keycloak:${IMAGE_TAG}`,
     };
 
     const env = Object.entries(updated).map(([k, v]) => `${k}=${v}`).join("\n");
