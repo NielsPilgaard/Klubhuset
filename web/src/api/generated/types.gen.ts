@@ -209,6 +209,7 @@ export type PresignResponse = {
     fileId?: string;
     uploadUrl?: string | null;
     confirmToken?: string | null;
+    contentType?: string | null;
 };
 
 export type RenameFolderRequest = {

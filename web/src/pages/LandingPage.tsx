@@ -123,44 +123,78 @@ export default function LandingPage() {
 
       {/* Pricing */}
       <section id="priser" className="py-20 px-6 bg-brand-900 text-white">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold mb-3">Enkel og gennemsigtig pris</h2>
-          <p className="text-brand-200 mb-12">Én pakke. Alt inkluderet. Ingen overraskelser.</p>
-          <div className="max-w-sm mx-auto bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100">
-              <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
-              <div className="mt-2 flex items-end gap-1 justify-center">
-                <span className="font-display text-5xl font-semibold text-brand-900">299</span>
-                <span className="text-lg text-gray-500 mb-2">kr/md</span>
+          <p className="text-brand-200 mb-12">Enkel pris — udvid efter behov.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start max-w-3xl mx-auto">
+
+            {/* Basis card */}
+            <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-visible">
+              <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100">
+                <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
+                <div className="mt-2 flex items-end gap-1 justify-center">
+                  <span className="font-display text-5xl font-semibold text-brand-900">299</span>
+                  <span className="text-lg text-gray-500 mb-2">kr/md</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
               </div>
-              <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
-            </div>
-            <div className="px-8 py-6 space-y-3">
-              {[
-                'Ubegrænset antal klasser og lærere',
-                'Skemabygger med konfliktkontrol',
-                'Medarbejder- og lokaleskemaer',
-                'Printbare skemaer',
-                'Filhåndtering (100 GB)',
-                'Dansk support',
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3 text-sm">
+              <div className="px-8 py-6 space-y-3 text-left">
+                {[
+                  'Ubegrænset antal klasser og lærere',
+                  'Konfliktkontrol – ingen dobbeltbookede lærere eller lokaler',
+                  'Medarbejder- og lokaleskemaer',
+                  'Printbare skemaer',
+                  'Filhåndtering (100 GB)',
+                  'E-mail support (svar inden 5 hverdage)',
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3 text-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 text-brand-600 shrink-0">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>{item}</span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-3 text-sm">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 text-brand-600 shrink-0">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  <span>{item}</span>
+                  <span>Ingen bindingsperiode — opsig når som helst</span>
+                  <RefundTooltip />
                 </div>
-              ))}
-              <div className="pt-4">
-                <a
-                  href="/signup"
-                  className="block w-full text-center py-3 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-                >
-                  Start 14 dages gratis prøve
-                </a>
-                <p className="text-xs text-center text-gray-400 mt-2">Intet kreditkort påkrævet</p>
+                <div className="pt-4">
+                  <a
+                    href="/signup"
+                    className="block w-full text-center py-3 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+                  >
+                    Start 14 dages gratis prøve
+                  </a>
+                  <p className="text-xs text-center text-gray-400 mt-2">Intet kreditkort påkrævet</p>
+                </div>
               </div>
             </div>
+
+            {/* Add-on modules teaser card */}
+            <div className="bg-gray-50 text-gray-900 rounded-2xl border border-dashed border-gray-300 overflow-hidden text-left">
+              <div className="px-8 pt-8 pb-6 border-b border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">Tillægsmoduler</p>
+                  <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full font-medium">Kommer snart</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Udvid Basis med moduler tilpasset din skole — betal kun for det, I bruger.</p>
+              </div>
+              <div className="px-8 py-6 space-y-4">
+                <ComingSoonItem
+                  title="Forældremodul"
+                  description="Ugeplaner, kontaktbog, kontakter og kalenderadgang"
+                />
+                <ComingSoonItem
+                  title="Bestyrelsesmodul"
+                  description={'Dokumentdeling og "stå mål med"-assistent'}
+                />
+                <p className="text-xs text-gray-400 pt-2">Samles på én månedlig faktura.</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -185,7 +219,7 @@ export default function LandingPage() {
               </svg>
             }
             title="Gennemsigtige priser"
-            description="299 kr/md. Ingen skjulte gebyrer, ingen bindingsperiode."
+            description="299 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
           />
           <TrustItem
             icon={
@@ -241,6 +275,35 @@ function TrustItem({ icon, title, description }: { icon: React.ReactNode; title:
       <div className="text-brand-600">{icon}</div>
       <h3 className="font-semibold text-gray-900">{title}</h3>
       <p className="text-sm text-gray-500">{description}</p>
+    </div>
+  )
+}
+
+function ComingSoonItem({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4 text-gray-400 shrink-0 mt-0.5">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+      <div>
+        <span className="text-sm font-medium text-gray-500">{title}</span>
+        <p className="text-xs text-gray-400">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+function RefundTooltip() {
+  return (
+    <div className="group relative inline-flex cursor-default select-none shrink-0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+      </svg>
+      <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-64 rounded-lg bg-gray-900 px-3 py-2 text-xs text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-lg text-left">
+        Abonnementet kan opsiges til enhver tid. Der ydes ikke refusion for den igangværende måneds betaling.
+      </div>
     </div>
   )
 }

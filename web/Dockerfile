@@ -7,6 +7,8 @@ RUN npm ci
 # openapi-typescript codegen reads from ../openapi/ relative to web/
 COPY openapi/ ../openapi/
 COPY web/ .
+ARG VITE_KEYCLOAK_URL=http://localhost:8080
+ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
 RUN npm run build
 
 FROM nginx:alpine AS runtime

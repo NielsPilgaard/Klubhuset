@@ -7,11 +7,14 @@
 # See the security checklist in tasks/phase-0-foundation.md before going live.
 #
 # Required environment variables (set in Dokploy dashboard):
-#   DATABASE_URL             — connection string from Dokploy Postgres database resource
-#   KEYCLOAK_DB_URL          — connection string for Keycloak's Postgres database (JDBC format)
-#   KEYCLOAK_ADMIN_PASSWORD  — strong random secret
-#   SMTP_USERNAME            — Scaleway TEM SMTP username
-#   SMTP_PASSWORD            — Scaleway TEM SMTP API key
+#   DATABASE_URL                  — connection string from Dokploy Postgres database resource
+#   KEYCLOAK_DB_URL               — connection string for Keycloak's Postgres database (JDBC format)
+#   KEYCLOAK_ADMIN_PASSWORD       — strong random secret
+#   SMTP_USERNAME                 — Scaleway TEM SMTP username
+#   SMTP_PASSWORD                 — Scaleway TEM SMTP API key
+#   Keycloak_AdminClientId        — Keycloak service account client ID (skoleplanen-admin)
+#   Keycloak_AdminClientSecret    — rotate via Keycloak admin UI → Clients → skoleplanen-admin → Credentials
+#   Keycloak_WebClientId          — Keycloak public client ID (skoleplanen-web)
 #
 # Optional overrides:
 #   API_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-api:latest
@@ -26,8 +29,15 @@ name:
 
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
     restart: unless-stopped
+    deploy:
+      replicas: 1
+      update_config:
+        order: stop-first
+        failure_action: rollback
+      rollback_config:
+        order: stop-first
     command: start --import-realm
     environment:
       KC_DB: postgres
@@ -39,15 +49,13 @@ services:
       KC_HOSTNAME: https://auth.skoleplanen.dk
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
-    volumes:
-      - ../keycloak/realms:/opt/keycloak/data/import:ro
-      - ../keycloak/themes:/opt/keycloak/themes:ro
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     networks:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      # Expose only /realms and /resources — block /admin at the proxy level.
-      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleplanen.dk`) && !PathPrefix(`/admin`)"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleplanen.dk`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
@@ -55,11 +63,22 @@ services:
   api:
     image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
     restart: unless-stopped
+    deploy:
+      replicas: 1
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 5s
+      rollback_config:
+        order: start-first
     environment:
-      ASPNETCORE__ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
       Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
       Keycloak__Audience: skoleplanen-api
+      Keycloak__WebClientId: ${Keycloak_WebClientId}
+      Keycloak__AdminClientId: ${Keycloak_AdminClientId}
+      Keycloak__AdminClientSecret: ${Keycloak_AdminClientSecret}
       ObjectStorage__ServiceUrl: ${ObjectStorage_ServiceUrl}
       ObjectStorage__AccessKey: ${ObjectStorage_AccessKey}
       ObjectStorage__SecretKey: ${ObjectStorage_SecretKey}
@@ -89,6 +108,14 @@ services:
   web:
     image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
     restart: unless-stopped
+    deploy:
+      replicas: 1
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 5s
+      rollback_config:
+        order: start-first
     networks:
       - dokploy-network
     depends_on:
@@ -96,6 +123,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`skoleplanen.dk`)"
+      - "traefik.http.routers.web.priority=1"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls.certresolver=letsencrypt"
       - "traefik.http.services.web.loadbalancer.server.port=80"

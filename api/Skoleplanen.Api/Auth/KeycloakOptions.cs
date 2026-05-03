@@ -18,6 +18,12 @@ public sealed class KeycloakOptions
     /// </summary>
     public string? MetadataAddress { get; init; }
 
+    /// <summary>
+    /// Set to false when Keycloak is reachable only over HTTP (e.g. CI staging stack).
+    /// Defaults to true so production always enforces HTTPS.
+    /// </summary>
+    public bool RequireHttpsMetadata { get; init; } = true;
+
     [Required(AllowEmptyStrings = false)]
     public string AdminClientId { get; init; } = null!;
 

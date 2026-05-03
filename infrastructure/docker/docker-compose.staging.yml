@@ -1,0 +1,100 @@
+# Staging stack for CI e2e tests — runs on the GitHub Actions runner.
+# Uses the freshly published images. No Traefik; services are exposed on localhost ports.
+# All secrets are injected via GitHub Actions environment variables.
+
+name: skoleplanen-staging
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: skoleplanen
+      POSTGRES_PASSWORD: staging-password
+      POSTGRES_DB: skoleplanen
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skoleplanen"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak-db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak-password
+      POSTGRES_DB: keycloak
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak-password
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: staging-admin-password
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q 'HTTP/1.0 200' <&3"]
+      interval: 10s
+      timeout: 10s
+      retries: 18
+      start_period: 30s
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Staging
+      ConnectionStrings__skoleplanen-db: Host=postgres;Port=5432;Database=skoleplanen;Username=skoleplanen;Password=staging-password
+      # API validates JWTs internally — use the container-network hostname, not localhost.
+      Keycloak__Authority: http://keycloak:8080/realms/Skoleplanen
+      Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__Audience: skoleplanen-api
+      Keycloak__WebClientId: skoleplanen-web
+      Keycloak__AdminClientId: skoleplanen-admin
+      Keycloak__AdminClientSecret: stub-secret
+      ObjectStorage__ServiceUrl: http://localhost:4566
+      ObjectStorage__AccessKey: test
+      ObjectStorage__SecretKey: test
+      ObjectStorage__DefaultBucketName: skoleplanen
+      ObjectStorage__PublicEndpoint: http://localhost:4566
+      ObjectStorage__PresignedUploadSigningKey: stub-signing-key
+      Smtp__Username: test
+      Smtp__Password: test
+      Stripe__SecretKey: sk_test_stub
+      Stripe__PriceId: price_stub
+      Stripe__WebhookSecret: whsec_stub
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /alive HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q 'HTTP/1.1 200' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy

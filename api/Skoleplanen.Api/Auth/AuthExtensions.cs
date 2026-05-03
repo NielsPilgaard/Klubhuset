@@ -6,7 +6,7 @@ namespace Skoleplanen.Api.Auth;
 
 public static class AuthExtensions
 {
-    public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, IWebHostEnvironment environment)
+    public static IServiceCollection AddKeycloakAuth(this IServiceCollection services)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                .AddJwtBearer(options =>
@@ -20,7 +20,7 @@ public static class AuthExtensions
                 {
                     jwt.Authority = kc.Value.Authority;
                     jwt.Audience = kc.Value.Audience;
-                    jwt.RequireHttpsMetadata = !environment.IsDevelopment();
+                    jwt.RequireHttpsMetadata = kc.Value.RequireHttpsMetadata;
                     jwt.MapInboundClaims = false;
 
                     if (!string.IsNullOrEmpty(kc.Value.MetadataAddress))

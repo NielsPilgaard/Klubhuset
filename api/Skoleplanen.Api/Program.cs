@@ -10,8 +10,11 @@ using Skoleplanen.Api.OpenApi;
 using Skoleplanen.Api.Services;
 using Skoleplanen.Api.Storage;
 using Skoleplanen.Api.Tenancy;
+using Skoleplanen.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Multi-tenancy
 builder.Services.AddHttpContextAccessor();
@@ -28,7 +31,7 @@ builder.Services.AddOptions<KeycloakOptions>()
        .ValidateOnStart();
 
 // Auth — validates Keycloak-issued JWTs
-builder.Services.AddKeycloakAuth(builder.Environment);
+builder.Services.AddKeycloakAuth();
 
 // Keycloak Admin REST API clients (for creating users during signup)
 builder.Services
@@ -96,9 +99,10 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
-if (app.Environment.IsDevelopment() && !isOpenApiGeneration)
+if (!app.Environment.IsProduction() && !isOpenApiGeneration)
 {
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

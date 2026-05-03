@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Logo from './Logo'
+import ErrorBoundary from './ErrorBoundary'
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -29,7 +30,9 @@ export default function Layout() {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

@@ -14,7 +14,8 @@ namespace Skoleplanen.Api.Controllers;
 public sealed class StaffInvitationsController(
 	AppDbContext db,
 	StaffInvitationService invitationService,
-	KeycloakAdminService keycloak) : ControllerBase
+	KeycloakAdminService keycloak,
+	ILogger<StaffInvitationsController> logger) : ControllerBase
 {
 	public record InvitationDto(
 		Guid Id,
@@ -91,8 +92,9 @@ public sealed class StaffInvitationsController(
 				detail: ex.Message,
 				statusCode: 500);
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			logger.LogError(ex, "Failed to send invitation email for staff {StaffId}", staffId);
 			return Problem(
 				title: "Kunne ikke sende invitation",
 				detail: "Der opstod en fejl ved afsendelse af invitationsmail. Prøv igen.",

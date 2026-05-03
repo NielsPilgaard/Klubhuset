@@ -74,7 +74,7 @@ function fileIcon(contentType: string) {
 // ─── Upload modal ─────────────────────────────────────────────────────────────
 
 interface UploadModalProps {
-  courses: CourseDto[]
+  courses: CourseDto[] | undefined
   currentFolderId: string | null
   onClose: () => void
   onUploaded: () => void
@@ -96,7 +96,11 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
         body: { fileName: file.name, fileSizeBytes: file.size, courseId: courseId || undefined },
         throwOnError: true,
       })
-      await fetch(presign!.uploadUrl!, { method: 'PUT', body: file })
+      await fetch(presign!.uploadUrl!, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': presign!.contentType! },
+      })
       setProgress(100)
       const { data: confirmed } = await postApiV1FilesConfirm({
         body: { confirmToken: presign!.confirmToken },
@@ -192,7 +196,7 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
             >
               <option value="">Intet fag</option>
-              {courses.map((c) => (
+              {courses?.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
