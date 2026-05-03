@@ -102,7 +102,7 @@ app.MapControllers();
 app.MapDefaultEndpoints();
 
 var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
-if (app.Environment.IsDevelopment() && !isOpenApiGeneration)
+if (!app.Environment.IsProduction() && !isOpenApiGeneration)
 {
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
