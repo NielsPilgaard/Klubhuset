@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import keycloak, { seedPostSignupToken } from '../auth/keycloak'
 
-const SELF_SERVE_ENABLED = false
+const SELF_SERVE_ENABLED = true
 
 interface ValidationErrors {
   name?: string
