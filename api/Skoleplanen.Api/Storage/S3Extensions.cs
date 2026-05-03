@@ -31,21 +31,38 @@ public static class S3Extensions
         return services;
     }
 
-    /// <summary>Ensures the configured S3 bucket exists. Idempotent — no-op if already present.</summary>
+    /// <summary>Ensures the configured S3 bucket exists and has a CORS policy that allows browser PUT uploads.</summary>
     public static async Task EnsureS3BucketAsync(this IServiceProvider services)
     {
         var s3 = services.GetRequiredService<IAmazonS3>();
         var opts = services.GetRequiredService<IOptions<S3Options>>().Value;
+        var appOpts = services.GetRequiredService<IOptions<ApplicationOptions>>().Value;
 
         var exists = await AmazonS3Util.DoesS3BucketExistV2Async(s3, opts.DefaultBucketName);
-        if (exists)
+        if (!exists)
         {
-            return;
+            await s3.PutBucketAsync(new PutBucketRequest
+            {
+                BucketName = opts.DefaultBucketName,
+            });
         }
 
-        await s3.PutBucketAsync(new PutBucketRequest
+        await s3.PutCORSConfigurationAsync(new PutCORSConfigurationRequest
         {
             BucketName = opts.DefaultBucketName,
+            Configuration = new CORSConfiguration
+            {
+                Rules =
+                [
+                    new CORSRule
+                    {
+                        AllowedMethods = ["PUT", "GET", "HEAD"],
+                        AllowedOrigins = [appOpts.BaseUrl.TrimEnd('/')],
+                        AllowedHeaders = ["*"],
+                        MaxAgeSeconds = 3600,
+                    }
+                ]
+            }
         });
     }
 }
