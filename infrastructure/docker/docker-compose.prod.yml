@@ -31,6 +31,13 @@ services:
   keycloak:
     image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
     restart: unless-stopped
+    deploy:
+      replicas: 1
+      update_config:
+        order: stop-first
+        failure_action: rollback
+      rollback_config:
+        order: stop-first
     command: start --import-realm
     environment:
       KC_DB: postgres
@@ -55,8 +62,15 @@ services:
 
   api:
     image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
-    pull_policy: always
     restart: unless-stopped
+    deploy:
+      replicas: 1
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 5s
+      rollback_config:
+        order: start-first
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
@@ -93,8 +107,15 @@ services:
 
   web:
     image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
-    pull_policy: always
     restart: unless-stopped
+    deploy:
+      replicas: 1
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 5s
+      rollback_config:
+        order: start-first
     networks:
       - dokploy-network
     depends_on:
