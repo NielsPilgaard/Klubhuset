@@ -25,7 +25,7 @@ export default function Layout() {
             </svg>
           </button>
           <Logo variant="light" size={24} />
-          <span className="font-display text-lg font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-lg font-semibold text-brand-800">Skoleoverblikket</span>
         </header>
 
         {/* Page content */}

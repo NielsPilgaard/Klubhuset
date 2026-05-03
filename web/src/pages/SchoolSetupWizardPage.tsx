@@ -723,7 +723,7 @@ export default function SchoolSetupWizardPage() {
         {/* Header */}
         <div className="px-8 pt-8 pb-5 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+            <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
             <button
               onClick={finish}
               className="text-xs text-gray-400 hover:text-gray-600"

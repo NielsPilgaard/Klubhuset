@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Email;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Email;
+using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Tenancy;
 
-namespace Skoleplanen.Api.Services;
+namespace Skoleoverblikket.Api.Services;
 
 public sealed class StaffInvitationService(
 	AppDbContext db,
@@ -49,7 +49,7 @@ public sealed class StaffInvitationService(
 							 .Where(s => s.Id == tenant.TenantId)
 							 .Select(s => s.Name)
 							 .FirstOrDefaultAsync(ct) ??
-					 "Skoleplanen";
+					 "Skoleoverblikket";
 
 		var baseUrl = config["App:BaseUrl"];
 		if (string.IsNullOrWhiteSpace(baseUrl))
@@ -63,7 +63,7 @@ public sealed class StaffInvitationService(
 
 		await email.SendAsync(new EmailMessage(
 								  To: staff.Email,
-								  Subject: $"Invitation til {school} på Skoleplanen",
+								  Subject: $"Invitation til {school} på Skoleoverblikket",
 								  HtmlBody: BuildHtmlEmail(staff.Name, school, link),
 								  PlainTextBody: BuildPlainEmail(staff.Name, school, link)
 							  ),
@@ -130,10 +130,10 @@ public sealed class StaffInvitationService(
 				<head><meta charset="utf-8" /><title>Invitation til {encodedSchoolName}</title></head>
 				<body style="font-family:system-ui,sans-serif;color:#111;background:#f9fafb;margin:0;padding:32px;">
 				  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:40px;border:1px solid #e5e7eb;">
-				    <p style="font-size:24px;font-weight:700;color:#1d4ed8;margin:0 0 8px;">Skoleplanen</p>
+				    <p style="font-size:24px;font-weight:700;color:#1d4ed8;margin:0 0 8px;">Skoleoverblikket</p>
 				    <h1 style="font-size:20px;font-weight:600;color:#111827;margin:0 0 16px;">Du er inviteret til {encodedSchoolName}</h1>
 				    <p style="color:#374151;margin:0 0 24px;">Hej {encodedName},<br><br>
-				    Du er inviteret til at oprette din konto på Skoleplanen som medarbejder på <strong>{encodedSchoolName}</strong>.
+				    Du er inviteret til at oprette din konto på Skoleoverblikket som medarbejder på <strong>{encodedSchoolName}</strong>.
 				    Klik på knappen herunder for at oprette din konto. Linket er gyldigt i 14 dage.</p>
 				    <a href="{encodedLink}" style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
 				      Opret konto
@@ -148,5 +148,5 @@ public sealed class StaffInvitationService(
 	}
 
 	private static string BuildPlainEmail(string name, string schoolName, string link) =>
-		$"Hej {name},\n\nDu er inviteret til {schoolName} på Skoleplanen.\n\nOpret din konto her:\n{link}\n\nLinket er gyldigt i 14 dage.\n";
+		$"Hej {name},\n\nDu er inviteret til {schoolName} på Skoleoverblikket.\n\nOpret din konto her:\n{link}\n\nLinket er gyldigt i 14 dage.\n";
 }

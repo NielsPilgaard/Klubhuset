@@ -3,12 +3,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
-using Skoleplanen.Api.Controllers;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.IntegrationTests.Infrastructure;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Controllers;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
+using Skoleoverblikket.Api.Models;
 
-namespace Skoleplanen.Api.IntegrationTests;
+namespace Skoleoverblikket.Api.IntegrationTests;
 
 public sealed class WeekPlanTests
 {

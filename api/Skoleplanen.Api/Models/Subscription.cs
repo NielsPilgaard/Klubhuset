@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 public enum SubscriptionStatus
 {

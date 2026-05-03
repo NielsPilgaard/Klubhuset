@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Refit;
 
-namespace Skoleplanen.Api.Auth;
+namespace Skoleoverblikket.Api.Auth;
 
 /// <summary>Admin REST API — base URL: {adminBase}</summary>
 public interface IKeycloakAdminApi

@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Skoleplanen.Api.Data.Migrations
+namespace Skoleoverblikket.Api.Data.Migrations
 {
     /// <inheritdoc />
     public partial class Remove_Slugs : Migration

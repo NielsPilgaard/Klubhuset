@@ -1,6 +1,6 @@
 using Microsoft.OpenApi;
 
-namespace Skoleplanen.Api.OpenApi;
+namespace Skoleoverblikket.Api.OpenApi;
 
 public static class SwaggerExtensions
 {
@@ -11,7 +11,7 @@ public static class SwaggerExtensions
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Skoleplanen API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Skoleoverblikket API", Version = "v1" });
             options.AddSecurityDefinition(schemeId,
                                           new OpenApiSecurityScheme
                                           {
@@ -39,7 +39,7 @@ public static class SwaggerExtensions
         app.UseSwagger(c => c.RouteTemplate = "api/v1/openapi/{documentName}/openapi.json");
         app.UseSwaggerUI(c =>
         {
-            c.SwaggerEndpoint("/api/v1/openapi/v1/openapi.json", "Skoleplanen API v1");
+            c.SwaggerEndpoint("/api/v1/openapi/v1/openapi.json", "Skoleoverblikket API v1");
             c.RoutePrefix = "api/v1/openapi";
         });
 

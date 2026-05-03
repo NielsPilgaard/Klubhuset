@@ -1,4 +1,4 @@
-# PRICING.md — Skoleplanen Pricing
+# PRICING.md — Skoleoverblikket Pricing
 
 ## Model
 

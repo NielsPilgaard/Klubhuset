@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
 #nullable disable
 
-namespace Skoleplanen.Api.Data.Migrations
+namespace Skoleoverblikket.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260405204220_Add_TimeSlot_SchemaId")]
@@ -25,7 +25,7 @@ namespace Skoleplanen.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.CalendarEntry", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.CalendarEntry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -60,7 +60,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("CalendarEntries");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Class", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Class", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -86,7 +86,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Classes");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Course", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Course", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -114,7 +114,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Courses");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Room", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Room", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -143,7 +143,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Schema", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Schema", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -176,7 +176,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Schemas");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.SchemaSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SchemaSlot", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -223,7 +223,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("SchemaSlots");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.School", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.School", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -256,7 +256,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Schools");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.SchoolFile", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SchoolFile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -308,7 +308,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("SchoolFiles");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Staff", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Staff", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -345,7 +345,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Staff");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.StaffInvitation", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.StaffInvitation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -391,7 +391,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("StaffInvitations");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Subscription", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Subscription", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -437,7 +437,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("Subscriptions");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlot", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -477,7 +477,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("TimeSlots");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlotTemplate", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlotTemplate", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -507,7 +507,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("TimeSlotTemplates");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlotTemplateBreak", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlotTemplateBreak", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -532,7 +532,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("TimeSlotTemplateBreaks");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlan", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlan", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -565,7 +565,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("WeekPlans");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlanSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlanSlot", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -608,7 +608,7 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("WeekPlanSlots");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlanSlotFile", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlanSlotFile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -633,9 +633,9 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.ToTable("WeekPlanSlotFiles");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Schema", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Schema", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Class", "Class")
+                    b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -644,36 +644,36 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("Class");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.SchemaSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SchemaSlot", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Staff", "Aide")
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "Aide")
                         .WithMany()
                         .HasForeignKey("AideId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Skoleplanen.Api.Models.Course", "Course")
+                    b.HasOne("Skoleoverblikket.Api.Models.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Skoleplanen.Api.Models.Room", "Room")
+                    b.HasOne("Skoleoverblikket.Api.Models.Room", "Room")
                         .WithMany()
                         .HasForeignKey("RoomId");
 
-                    b.HasOne("Skoleplanen.Api.Models.Schema", "Schema")
+                    b.HasOne("Skoleoverblikket.Api.Models.Schema", "Schema")
                         .WithMany("Slots")
                         .HasForeignKey("SchemaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Skoleplanen.Api.Models.Staff", "Teacher")
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "Teacher")
                         .WithMany()
                         .HasForeignKey("TeacherId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Skoleplanen.Api.Models.TimeSlot", "TimeSlot")
+                    b.HasOne("Skoleoverblikket.Api.Models.TimeSlot", "TimeSlot")
                         .WithMany()
                         .HasForeignKey("TimeSlotId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -692,9 +692,9 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("TimeSlot");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.SchoolFile", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SchoolFile", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Course", "Course")
+                    b.HasOne("Skoleoverblikket.Api.Models.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -702,9 +702,9 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("Course");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.StaffInvitation", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.StaffInvitation", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Staff", "Staff")
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "Staff")
                         .WithMany()
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -713,13 +713,13 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("Staff");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlot", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Class", "Class")
+                    b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId");
 
-                    b.HasOne("Skoleplanen.Api.Models.Schema", "Schema")
+                    b.HasOne("Skoleoverblikket.Api.Models.Schema", "Schema")
                         .WithMany("TimeSlots")
                         .HasForeignKey("SchemaId");
 
@@ -728,9 +728,9 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("Schema");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlotTemplateBreak", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlotTemplateBreak", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.TimeSlotTemplate", "TimeSlotTemplate")
+                    b.HasOne("Skoleoverblikket.Api.Models.TimeSlotTemplate", "TimeSlotTemplate")
                         .WithMany("Breaks")
                         .HasForeignKey("TimeSlotTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -739,9 +739,9 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("TimeSlotTemplate");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlan", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlan", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Class", "Class")
+                    b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -750,20 +750,20 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("Class");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlanSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlanSlot", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.Course", "FagSwapCourse")
+                    b.HasOne("Skoleoverblikket.Api.Models.Course", "FagSwapCourse")
                         .WithMany()
                         .HasForeignKey("FagSwapCourseId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Skoleplanen.Api.Models.SchemaSlot", "SchemaSlot")
+                    b.HasOne("Skoleoverblikket.Api.Models.SchemaSlot", "SchemaSlot")
                         .WithMany()
                         .HasForeignKey("SchemaSlotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Skoleplanen.Api.Models.WeekPlan", "WeekPlan")
+                    b.HasOne("Skoleoverblikket.Api.Models.WeekPlan", "WeekPlan")
                         .WithMany("Slots")
                         .HasForeignKey("WeekPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -776,15 +776,15 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("WeekPlan");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlanSlotFile", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlanSlotFile", b =>
                 {
-                    b.HasOne("Skoleplanen.Api.Models.SchoolFile", "SchoolFile")
+                    b.HasOne("Skoleoverblikket.Api.Models.SchoolFile", "SchoolFile")
                         .WithMany()
                         .HasForeignKey("SchoolFileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Skoleplanen.Api.Models.WeekPlanSlot", "WeekPlanSlot")
+                    b.HasOne("Skoleoverblikket.Api.Models.WeekPlanSlot", "WeekPlanSlot")
                         .WithMany("Files")
                         .HasForeignKey("WeekPlanSlotId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -795,24 +795,24 @@ namespace Skoleplanen.Api.Data.Migrations
                     b.Navigation("WeekPlanSlot");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.Schema", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Schema", b =>
                 {
                     b.Navigation("Slots");
 
                     b.Navigation("TimeSlots");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.TimeSlotTemplate", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlotTemplate", b =>
                 {
                     b.Navigation("Breaks");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlan", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlan", b =>
                 {
                     b.Navigation("Slots");
                 });
 
-            modelBuilder.Entity("Skoleplanen.Api.Models.WeekPlanSlot", b =>
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlanSlot", b =>
                 {
                     b.Navigation("Files");
                 });

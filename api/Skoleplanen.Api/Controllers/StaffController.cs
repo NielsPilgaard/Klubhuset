@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Auth;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Tenancy;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/staff")]

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 
-namespace Skoleplanen.Api.Auth;
+namespace Skoleoverblikket.Api.Auth;
 
 /// <summary>
 /// Fetches a client_credentials token from Keycloak and attaches it as a

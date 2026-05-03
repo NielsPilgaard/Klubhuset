@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Skoleplanen.Api.Auth;
+namespace Skoleoverblikket.Api.Auth;
 
 public record CredentialRepresentation(
     [property: JsonPropertyName("type")] string Type,
@@ -11,7 +11,7 @@ public record CredentialRepresentation(
 
 /// <summary>
 /// Talks to the Keycloak Admin REST API to create users on behalf of the application.
-/// Uses client_credentials flow with the skoleplanen-admin service account.
+/// Uses client_credentials flow with the skoleoverblikket-admin service account.
 /// </summary>
 public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTokenApi tokenApi, IOptions<KeycloakOptions> options, ILogger<KeycloakAdminService> logger)
 {

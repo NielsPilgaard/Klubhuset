@@ -3,7 +3,7 @@ using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
 using System.Net;
 
-namespace Skoleplanen.Api.Storage;
+namespace Skoleoverblikket.Api.Storage;
 
 public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IObjectStorage
 {

@@ -27,7 +27,7 @@ Establish the project skeleton, local dev environment, CI, and hosting infrastru
 
 ### Auth
 
-- [x] Keycloak realm setup: `Skoleplanen` realm, API resource server client, web app public client
+- [x] Keycloak realm setup: `Skoleoverblikket` realm, API resource server client, web app public client
 - [x] Roles: `admin`, `teacher`, `aide`
 - [x] Realm export committed to repo — imported automatically via `--import-realm` on startup
 

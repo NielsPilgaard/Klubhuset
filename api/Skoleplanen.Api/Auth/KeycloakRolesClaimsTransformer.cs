@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 
-namespace Skoleplanen.Api.Auth;
+namespace Skoleoverblikket.Api.Auth;
 
 /// <summary>
 /// Keycloak emits realm roles as a JSON-valued claim: realm_access = {"roles":["admin",...]}

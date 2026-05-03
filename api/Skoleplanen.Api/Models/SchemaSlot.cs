@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>
 /// One assigned lesson in a schema grid cell.

@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2">
           <Logo variant="dark" size={22} />
-          <span className="font-display text-white font-semibold">Skoleplanen</span>
+          <span className="font-display text-white font-semibold">Skoleoverblikket</span>
         </div>
 
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
@@ -16,7 +16,7 @@ export default function Footer() {
             data-testid="footer-link-om"
             className="hover:text-white transition-colors"
           >
-            Om Skoleplanen
+            Om Skoleoverblikket
           </Link>
           <Link
             to="/privatlivspolitik"
@@ -35,7 +35,7 @@ export default function Footer() {
         </nav>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <span>© {new Date().getFullYear()} Skoleplanen · Data opbevares i EU</span>
+          <span>© {new Date().getFullYear()} Skoleoverblikket · Data opbevares i EU</span>
           <a href="/login" className="hover:text-white transition-colors">Log ind</a>
         </div>
       </div>

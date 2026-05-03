@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
-using Skoleplanen.Api.Controllers;
-using Skoleplanen.Api.IntegrationTests.Infrastructure;
-namespace Skoleplanen.Api.IntegrationTests;
+using Skoleoverblikket.Api.Controllers;
+using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
+namespace Skoleoverblikket.Api.IntegrationTests;
 
 /// <summary>
 /// Full CRUD lifecycle tests for /api/v1/rooms.

@@ -11,7 +11,7 @@ Remaining tasks before the first production deployment. Everything in [phase-0-f
 - [ ] Provision OVH VPS (Ubuntu 24.04 LTS recommended)
 - [ ] Install Dokploy (`curl -sSL https://dokploy.com/install.sh | sh`)
 - [ ] Add `docker-compose.prod.yml` as a Dokploy compose app
-- [ ] Create a Postgres Database resource in Dokploy for the API (`skoleplanen` database)
+- [ ] Create a Postgres Database resource in Dokploy for the API (`skoleoverblikket` database)
 - [ ] Create a Postgres Database resource in Dokploy for Keycloak (`keycloak` database)
 - [ ] Set environment variables in Dokploy dashboard:
   - `DATABASE_URL` — connection string from Dokploy API Postgres resource (Npgsql format)
@@ -24,8 +24,8 @@ Remaining tasks before the first production deployment. Everything in [phase-0-f
 
 - [ ] Keycloak running in `start` mode (production) — not `start-dev`
 - [ ] Keycloak `/admin` not reachable from the public internet (Traefik rule in compose file already blocks it — verify after deploy)
-- [ ] `KC_PROXY=edge` and `KC_HOSTNAME=https://auth.skoleplanen.dk` set (already in compose file)
-- [ ] DNS: `skoleplanen.dk` and `auth.skoleplanen.dk` pointing to the VPS IP
+- [ ] `KC_PROXY=edge` and `KC_HOSTNAME=https://auth.skoleoverblikket.dk` set (already in compose file)
+- [ ] DNS: `skoleoverblikket.dk` and `auth.skoleoverblikket.dk` pointing to the VPS IP
 
 ### Database backup
 
@@ -37,7 +37,7 @@ Remaining tasks before the first production deployment. Everything in [phase-0-f
 
 ### Transactional email
 
-- [ ] Configure SPF record on `skoleplanen.dk` (Scaleway TEM provides the value)
+- [ ] Configure SPF record on `skoleoverblikket.dk` (Scaleway TEM provides the value)
 - [ ] Configure DKIM (add DNS TXT record from Scaleway TEM dashboard)
-- [ ] Configure DMARC (`_dmarc.skoleplanen.dk TXT "v=DMARC1; p=quarantine; rua=mailto:postmaster@skoleplanen.dk"`)
+- [ ] Configure DMARC (`_dmarc.skoleoverblikket.dk TXT "v=DMARC1; p=quarantine; rua=mailto:postmaster@skoleoverblikket.dk"`)
 - [ ] Send a test email and confirm delivery + no spam classification

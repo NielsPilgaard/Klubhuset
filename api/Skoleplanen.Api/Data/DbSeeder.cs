@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Models;
 
-namespace Skoleplanen.Api.Data;
+namespace Skoleoverblikket.Api.Data;
 
 public static class DbSeeder
 {
@@ -9,7 +9,7 @@ public static class DbSeeder
     public static readonly Guid SeedSchoolId = new("11111111-1111-1111-1111-111111111111");
     public static readonly Guid SeedStaffId  = new("22222222-2222-2222-2222-222222222222");
 
-    /// <summary>Keycloak subject for the seed admin user (matches the fixed id in Skoleplanen-realm.json).</summary>
+    /// <summary>Keycloak subject for the seed admin user (matches the fixed id in Skoleoverblikket-realm.json).</summary>
     private const string SeedAdminKeycloakSubject = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 
     public static async Task SeedAsync(this IServiceProvider services)

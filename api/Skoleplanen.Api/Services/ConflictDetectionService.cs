@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Services;
+namespace Skoleoverblikket.Api.Services;
 
 public enum ConflictType
 {

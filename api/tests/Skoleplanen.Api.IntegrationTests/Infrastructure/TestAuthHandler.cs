@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
+namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Fake authentication handler used in tests. Always returns an authenticated

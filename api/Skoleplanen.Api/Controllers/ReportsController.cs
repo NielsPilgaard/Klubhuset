@@ -1,9 +1,9 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Skoleplanen.Api.Services;
+using Skoleoverblikket.Api.Services;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/reports")]

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Fil — a file uploaded by staff or admin, optionally linked to a course.</summary>
 public sealed class SchoolFile : ITenantScoped, IEntityTypeConfiguration<SchoolFile>

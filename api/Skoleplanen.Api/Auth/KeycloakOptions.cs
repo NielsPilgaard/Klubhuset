@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Skoleplanen.Api.Auth;
+namespace Skoleoverblikket.Api.Auth;
 
 public sealed class KeycloakOptions
 {

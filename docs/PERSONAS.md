@@ -1,6 +1,6 @@
 # PERSONAS.md — User Personas
 
-These personas represent the real people who use Skoleplanen. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**
+These personas represent the real people who use Skoleoverblikket. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**
 
 ---
 

@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Auth;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Services;
+using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Services;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/staff-invitations")]
@@ -179,7 +179,7 @@ public sealed class StaffInvitationsController(
 		{
 			staffName = invitation.Staff.Name,
 			email = invitation.Email,
-			schoolName = school?.Name ?? "Skoleplanen",
+			schoolName = school?.Name ?? "Skoleoverblikket",
 			expiresAt = invitation.ExpiresAt,
 		});
 	}

@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Refit;
 
-namespace Skoleplanen.Api.Auth;
+namespace Skoleoverblikket.Api.Auth;
 
 /// <summary>Token endpoint — base URL: {authority}/protocol/openid-connect</summary>
 public interface IKeycloakTokenApi

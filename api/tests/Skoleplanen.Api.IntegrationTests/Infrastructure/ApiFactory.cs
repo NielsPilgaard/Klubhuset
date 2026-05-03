@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Tenancy;
 using Testcontainers.PostgreSql;
 
-namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
+namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Spins up a real PostgreSQL container (via Testcontainers) and the full
@@ -19,7 +19,7 @@ namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
 	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
-		.WithDatabase("skoleplanen_test")
+		.WithDatabase("skoleoverblikket_test")
 		.WithUsername("test")
 		.WithPassword("test")
 		.Build();

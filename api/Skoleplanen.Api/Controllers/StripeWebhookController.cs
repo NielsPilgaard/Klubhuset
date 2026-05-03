@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Skoleplanen.Api.Services;
+using Skoleoverblikket.Api.Services;
 using Stripe;
-using LocalSubscriptionService = Skoleplanen.Api.Services.SubscriptionService;
+using LocalSubscriptionService = Skoleoverblikket.Api.Services.SubscriptionService;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/stripe/webhook")]

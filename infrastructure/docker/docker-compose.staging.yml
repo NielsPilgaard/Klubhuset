@@ -2,17 +2,17 @@
 # Uses the freshly published images. No Traefik; services are exposed on localhost ports.
 # All secrets are injected via GitHub Actions environment variables.
 
-name: skoleplanen-staging
+name: skoleoverblikket-staging
 
 services:
   postgres:
     image: postgres:17
     environment:
-      POSTGRES_USER: skoleplanen
+      POSTGRES_USER: skoleoverblikket
       POSTGRES_PASSWORD: staging-password
-      POSTGRES_DB: skoleplanen
+      POSTGRES_DB: skoleoverblikket
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U skoleplanen"]
+      test: ["CMD-SHELL", "pg_isready -U skoleoverblikket"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -30,7 +30,7 @@ services:
       retries: 10
 
   keycloak:
-    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleoverblikket-keycloak:latest}
     command: start-dev --import-realm
     environment:
       KC_DB: postgres
@@ -56,21 +56,21 @@ services:
       start_period: 30s
 
   api:
-    image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
+    image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleoverblikket-api:latest}
     environment:
       ASPNETCORE_ENVIRONMENT: Staging
-      ConnectionStrings__skoleplanen-db: Host=postgres;Port=5432;Database=skoleplanen;Username=skoleplanen;Password=staging-password
+      ConnectionStrings__skoleoverblikket-db: Host=postgres;Port=5432;Database=skoleoverblikket;Username=skoleoverblikket;Password=staging-password
       # API validates JWTs internally — use the container-network hostname, not localhost.
-      Keycloak__Authority: http://keycloak:8080/realms/Skoleplanen
+      Keycloak__Authority: http://keycloak:8080/realms/Skoleoverblikket
       Keycloak__RequireHttpsMetadata: "false"
-      Keycloak__Audience: skoleplanen-api
-      Keycloak__WebClientId: skoleplanen-web
-      Keycloak__AdminClientId: skoleplanen-admin
+      Keycloak__Audience: skoleoverblikket-api
+      Keycloak__WebClientId: skoleoverblikket-web
+      Keycloak__AdminClientId: skoleoverblikket-admin
       Keycloak__AdminClientSecret: stub-secret
       ObjectStorage__ServiceUrl: http://localhost:4566
       ObjectStorage__AccessKey: test
       ObjectStorage__SecretKey: test
-      ObjectStorage__DefaultBucketName: skoleplanen
+      ObjectStorage__DefaultBucketName: skoleoverblikket
       ObjectStorage__PublicEndpoint: http://localhost:4566
       ObjectStorage__PresignedUploadSigningKey: stub-signing-key
       Smtp__Username: test
@@ -99,7 +99,7 @@ services:
       - "1025:1025"
 
   web:
-    image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
+    image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleoverblikket-web:latest}
     ports:
       - "5173:80"
     depends_on:

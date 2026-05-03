@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Skoleplanen.Api.Storage;
+namespace Skoleoverblikket.Api.Storage;
 
 public sealed class S3Options
 {

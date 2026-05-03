@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Skoleplanen.Api;
+namespace Skoleoverblikket.Api;
 
 public sealed class ApplicationOptions
 {

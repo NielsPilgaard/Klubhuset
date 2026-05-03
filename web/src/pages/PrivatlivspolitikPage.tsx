@@ -22,10 +22,10 @@ export default function PrivatlivspolitikPage() {
                 Den dataansvarlige for behandlingen af dine personoplysninger er:
               </p>
               <address className="not-italic mt-3 text-sm bg-brand-50 rounded-xl p-4 border border-brand-100">
-                <strong className="text-gray-900">Skoleplanen</strong><br />
+                <strong className="text-gray-900">Skoleoverblikket</strong><br />
                 E-mail:{' '}
-                <a href="mailto:kontakt@skoleplanen.dk" className="text-brand-700 hover:underline">
-                  kontakt@skoleplanen.dk
+                <a href="mailto:kontakt@skoleoverblikket.dk" className="text-brand-700 hover:underline">
+                  kontakt@skoleoverblikket.dk
                 </a>
               </address>
             </Section>
@@ -53,7 +53,7 @@ export default function PrivatlivspolitikPage() {
 
             <Section title="3. Formål og retsgrundlag">
               <p>
-                Vi behandler dine oplysninger for at kunne levere og drifte Skoleplanen-tjenesten.
+                Vi behandler dine oplysninger for at kunne levere og drifte Skoleoverblikket-tjenesten.
                 Retsgrundlaget er opfyldelse af aftale (GDPR artikel 6, stk. 1, litra b) og i
                 relevant omfang vores legitime interesse i at drive og forbedre tjenesten
                 (artikel 6, stk. 1, litra f).
@@ -99,8 +99,8 @@ export default function PrivatlivspolitikPage() {
               <p>
                 Du har ret til at anmode om indsigt i, berigtigelse eller sletning af de
                 personoplysninger vi behandler om dig. Du kan rette henvendelse til{' '}
-                <a href="mailto:kontakt@skoleplanen.dk" className="text-brand-700 hover:underline">
-                  kontakt@skoleplanen.dk
+                <a href="mailto:kontakt@skoleoverblikket.dk" className="text-brand-700 hover:underline">
+                  kontakt@skoleoverblikket.dk
                 </a>
                 . Vi besvarer din henvendelse inden for 30 dage.
               </p>
@@ -164,7 +164,7 @@ function PublicNav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">
           <Logo variant="light" size={28} />
-          <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
         </a>
         <div className="flex items-center gap-4">
           <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">

@@ -2,15 +2,15 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Refit;
-using Skoleplanen.Api;
-using Skoleplanen.Api.Auth;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Email;
-using Skoleplanen.Api.OpenApi;
-using Skoleplanen.Api.Services;
-using Skoleplanen.Api.Storage;
-using Skoleplanen.Api.Tenancy;
-using Skoleplanen.ServiceDefaults;
+using Skoleoverblikket.Api;
+using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Email;
+using Skoleoverblikket.Api.OpenApi;
+using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Storage;
+using Skoleoverblikket.Api.Tenancy;
+using Skoleoverblikket.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +22,7 @@ builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddMemoryCache();
 
 // Database
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleplanen-db")));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleoverblikket-db")));
 
 // Keycloak
 builder.Services.AddOptions<KeycloakOptions>()
@@ -112,7 +112,7 @@ if (!app.Environment.IsProduction() && !isOpenApiGeneration)
 if (!app.Environment.IsEnvironment("Testing"))
 {
     // Seed well-known dev/prod fixtures (idempotent — skipped if already present).
-    if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleplanen-db")))
+    if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleoverblikket-db")))
     {
         _ = Task.Run(() => app.Services.SeedAsync());
     }

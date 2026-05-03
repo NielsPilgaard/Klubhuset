@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Skoleplanen.Api\Skoleplanen.Api.csproj" />
+    <ProjectReference Include="..\..\Skoleoverblikket.Api\Skoleoverblikket.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

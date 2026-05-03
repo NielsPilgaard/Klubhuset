@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
 using Stripe;
 using Stripe.Checkout;
-using LocalSubscription = Skoleplanen.Api.Models.Subscription;
+using LocalSubscription = Skoleoverblikket.Api.Models.Subscription;
 using StripeSubscription = Stripe.Subscription;
 
-namespace Skoleplanen.Api.Services;
+namespace Skoleoverblikket.Api.Services;
 
 public sealed class SubscriptionService(
     AppDbContext db,

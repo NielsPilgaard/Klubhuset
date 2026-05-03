@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
 
-namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
+namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Arranges test data directly via DbContext (not via the API) to keep

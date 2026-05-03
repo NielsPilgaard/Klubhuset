@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Skoleplanen.Api.Tenancy;
+namespace Skoleoverblikket.Api.Tenancy;
 
 public sealed class MissingTenantClaimExceptionHandler(ILogger<MissingTenantClaimExceptionHandler> logger) : IExceptionHandler
 {

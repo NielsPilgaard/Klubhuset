@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Skoleplanen.Api.Email;
+namespace Skoleoverblikket.Api.Email;
 
 public sealed class SmtpOptions
 {
@@ -16,7 +16,7 @@ public sealed class SmtpOptions
     public string Password { get; init; } = string.Empty;
     
     [Required(AllowEmptyStrings = false)]
-    public string FromAddress { get; init; } = "kontakt@skoleplanen.dk";
+    public string FromAddress { get; init; } = "kontakt@skoleoverblikket.dk";
 
-    public string FromName { get; init; } = "Skoleplanen";
+    public string FromName { get; init; } = "Skoleoverblikket";
 }

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Join table: attaches an existing SchoolFile to a WeekPlanSlot.</summary>
 public sealed class WeekPlanSlotFile : ITenantScoped, IEntityTypeConfiguration<WeekPlanSlotFile>

@@ -48,7 +48,7 @@ Send a warning email to the school's admin account 7 days before the 90-day wind
 - Be in Danish
 - State clearly that data will be deleted in 7 days
 - Include a link to log in and export data
-- Include kontakt@skoleplanen.dk for questions
+- Include kontakt@skoleoverblikket.dk for questions
 
 Use whatever transactional email provider is already in use. If none exists, add a task note — do not introduce a new provider without explicit instruction.
 

@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Tenancy;
 using System.ComponentModel.DataAnnotations;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/courses")]

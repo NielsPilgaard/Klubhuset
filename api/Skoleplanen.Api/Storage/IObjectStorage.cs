@@ -1,4 +1,4 @@
-namespace Skoleplanen.Api.Storage;
+namespace Skoleoverblikket.Api.Storage;
 
 public interface IObjectStorage
 {

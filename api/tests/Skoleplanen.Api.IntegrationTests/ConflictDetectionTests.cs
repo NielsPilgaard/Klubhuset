@@ -2,11 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Skoleplanen.Api.Controllers;
-using Skoleplanen.Api.IntegrationTests.Infrastructure;
-using Skoleplanen.Api.Services;
+using Skoleoverblikket.Api.Controllers;
+using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
+using Skoleoverblikket.Api.Services;
 
-namespace Skoleplanen.Api.IntegrationTests;
+namespace Skoleoverblikket.Api.IntegrationTests;
 
 /// <summary>
 /// Tests for the conflict detection pipeline via the HTTP API.

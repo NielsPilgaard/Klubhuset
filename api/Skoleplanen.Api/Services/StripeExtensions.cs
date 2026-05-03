@@ -1,6 +1,6 @@
 using Stripe;
 
-namespace Skoleplanen.Api.Services;
+namespace Skoleoverblikket.Api.Services;
 
 public static class StripeExtensions
 {

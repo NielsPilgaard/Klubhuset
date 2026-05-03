@@ -1,4 +1,4 @@
-const string label = "skoleplanen";
+const string label = "skoleoverblikket";
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -8,13 +8,13 @@ var pgPassword = builder.AddParameter("postgres-password", secret: true);
 
 var postgres = builder.AddPostgres("postgres", userName: pgUsername, password: pgPassword)
 					  .WithLifetime(ContainerLifetime.Persistent)
-					  .WithVolume("skoleplanen-pgdata", "/var/lib/postgresql/data")
+					  .WithVolume("skoleoverblikket-pgdata", "/var/lib/postgresql/data")
 					  .WithPgAdmin(pgAdmin => pgAdmin.WithContainerRuntimeArgs(
 									   "--label",
 									   $"com.docker.compose.project={label}"))
 					  .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
 
-var db = postgres.AddDatabase("skoleplanen-db");
+var db = postgres.AddDatabase("skoleoverblikket-db");
 postgres.AddDatabase("keycloak-db");
 
 // Mailpit — local SMTP catch-all (captures all outbound email in dev)
@@ -51,12 +51,12 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
 // LocalStack (S3-compatible local emulation for OVHCloud Object Storage)
 builder.AddContainer("localstack", "localstack/localstack", "3")
 	   .WithLifetime(ContainerLifetime.Persistent)
-	   .WithVolume("skoleplanen-s3", "/var/lib/localstack/data")
+	   .WithVolume("skoleoverblikket-s3", "/var/lib/localstack/data")
 	   .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "gateway")
 	   .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}");
 
 // API — port 5000 is pinned so the Vite proxy target (http://127.0.0.1:5000) always resolves correctly.
-var api = builder.AddProject<Projects.Skoleplanen_Api>("api")
+var api = builder.AddProject<Projects.Skoleoverblikket_Api>("api")
 				 .WithEndpoint("http", e => e.Port = 5000)
 				 .WithReference(db)
 				 .WithReference(keycloak.GetEndpoint("http"))

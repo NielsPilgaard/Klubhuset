@@ -4,7 +4,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Util;
 using Microsoft.Extensions.Options;
 
-namespace Skoleplanen.Api.Storage;
+namespace Skoleoverblikket.Api.Storage;
 
 public static class S3Extensions
 {

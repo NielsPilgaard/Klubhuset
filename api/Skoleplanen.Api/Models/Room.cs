@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Lokale — a physical room (e.g. "Lokale 12", "Gymnastiksalen").</summary>
 public sealed class Room : ITenantScoped

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>
 /// Lektion — a concrete time period in a class's weekly schema.

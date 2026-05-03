@@ -13,7 +13,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Logo variant="light" size={28} />
-            <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+            <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
           </div>
           <div className="flex items-center gap-4">
             <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">

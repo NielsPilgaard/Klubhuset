@@ -1,4 +1,4 @@
-namespace Skoleplanen.Api.Email;
+namespace Skoleoverblikket.Api.Email;
 
 public interface IEmailSender
 {

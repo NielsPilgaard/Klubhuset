@@ -2,7 +2,7 @@
 
 ## Context
 
-Skoleplanen will offer add-on modules (Forældremodul, Bestyrelsesmodul) on top of the Basis plan.
+Skoleoverblikket will offer add-on modules (Forældremodul, Bestyrelsesmodul) on top of the Basis plan.
 Architecture decision: one Stripe subscription per school with multiple line items — base plan + per-module flat add-ons.
 This gives schools a single monthly invoice and lets us add/remove modules mid-cycle via Stripe's `SubscriptionItemService`.
 
@@ -12,16 +12,16 @@ Billing is currently disabled (`SELF_SERVE_ENABLED = false` in `BillingPage.tsx`
 
 ## Step 1 — `StripeOptions.cs`
 
-**File:** `api/Skoleplanen.Api/StripeOptions.cs`
+**File:** `api/Skoleoverblikket.Api/StripeOptions.cs`
 
 - Rename `PriceId` → `BasePriceId` (keep `[Required]`)
 - Add `public Dictionary<string, string> ModulePriceIds { get; init; } = new();`
 
-**File:** `api/Skoleplanen.Api/Services/SubscriptionService.cs` line 76
+**File:** `api/Skoleoverblikket.Api/Services/SubscriptionService.cs` line 76
 
 - `stripeOptions.Value.PriceId` → `stripeOptions.Value.BasePriceId`
 
-**Files:** `api/Skoleplanen.Api/appsettings.json` + `appsettings.Development.json`
+**Files:** `api/Skoleoverblikket.Api/appsettings.json` + `appsettings.Development.json`
 
 - Rename key `"PriceId"` → `"BasePriceId"` in the `"Stripe"` section
 
@@ -29,10 +29,10 @@ Billing is currently disabled (`SELF_SERVE_ENABLED = false` in `BillingPage.tsx`
 
 ## Step 2 — `SubscriptionModule` enum
 
-**New file:** `api/Skoleplanen.Api/Models/SubscriptionModule.cs`
+**New file:** `api/Skoleoverblikket.Api/Models/SubscriptionModule.cs`
 
 ```csharp
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 public enum SubscriptionModule
 {
@@ -47,10 +47,10 @@ Keys must match the dictionary keys in `StripeOptions.ModulePriceIds`.
 
 ## Step 3 — `SubscriptionModuleItem` entity
 
-**New file:** `api/Skoleplanen.Api/Models/SubscriptionModuleItem.cs`
+**New file:** `api/Skoleoverblikket.Api/Models/SubscriptionModuleItem.cs`
 
 ```csharp
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 public sealed class SubscriptionModuleItem
 {
@@ -67,7 +67,7 @@ Use `IEntityTypeConfiguration<SubscriptionModuleItem>` (project convention — w
 - Unique index on `(SubscriptionId, Module)`
 - Cascade delete on FK
 
-**`api/Skoleplanen.Api/Models/Subscription.cs`** — add nav property:
+**`api/Skoleoverblikket.Api/Models/Subscription.cs`** — add nav property:
 
 ```csharp
 public ICollection<SubscriptionModuleItem> ActiveModules { get; set; } = [];
@@ -82,7 +82,7 @@ public DbSet<SubscriptionModuleItem> SubscriptionModuleItems => Set<Subscription
 **Run migration:**
 
 ```
-dotnet ef migrations add Add_SubscriptionModuleItems --project api/Skoleplanen.Api
+dotnet ef migrations add Add_SubscriptionModuleItems --project api/Skoleoverblikket.Api
 ```
 
 ---
@@ -99,7 +99,7 @@ services.AddSingleton<SubscriptionItemService>();
 
 ## Step 5 — `SubscriptionService` additions
 
-**File:** `api/Skoleplanen.Api/Services/SubscriptionService.cs`
+**File:** `api/Skoleoverblikket.Api/Services/SubscriptionService.cs`
 
 Inject `SubscriptionItemService` via constructor.
 
@@ -162,7 +162,7 @@ public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, Ca
 
 ## Step 6 — `BillingController` endpoints
 
-**File:** `api/Skoleplanen.Api/Controllers/BillingController.cs`
+**File:** `api/Skoleoverblikket.Api/Controllers/BillingController.cs`
 
 Add three endpoints, all behind `[Authorize(Roles = "admin")]`:
 

@@ -1,10 +1,10 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
 
-namespace Skoleplanen.Api.Services;
+namespace Skoleoverblikket.Api.Services;
 
 public sealed class ExcelReportBuilder(AppDbContext db)
 {

@@ -23,16 +23,16 @@ jobs:
 
       - name: Pull images
         env:
-          API_IMAGE: ghcr.io/nielspilgaard/skoleplanen-api:sha-${{ github.event.workflow_run.head_sha }}
-          WEB_IMAGE: ghcr.io/nielspilgaard/skoleplanen-web:sha-${{ github.event.workflow_run.head_sha }}
-          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleplanen-keycloak:sha-${{ github.event.workflow_run.head_sha }}
+          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
+          WEB_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.event.workflow_run.head_sha }}
+          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
         run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull
 
       - name: Start staging stack
         env:
-          API_IMAGE: ghcr.io/nielspilgaard/skoleplanen-api:sha-${{ github.event.workflow_run.head_sha }}
-          WEB_IMAGE: ghcr.io/nielspilgaard/skoleplanen-web:sha-${{ github.event.workflow_run.head_sha }}
-          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleplanen-keycloak:sha-${{ github.event.workflow_run.head_sha }}
+          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
+          WEB_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.event.workflow_run.head_sha }}
+          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
         run: docker compose -f infrastructure/docker/docker-compose.staging.yml up -d --wait
 
       - name: Setup Node.js 24

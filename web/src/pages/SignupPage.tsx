@@ -76,7 +76,7 @@ export default function SignupPage() {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md text-center px-8 py-12">
-          <span className="font-display text-2xl font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-2xl font-semibold text-brand-800">Skoleoverblikket</span>
           <h1 className="mt-4 text-lg font-semibold text-gray-900">Kommer snart</h1>
           <p className="mt-2 text-sm text-gray-500">
             Tilmelding er ikke åben endnu. Følg med for opdateringer.
@@ -95,7 +95,7 @@ export default function SignupPage() {
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
         {/* Header */}
         <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
-          <span className="font-display text-2xl font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-2xl font-semibold text-brand-800">Skoleoverblikket</span>
           <h1 className="mt-3 text-lg font-semibold text-gray-900">Opret din skole</h1>
           <p className="mt-1 text-sm text-gray-500">14 dages gratis prøveperiode · Intet kreditkort</p>
         </div>

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Skoleplanen.Api.Data.Migrations
+namespace Skoleoverblikket.Api.Data.Migrations
 {
     /// <inheritdoc />
     public partial class Add_SchoolFile : Migration

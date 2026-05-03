@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
-namespace Skoleplanen.Api.Email;
+namespace Skoleoverblikket.Api.Email;
 
 public sealed class MailKitEmailSender(IOptionsMonitor<SmtpOptions> options) : IEmailSender
 {

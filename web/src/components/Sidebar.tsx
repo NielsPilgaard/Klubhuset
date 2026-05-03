@@ -149,10 +149,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             )}
             <div className="min-w-0">
               <span className="block font-display text-sm font-semibold tracking-tight text-white truncate">
-                {school?.name ?? 'Skoleplanen'}
+                {school?.name ?? 'Skoleoverblikket'}
               </span>
               {school?.name ? (
-                <span className="block text-xs text-brand-400">Skoleplanen</span>
+                <span className="block text-xs text-brand-400">Skoleoverblikket</span>
               ) : null}
             </div>
           </NavLink>
@@ -263,7 +263,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Log ud
           </button>
-          <p className="text-xs text-brand-400 px-3">v1.0 · Skoleplanen</p>
+          <p className="text-xs text-brand-400 px-3">v1.0 · Skoleoverblikket</p>
         </div>
       </aside>
     </>

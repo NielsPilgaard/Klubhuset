@@ -1,6 +1,6 @@
 ---
 name: test
-description: "Run the Playwright E2E test suite for Skoleplanen. USE THIS SKILL when the user asks to run tests, check if tests pass, verify a fix, or validate changes — even if they just say 'run tests', 'do the tests pass?', 'check everything still works', or similar. The Aspire stack is assumed to already be running."
+description: "Run the Playwright E2E test suite for Skoleoverblikket. USE THIS SKILL when the user asks to run tests, check if tests pass, verify a fix, or validate changes — even if they just say 'run tests', 'do the tests pass?', 'check everything still works', or similar. The Aspire stack is assumed to already be running."
 ---
 
 # Test Skill

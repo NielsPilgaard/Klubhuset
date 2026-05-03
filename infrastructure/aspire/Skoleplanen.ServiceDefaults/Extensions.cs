@@ -10,7 +10,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace Skoleplanen.ServiceDefaults;
+namespace Skoleoverblikket.ServiceDefaults;
 
 public static class Extensions
 {

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Tenancy;
 
-namespace Skoleplanen.Api.Data;
+namespace Skoleoverblikket.Api.Data;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext tenantContext)
 	: DbContext(options)

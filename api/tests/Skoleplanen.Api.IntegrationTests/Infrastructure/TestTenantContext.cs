@@ -1,6 +1,6 @@
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Tenancy;
 
-namespace Skoleplanen.Api.IntegrationTests.Infrastructure;
+namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Fixed-tenant context used in integration tests. Replaces the HTTP-based

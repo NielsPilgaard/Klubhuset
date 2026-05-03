@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Klasse — a group of students (e.g. 2.b, 9.a).</summary>
 public sealed class Class : ITenantScoped

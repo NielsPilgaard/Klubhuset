@@ -1,8 +1,8 @@
-# PRD.md — Skoleplanen Product Requirements
+# PRD.md — Skoleoverblikket Product Requirements
 
 ## Product overview
 
-Skoleplanen is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. It is sold B2B to schools, not to end users. The typical customer is a small-to-medium friskole with 50–500 students, run by a small team of administrators and teachers.
+Skoleoverblikket is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. It is sold B2B to schools, not to end users. The typical customer is a small-to-medium friskole with 50–500 students, run by a small team of administrators and teachers.
 
 ## Problem being solved
 

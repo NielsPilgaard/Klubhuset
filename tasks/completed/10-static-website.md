@@ -1,8 +1,8 @@
-# Task: Expand the Skoleplanen marketing footer with legal and contact pages
+# Task: Expand the Skoleoverblikket marketing footer with legal and contact pages
 
 ## Context
 
-The Skoleplanen marketing site is a React SPA (`web/src/`). Unauthenticated users see the public landing page (`LandingPage.tsx`); authenticated users see the app. Both live on the same domain/codebase — no subdomain split.
+The Skoleoverblikket marketing site is a React SPA (`web/src/`). Unauthenticated users see the public landing page (`LandingPage.tsx`); authenticated users see the app. Both live on the same domain/codebase — no subdomain split.
 
 The current footer (inlined at the bottom of `LandingPage.tsx`) is minimal: logo, copyright, and a login link. It needs to be expanded into a proper footer with navigation links and four new pages.
 
@@ -14,11 +14,11 @@ Design system: Tailwind CSS with a custom `brand` green palette (see `tailwind.c
 
 Extract the existing inline footer from `LandingPage.tsx` into `web/src/components/Footer.tsx`. Expand it to include a navigation section with these links:
 
-- Om Skoleplanen → `/om`
+- Om Skoleoverblikket → `/om`
 - Privatlivspolitik → `/privatlivspolitik`
 - Kontakt → `/kontakt`
 
-Keep the existing logo, copyright line (`© {year} Skoleplanen · Data opbevares i EU`), and login link.
+Keep the existing logo, copyright line (`© {year} Skoleoverblikket · Data opbevares i EU`), and login link.
 
 ### 2. Register the new routes
 
@@ -56,7 +56,7 @@ Create the following three page files in `web/src/pages/`. Each page must:
 
 Content (write polished Danish copy from these bullet points):
 
-- Skoleplanen er skabt af en frivillig IT-person fra en lille dansk friskole
+- Skoleoverblikket er skabt af en frivillig IT-person fra en lille dansk friskole
 - Professionel IT-udvikler med mange års erfaring
 - Far til to børn — ét i friskole, ét i dagpleje — med et personligt forhold til skolernes hverdag
 - Frustration over tunge, dyre og indviklede løsninger til noget så simpelt som et skema
@@ -70,13 +70,13 @@ Tone: warm, personal, trustworthy. Not corporate. First-person singular or "vi" 
 
 Draft a GDPR-compliant Danish privacy policy for a B2B SaaS targeting Danish independent schools. Use the following facts:
 
-**Data controller:** Skoleplanen (contact: kontakt@skoleplanen.dk)
+**Data controller:** Skoleoverblikket (contact: kontakt@skoleoverblikket.dk)
 
 **Personal data collected and processed:**
 - Account data: name, email address (school administrators and staff)
 - School data: class names, staff names, course names, room names, schedules
 - Uploaded files (stored per school, only accessible to that school's members)
-- Billing data: handled entirely by Stripe — Skoleplanen does not store payment card data
+- Billing data: handled entirely by Stripe — Skoleoverblikket does not store payment card data
 - Session cookie: used solely for authentication, no tracking
 
 **Data processors (sub-processors):**
@@ -87,7 +87,7 @@ Draft a GDPR-compliant Danish privacy policy for a B2B SaaS targeting Danish ind
 
 **Data retention:** data is retained for the duration of the subscription. Upon cancellation, data is retained for 90 days to allow re-activation or export, then permanently deleted. (Note: automated deletion is not yet implemented — a manual process applies until then.)
 
-**Data subject rights:** users may request access, correction, or deletion by emailing kontakt@skoleplanen.dk. Requests are handled within 30 days.
+**Data subject rights:** users may request access, correction, or deletion by emailing kontakt@skoleoverblikket.dk. Requests are handled within 30 days.
 
 **Cookies:** one session cookie used for login. No analytics, no advertising cookies.
 
@@ -102,7 +102,7 @@ Format as structured sections with headings (§1, §2, … or named sections —
 A simple contact page. No form — just:
 
 - A short warm intro (1–2 sentences): you're welcome to reach out with questions, feedback, or if you want to learn more.
-- Email link: `kontakt@skoleplanen.dk` (styled as a prominent `mailto:` link, not buried in a paragraph)
+- Email link: `kontakt@skoleoverblikket.dk` (styled as a prominent `mailto:` link, not buried in a paragraph)
 - Response time expectation: "Vi svarer typisk inden for 1–2 hverdage"
 
 Keep it brief and human. Do not add a contact form.

@@ -1,4 +1,4 @@
-namespace Skoleplanen.Api.Tenancy;
+namespace Skoleoverblikket.Api.Tenancy;
 
 public interface ITenantContext
 {

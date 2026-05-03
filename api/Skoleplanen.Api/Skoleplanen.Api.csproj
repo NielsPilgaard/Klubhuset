@@ -4,11 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>skoleplanen-api</UserSecretsId>
+    <UserSecretsId>skoleoverblikket-api</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\infrastructure\aspire\Skoleplanen.ServiceDefaults\Skoleplanen.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\infrastructure\aspire\Skoleoverblikket.ServiceDefaults\Skoleoverblikket.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(DOTNET_WATCH)' != '1' AND '$(CI)' != 'true'">

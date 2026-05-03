@@ -1,10 +1,10 @@
 {
-  "realm": "Skoleplanen",
+  "realm": "Skoleoverblikket",
   "enabled": true,
-  "displayName": "Skoleplanen",
+  "displayName": "Skoleoverblikket",
   "sslRequired": "external",
-  "loginTheme": "skoleplanen",
-  "emailTheme": "skoleplanen",
+  "loginTheme": "skoleoverblikket",
+  "emailTheme": "skoleoverblikket",
   "internationalizationEnabled": true,
   "supportedLocales": ["da"],
   "defaultLocale": "da",
@@ -12,8 +12,8 @@
   "smtpServer": {
     "host": "mailpit",
     "port": "1025",
-    "from": "no-reply@skoleplanen.dk",
-    "fromDisplayName": "Skoleplanen",
+    "from": "no-reply@skoleoverblikket.dk",
+    "fromDisplayName": "Skoleoverblikket",
     "auth": "false",
     "ssl": "false",
     "starttls": "false"
@@ -59,8 +59,8 @@
 
   "clients": [
     {
-      "clientId": "skoleplanen-admin",
-      "name": "Skoleplanen Admin (service account)",
+      "clientId": "skoleoverblikket-admin",
+      "name": "Skoleoverblikket Admin (service account)",
       "enabled": true,
       "protocol": "openid-connect",
 
@@ -70,13 +70,13 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
 
-      "secret": "skoleplanen-admin-secret",
+      "secret": "skoleoverblikket-admin-secret",
 
       "defaultClientScopes": []
     },
     {
-      "clientId": "skoleplanen-api",
-      "name": "Skoleplanen API",
+      "clientId": "skoleoverblikket-api",
+      "name": "Skoleoverblikket API",
       "enabled": true,
       "protocol": "openid-connect",
 
@@ -91,8 +91,8 @@
       ]
     },
     {
-      "clientId": "skoleplanen-web",
-      "name": "Skoleplanen Web",
+      "clientId": "skoleoverblikket-web",
+      "name": "Skoleoverblikket Web",
       "enabled": true,
       "protocol": "openid-connect",
 
@@ -103,11 +103,11 @@
 
       "redirectUris": [
         "http://localhost:5173/*",
-        "https://skoleplanen.dk/*"
+        "https://skoleoverblikket.dk/*"
       ],
       "webOrigins": [
         "http://localhost:5173",
-        "https://skoleplanen.dk"
+        "https://skoleoverblikket.dk"
       ],
 
       "defaultClientScopes": [
@@ -118,11 +118,11 @@
 
       "protocolMappers": [
         {
-          "name": "audience-skoleplanen-api",
+          "name": "audience-skoleoverblikket-api",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.client.audience": "skoleplanen-api",
+            "included.client.audience": "skoleoverblikket-api",
             "access.token.claim": "true"
           }
         }
@@ -132,9 +132,9 @@
 
   "users": [
     {
-      "username": "service-account-skoleplanen-admin",
+      "username": "service-account-skoleoverblikket-admin",
       "enabled": true,
-      "serviceAccountClientId": "skoleplanen-admin",
+      "serviceAccountClientId": "skoleoverblikket-admin",
       "clientRoles": {
         "realm-management": [
           "manage-users",

@@ -3,7 +3,7 @@ import Footer from '../components/Footer'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function OmPage() {
-  usePageTitle('Om Skoleplanen')
+  usePageTitle('Om Skoleoverblikket')
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
       <PublicNav />
@@ -11,7 +11,7 @@ export default function OmPage() {
       <main className="flex-1 py-20 px-6">
         <div className="max-w-2xl mx-auto">
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-brand-900 leading-tight mb-4">
-            Om Skoleplanen
+            Om Skoleoverblikket
           </h1>
           <p className="text-brand-600 text-lg font-medium mb-8">
             Enkelt skemaværktøj til den lille skole
@@ -19,19 +19,19 @@ export default function OmPage() {
 
           <div className="prose-like space-y-6 text-gray-700 leading-relaxed">
             <p className="text-lg">
-              Skoleplanen er bygget af mig, Niels — IT-udvikler med forståelse
+              Skoleoverblikket er bygget af mig, Niels — IT-udvikler med forståelse
               for, hvad der skal til for at hverdagen hænger sammen på en lille skole.
             </p>
 
             <p>
               Mange skemaværktøjer er designet til store kommunale institutioner med dedikerede
-              IT-afdelinger. Skoleplanen er anderledes: det er bygget til friskoler, privatskoler
+              IT-afdelinger. Skoleoverblikket er anderledes: det er bygget til friskoler, privatskoler
               og efterskoler — steder hvor den samme person både tager telefonen, booker vikar
               og hænger skemaet op mandag morgen.
             </p>
 
             <p>
-              Derfor er enkelhed ikke bare et designvalg — det er et løfte. Skoleplanen skal
+              Derfor er enkelhed ikke bare et designvalg — det er et løfte. Skoleoverblikket skal
               kunne tages i brug fra dag ét, uden kursus og uden IT-support.
             </p>
 
@@ -41,13 +41,13 @@ export default function OmPage() {
             </p>
 
             <p className="text-brand-700 font-medium">
-              Har du spørgsmål eller vil du høre, hvad Skoleplanen kan gøre for din skole?
+              Har du spørgsmål eller vil du høre, hvad Skoleoverblikket kan gøre for din skole?
               Skriv til{' '}
               <a
-                href="mailto:kontakt@skoleplanen.dk"
+                href="mailto:kontakt@skoleoverblikket.dk"
                 className="underline hover:text-brand-900 transition-colors"
               >
-                kontakt@skoleplanen.dk
+                kontakt@skoleoverblikket.dk
               </a>
               .
             </p>
@@ -55,7 +55,7 @@ export default function OmPage() {
 
           <div className="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400 space-y-1">
             <p className="font-medium text-gray-500">Virksomhedsoplysninger</p>
-            <p>Skoleplanen drives af Pilgaard Development</p>
+            <p>Skoleoverblikket drives af Pilgaard Development</p>
             <p>Nordlyvej 20, 8550 Ryomgård</p>
             <p>
               <a href="tel:+4529917126" className="hover:text-brand-700 transition-colors">
@@ -63,8 +63,8 @@ export default function OmPage() {
               </a>
             </p>
             <p>
-              <a href="mailto:kontakt@skoleplanen.dk" className="hover:text-brand-700 transition-colors">
-                kontakt@skoleplanen.dk
+              <a href="mailto:kontakt@skoleoverblikket.dk" className="hover:text-brand-700 transition-colors">
+                kontakt@skoleoverblikket.dk
               </a>
             </p>
           </div>
@@ -82,7 +82,7 @@ function PublicNav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">
           <Logo variant="light" size={28} />
-          <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
         </a>
         <div className="flex items-center gap-4">
           <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">

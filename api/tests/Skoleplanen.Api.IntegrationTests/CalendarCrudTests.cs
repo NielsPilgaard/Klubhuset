@@ -2,11 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Skoleplanen.Api.Controllers;
-using Skoleplanen.Api.IntegrationTests.Infrastructure;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Controllers;
+using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
+using Skoleoverblikket.Api.Models;
 
-namespace Skoleplanen.Api.IntegrationTests;
+namespace Skoleoverblikket.Api.IntegrationTests;
 
 public sealed class CalendarCrudTests
 {

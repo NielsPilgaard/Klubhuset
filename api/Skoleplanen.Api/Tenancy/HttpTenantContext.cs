@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Skoleplanen.Api.Tenancy;
+namespace Skoleoverblikket.Api.Tenancy;
 
 /// <summary>
 /// Resolves the current tenant from the authenticated JWT claim.

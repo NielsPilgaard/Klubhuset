@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 using System.ComponentModel.DataAnnotations;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Fag — a subject (e.g. dansk, matematik, idræt).</summary>
 public sealed class Course : ITenantScoped, IEntityTypeConfiguration<Course>

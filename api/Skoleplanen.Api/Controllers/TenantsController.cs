@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Skoleplanen.Api.Auth;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
+using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/tenants")]

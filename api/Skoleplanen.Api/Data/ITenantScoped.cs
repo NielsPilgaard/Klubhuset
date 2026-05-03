@@ -1,4 +1,4 @@
-namespace Skoleplanen.Api.Data;
+namespace Skoleoverblikket.Api.Data;
 
 /// <summary>
 /// Marker interface for all entities that belong to a tenant.

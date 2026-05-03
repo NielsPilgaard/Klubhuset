@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Services;
-using Skoleplanen.Api.Tenancy;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Tenancy;
 
-namespace Skoleplanen.Api.Controllers;
+namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/classes/{classId:guid}/schemas")]
