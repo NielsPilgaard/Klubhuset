@@ -31,7 +31,7 @@ builder.Services.AddOptions<KeycloakOptions>()
        .ValidateOnStart();
 
 // Auth — validates Keycloak-issued JWTs
-builder.Services.AddKeycloakAuth(builder.Environment);
+builder.Services.AddKeycloakAuth();
 
 // Keycloak Admin REST API clients (for creating users during signup)
 builder.Services
