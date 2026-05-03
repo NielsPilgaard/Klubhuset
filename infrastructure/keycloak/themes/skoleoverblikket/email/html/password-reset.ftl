@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nulstil din adgangskode – Skoleplanen</title>
+  <title>Nulstil din adgangskode – Skoleoverblikket</title>
   <style>
     body { margin: 0; padding: 0; background: #f0f5f1; font-family: 'Helvetica Neue', Arial, sans-serif; color: #111827; }
     .wrapper { max-width: 520px; margin: 40px auto; padding: 0 16px; }
@@ -31,12 +31,12 @@
           <line x1="5" y1="19" x2="27" y2="19" stroke="#7db87d" stroke-width="1.2"/>
           <line x1="5" y1="24" x2="27" y2="24" stroke="#7db87d" stroke-width="1.2"/>
         </svg>
-        <span class="brand-name">Skoleplanen</span>
+        <span class="brand-name">Skoleoverblikket</span>
       </div>
 
       <h1>Nulstil din adgangskode</h1>
 
-      <p>Vi har modtaget en anmodning om at nulstille adgangskoden til din Skoleplanen-konto. Klik på knappen nedenfor for at vælge en ny adgangskode.</p>
+      <p>Vi har modtaget en anmodning om at nulstille adgangskoden til din Skoleoverblikket-konto. Klik på knappen nedenfor for at vælge en ny adgangskode.</p>
 
       <div class="btn-wrapper">
         <a href="${link}" class="btn">Nulstil adgangskode</a>
@@ -53,7 +53,7 @@
 
     </div>
     <div class="footer">
-      Skoleplanen &middot; <a href="https://skoleplanen.dk" style="color:#9ca3af;">skoleplanen.dk</a>
+      Skoleoverblikket &middot; <a href="https://skoleoverblikket.dk" style="color:#9ca3af;">skoleoverblikket.dk</a>
     </div>
   </div>
 </body>

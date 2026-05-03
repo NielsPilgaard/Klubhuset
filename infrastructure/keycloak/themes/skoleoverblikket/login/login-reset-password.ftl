@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Glemt adgangskode – Skoleplanen</title>
+  <title>Glemt adgangskode – Skoleoverblikket</title>
   <link rel="stylesheet" href="${url.resourcesPath}/css/styles.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
         <line x1="5" y1="19" x2="27" y2="19" stroke="#7db87d" stroke-width="1.2"/>
         <line x1="5" y1="24" x2="27" y2="24" stroke="#7db87d" stroke-width="1.2"/>
       </svg>
-      <span class="brand-name">Skoleplanen</span>
+      <span class="brand-name">Skoleoverblikket</span>
     </div>
 
     <h1 class="login-title">Glemt adgangskode?</h1>
