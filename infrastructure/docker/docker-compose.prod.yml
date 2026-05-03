@@ -30,7 +30,6 @@ name:
 services:
   keycloak:
     image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
-    pull_policy: always
     restart: unless-stopped
     command: start --import-realm
     environment:
