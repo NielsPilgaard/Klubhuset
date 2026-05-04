@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -193,7 +193,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
             .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
             .ToListAsync(ct);
 
-        var bytes = IcsExporter.Build(entries);
+        var bytes = IcsBuilder.Build(entries);
         Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleplanen-kalender.ics\"");
         return File(bytes, "text/calendar; charset=utf-8");
     }

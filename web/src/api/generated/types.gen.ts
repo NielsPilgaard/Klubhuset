@@ -34,6 +34,7 @@ export type CalendarEntryDto = {
     endDate?: string;
     recurrenceRule?: string | null;
     recurrenceEnd?: string | null;
+    excludedDates?: string | null;
 };
 
 export type CalendarEntryType = 'Ferie' | 'Lukkedag' | 'Arbejdsdag' | 'Begivenhed';
@@ -590,6 +591,40 @@ export type PutApiV1CalendarByIdResponses = {
 };
 
 export type PutApiV1CalendarByIdResponse = PutApiV1CalendarByIdResponses[keyof PutApiV1CalendarByIdResponses];
+
+export type DeleteApiV1CalendarByIdOccurrencesByDateData = {
+    body?: never;
+    path: {
+        id: string;
+        date: string;
+    };
+    query?: never;
+    url: '/api/v1/calendar/{id}/occurrences/{date}';
+};
+
+export type DeleteApiV1CalendarByIdOccurrencesByDateResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiV1CalendarByIdFromByDateData = {
+    body?: never;
+    path: {
+        id: string;
+        date: string;
+    };
+    query?: never;
+    url: '/api/v1/calendar/{id}/from/{date}';
+};
+
+export type DeleteApiV1CalendarByIdFromByDateResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1CalendarExportIcsData = {
     body?: never;
