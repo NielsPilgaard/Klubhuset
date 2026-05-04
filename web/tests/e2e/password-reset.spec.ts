@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-const KEYCLOAK_BASE = 'http://127.0.0.1:8080'
-const MAILPIT_API = 'http://127.0.0.1:8025/api/v1'
+const KEYCLOAK_BASE = 'http://localhost:8080'
+const MAILPIT_API = 'http://localhost:8025/api/v1'
 const TEST_EMAIL = 'admin@debugskolen.dk'
 
 test('password reset sends email via Keycloak', async ({ page, request }) => {

@@ -66,7 +66,7 @@ services:
       Keycloak__Audience: skoleoverblikket-api
       Keycloak__WebClientId: skoleoverblikket-web
       Keycloak__AdminClientId: skoleoverblikket-admin
-      Keycloak__AdminClientSecret: stub-secret
+      Keycloak__AdminClientSecret: skoleoverblikket-admin-secret
       ObjectStorage__ServiceUrl: http://localhost:4566
       ObjectStorage__AccessKey: test
       ObjectStorage__SecretKey: test
