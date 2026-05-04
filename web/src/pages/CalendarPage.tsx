@@ -7,6 +7,8 @@ import {
   postApiV1CalendarMutation,
   putApiV1CalendarByIdMutation,
   deleteApiV1CalendarByIdMutation,
+  deleteApiV1CalendarByIdOccurrencesByDateMutation,
+  deleteApiV1CalendarByIdFromByDateMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { CalendarEntryDto, DefaultHolidayDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -40,14 +42,10 @@ const MONTH_NAMES = [
 
 const WEEKDAY_HEADERS = ['Ma', 'Ti', 'On', 'To', 'Fr', 'Lø', 'Sø']
 
-// Returns the school year start year for a given reference year.
-// School year starts in August. If today is Aug-Dec, school year = year/year+1.
-// The year selector represents the school start year (e.g. 2025 means 2025/2026).
 function getSchoolYears(schoolStartYear: number): { startYear: number; endYear: number } {
   return { startYear: schoolStartYear, endYear: schoolStartYear + 1 }
 }
 
-// School year months: Aug through Jun (11 months)
 function getSchoolYearMonths(schoolStartYear: number): Array<{ year: number; month: number }> {
   const months: Array<{ year: number; month: number }> = []
   for (let m = 8; m <= 12; m++) months.push({ year: schoolStartYear, month: m })
@@ -65,27 +63,20 @@ function getISOWeek(year: number, month: number, day: number): number {
 }
 
 function isEntryInSchoolYear(entry: CalendarEntryDto, startYear: number): boolean {
-  const schoolStart = new Date(startYear, 7, 1)    // Aug 1
-  const schoolEnd = new Date(startYear + 1, 6, 31) // Jul 31 next year
+  const schoolStart = new Date(startYear, 7, 1)
+  const schoolEnd = new Date(startYear + 1, 6, 31)
   const entryStart = new Date(`${entry.startDate}T00:00:00`)
-  // An entry belongs to this school year if its start date falls within the year.
-  // Using overlap (entryEnd >= schoolStart) causes summer vacation (Jun 26 – Aug 7)
-  // to be counted for both the current and the following school year.
   return entryStart >= schoolStart && entryStart <= schoolEnd
 }
 
 function buildMonthGrid(year: number, month: number): (number | null)[][] {
-  // month is 1-based
   const firstDay = new Date(year, month - 1, 1)
-  // Monday = 0 ... Sunday = 6
   const startOffset = (firstDay.getDay() + 6) % 7
   const daysInMonth = new Date(year, month, 0).getDate()
-
   const cells: (number | null)[] = [
     ...Array(startOffset).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
-
   const weeks: (number | null)[][] = []
   for (let i = 0; i < cells.length; i += 7) {
     const week = cells.slice(i, i + 7)
@@ -106,20 +97,254 @@ function getDayEntries(
   return entries.filter((e) => (e.startDate ?? '') <= dateStr && dateStr <= (e.endDate ?? ''))
 }
 
+function formatDateDDMMYYYY(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-')
+  return `${day}/${month}/${year}`
+}
+
 function formatDateRange(startDate: string, endDate: string): string {
-  const fmt = (d: string) => {
-    const [, , day] = d.split('-')
-    const monthShort = new Date(`${d}T00:00:00`).toLocaleDateString('da-DK', { month: 'short' })
-    return `${parseInt(day)} ${monthShort}`
-  }
-  if (startDate === endDate) return fmt(startDate)
-  return `${fmt(startDate)} – ${fmt(endDate)}`
+  if (startDate === endDate) return formatDateDDMMYYYY(startDate)
+  return `${formatDateDDMMYYYY(startDate)} – ${formatDateDDMMYYYY(endDate)}`
 }
 
 function toDateString(year: number, month: number, day: number): string {
   const pad = (n: number) => n.toString().padStart(2, '0')
   return `${year}-${pad(month)}-${pad(day)}`
 }
+
+// ─── DatePicker ──────────────────────────────────────────────────────────────
+
+interface DatePickerProps {
+  value: string // ISO yyyy-MM-dd
+  onChange: (value: string) => void
+  min?: string
+  label?: string
+}
+
+function DatePicker({ value, onChange, min }: DatePickerProps) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const parsed = value ? new Date(`${value}T00:00:00`) : new Date()
+  const [viewYear, setViewYear] = useState(parsed.getFullYear())
+  const [viewMonth, setViewMonth] = useState(parsed.getMonth() + 1) // 1-based
+
+  useEffect(() => {
+    if (value) {
+      const d = new Date(`${value}T00:00:00`)
+      setViewYear(d.getFullYear())
+      setViewMonth(d.getMonth() + 1)
+    }
+  }, [value])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  function prevMonth() {
+    if (viewMonth === 1) { setViewMonth(12); setViewYear(y => y - 1) }
+    else setViewMonth(m => m - 1)
+  }
+  function nextMonth() {
+    if (viewMonth === 12) { setViewMonth(1); setViewYear(y => y + 1) }
+    else setViewMonth(m => m + 1)
+  }
+
+  const weeks = buildMonthGrid(viewYear, viewMonth)
+  const today = toDateString(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())
+
+  function selectDay(day: number) {
+    const dateStr = toDateString(viewYear, viewMonth, day)
+    if (min && dateStr < min) return
+    onChange(dateStr)
+    setOpen(false)
+  }
+
+  const displayValue = value ? formatDateDDMMYYYY(value) : ''
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-brand-500 hover:border-gray-400 bg-white transition-colors"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 flex-shrink-0">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <span className={displayValue ? 'text-gray-900' : 'text-gray-400'}>
+          {displayValue || 'Vælg dato'}
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-72">
+          {/* Month navigation */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <span className="font-semibold text-sm text-gray-900">
+              {MONTH_NAMES[viewMonth - 1]} {viewYear}
+            </span>
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {WEEKDAY_HEADERS.map((h) => (
+              <div key={h} className="text-xs text-center text-gray-400 font-medium py-1">{h}</div>
+            ))}
+          </div>
+
+          {/* Days */}
+          <div className="grid grid-cols-7 gap-y-0.5">
+            {weeks.flat().map((day, i) => {
+              if (day === null) return <div key={i} />
+              const dateStr = toDateString(viewYear, viewMonth, day)
+              const isSelected = dateStr === value
+              const isToday = dateStr === today
+              const isDisabled = min ? dateStr < min : false
+              const isWeekend = i % 7 >= 5
+
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => selectDay(day)}
+                  disabled={isDisabled}
+                  className={[
+                    'h-9 w-full rounded-lg text-sm font-medium transition-colors',
+                    isSelected
+                      ? 'bg-brand-600 text-white'
+                      : isToday
+                        ? 'border border-brand-400 text-brand-700 hover:bg-brand-50'
+                        : isDisabled
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : isWeekend
+                            ? 'text-gray-400 hover:bg-gray-100'
+                            : 'text-gray-700 hover:bg-gray-100',
+                  ].join(' ')}
+                >
+                  {day}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── DeleteOccurrenceDialog ───────────────────────────────────────────────────
+
+type DeleteMode = 'single' | 'from' | 'all'
+
+interface DeleteOccurrenceDialogProps {
+  entry: CalendarEntryDto
+  occurrenceDate: string // ISO yyyy-MM-dd of the specific occurrence being deleted
+  onClose: () => void
+  onDeleted: () => void
+}
+
+function DeleteOccurrenceDialog({ entry, occurrenceDate, onClose, onDeleted }: DeleteOccurrenceDialogProps) {
+  const qc = useQueryClient()
+  const [mode, setMode] = useState<DeleteMode>('single')
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() })
+
+  const deleteSingleMutation = useMutation({
+    ...deleteApiV1CalendarByIdOccurrencesByDateMutation(),
+    onSuccess: () => { invalidate(); onDeleted() },
+  })
+  const deleteFromMutation = useMutation({
+    ...deleteApiV1CalendarByIdFromByDateMutation(),
+    onSuccess: () => { invalidate(); onDeleted() },
+  })
+  const deleteAllMutation = useMutation({
+    ...deleteApiV1CalendarByIdMutation(),
+    onSuccess: () => { invalidate(); onDeleted() },
+  })
+
+  const isPending = deleteSingleMutation.isPending || deleteFromMutation.isPending || deleteAllMutation.isPending
+
+  function handleConfirm() {
+    if (isPending) return
+    if (mode === 'single') {
+      deleteSingleMutation.mutate({ path: { id: entry.id!, date: occurrenceDate } })
+    } else if (mode === 'from') {
+      deleteFromMutation.mutate({ path: { id: entry.id!, date: occurrenceDate } })
+    } else {
+      deleteAllMutation.mutate({ path: { id: entry.id! } })
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Slet begivenhed</h2>
+          <p className="text-sm text-gray-500 mt-1">"{entry.title}" gentages. Hvad vil du slette?</p>
+        </div>
+        <div className="px-6 py-5 space-y-3">
+          {([
+            ['single', 'Kun denne begivenhed'],
+            ['from', 'Denne og alle efterfølgende'],
+            ['all', 'Alle begivenheder i serien'],
+          ] as [DeleteMode, string][]).map(([val, label]) => (
+            <label key={val} className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="radio"
+                name="deleteMode"
+                value={val}
+                checked={mode === val}
+                onChange={() => setMode(val)}
+                className="accent-brand-600 w-4 h-4"
+              />
+              <span className="text-sm text-gray-800 group-hover:text-gray-900">{label}</span>
+            </label>
+          ))}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Annuller
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={isPending}
+            className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isPending ? 'Sletter...' : 'Slet'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── DayPopover ───────────────────────────────────────────────────────────────
 
 interface DayPopoverProps {
   year: number
@@ -139,9 +364,7 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose()
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -167,7 +390,7 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
           <p className="text-xs text-gray-400 italic">Ingen begivenheder</p>
         )}
         {dayEntries.map((entry) => (
-          <div key={entry.id} className="flex items-center gap-1.5">
+          <div key={`${entry.id}-${entry.startDate}`} className="flex items-center gap-1.5">
             <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
               {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
             </span>
@@ -200,6 +423,8 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
     </div>
   )
 }
+
+// ─── EntryModal ───────────────────────────────────────────────────────────────
 
 interface EntryModalProps {
   initial?: CalendarEntryDto
@@ -287,23 +512,20 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-            <input
-              type="date"
+            <DatePicker
               value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value)
-                if (endDate < e.target.value) setEndDate(e.target.value)
+              onChange={(v) => {
+                setStartDate(v)
+                if (endDate < v) setEndDate(v)
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-            <input
-              type="date"
+            <DatePicker
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              onChange={setEndDate}
+              min={startDate}
             />
             {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
           </div>
@@ -323,12 +545,10 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
           {recurrenceRule && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Gentag indtil</label>
-              <input
-                type="date"
+              <DatePicker
                 value={recurrenceEnd}
-                onChange={(e) => setRecurrenceEnd(e.target.value)}
+                onChange={setRecurrenceEnd}
                 min={endDate}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
           )}
@@ -352,6 +572,8 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
     </div>
   )
 }
+
+// ─── CalendarPage ─────────────────────────────────────────────────────────────
 
 export default function CalendarPage() {
   usePageTitle('Kalender')
@@ -389,9 +611,11 @@ export default function CalendarPage() {
 
   const [createDate, setCreateDate] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
-  const [openPopover, setOpenPopover] = useState<string | null>(null) // "year-month-day"
+  const [openPopover, setOpenPopover] = useState<string | null>(null)
 
-  // Fetch entries for both years of the school year
+  // Entry + occurrence date to show delete dialog for
+  const [deleteTarget, setDeleteTarget] = useState<{ entry: CalendarEntryDto; occurrenceDate: string } | null>(null)
+
   const { data: entriesStartYear = [] } = useQuery({
     ...getApiV1CalendarOptions({ query: { year: startYear } }),
     select: (d) => (d ?? []) as CalendarEntryDto[],
@@ -401,10 +625,9 @@ export default function CalendarPage() {
     select: (d) => (d ?? []) as CalendarEntryDto[],
   })
 
-  // Merge and deduplicate entries from both years
   const allEntries: CalendarEntryDto[] = [
     ...entriesStartYear,
-    ...entriesEndYear.filter((e) => !entriesStartYear.some((s) => s.id === e.id)),
+    ...entriesEndYear.filter((e) => !entriesStartYear.some((s) => s.id === e.id && s.startDate === e.startDate)),
   ]
 
   const hasEntries = allEntries.some((e) => isEntryInSchoolYear(e, schoolStartYear))
@@ -430,13 +653,22 @@ export default function CalendarPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() }),
   })
 
-  // School year options: 5 years around current
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentSchoolStartYear - 2 + i)
 
   function handleDayClick(year: number, month: number, day: number, isWeekend: boolean) {
     if (isWeekend) return
     const key = `${year}-${month}-${day}`
     setOpenPopover((prev) => (prev === key ? null : key))
+  }
+
+  function handleDeleteEntry(entry: CalendarEntryDto) {
+    if (entry.recurrenceRule) {
+      // Use the base startDate as the occurrence date for the "all" case; for list-level delete,
+      // we don't know which occurrence was clicked so default to the entry's own startDate.
+      setDeleteTarget({ entry, occurrenceDate: entry.startDate! })
+    } else {
+      if (confirm(`Slet "${entry.title}"?`)) deleteMutation.mutate({ path: { id: entry.id! } })
+    }
   }
 
   return (
@@ -528,10 +760,7 @@ export default function CalendarPage() {
                       const isOpen = openPopover === popoverKey
 
                       return (
-                        <div
-                          key={`${wi}-${di}`}
-                          className="relative"
-                        >
+                        <div key={`${wi}-${di}`} className="relative">
                           <div
                             onClick={() => handleDayClick(year, month, day, isWeekend)}
                             className={[
@@ -584,7 +813,7 @@ export default function CalendarPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {allEntries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={`${entry.id}-${entry.startDate}`} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
                       {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
@@ -608,9 +837,7 @@ export default function CalendarPage() {
                           </svg>
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`Slet "${entry.title}"?`)) deleteMutation.mutate({ path: { id: entry.id! } })
-                          }}
+                          onClick={() => handleDeleteEntry(entry)}
                           className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                           title="Slet"
                         >
@@ -645,6 +872,14 @@ export default function CalendarPage() {
           defaultYear={schoolStartYear}
           onClose={() => setEditingEntry(null)}
           onSaved={() => setEditingEntry(null)}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteOccurrenceDialog
+          entry={deleteTarget.entry}
+          occurrenceDate={deleteTarget.occurrenceDate}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => setDeleteTarget(null)}
         />
       )}
     </div>
