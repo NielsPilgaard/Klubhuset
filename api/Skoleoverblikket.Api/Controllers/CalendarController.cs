@@ -15,7 +15,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize]
 public sealed class CalendarController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
-    public record CalendarEntryDto(Guid Id, CalendarEntryType Type, string Title, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
+    public record CalendarEntryDto(Guid Id, CalendarEntryType Type, string Title, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null, string? ExcludedDates = null);
     public record CreateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
     public record UpdateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
     public record DefaultHolidayDto(string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
@@ -35,7 +35,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 
         var rawEntries = await query
             .OrderBy(e => e.StartDate)
-            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd))
+            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
             .ToListAsync(ct);
 
         var result = new List<CalendarEntryDto>(rawEntries.Count);
@@ -90,7 +90,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
         };
         db.CalendarEntries.Add(entry);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd));
+        return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
     }
 
     [HttpPut("{id:guid}")]
@@ -115,7 +115,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
         entry.RecurrenceRule = req.RecurrenceRule;
         entry.RecurrenceEnd = req.RecurrenceEnd;
         await db.SaveChangesAsync(ct);
-        return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd));
+        return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
     }
 
     [HttpDelete("{id:guid}")]
@@ -133,56 +133,79 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
         return NoContent();
     }
 
+    // Exclude a single occurrence of a recurring event (adds date to ExcludedDates).
+    [HttpDelete("{id:guid}/occurrences/{date}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult> DeleteOccurrence(Guid id, DateOnly date, CancellationToken ct)
+    {
+        var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+        if (entry is null) return NotFound();
+        if (entry.RecurrenceRule is null) return Problem("Begivenheden gentages ikke.", statusCode: 400);
+
+        var existing = entry.ExcludedDates?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet() ?? [];
+        existing.Add(date.ToString("yyyy-MM-dd"));
+        entry.ExcludedDates = string.Join(',', existing.OrderBy(d => d));
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // Truncate a recurring event so it ends before the given date (delete this and all subsequent).
+    [HttpDelete("{id:guid}/from/{date}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult> DeleteFrom(Guid id, DateOnly date, CancellationToken ct)
+    {
+        var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+        if (entry is null) return NotFound();
+        if (entry.RecurrenceRule is null) return Problem("Begivenheden gentages ikke.", statusCode: 400);
+
+        // If the base occurrence itself is being cut, delete the entire entry.
+        if (date <= entry.StartDate)
+        {
+            db.CalendarEntries.Remove(entry);
+        }
+        else
+        {
+            // Set RecurrenceEnd to one day before the cut date so occurrences from `date` onward are excluded.
+            entry.RecurrenceEnd = date.AddDays(-1);
+            // Remove any excluded dates that are now beyond the new end
+            if (entry.ExcludedDates is not null)
+            {
+                var kept = entry.ExcludedDates
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Where(d => DateOnly.TryParse(d, out var parsed) && parsed < date)
+                    .ToList();
+                entry.ExcludedDates = kept.Count > 0 ? string.Join(',', kept) : null;
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     [HttpGet("export.ics")]
     public async Task<IActionResult> ExportIcs(CancellationToken ct)
     {
         var entries = await db.CalendarEntries
             .AsNoTracking()
             .OrderBy(e => e.StartDate)
-            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd))
+            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
             .ToListAsync(ct);
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var sb = new StringBuilder();
-        sb.AppendLine("BEGIN:VCALENDAR");
-        sb.AppendLine("VERSION:2.0");
-        sb.AppendLine("PRODID:-//Skoleplanen//Skoleplanen//DA");
-        sb.AppendLine("CALSCALE:GREGORIAN");
-        sb.AppendLine("METHOD:PUBLISH");
-
-        foreach (var entry in entries)
-        {
-            var occurrencesToWrite = new List<(DateOnly Start, DateOnly End)> { (entry.StartDate, entry.EndDate) };
-            if (entry.RecurrenceRule is not null)
-            {
-                var expansionEnd = entry.RecurrenceEnd ?? entry.StartDate.AddYears(2);
-                var expanded = ExpandRecurrence(entry, expansionEnd, filterStart: null, filterEnd: null);
-                occurrencesToWrite.AddRange(expanded.Select(o => (o.StartDate, o.EndDate)));
-            }
-
-            foreach (var (start, end) in occurrencesToWrite)
-            {
-                sb.AppendLine("BEGIN:VEVENT");
-                sb.AppendLine($"UID:{entry.Id}@skoleplanen");
-                sb.AppendLine($"SUMMARY:{EscapeIcsText(entry.Title)}");
-                sb.AppendLine($"DTSTART;VALUE=DATE:{start:yyyyMMdd}");
-                sb.AppendLine($"DTEND;VALUE=DATE:{end.AddDays(1):yyyyMMdd}");
-                sb.AppendLine("END:VEVENT");
-            }
-        }
-
-        sb.AppendLine("END:VCALENDAR");
-
-        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        var bytes = IcsExporter.Build(entries);
         Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleplanen-kalender.ics\"");
         return File(bytes, "text/calendar; charset=utf-8");
     }
 
-    private static string EscapeIcsText(string text) =>
-        text.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\n", "\\n");
-
     // Expands a recurring entry into additional occurrences after its base occurrence.
     // Returns only the extra occurrences (not the original). Each occurrence keeps the same Id.
+    internal static List<CalendarEntryDto> ExpandRecurrencePublic(
+        CalendarEntryDto entry,
+        DateOnly expansionEnd,
+        DateOnly? filterStart,
+        DateOnly? filterEnd) => ExpandRecurrence(entry, expansionEnd, filterStart, filterEnd);
+
     private static List<CalendarEntryDto> ExpandRecurrence(
         CalendarEntryDto entry,
         DateOnly expansionEnd,
@@ -223,6 +246,13 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
         var duration = entry.EndDate.DayNumber - entry.StartDate.DayNumber;
         var current = entry.StartDate;
 
+        var excluded = entry.ExcludedDates?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(d => DateOnly.TryParse(d, out var pd) ? pd : (DateOnly?)null)
+            .Where(d => d.HasValue)
+            .Select(d => d!.Value)
+            .ToHashSet() ?? [];
+
         for (var safety = 0; safety < 500; safety++)
         {
             current = freq == "WEEKLY"
@@ -232,6 +262,11 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
             if (current > expansionEnd)
             {
                 break;
+            }
+
+            if (excluded.Contains(current))
+            {
+                continue;
             }
 
             var occEnd = DateOnly.FromDayNumber(current.DayNumber + duration);

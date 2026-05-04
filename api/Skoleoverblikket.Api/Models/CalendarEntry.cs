@@ -26,6 +26,9 @@ public sealed class CalendarEntry : ITenantScoped, IEntityTypeConfiguration<Cale
 	// Inclusive end date for recurrence expansion (null = no recurrence)
 	public DateOnly? RecurrenceEnd { get; set; }
 
+	// Comma-separated ISO dates (yyyy-MM-dd) excluded from recurrence expansion
+	public string? ExcludedDates { get; set; }
+
 	public void Configure(EntityTypeBuilder<CalendarEntry> builder)
 	{
 		builder.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
