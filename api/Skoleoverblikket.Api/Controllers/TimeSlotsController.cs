@@ -4,13 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Skoleplanen.Api.Data;
-using Skoleplanen.Api.Models;
-using Skoleplanen.Api.Storage;
-using Skoleplanen.Api.Tenancy;
 using System.Text.Json;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Storage;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -19,11 +16,11 @@ namespace Skoleoverblikket.Api.Controllers;
 [Route("api/v1")]
 [Authorize]
 public sealed class TimeSlotsController(
-    AppDbContext context,
-    ITenantContext tenant,
-    IObjectStorage storage,
-    IAmazonS3 s3,
-    IOptions<S3Options> s3Opts) : ControllerBase
+	AppDbContext context,
+	ITenantContext tenant,
+	IObjectStorage storage,
+	IAmazonS3 s3,
+	IOptions<S3Options> s3Opts) : ControllerBase
 {
 	public record BreakDto(Guid Id, TimeOnly StartTime, int DurationMinutes);
 	public record TemplateDto(Guid Id, int LessonDurationMinutes, TimeOnly DayStartTime, TimeOnly DayEndTime,
