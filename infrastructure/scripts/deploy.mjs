@@ -36,22 +36,26 @@ async function get(path, query) {
 async function saveEnvironment() {
     const compose = await get("compose.one", { composeId: DOKPLOY_COMPOSE_ID });
 
-    // Parse existing env, overwrite only the image vars, preserve everything else.
-    const existing = Object.fromEntries(
-        (compose.env ?? "")
-            .split("\n")
-            .filter(line => line.includes("="))
-            .map(line => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)])
-    );
-
-    const updated = {
-        ...existing,
+    const overrides = {
         API_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-api:${IMAGE_TAG}`,
         WEB_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-web:${IMAGE_TAG}`,
         KEYCLOAK_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-keycloak:${IMAGE_TAG}`,
     };
 
-    const env = Object.entries(updated).map(([k, v]) => `${k}=${v}`).join("\n");
+    // Replace matching lines in-place to preserve blank lines and ordering.
+    const lines = (compose.env ?? "").split("\n");
+    const seen = new Set();
+    const updated = lines.map(line => {
+        const eq = line.indexOf("=");
+        if (eq === -1) return line;
+        const key = line.slice(0, eq);
+        if (key in overrides) { seen.add(key); return `${key}=${overrides[key]}`; }
+        return line;
+    });
+    for (const [key, val] of Object.entries(overrides)) {
+        if (!seen.has(key)) updated.push(`${key}=${val}`);
+    }
+    const env = updated.join("\n");
 
     await post("compose.saveEnvironment", { composeId: DOKPLOY_COMPOSE_ID, env });
     console.log(`Environment updated to ${IMAGE_TAG}`);
