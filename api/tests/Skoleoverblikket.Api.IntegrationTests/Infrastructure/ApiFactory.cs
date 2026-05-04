@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Tenancy;
 using Testcontainers.PostgreSql;
+using TUnit.AspNetCore;
 
 namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
@@ -16,7 +16,7 @@ namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 /// <see cref="TestTenantContext"/> and a simple test-only JWT scheme so
 /// tests can control which tenant they're operating as.
 /// </summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>
+public sealed class ApiFactory : TestWebApplicationFactory<Program>
 {
 	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
 		.WithDatabase("skoleoverblikket_test")
