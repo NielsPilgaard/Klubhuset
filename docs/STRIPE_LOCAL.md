@@ -7,7 +7,7 @@ This document covers how to test the full Stripe billing flow locally using the 
 ## Prerequisites
 
 1. **Stripe CLI installed** — [https://docs.stripe.com/stripe-cli](https://docs.stripe.com/stripe-cli)
-2. **Logged in to Stripe CLI** — `stripe login` (uses the Skoleplanen test account)
+2. **Logged in to Stripe CLI** — `stripe login` (uses the Skoleoverblikket test account)
 3. **Aspire stack running** — `aspire run` from the repo root, or the API already up on port 5000
 4. **`appsettings.Development.json` Stripe keys in place** — they are committed and point to the test account
 
@@ -111,7 +111,7 @@ The API will log the received event. Check the Aspire dashboard or API stdout.
 
 ## Configuration reference
 
-All local Stripe config lives in `api/Skoleplanen.Api/appsettings.Development.json`:
+All local Stripe config lives in `api/Skoleoverblikket.Api/appsettings.Development.json`:
 
 ```json
 "Stripe": {

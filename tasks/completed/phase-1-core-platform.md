@@ -32,7 +32,7 @@ Build the core product: tenant setup, schema planner with conflict detection, st
 
 ### Authentication
 
-- [x] Keycloak realm configured: `skoleplanen-web` public OIDC client, `skoleplanen-api` bearer-only resource server
+- [x] Keycloak realm configured: `skoleoverblikket-web` public OIDC client, `skoleoverblikket-api` bearer-only resource server
 - [x] Role-based access: `admin`, `teacher`, `aide` roles in Keycloak; mapped to JWT claims; enforced on API endpoints via `[Authorize(Roles = "...")]`
 - [x] Frontend Keycloak OIDC login flow (`keycloak-js`, PKCE, auto token refresh)
 - [x] All API endpoints require a valid Keycloak-issued JWT; tenant_id claim drives `ITenantContext`

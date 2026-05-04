@@ -1,4 +1,4 @@
-# Skoleplanen
+# Skoleoverblikket
 
 SaaS schema planner for Danish friskoler and private/independent schools. Schools build, manage, and print their weekly class schedules — with real-time conflict detection for teachers, rooms, and aides.
 
@@ -92,7 +92,7 @@ This starts:
 | PgAdmin | http://localhost:5050 |
 | LocalStack | http://localhost:4566 |
 
-The Keycloak realm (`Skoleplanen`) is imported automatically from `infrastructure/keycloak/realms/Skoleplanen-realm.json` on first startup.
+The Keycloak realm (`Skoleoverblikket`) is imported automatically from `infrastructure/keycloak/realms/Skoleoverblikket-realm.json` on first startup.
 
 ### Aspire parameters
 
@@ -100,19 +100,19 @@ Aspire uses parameter secrets for local dev. On first run, set:
 
 ```powershell
 # PostgreSQL password
-dotnet user-secrets set "Parameters:postgres-password" "your-dev-password" --project infrastructure/aspire/Skoleplanen.AppHost
+dotnet user-secrets set "Parameters:postgres-password" "your-dev-password" --project infrastructure/aspire/Skoleoverblikket.AppHost
 
 # Keycloak admin password
-dotnet user-secrets set "Parameters:keycloak-admin-password" "your-dev-password" --project infrastructure/aspire/Skoleplanen.AppHost
+dotnet user-secrets set "Parameters:keycloak-admin-password" "your-dev-password" --project infrastructure/aspire/Skoleoverblikket.AppHost
 
 # Scaleway TEM (Email)
-dotnet user-secrets set "Smtp:Username" "your-scaleway-username" --project api/Skoleplanen.Api
-dotnet user-secrets set "Smtp:Password" "your-scaleway-api-key" --project api/Skoleplanen.Api
+dotnet user-secrets set "Smtp:Username" "your-scaleway-username" --project api/Skoleoverblikket.Api
+dotnet user-secrets set "Smtp:Password" "your-scaleway-api-key" --project api/Skoleoverblikket.Api
 
 
 # OVHcloud S3
-dotnet user-secrets set "ObjectStorage:AccessKey" "your-s3-accesskey" --project api/Skoleplanen.Api
-dotnet user-secrets set "ObjectStorage:SecretKey" "your-s3-secretkey" --project api/Skoleplanen.Api
+dotnet user-secrets set "ObjectStorage:AccessKey" "your-s3-accesskey" --project api/Skoleoverblikket.Api
+dotnet user-secrets set "ObjectStorage:SecretKey" "your-s3-secretkey" --project api/Skoleoverblikket.Api
 
 ```
 
@@ -139,7 +139,7 @@ Add a new EF Core migration from the repo root:
 .\scripts\add-migration.ps1 -MigrationName YourMigrationName
 ```
 
-Migrations live in `api/Skoleplanen.Api/Data/Migrations/`. Never edit an existing migration file — always add a new one.
+Migrations live in `api/Skoleoverblikket.Api/Data/Migrations/`. Never edit an existing migration file — always add a new one.
 
 ### API client codegen
 
@@ -147,7 +147,7 @@ When the API has changed, regenerate the typed TypeScript client:
 
 ```powershell
 # 1. Build the API (emits openapi spec to web/openapi/v1.json)
-dotnet build api/Skoleplanen.Api/Skoleplanen.Api.csproj
+dotnet build api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj
 
 # 2. Run codegen
 cd web && npm run codegen

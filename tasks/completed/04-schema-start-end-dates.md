@@ -14,7 +14,7 @@ The current active/draft model is confusing — users don't see a clear benefit.
 
 ### 1. Update `Schema.cs`
 
-File: `api/Skoleplanen.Api/Models/Schema.cs`
+File: `api/Skoleoverblikket.Api/Models/Schema.cs`
 
 - Remove: `SchemaStatus Status` and `bool IsActive`
 - Add: `DateOnly? StartDate` and `DateOnly? EndDate` (nullable for backwards compat with existing schemas)
@@ -31,7 +31,7 @@ The migration should:
 
 ### 3. Update `SchemasController.cs`
 
-File: `api/Skoleplanen.Api/Controllers/SchemasController.cs`
+File: `api/Skoleoverblikket.Api/Controllers/SchemasController.cs`
 
 - Remove the `Activate()` endpoint (or repurpose as `SetDateRange`)
 - Remove the `Complete()` endpoint (mark as done / change status)
@@ -41,13 +41,13 @@ File: `api/Skoleplanen.Api/Controllers/SchemasController.cs`
 
 ### 4. Update `StatsController.cs`
 
-File: `api/Skoleplanen.Api/Controllers/StatsController.cs`
+File: `api/Skoleoverblikket.Api/Controllers/StatsController.cs`
 
 - Replace `s.IsActive` filter with date-range logic: `s.StartDate <= today && (s.EndDate == null || s.EndDate >= today)`
 
 ### 5. Update `WeekPlanController.cs`
 
-File: `api/Skoleplanen.Api/Controllers/WeekPlanController.cs`
+File: `api/Skoleoverblikket.Api/Controllers/WeekPlanController.cs`
 
 - Replace `s.IsActive` filter with the same date-range logic as above
 

@@ -27,7 +27,7 @@ async function post(path, body) {
 }
 
 async function get(path, query) {
-    const qs = new URLSearchParams({ input: JSON.stringify(query) });
+    const qs = new URLSearchParams({ input: JSON.stringify({ json: query }) });
     const res = await fetch(`${DOKPLOY_URL}/api/${path}?${qs}`, { headers });
     if (!res.ok) throw new Error(`GET ${path} failed: ${res.status} ${await res.text()}`);
     return res.json();
@@ -46,9 +46,9 @@ async function saveEnvironment() {
 
     const updated = {
         ...existing,
-        API_IMAGE: `ghcr.io/nielspilgaard/skoleplanen-api:${IMAGE_TAG}`,
-        WEB_IMAGE: `ghcr.io/nielspilgaard/skoleplanen-web:${IMAGE_TAG}`,
-        KEYCLOAK_IMAGE: `ghcr.io/nielspilgaard/skoleplanen-keycloak:${IMAGE_TAG}`,
+        API_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-api:${IMAGE_TAG}`,
+        WEB_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-web:${IMAGE_TAG}`,
+        KEYCLOAK_IMAGE: `ghcr.io/nielspilgaard/skoleoverblikket-keycloak:${IMAGE_TAG}`,
     };
 
     const env = Object.entries(updated).map(([k, v]) => `${k}=${v}`).join("\n");

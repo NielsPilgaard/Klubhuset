@@ -5,13 +5,13 @@ import path from 'path'
 import fs from 'fs'
 
 function codegenWatchPlugin() {
-  const openApiSpec = path.resolve(__dirname, '../openapi/Skoleplanen.Api.json')
+  const openApiSpec = path.resolve(__dirname, '../openapi/Skoleoverblikket.Api.json')
 
   return {
     name: 'codegen-watch',
     configureServer(server: import('vite').ViteDevServer) {
       const watcher = fs.watch(path.dirname(openApiSpec), (_event, filename) => {
-        if (filename !== 'Skoleplanen.Api.json') return
+        if (filename !== 'Skoleoverblikket.Api.json') return
         console.log('\n[codegen] OpenAPI spec changed — regenerating...')
         try {
           execSync('npm run api:generate --silent', { cwd: __dirname, stdio: 'inherit' })

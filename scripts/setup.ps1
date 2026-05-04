@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Sets up the local development environment for Skoleplanen.
+    Sets up the local development environment for Skoleoverblikket.
 .DESCRIPTION
     Installs .NET 10, Node.js (LTS), Aspire CLI, and verifies Docker is available.
     Skips any tool that is already installed at the required version.

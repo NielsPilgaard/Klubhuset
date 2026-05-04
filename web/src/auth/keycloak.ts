@@ -2,13 +2,13 @@ import Keycloak from 'keycloak-js'
 
 const keycloak = new Keycloak({
   url: import.meta.env.VITE_KEYCLOAK_URL ?? 'http://localhost:8080',
-  realm: 'Skoleplanen',
-  clientId: 'skoleplanen-web',
+  realm: 'Skoleoverblikket',
+  clientId: 'skoleoverblikket-web',
 })
 
 // Module-level promise so init() is only ever called once,
 // even if AuthProvider mounts twice (React 18 Strict Mode).
-const SIGNUP_TOKEN_KEY = 'skoleplanen_signup_token'
+const SIGNUP_TOKEN_KEY = 'skoleoverblikket_signup_token'
 
 /** Call before navigating to /setup after signup to seed the token so init() skips the login redirect. */
 export function seedPostSignupToken(accessToken: string, refreshToken: string) {

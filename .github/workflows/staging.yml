@@ -21,18 +21,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull images
+      - name: Pull API and Keycloak images
         env:
-          API_IMAGE: ghcr.io/nielspilgaard/skoleplanen-api:sha-${{ github.event.workflow_run.head_sha }}
-          WEB_IMAGE: ghcr.io/nielspilgaard/skoleplanen-web:sha-${{ github.event.workflow_run.head_sha }}
-          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleplanen-keycloak:sha-${{ github.event.workflow_run.head_sha }}
-        run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull
+          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
+          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
+          # WEB_IMAGE unused here — we build it locally with the staging Keycloak URL
+          WEB_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.event.workflow_run.head_sha }}
+        run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull api keycloak keycloak-db postgres mailpit
+
+      - name: Build web image with staging Keycloak URL
+        # The published web image has the production Keycloak URL baked in (https://auth.skoleoverblikket.dk).
+        # For e2e tests we need http://localhost:8080, so we rebuild locally.
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          push: false
+          load: true
+          tags: skoleoverblikket-web-e2e:latest
+          build-args: |
+            VITE_KEYCLOAK_URL=http://localhost:8080
 
       - name: Start staging stack
         env:
-          API_IMAGE: ghcr.io/nielspilgaard/skoleplanen-api:sha-${{ github.event.workflow_run.head_sha }}
-          WEB_IMAGE: ghcr.io/nielspilgaard/skoleplanen-web:sha-${{ github.event.workflow_run.head_sha }}
-          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleplanen-keycloak:sha-${{ github.event.workflow_run.head_sha }}
+          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
+          WEB_IMAGE: skoleoverblikket-web-e2e:latest
+          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
         run: docker compose -f infrastructure/docker/docker-compose.staging.yml up -d --wait
 
       - name: Setup Node.js 24

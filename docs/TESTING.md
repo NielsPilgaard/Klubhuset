@@ -41,7 +41,7 @@ Do **not** use Verify for:
 - EF Core query behavior (global query filters, includes, projections)
 - Serialization and ProblemDetails error shape
 
-**Location**: `api/tests/Skoleplanen.Api.IntegrationTests/`
+**Location**: `api/tests/Skoleoverblikket.Api.IntegrationTests/`
 
 **Example scope**: one test class per feature area (`SchemaBuilderTests`, `ConflictDetectionTests`, `StaffInvitationTests`), not one per controller or service.
 

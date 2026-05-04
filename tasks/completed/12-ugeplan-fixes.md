@@ -22,7 +22,7 @@ Place the dropdown between the prev/next buttons, replacing or supplementing the
 
 ## 2. Single holidays (Lukkedag) shown per day in the grid
 
-Files: `web/src/pages/WeekPlanPage.tsx`, `api/Skoleplanen.Api/Controllers/WeekPlanController.cs`
+Files: `web/src/pages/WeekPlanPage.tsx`, `api/Skoleoverblikket.Api/Controllers/WeekPlanController.cs`
 
 ### The bug
 

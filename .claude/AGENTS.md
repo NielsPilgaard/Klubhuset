@@ -4,7 +4,7 @@ This file defines how AI agents should work in this codebase.
 
 ## Project context
 
-Skoleplanen is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. Each tenant is a school. The platform helps schools build, manage, and print their weekly class schedules with real-time conflict detection. The platform is Danish-language only, targeting the Danish market.
+Skoleoverblikket is a multi-tenant SaaS schema planner for Danish friskoler and private/independent schools. Each tenant is a school. The platform helps schools build, manage, and print their weekly class schedules with real-time conflict detection. The platform is Danish-language only, targeting the Danish market.
 
 Reference school profile: ~300 students, 25 staff, friskole in a small Danish town — use this as the mental model for a typical customer.
 

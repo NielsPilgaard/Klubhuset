@@ -1,17 +1,17 @@
 import { test, expect } from '@playwright/test'
 
-const KEYCLOAK_BASE = 'http://127.0.0.1:8080'
-const MAILPIT_API = 'http://127.0.0.1:8025/api/v1'
+const KEYCLOAK_BASE = 'http://localhost:8080'
+const MAILPIT_API = 'http://localhost:8025/api/v1'
 const TEST_EMAIL = 'admin@debugskolen.dk'
 
 test('password reset sends email via Keycloak', async ({ page, request }) => {
   // Purge Mailpit inbox so we start clean
   await request.delete(`${MAILPIT_API}/messages`)
 
-  // Navigate to Keycloak login page for the Skoleplanen realm
+  // Navigate to Keycloak login page for the Skoleoverblikket realm
   await page.goto(
-    `${KEYCLOAK_BASE}/realms/Skoleplanen/protocol/openid-connect/auth` +
-      `?client_id=skoleplanen-web&response_type=code&redirect_uri=http://localhost:5173/dashboard`,
+    `${KEYCLOAK_BASE}/realms/Skoleoverblikket/protocol/openid-connect/auth` +
+      `?client_id=skoleoverblikket-web&response_type=code&redirect_uri=http://localhost:5173/dashboard`,
   )
 
   // Click "Glemt adgangskode?"

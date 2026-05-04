@@ -12,16 +12,16 @@
 #   KEYCLOAK_ADMIN_PASSWORD       — strong random secret
 #   SMTP_USERNAME                 — Scaleway TEM SMTP username
 #   SMTP_PASSWORD                 — Scaleway TEM SMTP API key
-#   Keycloak_AdminClientId        — Keycloak service account client ID (skoleplanen-admin)
-#   Keycloak_AdminClientSecret    — rotate via Keycloak admin UI → Clients → skoleplanen-admin → Credentials
-#   Keycloak_WebClientId          — Keycloak public client ID (skoleplanen-web)
+#   Keycloak_AdminClientId        — Keycloak service account client ID (skoleoverblikket-admin)
+#   Keycloak_AdminClientSecret    — rotate via Keycloak admin UI → Clients → skoleoverblikket-admin → Credentials
+#   Keycloak_WebClientId          — Keycloak public client ID (skoleoverblikket-web)
 #
 # Optional overrides:
-#   API_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-api:latest
-#   WEB_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleplanen-web:latest
+#   API_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleoverblikket-api:latest
+#   WEB_IMAGE                — defaults to ghcr.io/nielspilgaard/skoleoverblikket-web:latest
 
 name:
-  skoleplanen
+  skoleoverblikket
 
   # Postgres is managed as a dedicated Database resource in Dokploy.
   # Dokploy injects the connection strings below as environment variables.
@@ -29,8 +29,14 @@ name:
 
 services:
   keycloak:
-    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-keycloak:latest}
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/nielspilgaard/skoleoverblikket-keycloak:latest}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q '200'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
     deploy:
       replicas: 1
       update_config:
@@ -46,7 +52,7 @@ services:
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KC_HOSTNAME: https://auth.skoleplanen.dk
+      KC_HOSTNAME: https://auth.skoleoverblikket.dk
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
@@ -55,13 +61,13 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleplanen.dk`)"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.skoleoverblikket.dk`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
 
   api:
-    image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-api:latest}
+    image: ${API_IMAGE:-ghcr.io/nielspilgaard/skoleoverblikket-api:latest}
     restart: unless-stopped
     deploy:
       replicas: 1
@@ -73,9 +79,9 @@ services:
         order: start-first
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__skoleplanen-db: ${DATABASE_URL}
-      Keycloak__Authority: https://auth.skoleplanen.dk/realms/Skoleplanen
-      Keycloak__Audience: skoleplanen-api
+      ConnectionStrings__skoleoverblikket-db: ${DATABASE_URL}
+      Keycloak__Authority: https://auth.skoleoverblikket.dk/realms/Skoleoverblikket
+      Keycloak__Audience: skoleoverblikket-api
       Keycloak__WebClientId: ${Keycloak_WebClientId}
       Keycloak__AdminClientId: ${Keycloak_AdminClientId}
       Keycloak__AdminClientSecret: ${Keycloak_AdminClientSecret}
@@ -93,20 +99,27 @@ services:
       Stripe__SecretKey: ${Stripe_SecretKey}
       Stripe__PriceId: ${Stripe_PriceId}
       Stripe__WebhookSecret: ${Stripe_WebhookSecret}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /alive HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q '200'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - dokploy-network
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`skoleplanen.dk`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api.rule=Host(`skoleoverblikket.dk`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.priority=10"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
       - "traefik.http.services.api.loadbalancer.server.port=8080"
 
   web:
-    image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleplanen-web:latest}
+    image: ${WEB_IMAGE:-ghcr.io/nielspilgaard/skoleoverblikket-web:latest}
     restart: unless-stopped
     deploy:
       replicas: 1
@@ -116,13 +129,20 @@ services:
         delay: 5s
       rollback_config:
         order: start-first
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     networks:
       - dokploy-network
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`skoleplanen.dk`)"
+      - "traefik.http.routers.web.rule=Host(`skoleoverblikket.dk`)"
       - "traefik.http.routers.web.priority=1"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls.certresolver=letsencrypt"

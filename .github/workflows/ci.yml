@@ -22,10 +22,10 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore api/Skoleplanen.Api/Skoleplanen.Api.csproj
+        run: dotnet restore api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj
 
       - name: Build
-        run: dotnet build api/Skoleplanen.Api/Skoleplanen.Api.csproj --no-restore --configuration Release -p:CI=true
+        run: dotnet build api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --no-restore --configuration Release -p:CI=true
 
       - name: Test
         run: dotnet test --no-build --configuration Release
@@ -34,7 +34,7 @@ jobs:
       - name: Check OpenAPI spec is up to date
         run: |
           cp web/openapi/v1.json web/openapi/v1.json.committed
-          dotnet build api/Skoleplanen.Api/Skoleplanen.Api.csproj --no-restore --configuration Release -p:CI=true
+          dotnet build api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --no-restore --configuration Release -p:CI=true
           diff web/openapi/v1.json.committed web/openapi/v1.json || (echo "OpenAPI spec is stale — run 'dotnet build' and commit web/openapi/v1.json" && exit 1)
 
   web:
@@ -74,7 +74,7 @@ jobs:
       - name: Apply migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: psql "$DATABASE_URL" -f api/Skoleplanen.Api/Data/Migrations/migration_script.sql
+        run: psql "$DATABASE_URL" -f api/Skoleoverblikket.Api/Data/Migrations/migration_script.sql
 
   publish-api:
     name: Publish API image
@@ -97,8 +97,8 @@ jobs:
           file: api/Dockerfile
           push: true
           tags: |
-            ghcr.io/nielspilgaard/skoleplanen-api:latest
-            ghcr.io/nielspilgaard/skoleplanen-api:sha-${{ github.sha }}
+            ghcr.io/nielspilgaard/skoleoverblikket-api:latest
+            ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.sha }}
 
   publish-web:
     name: Publish web image
@@ -121,10 +121,10 @@ jobs:
           file: web/Dockerfile
           push: true
           tags: |
-            ghcr.io/nielspilgaard/skoleplanen-web:latest
-            ghcr.io/nielspilgaard/skoleplanen-web:sha-${{ github.sha }}
+            ghcr.io/nielspilgaard/skoleoverblikket-web:latest
+            ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.sha }}
           build-args: |
-            VITE_KEYCLOAK_URL=https://auth.skoleplanen.dk
+            VITE_KEYCLOAK_URL=https://auth.skoleoverblikket.dk
 
   publish-keycloak:
     name: Publish Keycloak image
@@ -147,5 +147,5 @@ jobs:
           file: infrastructure/keycloak/Dockerfile
           push: true
           tags: |
-            ghcr.io/nielspilgaard/skoleplanen-keycloak:latest
-            ghcr.io/nielspilgaard/skoleplanen-keycloak:sha-${{ github.sha }}
+            ghcr.io/nielspilgaard/skoleoverblikket-keycloak:latest
+            ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.sha }}

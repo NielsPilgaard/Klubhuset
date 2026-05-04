@@ -10,8 +10,8 @@ ASP.NET Core maps environment variables to the config key hierarchy using `__` (
 
 | Environment variable                   | Config key                            | Description                                                                                                                |
 | -------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `ConnectionStrings__DefaultConnection` | `ConnectionStrings:DefaultConnection` | PostgreSQL connection string. Example: `Host=db;Database=skoleplanen;Username=app;Password=…`                              |
-| `Keycloak__AdminClientId`              | `Keycloak:AdminClientId`              | Client ID of the Keycloak service-account used for admin API calls (e.g. `skoleplanen-admin`).                             |
+| `ConnectionStrings__DefaultConnection` | `ConnectionStrings:DefaultConnection` | PostgreSQL connection string. Example: `Host=db;Database=skoleoverblikket;Username=app;Password=…`                              |
+| `Keycloak__AdminClientId`              | `Keycloak:AdminClientId`              | Client ID of the Keycloak service-account used for admin API calls (e.g. `skoleoverblikket-admin`).                             |
 | `Keycloak__AdminClientSecret`          | `Keycloak:AdminClientSecret`          | Secret for the admin Keycloak client. Generate in the Keycloak console → Clients → Credentials.                            |
 | `ObjectStorage__AccessKey`             | `ObjectStorage:AccessKey`             | OVHCloud Object Storage access key (S3-compatible).                                                                        |
 | `ObjectStorage__SecretKey`             | `ObjectStorage:SecretKey`             | OVHCloud Object Storage secret key.                                                                                        |
@@ -27,9 +27,9 @@ These have non-empty values in `appsettings.json` that are correct for productio
 
 | Environment variable               | Default value                                    | When to override                                                   |
 | ---------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| `Keycloak__Authority`              | `https://auth.skoleplanen.dk/realms/Skoleplanen` | Only if you use a different Keycloak hostname.                     |
+| `Keycloak__Authority`              | `https://auth.skoleoverblikket.dk/realms/Skoleoverblikket` | Only if you use a different Keycloak hostname.                     |
 | `ObjectStorage__ServiceUrl`        | `https://s3.rbx.io.cloud.ovh.net/`               | Only if you switch S3 regions or providers.                        |
-| `ObjectStorage__DefaultBucketName` | `skoleplanen`                                    | Only if you use a different bucket name.                           |
+| `ObjectStorage__DefaultBucketName` | `skoleoverblikket`                                    | Only if you use a different bucket name.                           |
 | `ObjectStorage__PublicEndpoint`    | `https://s3.rbx.io.cloud.ovh.net`                | Only if the public download base URL differs from the service URL. |
 | `Smtp__Host`                       | `smtp.tem.scaleway.com`                          | Only if you switch transactional email providers.                  |
 
@@ -40,7 +40,7 @@ These have non-empty values in `appsettings.json` that are correct for productio
 | Environment variable        | Default                     | Description                                                                                 |
 | --------------------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
 | `Stripe__PriceId`           | _(set in appsettings)_      | Stripe price ID for the monthly subscription. Override to switch plans without redeploying. |
-| `App__BaseUrl`              | `https://skoleplanen.dk`    | Used to construct absolute URLs in emails and webhooks.                                     |
+| `App__BaseUrl`              | `https://skoleoverblikket.dk`    | Used to construct absolute URLs in emails and webhooks.                                     |
 | `Keycloak__MetadataAddress` | _(empty — auto-discovered)_ | Override only if your Keycloak OIDC discovery endpoint is at a non-standard path.           |
 
 ---
@@ -51,7 +51,7 @@ The frontend is a static SPA. These variables must be set **at build time** (the
 
 | Variable            | Description                                                                                  |
 | ------------------- | -------------------------------------------------------------------------------------------- |
-| `VITE_KEYCLOAK_URL` | Keycloak base URL — no trailing slash, no realm path. Example: `https://auth.skoleplanen.dk` |
+| `VITE_KEYCLOAK_URL` | Keycloak base URL — no trailing slash, no realm path. Example: `https://auth.skoleoverblikket.dk` |
 
 Set in the CI/CD pipeline before running `npm run build`. See [web/.env.example](../web/.env.example).
 

@@ -32,7 +32,7 @@ Implementation:
 
 ## 3. Fix "Tilføj standardferier" for subsequent school years
 
-Files: `web/src/pages/CalendarPage.tsx`, `api/Skoleplanen.Api/Controllers/CalendarController.cs`
+Files: `web/src/pages/CalendarPage.tsx`, `api/Skoleoverblikket.Api/Controllers/CalendarController.cs`
 
 ### The bug
 
@@ -65,7 +65,7 @@ When the seed button is clicked, it calls `seedMutation.mutate(defaults)` where 
 
 ## 4. Standard vacation dates — wrong year offset
 
-File: `api/Skoleplanen.Api/Controllers/CalendarController.cs` (`ComputeDefaultHolidays`, ~line 104–154)
+File: `api/Skoleoverblikket.Api/Controllers/CalendarController.cs` (`ComputeDefaultHolidays`, ~line 104–154)
 
 This was flagged as a bug: "adding standard vacations for 2026-2027 takes 1 year instead."
 

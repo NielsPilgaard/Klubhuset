@@ -14,15 +14,15 @@ export default function KontaktPage() {
             Kontakt
           </h1>
           <p className="text-lg text-gray-600 mb-10">
-            Er du nysgerrig på Skoleplanen, har du spørgsmål eller feedback? Du er meget
+            Er du nysgerrig på Skoleoverblikket, har du spørgsmål eller feedback? Du er meget
             velkommen til at skrive — vi hører gerne fra dig.
           </p>
 
           <a
-            href="mailto:kontakt@skoleplanen.dk"
+            href="mailto:kontakt@skoleoverblikket.dk"
             className="inline-block px-8 py-4 bg-brand-600 text-white text-base font-medium rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
           >
-            kontakt@skoleplanen.dk
+            kontakt@skoleoverblikket.dk
           </a>
 
           <p className="mt-6 text-sm text-gray-400">
@@ -42,7 +42,7 @@ function PublicNav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">
           <Logo variant="light" size={28} />
-          <span className="font-display text-xl font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
         </a>
         <div className="flex items-center gap-4">
           <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">

@@ -10,14 +10,14 @@ Route: `/klasser/:classId/ugeplan` (accessible from the class list).
 
 ### `WeekPlan`
 
-File: `api/Skoleplanen.Api/Models/WeekPlan.cs`
+File: `api/Skoleoverblikket.Api/Models/WeekPlan.cs`
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 public sealed class WeekPlan : ITenantScoped, IEntityTypeConfiguration<WeekPlan>
 {
@@ -41,15 +41,15 @@ public sealed class WeekPlan : ITenantScoped, IEntityTypeConfiguration<WeekPlan>
 
 ### `WeekPlanSlot`
 
-File: `api/Skoleplanen.Api/Models/WeekPlanSlot.cs`
+File: `api/Skoleoverblikket.Api/Models/WeekPlanSlot.cs`
 
 ```csharp
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 public sealed class WeekPlanSlot : ITenantScoped, IEntityTypeConfiguration<WeekPlanSlot>
 {
@@ -86,14 +86,14 @@ public sealed class WeekPlanSlot : ITenantScoped, IEntityTypeConfiguration<WeekP
 
 ### `WeekPlanSlotFile`
 
-File: `api/Skoleplanen.Api/Models/WeekPlanSlotFile.cs`
+File: `api/Skoleoverblikket.Api/Models/WeekPlanSlotFile.cs`
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Skoleplanen.Api.Data;
+using Skoleoverblikket.Api.Data;
 
-namespace Skoleplanen.Api.Models;
+namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Join table: attaches an existing SchoolFile to a WeekPlanSlot.</summary>
 public sealed class WeekPlanSlotFile : ITenantScoped, IEntityTypeConfiguration<WeekPlanSlotFile>
@@ -118,7 +118,7 @@ public sealed class WeekPlanSlotFile : ITenantScoped, IEntityTypeConfiguration<W
 
 ## 2. AppDbContext
 
-File: `api/Skoleplanen.Api/Data/AppDbContext.cs`
+File: `api/Skoleoverblikket.Api/Data/AppDbContext.cs`
 
 Add three DbSets after `SchoolFiles`:
 
@@ -140,7 +140,7 @@ Never edit existing migration files.
 
 ## 4. API Controller
 
-File: `api/Skoleplanen.Api/Controllers/WeekPlanController.cs`
+File: `api/Skoleoverblikket.Api/Controllers/WeekPlanController.cs`
 
 Route prefix: `api/v1/classes/{classId:guid}/ugeplan`
 
@@ -431,7 +431,7 @@ After `dotnet build` regenerates `web/src/api/schema.d.ts`, update `client.ts` t
 
 ## 6. Integration Tests
 
-File: `api/tests/Skoleplanen.Api.IntegrationTests/WeekPlanTests.cs`
+File: `api/tests/Skoleoverblikket.Api.IntegrationTests/WeekPlanTests.cs`
 
 Follow the pattern of existing `RoomsCrudTests.cs` (TUnit, no mocking, real PostgreSQL via Testcontainers).
 

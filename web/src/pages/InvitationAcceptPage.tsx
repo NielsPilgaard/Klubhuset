@@ -155,7 +155,7 @@ export default function InvitationAcceptPage() {
     <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
         <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
-          <span className="font-display text-2xl font-semibold text-brand-800">Skoleplanen</span>
+          <span className="font-display text-2xl font-semibold text-brand-800">Skoleoverblikket</span>
           <h1 className="mt-3 text-lg font-semibold text-gray-900">Du er inviteret!</h1>
           <p className="mt-1 text-sm text-gray-500">
             {preview?.schoolName} har inviteret dig til at oprette en konto

@@ -3,7 +3,7 @@
 .SYNOPSIS
     Adds a new EF Core migration and generates an idempotent SQL script.
 .DESCRIPTION
-    Run from anywhere in the repo. Targets api/Skoleplanen.Api automatically.
+    Run from anywhere in the repo. Targets api/Skoleoverblikket.Api automatically.
     Never modifies existing migration files — only adds new ones.
 .PARAMETER MigrationName
     The migration name in PascalCase, e.g. "AddSchoolTable".
@@ -20,8 +20,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repoRoot   = Split-Path $PSScriptRoot -Parent
-$apiProject = Join-Path $repoRoot "api/Skoleplanen.Api/Skoleplanen.Api.csproj"
-$sqlOutput  = Join-Path $repoRoot "api/Skoleplanen.Api/Data/Migrations/migration_script.sql"
+$apiProject = Join-Path $repoRoot "api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj"
+$sqlOutput  = Join-Path $repoRoot "api/Skoleoverblikket.Api/Data/Migrations/migration_script.sql"
 
 try {
     Write-Host "Adding EF Core migration '$MigrationName'..." -ForegroundColor Cyan
@@ -50,7 +50,7 @@ try {
     }
 
     Write-Host "`n[OK] Migration '$MigrationName' created." -ForegroundColor Green
-    Write-Host "     SQL script: api/Skoleplanen.Api/Data/Migrations/migration_script.sql" -ForegroundColor Green
+    Write-Host "     SQL script: api/Skoleoverblikket.Api/Data/Migrations/migration_script.sql" -ForegroundColor Green
 }
 catch {
     Write-Host "`n[FAIL] $($_.Exception.Message)" -ForegroundColor Red

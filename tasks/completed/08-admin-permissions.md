@@ -24,8 +24,8 @@ Admin access is currently enforced via the Keycloak realm role `admin` on `[Auth
 
 Keycloak is the authority for runtime auth checks, so `IsAdmin` must be kept in sync with the Keycloak `admin` realm role.
 
-- When `IsAdmin` is set to `true`: call Keycloak Admin REST API to assign the `admin` realm role to the user (`POST /admin/realms/Skoleplanen/users/{keycloakUserId}/role-mappings/realm`)
-- When `IsAdmin` is set to `false`: call Keycloak Admin REST API to remove the `admin` realm role (`DELETE /admin/realms/Skoleplanen/users/{keycloakUserId}/role-mappings/realm`)
+- When `IsAdmin` is set to `true`: call Keycloak Admin REST API to assign the `admin` realm role to the user (`POST /admin/realms/Skoleoverblikket/users/{keycloakUserId}/role-mappings/realm`)
+- When `IsAdmin` is set to `false`: call Keycloak Admin REST API to remove the `admin` realm role (`DELETE /admin/realms/Skoleoverblikket/users/{keycloakUserId}/role-mappings/realm`)
 - Only possible when `staff.KeycloakSubject` is set (i.e. the staff member has accepted their invite and has a Keycloak account)
 - Use a dedicated Keycloak service account (client credentials grant) for the Admin API calls — never the logged-in user's token
 - Configure the service account client ID and secret via `appsettings.json` under `Keycloak:AdminClientId` / `Keycloak:AdminClientSecret`
