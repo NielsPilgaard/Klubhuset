@@ -27,7 +27,7 @@ async function post(path, body) {
 }
 
 async function get(path, query) {
-    const qs = new URLSearchParams({ input: JSON.stringify({ json: query }) });
+    const qs = new URLSearchParams(query);
     const res = await fetch(`${DOKPLOY_URL}/api/${path}?${qs}`, { headers });
     if (!res.ok) throw new Error(`GET ${path} failed: ${res.status} ${await res.text()}`);
     return res.json();
