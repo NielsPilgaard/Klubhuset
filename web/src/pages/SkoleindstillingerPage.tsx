@@ -39,7 +39,6 @@ export default function SkoleindstillingerPage() {
   const [phone, setPhone] = useState('')
   const [initialized, setInitialized] = useState(false)
 
-  // Pre-fill form once data arrives
   useEffect(() => {
     if (data && !initialized) {
       setName(data.name ?? '')
@@ -204,6 +203,9 @@ function SkoledagCard() {
   const [initialized, setInitialized] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [restoreError, setRestoreError] = useState<string | null>(null)
+  const [restoreSuccess, setRestoreSuccess] = useState(false)
 
   useEffect(() => {
     if (template !== undefined && !initialized) {
@@ -226,12 +228,35 @@ function SkoledagCard() {
       qc.invalidateQueries({ queryKey: getApiV1TimeSlotTemplateQueryKey() })
       setSaveError(null)
       setSaveSuccess(true)
+      setShowConfirmModal(false)
       setTimeout(() => setSaveSuccess(false), 3000)
     },
     onError: (err) => {
       const detail = err && typeof err === 'object' && 'detail' in err ? (err as { detail: string }).detail : 'Kunne ikke gemme skoledag. Prøv igen.'
       setSaveError(detail)
       setSaveSuccess(false)
+      setShowConfirmModal(false)
+    },
+  })
+
+  const restoreMutation = useMutation({
+    mutationFn: async () => {
+      const { api } = await import('../api/client')
+      return api.post<void>('/time-slot-template/restore', null)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1TimeSlotTemplateQueryKey() })
+      setInitialized(false)
+      setRestoreError(null)
+      setRestoreSuccess(true)
+      setTimeout(() => setRestoreSuccess(false), 4000)
+    },
+    onError: (err) => {
+      const detail = err && typeof err === 'object' && 'detail' in err
+        ? (err as { detail: string }).detail
+        : err instanceof Error ? err.message : 'Gendannelse mislykkedes. Prøv igen.'
+      setRestoreError(detail)
+      setRestoreSuccess(false)
     },
   })
 
@@ -245,110 +270,151 @@ function SkoledagCard() {
     setBreaks(prev => prev.filter((_, idx) => idx !== i))
   }
 
+  function handleSaveConfirmed() {
+    saveMutation.mutate({ body: {
+      lessonDurationMinutes: lessonDuration,
+      dayStartTime: dayStart + ':00',
+      dayEndTime: dayEnd + ':00',
+      activeDays: '1,2,3,4,5',
+      breaks: breaks.map(b => ({ startTime: b.startTime + ':00', durationMinutes: b.durationMinutes })),
+    } })
+  }
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-      <div className="px-6 py-5">
-        <h2 className="text-sm font-semibold text-gray-700">Skoledag</h2>
-        <p className="mt-0.5 text-xs text-gray-400">Lektionslængde og pauser for en normal skoledag</p>
-      </div>
-      <div className="px-6 py-5 space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag starter</label>
-            <TimeInput value={dayStart} onChange={setDayStart} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag slutter</label>
-            <TimeInput value={dayEnd} onChange={setDayEnd} />
-          </div>
+    <>
+      <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <div className="px-6 py-5">
+          <h2 className="text-sm font-semibold text-gray-700">Skoledag</h2>
+          <p className="mt-0.5 text-xs text-gray-400">Lektionslængde og pauser for en normal skoledag</p>
         </div>
-
-        <LessonDurationSlider value={lessonDuration} onChange={setLessonDuration} />
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700">Pauser</label>
-            <button
-              onClick={addBreak}
-              className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Tilføj pause
-            </button>
+        <div className="px-6 py-5 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag starter</label>
+              <TimeInput value={dayStart} onChange={setDayStart} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag slutter</label>
+              <TimeInput value={dayEnd} onChange={setDayEnd} />
+            </div>
           </div>
-          {breaks.length === 0 && (
-            <p className="text-sm text-gray-400 italic">Ingen faste pauser.</p>
-          )}
-          <div className="space-y-2">
-            {breaks.map((b, i) => (
-              <div key={i} className="flex items-end gap-2">
-                <div className="flex-1 grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-0.5">Starttidspunkt</label>
-                    <TimeInput value={b.startTime} onChange={(v) => updateBreak(i, 'startTime', v)} />
+
+          <LessonDurationSlider value={lessonDuration} onChange={setLessonDuration} />
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">Pauser</label>
+              <button
+                onClick={addBreak}
+                className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Tilføj pause
+              </button>
+            </div>
+            {breaks.length === 0 && (
+              <p className="text-sm text-gray-400 italic">Ingen faste pauser.</p>
+            )}
+            <div className="space-y-2">
+              {breaks.map((b, i) => (
+                <div key={i} className="flex items-end gap-2">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-0.5">Starttidspunkt</label>
+                      <TimeInput value={b.startTime} onChange={(v) => updateBreak(i, 'startTime', v)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-0.5">Varighed (min)</label>
+                      <input
+                        type="number"
+                        min={5}
+                        max={60}
+                        value={b.durationMinutes}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => updateBreak(i, 'durationMinutes', Number(e.target.value))}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-0.5">Varighed (min)</label>
-                    <input
-                      type="number"
-                      min={5}
-                      max={60}
-                      value={b.durationMinutes}
-                      onFocus={(e) => e.target.select()}
-                      onChange={(e) => updateBreak(i, 'durationMinutes', Number(e.target.value))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                    />
-                  </div>
+                  <button
+                    onClick={() => removeBreak(i)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors mb-0.5"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={() => removeBreak(i)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors mb-0.5"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+          {saveSuccess && <p className="text-sm text-green-600">Ændringer gemt.</p>}
+        </div>
+        <div className="px-6 py-4 space-y-3">
+          <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+            <svg className="mt-0.5 shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">Advarsel:</span> Ændringer i skoledag-indstillingerne gør eksisterende skemaer ubrugelige. Du kan fortryde ændringen bagefter.
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={() => setShowConfirmModal(true)}
+              disabled={saveMutation.isPending}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {saveMutation.isPending ? 'Gemmer...' : 'Gem ændringer'}
+            </button>
+            <button
+              onClick={() => restoreMutation.mutate()}
+              disabled={restoreMutation.isPending}
+              className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {restoreMutation.isPending ? 'Gendanner...' : 'Fortryd seneste ændring'}
+            </button>
+            {restoreError && <p className="text-sm text-red-600">{restoreError}</p>}
+            {restoreSuccess && <p className="text-sm text-green-600">Ændringen er fortrydet.</p>}
           </div>
         </div>
+      </div>
 
-        {saveError && <p className="text-sm text-red-600">{saveError}</p>}
-        {saveSuccess && <p className="text-sm text-green-600">Ændringer gemt.</p>}
-      </div>
-      <div className="px-6 py-4 space-y-3">
-        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-          <svg className="mt-0.5 shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-          <p className="text-sm text-amber-800">
-            <span className="font-semibold">Advarsel:</span> Ændringer i skoledag-indstillingerne sletter alle eksisterende skemaer. Dette kan ikke fortrydes.
-          </p>
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowConfirmModal(false)}
+          />
+          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900">Er du sikker?</h2>
+            <p className="text-sm text-gray-600">
+              Ændringer i skoledag-indstillingerne gør eksisterende skemaer ubrugelige. En sikkerhedskopi gemmes automatisk, og du kan fortryde ændringen bagefter fra denne side.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuller
+              </button>
+              <button
+                onClick={handleSaveConfirmed}
+                disabled={saveMutation.isPending}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {saveMutation.isPending ? 'Gemmer...' : 'Gem alligevel'}
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex justify-end">
-          <button
-            onClick={() => {
-              if (!window.confirm('Er du sikker? Ændringer i skoledag-indstillingerne sletter alle eksisterende skemaer. Dette kan ikke fortrydes.')) return
-              saveMutation.mutate({ body: {
-                lessonDurationMinutes: lessonDuration,
-                dayStartTime: dayStart + ':00',
-                dayEndTime: dayEnd + ':00',
-                activeDays: '1,2,3,4,5',
-                breaks: breaks.map(b => ({ startTime: b.startTime + ':00', durationMinutes: b.durationMinutes })),
-              } })
-            }}
-            disabled={saveMutation.isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {saveMutation.isPending ? 'Gemmer...' : 'Gem ændringer'}
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   )
 }
-

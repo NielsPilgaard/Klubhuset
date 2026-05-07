@@ -74,7 +74,6 @@ export default function InvitationAcceptPage() {
 
   function handleLogin() {
     if (!token) return
-    // Redirect to Keycloak login, then return to this invitation page
     keycloak.login({
       loginHint: preview?.email,
       redirectUri: window.location.origin + `/invitation/${token}`,
@@ -186,7 +185,7 @@ export default function InvitationAcceptPage() {
             onClick={handleLogin}
             className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
-            Log ind og acceptér
+            Opret konto og acceptér
           </button>
         </div>
       </div>

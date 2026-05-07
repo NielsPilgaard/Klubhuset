@@ -34,7 +34,8 @@ public record CreateUserRequest(
     [property: JsonPropertyName("enabled")] bool Enabled,
     [property: JsonPropertyName("emailVerified")] bool EmailVerified,
     [property: JsonPropertyName("credentials")] IReadOnlyList<CredentialRepresentation> Credentials,
-    [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
+    [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes,
+    [property: JsonPropertyName("requiredActions")] IReadOnlyList<string>? RequiredActions = null);
 
 public record UpdateUserRequest(
     [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);

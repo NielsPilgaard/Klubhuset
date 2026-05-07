@@ -32,6 +32,9 @@ export type CalendarEntryDto = {
     title?: string | null;
     startDate?: string;
     endDate?: string;
+    recurrenceRule?: string | null;
+    recurrenceEnd?: string | null;
+    excludedDates?: string | null;
 };
 
 export type CalendarEntryType = 'Ferie' | 'Lukkedag' | 'Arbejdsdag' | 'Begivenhed';
@@ -83,6 +86,8 @@ export type CreateCalendarEntryRequest = {
     type?: CalendarEntryType;
     startDate?: string;
     endDate?: string;
+    recurrenceRule?: string | null;
+    recurrenceEnd?: string | null;
 };
 
 export type CreateFolderRequest = {
@@ -343,6 +348,8 @@ export type UpdateCalendarEntryRequest = {
     type?: CalendarEntryType;
     startDate?: string;
     endDate?: string;
+    recurrenceRule?: string | null;
+    recurrenceEnd?: string | null;
 };
 
 export type UpdateSchoolSettingsRequest = {
@@ -584,6 +591,54 @@ export type PutApiV1CalendarByIdResponses = {
 };
 
 export type PutApiV1CalendarByIdResponse = PutApiV1CalendarByIdResponses[keyof PutApiV1CalendarByIdResponses];
+
+export type DeleteApiV1CalendarByIdOccurrencesByDateData = {
+    body?: never;
+    path: {
+        id: string;
+        date: string;
+    };
+    query?: never;
+    url: '/api/v1/calendar/{id}/occurrences/{date}';
+};
+
+export type DeleteApiV1CalendarByIdOccurrencesByDateResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiV1CalendarByIdFromByDateData = {
+    body?: never;
+    path: {
+        id: string;
+        date: string;
+    };
+    query?: never;
+    url: '/api/v1/calendar/{id}/from/{date}';
+};
+
+export type DeleteApiV1CalendarByIdFromByDateResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1CalendarExportIcsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/calendar/export.ics';
+};
+
+export type GetApiV1CalendarExportIcsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ClassesData = {
     body?: never;
@@ -1585,6 +1640,20 @@ export type PutApiV1TimeSlotTemplateResponses = {
 };
 
 export type PutApiV1TimeSlotTemplateResponse = PutApiV1TimeSlotTemplateResponses[keyof PutApiV1TimeSlotTemplateResponses];
+
+export type PostApiV1TimeSlotTemplateRestoreData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/time-slot-template/restore';
+};
+
+export type PostApiV1TimeSlotTemplateRestoreResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ClassesByClassIdTimeSlotsData = {
     body?: never;

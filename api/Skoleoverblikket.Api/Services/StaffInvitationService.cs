@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using Microsoft.EntityFrameworkCore;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Email;
 using Skoleoverblikket.Api.Models;
@@ -12,7 +13,9 @@ public sealed class StaffInvitationService(
 	AppDbContext db,
 	ITenantContext tenant,
 	IEmailSender email,
-	IConfiguration config)
+	IConfiguration config,
+	KeycloakAdminService keycloakAdmin,
+	ILogger<StaffInvitationService> logger)
 {
 	private static readonly TimeSpan InvitationValidity = TimeSpan.FromDays(14);
 
@@ -43,6 +46,26 @@ public sealed class StaffInvitationService(
 
 		db.StaffInvitations.Add(invitation);
 		await db.SaveChangesAsync(ct);
+
+		// Create a Keycloak account for the invited user if one doesn't exist yet.
+		// The account has no password; UPDATE_PASSWORD is set as a required action so
+		// Keycloak prompts the user to choose a password on first login.
+		if (string.IsNullOrWhiteSpace(staff.KeycloakSubject))
+		{
+			try
+			{
+				var nameParts = staff.Name.Split(' ', 2);
+				var firstName = nameParts[0];
+				var lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
+				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, ct);
+				staff.KeycloakSubject = keycloakSubject;
+				await db.SaveChangesAsync(ct);
+			}
+			catch (KeycloakException ex)
+			{
+				logger.LogWarning(ex, "Could not pre-create Keycloak account for invited staff {Email}; invitation email will still be sent", staff.Email);
+			}
+		}
 
 		var school = await db.Schools
 							 .IgnoreQueryFilters()
@@ -130,12 +153,14 @@ public sealed class StaffInvitationService(
 				<head><meta charset="utf-8" /><title>Invitation til {encodedSchoolName}</title></head>
 				<body style="font-family:system-ui,sans-serif;color:#111;background:#f9fafb;margin:0;padding:32px;">
 				  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:40px;border:1px solid #e5e7eb;">
-				    <p style="font-size:24px;font-weight:700;color:#1d4ed8;margin:0 0 8px;">Skoleoverblikket</p>
+				    <div style="margin-bottom:28px;">
+				      <img src="https://skoleoverblikket.dk/logo.png" alt="Skoleoverblikket" height="40" style="display:block;height:40px;width:auto;" />
+				    </div>
 				    <h1 style="font-size:20px;font-weight:600;color:#111827;margin:0 0 16px;">Du er inviteret til {encodedSchoolName}</h1>
 				    <p style="color:#374151;margin:0 0 24px;">Hej {encodedName},<br><br>
 				    Du er inviteret til at oprette din konto på Skoleoverblikket som medarbejder på <strong>{encodedSchoolName}</strong>.
 				    Klik på knappen herunder for at oprette din konto. Linket er gyldigt i 14 dage.</p>
-				    <a href="{encodedLink}" style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+				    <a href="{encodedLink}" style="display:inline-block;padding:12px 24px;background:#1f6321;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
 				      Opret konto
 				    </a>
 				    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">

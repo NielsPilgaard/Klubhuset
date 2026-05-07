@@ -2,7 +2,9 @@ namespace Skoleoverblikket.Api.Storage;
 
 public interface IObjectStorage
 {
-    Task<string> UploadAsync(string key, string contentType, Stream content, CancellationToken ct = default);
+    Task UploadAsync(string key, string contentType, Stream content, CancellationToken ct = default);
+
+    Task<string> UploadPublicAsync(string key, string contentType, Stream content, CancellationToken ct = default);
 
     /// <summary>
     /// Returns a presigned PUT URL the client can use to upload directly to S3,

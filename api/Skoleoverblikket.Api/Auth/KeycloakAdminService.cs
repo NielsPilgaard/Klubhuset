@@ -57,6 +57,41 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
     }
 
     /// <summary>
+    /// Creates a Keycloak user for an invited staff member with no password and UPDATE_PASSWORD required action.
+    /// Returns the new user's Keycloak subject (UUID).
+    /// </summary>
+    public async Task<string> CreateStaffUserAsync(
+        string email,
+        string firstName,
+        string lastName,
+        CancellationToken ct)
+    {
+        var payload = new CreateUserRequest(
+            Username: email,
+            Email: email,
+            FirstName: firstName,
+            LastName: lastName,
+            Enabled: true,
+            EmailVerified: true,
+            Credentials: [],
+            Attributes: [],
+            RequiredActions: ["UPDATE_PASSWORD"]);
+
+        var createResponse = await adminApi.CreateUserAsync(payload, ct);
+
+        if (!createResponse.IsSuccessStatusCode)
+        {
+            var err = await createResponse.Content.ReadAsStringAsync(ct);
+            throw new KeycloakException($"Failed to create Keycloak staff user: {createResponse.StatusCode} — {err}");
+        }
+
+        var location = createResponse.Headers.Location
+                       ?? throw new KeycloakException("Keycloak did not return a Location header after user creation");
+
+        return location.Segments.Last().TrimEnd('/');
+    }
+
+    /// <summary>
     /// Exchanges user credentials for a token via the password grant on the web client.
     /// Used immediately after signup so the frontend gets a JWT with tenant_id already embedded.
     /// </summary>
