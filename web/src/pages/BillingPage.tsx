@@ -7,7 +7,7 @@ import {
 import type { SubscriptionDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 
-const SELF_SERVE_ENABLED = false
+const SELF_SERVE_ENABLED = true
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('da-DK', {
