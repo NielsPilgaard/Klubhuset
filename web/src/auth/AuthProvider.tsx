@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authenticated,
         token: keycloak.token,
         userName,
-        logout: () => keycloak.logout(),
+        logout: () => keycloak.logout({ redirectUri: 'https://skoleoverblikket.dk' }),
       }}
     >
       {children}
