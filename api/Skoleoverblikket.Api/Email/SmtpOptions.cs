@@ -9,10 +9,7 @@ public sealed class SmtpOptions
     public string Host { get; init; } = "smtp.tem.scaleway.com";
     public int Port { get; init; } = 587;
 
-    [Required(AllowEmptyStrings = false)]
     public string Username { get; init; } = string.Empty;
-    
-    [Required(AllowEmptyStrings = false)]
     public string Password { get; init; } = string.Empty;
     
     [Required(AllowEmptyStrings = false)]
