@@ -26,7 +26,7 @@ public sealed class MailKitEmailSender(IOptionsMonitor<SmtpOptions> options) : I
 
         using var smtp = new SmtpClient();
 
-        var tls = string.IsNullOrEmpty(_options.Username) ? SecureSocketOptions.None : SecureSocketOptions.StartTls;
+        var tls = string.IsNullOrEmpty(_options.Username) ? SecureSocketOptions.None : SecureSocketOptions.Auto;
         
         await smtp.ConnectAsync(_options.Host, _options.Port, tls, cancellationToken);
         
