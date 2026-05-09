@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -107,8 +108,8 @@ public sealed class StaffInvitationsController(
 	public async Task<ActionResult> Accept([FromBody] AcceptInvitationRequest req, CancellationToken ct)
 	{
 		// Extract authenticated subject from claims
-		var keycloakSubject = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
-							  User.FindFirst("sub")?.Value;
+		var keycloakSubject = User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+							  User.FindFirstValue("sub");
 
 		if (string.IsNullOrEmpty(keycloakSubject))
 		{

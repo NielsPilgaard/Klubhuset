@@ -407,6 +407,7 @@ export default function StaffPage() {
             )}
             {staff?.map((s) => {
               const invite = getLatestInvite(s.id ?? '')
+              const isSelf = s.keycloakSubject != null && s.keycloakSubject === currentUserKeycloakSubject
               return (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3 font-medium text-gray-900">
@@ -474,8 +475,9 @@ export default function StaffPage() {
                         onClick={() => {
                           if (confirm(`Slet "${s.name}"?`)) deleteMutation.mutate({ path: { id: s.id ?? '' } })
                         }}
-                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                        title="Slet"
+                        disabled={isSelf}
+                        title={isSelf ? 'Du kan ikke slette dig selv' : 'Slet'}
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent"
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="3 6 5 6 21 6" />

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -160,6 +161,15 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			return NotFound();
 		}
 
+		var currentSubject = User.FindFirstValue(ClaimTypes.NameIdentifier)
+						  ?? User.FindFirstValue("sub");
+		if (!string.IsNullOrWhiteSpace(s.KeycloakSubject) && s.KeycloakSubject == currentSubject)
+		{
+			return Problem(
+				detail: "Du kan ikke slette din egen konto.",
+				statusCode: StatusCodes.Status403Forbidden);
+		}
+
 		if (!string.IsNullOrWhiteSpace(s.KeycloakSubject))
 		{
 			try
@@ -179,8 +189,8 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 	private async Task<ActionResult?> ValidateAdminChangeAsync(Guid staffId, bool newIsAdmin, CancellationToken ct)
 	{
-		var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-						 ?? User.FindFirst("sub")?.Value;
+		var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+						 ?? User.FindFirstValue("sub");
 
 		var staff = await db.Staff.AsNoTracking().FirstOrDefaultAsync(s => s.Id == staffId, ct);
 		if (staff?.KeycloakSubject is not null && staff.KeycloakSubject == currentUserId && !newIsAdmin)
