@@ -154,7 +154,7 @@ public sealed class StaffInvitationService(
 				<body style="font-family:system-ui,sans-serif;color:#111;background:#f9fafb;margin:0;padding:32px;">
 				  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:40px;border:1px solid #e5e7eb;">
 				    <div style="margin-bottom:28px;">
-				      <img src="https://skoleoverblikket.dk/logo.png" alt="Skoleoverblikket" height="40" style="display:block;height:40px;width:auto;" />
+				      <img src="https://skoleoverblikket.dk/logo-transparent.png" alt="Skoleoverblikket" height="40" style="display:block;height:40px;width:auto;" />
 				    </div>
 				    <h1 style="font-size:20px;font-weight:600;color:#111827;margin:0 0 16px;">Du er inviteret til {encodedSchoolName}</h1>
 				    <p style="color:#374151;margin:0 0 24px;">Hej {encodedName},<br><br>
