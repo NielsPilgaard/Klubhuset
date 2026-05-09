@@ -66,6 +66,7 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
         string firstName,
         string lastName,
         string temporaryPassword,
+        Guid tenantId,
         CancellationToken ct)
     {
         var payload = new CreateUserRequest(
@@ -76,7 +77,10 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
             Enabled: true,
             EmailVerified: true,
             Credentials: [new CredentialRepresentation("password", temporaryPassword, Temporary: true)],
-            Attributes: [],
+            Attributes: new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["tenant_id"] = [tenantId.ToString()],
+            },
             RequiredActions: ["UPDATE_PASSWORD"]);
 
         var createResponse = await adminApi.CreateUserAsync(payload, ct);
