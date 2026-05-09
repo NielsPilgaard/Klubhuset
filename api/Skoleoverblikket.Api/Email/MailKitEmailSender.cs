@@ -29,8 +29,8 @@ public sealed class MailKitEmailSender(IOptionsMonitor<SmtpOptions> options) : I
         var tls = string.IsNullOrEmpty(_options.Username) ? SecureSocketOptions.None : SecureSocketOptions.Auto;
         
         await smtp.ConnectAsync(_options.Host, _options.Port, tls, cancellationToken);
-        
-        if (!string.IsNullOrEmpty(_options.Username))
+
+        if (!string.IsNullOrEmpty(_options.Username) && smtp.Capabilities.HasFlag(SmtpCapabilities.Authentication))
 		{
 			await smtp.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);
 		}
