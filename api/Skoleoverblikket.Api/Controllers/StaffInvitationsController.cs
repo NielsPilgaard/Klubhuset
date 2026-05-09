@@ -67,6 +67,12 @@ public sealed class StaffInvitationsController(
 			return NotFound();
 		}
 
+		var currentUserSubject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		if (staff.KeycloakSubject != null && staff.KeycloakSubject == currentUserSubject)
+		{
+			return BadRequest(new ProblemDetails { Title = "Ugyldig handling", Detail = "Du kan ikke invitere dig selv.", Status = 400 });
+		}
+
 		if (string.IsNullOrWhiteSpace(staff.Email))
 		{
 			return ValidationProblem(new ValidationProblemDetails

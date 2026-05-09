@@ -48,22 +48,25 @@ public sealed class StaffInvitationService(
 		await db.SaveChangesAsync(ct);
 
 		// Create a Keycloak account for the invited user if one doesn't exist yet.
-		// The account has no password; UPDATE_PASSWORD is set as a required action so
-		// Keycloak prompts the user to choose a password on first login.
+		// A temporary password is set so the user can log in; UPDATE_PASSWORD required action
+		// forces them to choose a new password immediately on first login.
+		string? temporaryPassword = null;
 		if (string.IsNullOrWhiteSpace(staff.KeycloakSubject))
 		{
 			try
 			{
+				temporaryPassword = GenerateTemporaryPassword();
 				var nameParts = staff.Name.Split(' ', 2);
 				var firstName = nameParts[0];
 				var lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
-				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, ct);
+				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, temporaryPassword, ct);
 				staff.KeycloakSubject = keycloakSubject;
 				await db.SaveChangesAsync(ct);
 			}
 			catch (KeycloakException ex)
 			{
 				logger.LogWarning(ex, "Could not pre-create Keycloak account for invited staff {Email}; invitation email will still be sent", staff.Email);
+				temporaryPassword = null;
 			}
 		}
 
@@ -87,8 +90,8 @@ public sealed class StaffInvitationService(
 		await email.SendAsync(new EmailMessage(
 								  To: staff.Email,
 								  Subject: $"Invitation til {school} på Skoleoverblikket",
-								  HtmlBody: BuildHtmlEmail(staff.Name, school, link),
-								  PlainTextBody: BuildPlainEmail(staff.Name, school, link)
+								  HtmlBody: BuildHtmlEmail(staff.Name, school, link, temporaryPassword),
+								  PlainTextBody: BuildPlainEmail(staff.Name, school, link, temporaryPassword)
 							  ),
 							  ct);
 
@@ -141,11 +144,45 @@ public sealed class StaffInvitationService(
 					  .TrimEnd('=');
 	}
 
-	private static string BuildHtmlEmail(string name, string schoolName, string link)
+	// Generates a temporary password that satisfies common Keycloak password policies:
+	// at least one uppercase, one lowercase, one digit, one special char, 12 chars total.
+	private static string GenerateTemporaryPassword()
+	{
+		const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+		const string lower = "abcdefghjkmnpqrstuvwxyz";
+		const string digits = "23456789";
+		const string special = "!@#$%&*";
+		const string all = upper + lower + digits + special;
+
+		var rng = RandomNumberGenerator.GetBytes(12);
+		var chars = new char[12];
+		chars[0] = upper[rng[0] % upper.Length];
+		chars[1] = lower[rng[1] % lower.Length];
+		chars[2] = digits[rng[2] % digits.Length];
+		chars[3] = special[rng[3] % special.Length];
+		for (var i = 4; i < 12; i++)
+		{
+			chars[i] = all[rng[i] % all.Length];
+		}
+
+		RandomNumberGenerator.Shuffle(chars.AsSpan());
+		return new string(chars);
+	}
+
+	private static string BuildHtmlEmail(string name, string schoolName, string link, string? temporaryPassword)
 	{
 		var encodedName = HtmlEncoder.Default.Encode(name);
 		var encodedSchoolName = HtmlEncoder.Default.Encode(schoolName);
 		var encodedLink = HtmlEncoder.Default.Encode(link);
+
+		var passwordBlock = temporaryPassword is not null
+			? $"""
+			  <div style="margin:0 0 24px;padding:16px;background:#f3f4f6;border-radius:8px;border:1px solid #e5e7eb;">
+			    <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Din midlertidige adgangskode (du skal ændre den ved første login):</p>
+			    <code style="font-size:18px;font-weight:700;letter-spacing:0.05em;color:#111827;">{HtmlEncoder.Default.Encode(temporaryPassword)}</code>
+			  </div>
+			  """
+			: string.Empty;
 
 		return $"""
 				<!DOCTYPE html>
@@ -159,9 +196,10 @@ public sealed class StaffInvitationService(
 				    <h1 style="font-size:20px;font-weight:600;color:#111827;margin:0 0 16px;">Du er inviteret til {encodedSchoolName}</h1>
 				    <p style="color:#374151;margin:0 0 24px;">Hej {encodedName},<br><br>
 				    Du er inviteret til at oprette din konto på Skoleoverblikket som medarbejder på <strong>{encodedSchoolName}</strong>.
-				    Klik på knappen herunder for at oprette din konto. Linket er gyldigt i 14 dage.</p>
+				    Klik på knappen herunder for at logge ind. Linket er gyldigt i 14 dage.</p>
+				    {passwordBlock}
 				    <a href="{encodedLink}" style="display:inline-block;padding:12px 24px;background:#1f6321;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
-				      Opret konto
+				      Opret konto og acceptér
 				    </a>
 				    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
 				      Eller kopiér dette link: <a href="{encodedLink}" style="color:#1d4ed8;">{encodedLink}</a>
@@ -172,6 +210,12 @@ public sealed class StaffInvitationService(
 				""";
 	}
 
-	private static string BuildPlainEmail(string name, string schoolName, string link) =>
-		$"Hej {name},\n\nDu er inviteret til {schoolName} på Skoleoverblikket.\n\nOpret din konto her:\n{link}\n\nLinket er gyldigt i 14 dage.\n";
+	private static string BuildPlainEmail(string name, string schoolName, string link, string? temporaryPassword)
+	{
+		var passwordLine = temporaryPassword is not null
+			? $"\nDin midlertidige adgangskode: {temporaryPassword}\n(Du skal ændre den ved første login.)\n"
+			: string.Empty;
+
+		return $"Hej {name},\n\nDu er inviteret til {schoolName} på Skoleoverblikket.{passwordLine}\nOpret din konto her:\n{link}\n\nLinket er gyldigt i 14 dage.\n";
+	}
 }

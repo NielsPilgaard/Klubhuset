@@ -178,7 +178,7 @@ export default function InvitationAcceptPage() {
           </div>
 
           <p className="text-sm text-gray-500">
-            Klik på knappen herunder for at logge ind og bekræfte din invitation.
+            Klik på knappen herunder for at logge ind med din midlertidige adgangskode fra e-mailen. Du bliver bedt om at vælge en ny adgangskode ved første login.
           </p>
 
           <button

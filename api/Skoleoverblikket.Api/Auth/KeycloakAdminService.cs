@@ -57,13 +57,15 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
     }
 
     /// <summary>
-    /// Creates a Keycloak user for an invited staff member with no password and UPDATE_PASSWORD required action.
+    /// Creates a Keycloak user for an invited staff member with a temporary password and UPDATE_PASSWORD required action.
+    /// Keycloak will force password change on first login.
     /// Returns the new user's Keycloak subject (UUID).
     /// </summary>
     public async Task<string> CreateStaffUserAsync(
         string email,
         string firstName,
         string lastName,
+        string temporaryPassword,
         CancellationToken ct)
     {
         var payload = new CreateUserRequest(
@@ -73,7 +75,7 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
             LastName: lastName,
             Enabled: true,
             EmailVerified: true,
-            Credentials: [],
+            Credentials: [new CredentialRepresentation("password", temporaryPassword, Temporary: true)],
             Attributes: [],
             RequiredActions: ["UPDATE_PASSWORD"]);
 
