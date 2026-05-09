@@ -33,7 +33,7 @@
     <form action="${url.loginAction}" method="post">
 
       <input type="hidden" id="username" name="username" value="${username!''}">
-      <input type="hidden" name="stateChecker" value="${stateChecker}">
+      <input type="hidden" name="stateChecker" value="${stateChecker!''}">
 
       <div class="form-group">
         <label for="password-new">Ny adgangskode</label>
