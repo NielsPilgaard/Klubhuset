@@ -35,8 +35,11 @@
   "permanentLockout": false,
 
   "accessTokenLifespan": 300,
-  "ssoSessionIdleTimeout": 1800,
-  "ssoSessionMaxLifespan": 36000,
+  "ssoSessionIdleTimeout": 2592000,
+  "ssoSessionMaxLifespan": 2592000,
+  "offlineSessionIdleTimeout": 2592000,
+  "offlineSessionMaxLifespan": 2592000,
+  "offlineSessionMaxLifespanEnabled": true,
   "accessCodeLifespan": 60,
   "accessCodeLifespanUserAction": 300,
 
