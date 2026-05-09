@@ -444,7 +444,6 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
 interface EntryModalProps {
   initial?: CalendarEntryDto
   defaultDate?: string
-  defaultYear: number
   onClose: () => void
   onSaved: () => void
 }
@@ -601,13 +600,34 @@ export default function CalendarPage() {
   const { startYear, endYear } = getSchoolYears(schoolStartYear)
   const schoolYearMonths = getSchoolYearMonths(schoolStartYear)
 
-  const [calView, setCalView] = useState<'år' | 'måned'>('år')
-  const nowMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
-  const visibleMonths = calView === 'måned'
-    ? [schoolYearMonths.find(({ year, month }) =>
-        `${year}-${String(month).padStart(2, '0')}` >= nowMonthStr
-      ) ?? schoolYearMonths[0]]
-    : schoolYearMonths
+  const nowMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+  function findCurrentMonthIndex(months: Array<{ year: number; month: number }>) {
+    const idx = months.findIndex(
+      ({ year, month }) => `${year}-${String(month).padStart(2, '0')}` >= nowMonthStr,
+    )
+    return idx >= 0 ? idx : 0
+  }
+
+  const [carouselIndex, setCarouselIndex] = useState(() => findCurrentMonthIndex(schoolYearMonths))
+
+  useEffect(() => {
+    setCarouselIndex(findCurrentMonthIndex(getSchoolYearMonths(schoolStartYear)))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolStartYear])
+
+  const touchStartX = useRef<number | null>(null)
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return
+    const delta = e.changedTouches[0].clientX - touchStartX.current
+    if (delta < -40) setCarouselIndex((i) => Math.min(i + 1, schoolYearMonths.length - 1))
+    else if (delta > 40) setCarouselIndex((i) => Math.max(i - 1, 0))
+    touchStartX.current = null
+  }
 
   const [exportPending, setExportPending] = useState(false)
 
@@ -636,7 +656,6 @@ export default function CalendarPage() {
   const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
   const [openPopover, setOpenPopover] = useState<string | null>(null)
 
-  // Entry + occurrence date to show delete dialog for
   const [deleteTarget, setDeleteTarget] = useState<{ entry: CalendarEntryDto; occurrenceDate: string } | null>(null)
 
   const { data: entriesStartYear = [] } = useQuery({
@@ -686,20 +705,97 @@ export default function CalendarPage() {
 
   function handleDeleteEntry(entry: CalendarEntryDto) {
     if (entry.recurrenceRule) {
-      // Use the base startDate as the occurrence date for the "all" case; for list-level delete,
-      // we don't know which occurrence was clicked so default to the entry's own startDate.
       setDeleteTarget({ entry, occurrenceDate: entry.startDate! })
     } else {
       if (confirm(`Slet "${entry.title}"?`)) deleteMutation.mutate({ path: { id: entry.id! } })
     }
   }
 
+  function renderMonthCard(year: number, month: number, large = false) {
+    const weeks = buildMonthGrid(year, month)
+    const dayCellClass = large
+      ? 'text-base text-center py-2.5 rounded-lg select-none font-medium'
+      : 'text-sm text-center py-1 rounded select-none'
+    const headerClass = large ? 'text-sm text-center pb-2' : 'text-xs text-center pb-1'
+    const weekNumClass = large
+      ? 'text-xs text-gray-400 text-right pr-2 leading-none flex items-center justify-end'
+      : 'text-xs text-gray-400 text-right pr-1 py-0.5 leading-none flex items-center justify-end'
+    const weekNumCol = large ? '2.5rem' : '2rem'
+
+    return (
+      <div key={`${year}-${month}`} className={`bg-white rounded-xl border border-gray-200 ${large ? 'p-6' : 'p-5'}`}>
+        <p className={`font-display font-semibold text-gray-700 mb-3 ${large ? 'text-xl' : 'text-base'}`}>
+          {MONTH_NAMES[month - 1]} {year}
+        </p>
+        <div className="grid gap-0" style={{ gridTemplateColumns: `${weekNumCol} repeat(7, 1fr)` }}>
+          <div />
+          {WEEKDAY_HEADERS.map((h, hi) => (
+            <div key={h} className={`${headerClass} ${hi >= 5 ? 'text-gray-400' : 'text-gray-600'}`}>{h}</div>
+          ))}
+          {weeks.map((week, wi) => {
+            const firstDay = week.find((d) => d !== null)
+            const weekNum = firstDay != null ? getISOWeek(year, month, firstDay) : null
+            return [
+              <div key={`wn-${wi}`} className={weekNumClass}>
+                {weekNum}
+              </div>,
+              ...week.map((day, di) => {
+                if (day === null) {
+                  return <div key={`${wi}-${di}`} className={di >= 5 ? 'bg-gray-100 rounded' : ''} />
+                }
+                const isWeekend = di >= 5
+                const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
+                const firstEntry = dayEntries[0]
+                const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type ?? ''] ?? '' : ''
+                const popoverKey = `${year}-${month}-${day}`
+                const isOpen = openPopover === popoverKey
+
+                return (
+                  <div key={`${wi}-${di}`} className="relative">
+                    <div
+                      onClick={() => handleDayClick(year, month, day, isWeekend)}
+                      className={[
+                        dayCellClass,
+                        isWeekend
+                          ? 'bg-gray-100 text-gray-400 cursor-default'
+                          : colorClass
+                            ? `${colorClass} cursor-pointer`
+                            : 'text-gray-700 cursor-pointer hover:bg-gray-100',
+                      ].join(' ')}
+                    >
+                      {day}
+                    </div>
+                    {isOpen && (
+                      <DayPopover
+                        year={year}
+                        month={month}
+                        day={day}
+                        entries={allEntries}
+                        isAdmin={isAdmin}
+                        onCreateForDate={(dateStr) => setCreateDate(dateStr)}
+                        onEdit={(entry) => setEditingEntry(entry)}
+                        onDelete={(entry) => handleDeleteEntry(entry)}
+                        onClose={() => setOpenPopover(null)}
+                      />
+                    )}
+                  </div>
+                )
+              }),
+            ]
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  const currentCarouselMonth = schoolYearMonths[carouselIndex]
+
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
         <h1 className="font-display text-2xl font-semibold text-gray-900">Kalender</h1>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-2 flex-wrap">
           <select
             value={schoolStartYear}
             onChange={(e) => setSchoolStartYear(Number(e.target.value))}
@@ -709,16 +805,6 @@ export default function CalendarPage() {
               <option key={y} value={y}>{y}/{y + 1}</option>
             ))}
           </select>
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm">
-            <button
-              onClick={() => setCalView('år')}
-              className={`px-3 py-1.5 transition-colors ${calView === 'år' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
-            >År</button>
-            <button
-              onClick={() => setCalView('måned')}
-              className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${calView === 'måned' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
-            >Måned</button>
-          </div>
           <button
             onClick={handleExportIcs}
             disabled={exportPending}
@@ -744,91 +830,57 @@ export default function CalendarPage() {
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-5">
           <p className="text-sm text-brand-800 font-medium mb-1">Ingen begivenheder endnu</p>
           <p className="text-sm text-brand-700">
-            Tilføj ferier, lukkedage og begivenheder for skoleåret {startYear}/{endYear}. Du kan bruge &quot;Tilføj standardferier&quot; for at komme hurtigt i gang med danske skoleferier.
+            Tilføj ferier, lukkedage og begivenheder for skoleåret {startYear}/{endYear}. Du kan bruge &quot;Tilføj standardferier&quot; knappen øverst for at komme hurtigt i gang med danske skoleferier.
           </p>
-          {defaults.length > 0 && (
-            <button
-              onClick={() => seedMutation.mutate(defaults)}
-              disabled={seedMutation.isPending}
-              className="mt-3 border border-brand-600 text-brand-600 hover:bg-brand-100 rounded-lg px-3 py-1.5 text-sm disabled:opacity-50 transition-colors"
-            >
-              {seedMutation.isPending
-                ? <span className="flex items-center gap-2"><span className="inline-block w-3 h-3 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />Tilføjer...</span>
-                : 'Tilføj standardferier'}
-            </button>
-          )}
         </div>
       )}
 
-      {/* School year calendar grid: Aug–Jun */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleMonths.map(({ year, month }) => {
-          const weeks = buildMonthGrid(year, month)
-          return (
-            <div key={`${year}-${month}`} className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="font-display text-sm font-semibold text-gray-700 mb-3">
-                {MONTH_NAMES[month - 1]} {year}
-              </p>
-              <div className="grid gap-0" style={{ gridTemplateColumns: '1.5rem repeat(7, 1fr)' }}>
-                <div />
-                {WEEKDAY_HEADERS.map((h, hi) => (
-                  <div key={h} className={`text-xs text-center pb-1 ${hi >= 5 ? 'text-gray-400' : 'text-gray-600'}`}>{h}</div>
-                ))}
-                {weeks.map((week, wi) => {
-                  const firstDay = week.find((d) => d !== null)
-                  const weekNum = firstDay != null ? getISOWeek(year, month, firstDay) : null
-                  return [
-                    <div key={`wn-${wi}`} className="text-xs text-gray-400 text-right pr-1 py-0.5 leading-none flex items-center justify-end">
-                      {weekNum}
-                    </div>,
-                    ...week.map((day, di) => {
-                      if (day === null) {
-                        return <div key={`${wi}-${di}`} className={di >= 5 ? 'bg-gray-100 rounded' : ''} />
-                      }
-                      const isWeekend = di >= 5
-                      const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
-                      const firstEntry = dayEntries[0]
-                      const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type ?? ''] ?? '' : ''
-                      const popoverKey = `${year}-${month}-${day}`
-                      const isOpen = openPopover === popoverKey
+      {/* Mobile carousel — visible below lg */}
+      <div className="lg:hidden">
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {renderMonthCard(currentCarouselMonth.year, currentCarouselMonth.month, true)}
+        </div>
+        {/* Pagination: arrow ← dots → arrow */}
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <button
+            onClick={() => setCarouselIndex((i) => Math.max(i - 1, 0))}
+            disabled={carouselIndex === 0}
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Forrige måned"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-1.5">
+            {schoolYearMonths.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCarouselIndex(i)}
+                aria-label={`Gå til måned ${i + 1}`}
+                className={`rounded-full transition-all ${i === carouselIndex ? 'w-4 h-2 bg-brand-600' : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => setCarouselIndex((i) => Math.min(i + 1, schoolYearMonths.length - 1))}
+            disabled={carouselIndex === schoolYearMonths.length - 1}
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Næste måned"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
-                      return (
-                        <div key={`${wi}-${di}`} className="relative">
-                          <div
-                            onClick={() => handleDayClick(year, month, day, isWeekend)}
-                            className={[
-                              'text-xs text-center py-0.5 rounded select-none',
-                              isWeekend
-                                ? 'bg-gray-100 text-gray-400 cursor-default'
-                                : colorClass
-                                  ? `${colorClass} cursor-pointer`
-                                  : 'text-gray-700 cursor-pointer hover:bg-gray-100',
-                            ].join(' ')}
-                          >
-                            {day}
-                          </div>
-                          {isOpen && (
-                            <DayPopover
-                              year={year}
-                              month={month}
-                              day={day}
-                              entries={allEntries}
-                              isAdmin={isAdmin}
-                              onCreateForDate={(dateStr) => setCreateDate(dateStr)}
-                              onEdit={(entry) => setEditingEntry(entry)}
-                              onDelete={(entry) => handleDeleteEntry(entry)}
-                              onClose={() => setOpenPopover(null)}
-                            />
-                          )}
-                        </div>
-                      )
-                    }),
-                  ]
-                })}
-              </div>
-            </div>
-          )
-        })}
+      {/* Desktop grid — visible from lg */}
+      <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {schoolYearMonths.map(({ year, month }) => renderMonthCard(year, month))}
       </div>
 
       {/* Entry list */}
@@ -897,7 +949,6 @@ export default function CalendarPage() {
       {createDate !== null && (
         <EntryModal
           defaultDate={createDate}
-          defaultYear={schoolStartYear}
           onClose={() => setCreateDate(null)}
           onSaved={() => setCreateDate(null)}
         />
@@ -905,7 +956,6 @@ export default function CalendarPage() {
       {editingEntry && (
         <EntryModal
           initial={editingEntry}
-          defaultYear={schoolStartYear}
           onClose={() => setEditingEntry(null)}
           onSaved={() => setEditingEntry(null)}
         />
