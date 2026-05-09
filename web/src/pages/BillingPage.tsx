@@ -156,7 +156,7 @@ function StatusCard({
             </p>
             <p className="mt-0.5 text-sm text-brand-600">
               Du kan bruge alle funktioner gratis frem til den {formatDate(data.trialEnd ?? '')}.
-              Herefter koster det 299 kr/md.
+              Herefter koster det 499 kr/md.
             </p>
           </div>
         </div>
@@ -182,7 +182,7 @@ function StatusCard({
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold text-green-900">Aktivt abonnement — Basis (299 kr/md)</h2>
+            <h2 className="text-base font-semibold text-green-900">Aktivt abonnement — Basis (499 kr/md)</h2>
             {data.currentPeriodEnd && (
               <p className="mt-1 text-sm text-green-700">
                 Næste betaling den {formatDate(data.currentPeriodEnd)}
@@ -321,7 +321,7 @@ function PricingCard({
           <p className="mt-0.5 text-xs text-gray-400">Alt hvad din skole behøver</p>
         </div>
         <div className="text-right shrink-0">
-          <span className="text-2xl font-semibold text-gray-900 tabular-nums">299</span>
+          <span className="text-2xl font-semibold text-gray-900 tabular-nums">499</span>
           <span className="text-sm text-gray-500"> kr/md</span>
         </div>
       </div>

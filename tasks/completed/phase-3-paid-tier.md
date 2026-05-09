@@ -10,7 +10,7 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
 
 ### Stripe Checkout billing
 
-- [x] Stripe product and price configuration for Basis tier (299 kr/month)
+- [x] Stripe product and price configuration for Basis tier (499 kr/month)
 - [x] Signup flow: school completes trial → Stripe Checkout session → subscription created
 - [x] Auto-renew monthly
 - [x] Stripe billing portal link in admin settings (manage subscription, update card, cancel)
@@ -43,7 +43,7 @@ Implement self-serve billing via Stripe Checkout, the file explorer, and exporta
   - Nav: sticky, "Skoleoverblikket" brand name + "Log ind" (`/login`) + "Prøv gratis" (`/signup`)
   - Hero: headline "Det enkle skema — bygget til friskoler", primary CTA to `/signup`, trust line ("Intet kreditkort · Opsig når som helst · Data opbevares i EU")
   - Features: 5-card grid — conflict detection, schema builder, staff overview, printable schemas, file management
-  - Pricing: dark brand section, single "Basis" card (299 kr/md), checklist, CTA to `/signup`
+  - Pricing: dark brand section, single "Basis" card (499 kr/md), checklist, CTA to `/signup`
   - Trust: EU data, transparent pricing, simple from day one
   - CTA footer + page footer
 - [x] Update `SignupPage.tsx` — change "Log ind" link from `href="/"` to `href="/login"`

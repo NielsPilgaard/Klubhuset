@@ -12,7 +12,7 @@ Pricing is transparent and listed on the website. No sales calls, no hidden fees
 
 ### Basis
 
-**299 kr/month** · All features · 100 GB file storage
+**499 kr/month** · All features · 100 GB file storage
 
 Included:
 

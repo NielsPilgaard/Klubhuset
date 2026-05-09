@@ -2,7 +2,7 @@
 
 ## Product overview
 
-Skoleoverblikket is a multi-tenant SaaS schema planner for Danish schools. It is sold B2B to schools, not to end users. The primary market is friskoler and private/independent schools; the secondary market is folkeskoler who want a simpler, self-serve alternative to Docendo and Skoleplan.
+Skoleoverblikket is a multi-tenant SaaS schema planner for Danish schools. It is sold B2B to schools, not to end users. The target market is all Danish school types: folkeskoler, friskoler, privatskoler, and efterskoler. The product is positioned for schools that want a simpler, lower-cost alternative to Docendo, Skoleplan, Skoleintra, or Forældreintra — or schools setting up a timetable tool for the first time.
 
 ## Problem being solved
 
@@ -101,7 +101,7 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 
 - **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly
 - **14-day free trial**: full access, no payment required upfront
-- **Single tier (v1)**: 299 kr/month — all features included
+- **Single tier (v1)**: 499 kr/month — all features included
 - Schools are never invoiced manually — everything is self-serve
 
 ---

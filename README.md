@@ -53,7 +53,7 @@ SaaS schema planner for Danish friskoler and private/independent schools. School
 
 | Tier            | Storage | Monthly |
 | --------------- | ------- | ------- |
-| Basis           | 100 GB  | 299 kr  |
+| Basis           | 100 GB  | 499 kr  |
 | Skole+ (future) | 1000 GB | 499 kr  |
 
 14-day free trial with full access. No per-student pricing.
