@@ -439,7 +439,7 @@ export default function StaffPage() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button
+                      {!isSelf && <button
                         onClick={() => setInvitingStaff(s)}
                         className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
                         title="Send invitation"
@@ -448,7 +448,7 @@ export default function StaffPage() {
                           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                           <polyline points="22,6 12,13 2,6" />
                         </svg>
-                      </button>
+                      </button>}
                       <button
                         onClick={() => navigate(`/medarbejdere/${s.id}/skema`)}
                         className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"

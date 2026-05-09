@@ -14,7 +14,7 @@ export default function OmPage() {
             Om Skoleoverblikket
           </h1>
           <p className="text-brand-600 text-lg font-medium mb-8">
-            Enkelt skemaværktøj til den lille skole
+            Enkelt skemaværktøj til alle skoler
           </p>
 
           <div className="prose-like space-y-6 text-gray-700 leading-relaxed">
@@ -24,10 +24,10 @@ export default function OmPage() {
             </p>
 
             <p>
-              Mange skemaværktøjer er designet til store kommunale institutioner med dedikerede
-              IT-afdelinger. Skoleoverblikket er anderledes: det er bygget til friskoler, privatskoler
-              og efterskoler — steder hvor den samme person både tager telefonen, booker vikar
-              og hænger skemaet op mandag morgen.
+              Mange skemaværktøjer er bygget til store institutioner med budgetter og
+              IT-ressourcer der matcher. Skoleoverblikket er anderledes: det er bygget til skoler der
+              vil have noget enkelt — folkeskoler, friskoler, privatskoler og efterskoler — steder
+              hvor den samme person både tager telefonen, booker vikar og hænger skemaet op mandag morgen.
             </p>
 
             <p>

@@ -33,17 +33,17 @@ export default function LandingPage() {
       <section className="py-24 px-6 text-center bg-gradient-to-b from-brand-50 to-white">
         <div className="max-w-3xl mx-auto">
           <h1 className="font-display text-5xl sm:text-6xl font-semibold text-brand-900 leading-tight">
-            Det enkle skema —<br />bygget til friskoler
+            Spar tid på det kedelige —<br />brug den på børnene
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto">
-            Byg, administrer og udskriv ugeskemaer med automatisk konfliktkontrol. Uden kompleksitet.
+            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen demo, ingen oplæring — kom i gang på under 2 minutter.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="/signup"
               className="px-6 py-3 bg-brand-600 text-white text-base font-medium rounded-lg hover:bg-brand-700 transition-colors"
             >
-              Start din gratis prøveperiode
+              Kom i gang gratis — på 2 minutter
             </a>
             <a
               href="#priser"
@@ -53,7 +53,7 @@ export default function LandingPage() {
             </a>
           </div>
           <p className="mt-5 text-sm text-gray-400">
-            Intet kreditkort · Ingen binding · Data opbevares i EU
+            Intet kreditkort · Ingen binding · Klar til brug samme dag
           </p>
         </div>
       </section>
@@ -72,7 +72,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Konfliktkontrol i realtid"
-              description="Systemet advarer med det samme om dobbeltbookinger."
+              description="Systemet advarer øjeblikkeligt om dobbeltbookede lærere eller lokaler — uden manuel kontrol."
             />
             <FeatureCard
               icon={
@@ -82,7 +82,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Skemabygger"
-              description="Træk og slip lektioner på plads. Simpelt og overskueligt — for alle."
+              description="Træk og slip lektioner på plads. Nemt at lære — for alle, uanset teknisk erfaring."
             />
             <FeatureCard
               icon={
@@ -121,6 +121,36 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Audience */}
+      <section className="py-16 px-6 bg-brand-50 border-t border-brand-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-display text-3xl font-semibold text-brand-900 mb-4">
+            Hvem er Skoleoverblikket til?
+          </h2>
+          <p className="text-gray-600 mb-10 max-w-xl mx-auto">
+            Skoleoverblikket passer til alle skoler der vil have et enkelt, moderne skemaværktøj — uanset udgangspunktet.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
+            <AudienceItem
+              title="Ny skole fra grunden"
+              description="Intet at flytte — kom i gang samme dag og byg skemaet op fra start."
+            />
+            <AudienceItem
+              title="Skoler der vil skifte system"
+              description="Skift fra et gammelt eller dyrt system. Hjælp til overgangen kan købes som tillægsservice."
+            />
+            <AudienceItem
+              title="Skoler med begrænset IT-erfaring"
+              description="Ingen IT-afdeling nødvendig. Fungerer fra dag ét uden kursus."
+            />
+            <AudienceItem
+              title="Skoler der vil spare tid og penge"
+              description="Fast lav månedspris — ingen binding, ingen skjulte gebyrer."
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="priser" className="py-20 px-6 bg-brand-900 text-white">
         <div className="max-w-5xl mx-auto text-center">
@@ -133,7 +163,7 @@ export default function LandingPage() {
               <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100">
                 <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
                 <div className="mt-2 flex items-end gap-1 justify-center">
-                  <span className="font-display text-5xl font-semibold text-brand-900">299</span>
+                  <span className="font-display text-5xl font-semibold text-brand-900">499</span>
                   <span className="text-lg text-gray-500 mb-2">kr/md</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
@@ -219,7 +249,7 @@ export default function LandingPage() {
               </svg>
             }
             title="Gennemsigtige priser"
-            description="299 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
+            description="499 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
           />
           <TrustItem
             icon={
@@ -229,7 +259,7 @@ export default function LandingPage() {
               </svg>
             }
             title="Simpelt fra dag ét"
-            description="Ingen oplæring nødvendig. Klar til brug på 10 minutter."
+            description="Ingen oplæring nødvendig. De fleste skoler er kørende på under 2 minutter."
           />
         </div>
       </section>
@@ -238,9 +268,9 @@ export default function LandingPage() {
       <section className="py-20 px-6 bg-brand-50 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="font-display text-3xl font-semibold text-brand-900">
-            Klar til at prøve?
+            Klar til at spare tid?
           </h2>
-          <p className="mt-3 text-gray-600">14 dage gratis. Intet kreditkort. Kom i gang på få minutter.</p>
+          <p className="mt-3 text-gray-600">14 dage gratis. Intet kreditkort. Kom i gang på under 2 minutter — uanset hvilken skole du er.</p>
           <a
             href="/signup"
             className="inline-block mt-6 px-8 py-3 bg-brand-600 text-white text-base font-medium rounded-lg hover:bg-brand-700 transition-colors"
@@ -275,6 +305,15 @@ function TrustItem({ icon, title, description }: { icon: React.ReactNode; title:
       <div className="text-brand-600">{icon}</div>
       <h3 className="font-semibold text-gray-900">{title}</h3>
       <p className="text-sm text-gray-500">{description}</p>
+    </div>
+  )
+}
+
+function AudienceItem({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="p-5 rounded-xl bg-white border border-brand-100">
+      <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
+      <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
     </div>
   )
 }
