@@ -601,6 +601,14 @@ export default function CalendarPage() {
   const { startYear, endYear } = getSchoolYears(schoolStartYear)
   const schoolYearMonths = getSchoolYearMonths(schoolStartYear)
 
+  const [calView, setCalView] = useState<'år' | 'måned'>('år')
+  const nowMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+  const visibleMonths = calView === 'måned'
+    ? [schoolYearMonths.find(({ year, month }) =>
+        `${year}-${String(month).padStart(2, '0')}` >= nowMonthStr
+      ) ?? schoolYearMonths[0]]
+    : schoolYearMonths
+
   const [exportPending, setExportPending] = useState(false)
 
   async function handleExportIcs() {
@@ -701,6 +709,16 @@ export default function CalendarPage() {
               <option key={y} value={y}>{y}/{y + 1}</option>
             ))}
           </select>
+          <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+            <button
+              onClick={() => setCalView('år')}
+              className={`px-3 py-1.5 transition-colors ${calView === 'år' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+            >År</button>
+            <button
+              onClick={() => setCalView('måned')}
+              className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${calView === 'måned' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+            >Måned</button>
+          </div>
           <button
             onClick={handleExportIcs}
             disabled={exportPending}
@@ -744,7 +762,7 @@ export default function CalendarPage() {
 
       {/* School year calendar grid: Aug–Jun */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {schoolYearMonths.map(({ year, month }) => {
+        {visibleMonths.map(({ year, month }) => {
           const weeks = buildMonthGrid(year, month)
           return (
             <div key={`${year}-${month}`} className="bg-white rounded-xl border border-gray-200 p-4">
@@ -816,7 +834,8 @@ export default function CalendarPage() {
       {/* Entry list */}
       {allEntries.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
@@ -841,7 +860,7 @@ export default function CalendarPage() {
                   </td>
                   {isAdmin && (
                     <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setEditingEntry(entry)}
                           className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
@@ -871,6 +890,7 @@ export default function CalendarPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

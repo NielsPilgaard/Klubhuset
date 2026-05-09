@@ -151,7 +151,8 @@ export default function RoomsPage() {
       )}
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Navn</th>
@@ -185,7 +186,7 @@ export default function RoomsPage() {
                 </td>
                 <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{r.description ?? '—'}</td>
                 <td className="px-5 py-3 text-right">
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => navigate(`/lokaler/${r.id}/skema`)}
                       className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
@@ -226,6 +227,7 @@ export default function RoomsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showCreate && (

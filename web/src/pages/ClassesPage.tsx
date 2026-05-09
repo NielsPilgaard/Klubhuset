@@ -449,9 +449,9 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
           <div
             key={s.id}
             onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
-            className="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
+            className="flex flex-wrap items-center gap-y-2 justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
           >
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate">
                 {s.name}
               </span>
@@ -465,7 +465,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0 ml-4">
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
               <button
                 data-testid={`class-ugeplan-${classId}-${s.id}`}
                 onClick={(e) => { e.stopPropagation(); navigate(`/klasser/${classId}/ugeplan?schemaId=${s.id}`) }}

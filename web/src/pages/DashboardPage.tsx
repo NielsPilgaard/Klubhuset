@@ -9,7 +9,6 @@ import { usePageTitle } from '../hooks/usePageTitle'
 
 function OnboardingCard({ status }: { status: OnboardingStatusDto }) {
   const steps = [
-    { label: 'Logo uploadet', done: status.hasLogo },
     { label: 'Medarbejdere oprettet', done: (status.staffCount ?? 0) > 0 },
     { label: 'Klasser oprettet', done: (status.classCount ?? 0) > 0 },
     { label: 'Fag oprettet', done: (status.courseCount ?? 0) > 0 },
@@ -204,13 +203,15 @@ export default function DashboardPage() {
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="text-sm font-semibold text-gray-700">Klasser med mangler</h2>
             </div>
-            {(data!.unassignedClasses?.length ?? 0) === 0 ? (
+            {(data!.unassignedClasses?.length ?? 0) === 0 && (data?.classCount ?? 0) > 0 ? (
               <div className="px-5 py-8 text-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-brand-50 mb-3">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-500"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
                 <p className="text-sm text-gray-500">Alle klasser har et færdigt skema</p>
               </div>
+            ) : (data!.unassignedClasses?.length ?? 0) === 0 ? (
+              <p className="px-5 py-6 text-sm text-gray-400 text-center">Ingen klasser oprettet endnu</p>
             ) : (
               <table className="w-full text-sm">
                 <thead>

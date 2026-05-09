@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Logo from './Logo'
 import ErrorBoundary from './ErrorBoundary'
@@ -24,8 +24,10 @@ export default function Layout() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <Logo variant="light" size={24} />
-          <span className="font-display text-lg font-semibold text-brand-800">Skoleoverblikket</span>
+          <Link to="/dashboard" className="flex items-center gap-3">
+            <Logo variant="light" size={24} />
+            <span className="font-display text-lg font-semibold text-brand-800">Skoleoverblikket</span>
+          </Link>
         </header>
 
         {/* Page content */}
