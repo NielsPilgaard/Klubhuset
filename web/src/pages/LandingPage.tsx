@@ -10,18 +10,18 @@ export default function LandingPage() {
 
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Logo variant="light" size={28} />
-            <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <Logo variant="light" size={24} />
+            <span className="font-display text-base sm:text-xl font-semibold text-brand-800 truncate">Skoleoverblikket</span>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors whitespace-nowrap">
               Log ind
             </a>
             <a
               href="/signup"
-              className="text-sm px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+              className="text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium whitespace-nowrap"
             >
               Prøv gratis
             </a>
@@ -33,10 +33,10 @@ export default function LandingPage() {
       <section className="py-24 px-6 text-center bg-gradient-to-b from-brand-50 to-white">
         <div className="max-w-3xl mx-auto">
           <h1 className="font-display text-5xl sm:text-6xl font-semibold text-brand-900 leading-tight">
-            Spar tid på det kedelige —<br />brug den på børnene
+            Spar tid på det kedelige — brug den på børnene
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto">
-            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen demo, ingen oplæring — kom i gang på under 2 minutter.
+            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen demo, ingen oplæring nødvendig.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
@@ -132,7 +132,7 @@ export default function LandingPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
             <AudienceItem
-              title="Ny skole fra grunden"
+              title="Nyoprettet skole"
               description="Intet at flytte — kom i gang samme dag og byg skemaet op fra start."
             />
             <AudienceItem

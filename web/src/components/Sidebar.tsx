@@ -263,7 +263,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Log ud
           </button>
-          <p className="text-xs text-brand-400 px-3">v1.0 · Skoleoverblikket</p>
         </div>
       </aside>
     </>
