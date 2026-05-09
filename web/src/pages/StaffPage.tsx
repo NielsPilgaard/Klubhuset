@@ -473,6 +473,7 @@ export default function StaffPage() {
                       </button>
                       <button
                         onClick={() => {
+                          if (isSelf) return
                           if (confirm(`Slet "${s.name}"?`)) deleteMutation.mutate({ path: { id: s.id ?? '' } })
                         }}
                         disabled={isSelf}

@@ -84,8 +84,6 @@ public static class Extensions
 
         if (useOtlpExporter)
         {
-            var otlpHeaders = builder.Configuration["OTEL_EXPORTER_OTLP_HEADERS"];
-            Console.WriteLine($"[OTEL DEBUG] Headers: '{otlpHeaders}'");
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
 

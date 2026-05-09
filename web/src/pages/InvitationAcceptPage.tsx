@@ -30,8 +30,14 @@ export default function InvitationAcceptPage() {
           const data: InvitationPreview = await res.json()
           setPreview(data)
 
-          // If we're already authenticated, accept immediately
           if (keycloak.authenticated && keycloak.token) {
+            const tokenEmail = (keycloak.tokenParsed as Record<string, string> | undefined)?.['email']
+            if (tokenEmail && tokenEmail !== data.email) {
+              // Wrong user logged in (e.g. admin opened invitation link).
+              // Log out and redirect back so the correct user can log in.
+              keycloak.logout({ redirectUri: window.location.href })
+              return
+            }
             setState('accepting')
             await acceptInvitation(token, keycloak.token)
           } else {

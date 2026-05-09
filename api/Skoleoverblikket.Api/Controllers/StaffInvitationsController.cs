@@ -114,8 +114,8 @@ public sealed class StaffInvitationsController(
 	public async Task<ActionResult> Accept([FromBody] AcceptInvitationRequest req, CancellationToken ct)
 	{
 		// Extract authenticated subject from claims
-		var keycloakSubject = User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-							  User.FindFirstValue("sub");
+		var keycloakSubject = User.FindFirstValue("sub")
+							  ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 		if (string.IsNullOrEmpty(keycloakSubject))
 		{
