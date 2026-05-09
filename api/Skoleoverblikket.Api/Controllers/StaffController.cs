@@ -11,7 +11,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/staff")]
 [Authorize]
-public sealed class StaffController(AppDbContext db, ITenantContext tenant, KeycloakAdminService keycloak) : ControllerBase
+public sealed class StaffController(AppDbContext db, ITenantContext tenant, KeycloakAdminService keycloak, ILogger<StaffController> logger) : ControllerBase
 {
 	public record StaffDto(Guid Id, string Name, string? Email, string? Phone, StaffRole Role, bool IsAdmin, string? KeycloakSubject);
 	public record UpsertStaffRequest(string Name, string? Email, string? Phone, StaffRole Role, bool IsAdmin = false);
@@ -158,6 +158,18 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 		if (s is null)
 		{
 			return NotFound();
+		}
+
+		if (!string.IsNullOrWhiteSpace(s.KeycloakSubject))
+		{
+			try
+			{
+				await keycloak.DeleteStaffUserAsync(s.KeycloakSubject, ct);
+			}
+			catch (KeycloakException ex)
+			{
+				logger.LogWarning(ex, "Could not delete Keycloak account for staff {StaffId}; DB record will still be removed", id);
+			}
 		}
 
 		db.Staff.Remove(s);

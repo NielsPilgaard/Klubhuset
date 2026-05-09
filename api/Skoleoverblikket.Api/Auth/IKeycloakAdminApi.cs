@@ -20,6 +20,12 @@ public interface IKeycloakAdminApi
 
     [Put("/users/{userId}")]
     Task<HttpResponseMessage> UpdateUserAsync(string userId, [Body] UpdateUserRequest request, CancellationToken ct);
+
+    [Get("/users")]
+    Task<IReadOnlyList<UserRepresentation>> GetUsersByEmailAsync([AliasAs("email")] string email, [AliasAs("exact")] bool exact, CancellationToken ct);
+
+    [Delete("/users/{userId}")]
+    Task<HttpResponseMessage> DeleteUserAsync(string userId, CancellationToken ct);
 }
 
 public record RoleRepresentation(
@@ -39,3 +45,7 @@ public record CreateUserRequest(
 
 public record UpdateUserRequest(
     [property: JsonPropertyName("attributes")] Dictionary<string, IReadOnlyList<string>> Attributes);
+
+public record UserRepresentation(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("email")] string Email);

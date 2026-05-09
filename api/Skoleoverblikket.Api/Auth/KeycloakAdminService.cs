@@ -79,6 +79,13 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 
         var createResponse = await adminApi.CreateUserAsync(payload, ct);
 
+        if (createResponse.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            var existing = await adminApi.GetUsersByEmailAsync(email, exact: true, ct);
+            return existing.FirstOrDefault()?.Id
+                ?? throw new KeycloakException($"Keycloak rejected duplicate user but no existing user found for {email}");
+        }
+
         if (!createResponse.IsSuccessStatusCode)
         {
             var err = await createResponse.Content.ReadAsStringAsync(ct);
@@ -145,6 +152,16 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
         catch (Exception ex)
         {
             throw new KeycloakException($"Failed to {(grant ? "assign" : "remove")} 'admin' role for user {keycloakUserId}: {ex.Message}");
+        }
+    }
+
+    public async Task DeleteStaffUserAsync(string keycloakUserId, CancellationToken ct)
+    {
+        var response = await adminApi.DeleteUserAsync(keycloakUserId, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync(ct);
+            throw new KeycloakException($"Failed to delete Keycloak user {keycloakUserId}: {response.StatusCode} — {err}");
         }
     }
 
