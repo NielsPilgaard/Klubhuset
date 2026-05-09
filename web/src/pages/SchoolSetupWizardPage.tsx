@@ -21,13 +21,12 @@ interface WizardStep {
 
 const STEPS: WizardStep[] = [
   { id: 1, title: 'Skolenavn', description: 'Bekræft eller opdater skolens navn' },
-  { id: 2, title: 'Logo', description: 'Upload et logo til skolen' },
-  { id: 3, title: 'Skoledag', description: 'Definér varighed og pauser for en normal skoledag' },
-  { id: 4, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
-  { id: 5, title: 'Fag', description: 'Tilføj fag, f.eks. dansk, matematik' },
-  { id: 6, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
-  { id: 7, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
-  { id: 8, title: 'Færdig', description: 'Din skole er klar til brug' },
+  { id: 2, title: 'Skoledag', description: 'Definér varighed og pauser for en normal skoledag' },
+  { id: 3, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
+  { id: 4, title: 'Fag', description: 'Tilføj fag, f.eks. dansk, matematik' },
+  { id: 5, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
+  { id: 6, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
+  { id: 7, title: 'Færdig', description: 'Din skole er klar til brug' },
 ]
 
 
@@ -92,72 +91,6 @@ function StepSchoolName({ initialName, onNext, onSkip }: { initialName?: string;
   )
 }
 
-function StepLogo({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const [file, setFile] = useState<File | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    api.get<{ logoUrl: string | null }>('/schools/settings')
-      .then(s => { if (s.logoUrl) setExistingLogoUrl(s.logoUrl) })
-      .catch(() => {})
-  }, [])
-
-  async function upload() {
-    if (!file) { onNext(); return }
-    setSaving(true)
-    setError('')
-    try {
-      const form = new FormData()
-      form.append('file', file)
-      await api.postForm('/schools/logo', form)
-      onNext()
-    } catch {
-      setError('Uploaden fejlede. Du kan uploade logo fra Indstillinger.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <p className="text-sm text-gray-600">
-        Upload et logo til din skole. Det vises på udskrevne skemaer. Max 2 MB, PNG eller JPG.
-      </p>
-      {existingLogoUrl && (
-        <div className="flex items-center gap-3">
-          <img src={existingLogoUrl} alt="Nuværende logo" className="h-12 w-auto object-contain rounded border border-gray-100" />
-          <span className="text-sm text-gray-500">Nuværende logo</span>
-        </div>
-      )}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {existingLogoUrl ? 'Erstat logo' : 'Logo'}
-        </label>
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-        />
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-3 pt-2">
-        <button
-          onClick={upload}
-          disabled={saving || !file}
-          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
-        >
-          {saving ? 'Uploader…' : 'Upload og fortsæt'}
-        </button>
-        <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
-          Spring over
-        </button>
-      </div>
-    </div>
-  )
-}
 
 interface BreakEntry {
   startTime: string
@@ -743,9 +676,8 @@ export default function SchoolSetupWizardPage() {
         {/* Step body */}
         <div className="px-8 pb-8 pt-4">
           {step === 1 && <StepSchoolName initialName={searchParams.get('schoolName') ?? undefined} onNext={advance} onSkip={skip} />}
-          {step === 2 && <StepLogo onNext={advance} onSkip={skip} />}
-          {step === 3 && <StepTimeSlots onNext={advance} onSkip={skip} />}
-          {step === 4 && (
+          {step === 2 && <StepTimeSlots onNext={advance} onSkip={skip} />}
+          {step === 3 && (
             <StepCreateItems
               noun="Klasse"
               plural="Klasser"
@@ -755,7 +687,7 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 5 && (
+          {step === 4 && (
             <StepCreateItems
               noun="Fag"
               plural="Fag"
@@ -765,7 +697,7 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 6 && (
+          {step === 5 && (
             <StepCreateItems
               noun="Lokale"
               plural="Lokaler"
@@ -775,8 +707,8 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 7 && <StepInviteStaff onNext={advance} onSkip={skip} />}
-          {step === 8 && <StepDone onFinish={finish} />}
+          {step === 6 && <StepInviteStaff onNext={advance} onSkip={skip} />}
+          {step === 7 && <StepDone onFinish={finish} />}
         </div>
 
         {/* Step dots */}
