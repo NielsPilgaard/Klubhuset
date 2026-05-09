@@ -12,17 +12,31 @@ Folkeskoler are not vendor-locked into any single timetable tool. Aula (the nati
 
 ## Target customer
 
-**Primary**: Danish friskole or private/independent school
-- 50–500 students
-- Small admin staff: skoleleder, skolesekretær, possibly a viceskoleleder
-- Low technical sophistication among admin users
-- Currently using: Excel, paper, Skoleplan, or Docendo
+Danish schools that want simple, low-cost timetable administration without requiring IT support or training. This includes:
 
-**Secondary**: Danish folkeskole seeking a simpler, lower-cost timetable tool
-- Same size range: 100–600 students
-- Admin staff often more IT-literate (municipality IT support available)
-- May use UNI•Login for SSO and expect UVM hour reporting
-- Currently using: Docendo, Skoleplan, or municipality-provided tools
+**Segment A — New schools with no existing system**
+- No migration cost or complexity — onboard from scratch
+- 50–300 students typical
+
+**Segment B — Schools migrating from Skoleintra / Forældreintra / Elevintra**
+- Want something cheaper and easier
+- Low technical sophistication among admin users
+- Guided migration is a paid consulting add-on service (~3,000 kr depending on school size) — not a self-serve product feature
+
+**Segment C — Schools migrating from Docendo**
+- Want to save money
+- Already familiar with digital timetabling
+- 100–500 students typical
+
+**Segment D — Schools with low technical experience**
+- Must be operable without training, without IT department, without support calls
+- Admin user is often a school secretary managing all admin tasks solo
+
+**Segment E — Schools wanting something simpler than Skoleplan or Docendo**
+- Frustrated by complexity and opaque pricing
+- Value transparency and self-serve trial
+
+All five segments span school types. Folkeskoler, friskoler, privatskoler, and efterskoler are all valid customers. Folkeskoler are not the primary focus (they have more vendor inertia) but are not excluded.
 
 ## Target end user
 
@@ -125,9 +139,9 @@ See [docs/adr/](adr/) for full rationale. Summary:
 | Competitor | Strengths                                                   | Weaknesses                                                              |
 | ---------- | ----------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Skoleplan  | Established, known in friskole market                       | Opaque pricing, no public feature list, no self-serve trial             |
-| Docendo    | Feature-rich, integrates into AULA for folkeskoler          | Expensive, complex, targets folkeskoler — overkill for small friskoler  |
+| Docendo    | Feature-rich, integrates into AULA for folkeskoler          | Expensive, complex, requires AULA/STIL integration — overkill for smaller schools of any type |
 | Skoleintra | Solid product, good reputation                              | High price, heavy for small schools, unclear friskole-specific support  |
-| Aula       | 2.3M users, government-backed, school-home communication    | Folkeskoler only (KOMBIT/municipality procurement) — friskoler excluded |
+| Aula       | 2.3M users, government-backed, school-home communication    | Communication platform only (not a timetable tool) — procured at municipality level, not available to friskoler or privatskoler. May add timetable features in the future. |
 
 ### Why Aula is not a competitor
 
@@ -145,7 +159,7 @@ Docendo is the closest functional analog — it is a schema builder used by folk
 4. Clean, modern UI — no bloat, no legacy design
 5. EU-only data storage (OVHCloud, Scaleway)
 6. 14-day free trial with full access
-7. Built specifically for friskoler — no folkeskole/AULA assumptions baked in
+7. Serves all Danish school types — folkeskoler, friskoler, privatskoler, efterskoler — with no assumptions about municipal IT infrastructure
 
 ## Migration from competitors
 
@@ -168,6 +182,8 @@ A structured onboarding wizard with CSV upload steps:
 3. Import course list (fag)
 4. Manual schema rebuild (no competitor exports structured timetable data we can reliably parse)
 
+**Migration consulting add-on**: guided migration from legacy tools (Skoleintra, Forældreintra, Docendo) is offered as a paid consulting service (~3,000 kr, depending on school size). This is a sales-driven, manual service — not a self-serve product feature. Do not build automated migration tooling as a free feature.
+
 ## AULA integration
 
 Aula has a **widget vendor program** (managed by KOMBIT) that lets third-party tools embed widgets into the Aula SPA. Docendo uses this to display schedules inside Aula for folkeskoler.
@@ -176,7 +192,7 @@ Aula has a **widget vendor program** (managed by KOMBIT) that lets third-party t
 
 However, if Skoleoverblikket ever expands to serve folkeskoler or mixed schools, the AULA widget program is the right integration path. KOMBIT controls vendor approval. Documentation: [aulainfo.dk/footer/widgetleverandoer](https://aulainfo.dk/footer/widgetleverandoer).
 
-**For now**: Aula integration is out of scope. The framing to use with customers is: "We don't need Aula — Aula isn't available to your school anyway."
+**For now**: Aula integration is out of scope. The framing to use with customers is: "Skoleoverblikket is a timetable tool. Aula is a communication platform — they serve different purposes and can be used side by side."
 
 ## Future features (not v1)
 
@@ -195,6 +211,6 @@ However, if Skoleoverblikket ever expands to serve folkeskoler or mixed schools,
 - LMS / learning management
 - SMS notifications
 - Native mobile app
-- Aula widget integration (blocked — friskoler have no Aula instance)
-- STIL/WS17 integration (targets folkeskoler, not friskoler)
+- Aula widget integration (deferred — low priority for v1; relevant only for folkeskoler who want schedule data embedded in Aula)
+- STIL/WS17 integration (low priority for v1; targets folkeskoler specifically)
 - Accounting software integration
