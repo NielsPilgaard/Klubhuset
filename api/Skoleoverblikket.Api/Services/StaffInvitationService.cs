@@ -59,7 +59,7 @@ public sealed class StaffInvitationService(
 				var nameParts = staff.Name.Split(' ', 2);
 				var firstName = nameParts[0];
 				var lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
-				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, temporaryPassword, ct);
+				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, temporaryPassword, tenant.TenantId, ct);
 				staff.KeycloakSubject = keycloakSubject;
 				await db.SaveChangesAsync(ct);
 			}
@@ -179,7 +179,7 @@ public sealed class StaffInvitationService(
 			? $"""
 			  <div style="margin:0 0 24px;padding:16px;background:#f3f4f6;border-radius:8px;border:1px solid #e5e7eb;">
 			    <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Din midlertidige adgangskode (du skal ændre den ved første login):</p>
-			    <code style="font-size:18px;font-weight:700;letter-spacing:0.05em;color:#111827;">{HtmlEncoder.Default.Encode(temporaryPassword)}</code>
+			    <span style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:0.05em;color:#111827;user-select:all;">{HtmlEncoder.Default.Encode(temporaryPassword)}</span>
 			  </div>
 			  """
 			: string.Empty;
