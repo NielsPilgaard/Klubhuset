@@ -109,7 +109,7 @@ services:
       - dokploy-network
     depends_on:
       keycloak:
-        condition: service_healthy
+        condition: service_started
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`skoleoverblikket.dk`) && PathPrefix(`/api`)"
