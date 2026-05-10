@@ -143,16 +143,6 @@ public sealed class StaffInvitationsController(
 				statusCode: 400);
 		}
 
-		var callerEmail = User.GetEmail();
-		if (string.IsNullOrEmpty(callerEmail) ||
-			!string.Equals(callerEmail, invitation.Email, StringComparison.OrdinalIgnoreCase))
-		{
-			return Problem(
-				title: "Ugyldig invitation",
-				detail: "Invitationen tilhører ikke den konto, du er logget ind med.",
-				statusCode: 403);
-		}
-
 		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, ct);
 
 		if (invitation.Staff.IsAdmin)
