@@ -75,10 +75,19 @@ public sealed class StaffInvitationsController(
 		if (string.IsNullOrWhiteSpace(staff.Email))
 		{
 			return ValidationProblem(new ValidationProblemDetails
-
 			{
 				Errors = { ["email"] = ["Medarbejderen har ingen e-mailadresse. Tilføj en e-mail og prøv igen."] }
 			});
+		}
+
+		var emailAlreadyClaimed = await db.Staff
+			.AnyAsync(s => s.Id != staffId && s.Email == staff.Email && s.KeycloakSubject != null, ct);
+		if (emailAlreadyClaimed)
+		{
+			return Problem(
+				title: "E-mailadresse allerede i brug",
+				detail: "En anden medarbejder har allerede accepteret en invitation med denne e-mailadresse.",
+				statusCode: 409);
 		}
 
 		try
@@ -132,6 +141,16 @@ public sealed class StaffInvitationsController(
 				title: "Ugyldig eller udløbet invitation",
 				detail: "Invitationslinket er ugyldigt eller udløbet.",
 				statusCode: 400);
+		}
+
+		var callerEmail = User.GetEmail();
+		if (string.IsNullOrEmpty(callerEmail) ||
+			!string.Equals(callerEmail, invitation.Email, StringComparison.OrdinalIgnoreCase))
+		{
+			return Problem(
+				title: "Ugyldig invitation",
+				detail: "Invitationen tilhører ikke den konto, du er logget ind med.",
+				statusCode: 403);
 		}
 
 		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, ct);

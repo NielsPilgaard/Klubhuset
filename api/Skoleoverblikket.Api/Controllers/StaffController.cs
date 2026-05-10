@@ -67,6 +67,18 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<StaffDto>> Create([FromBody] UpsertStaffRequest req, CancellationToken ct)
 	{
+		if (!string.IsNullOrWhiteSpace(req.Email))
+		{
+			var emailTaken = await db.Staff.AnyAsync(s => s.Email == req.Email, ct);
+			if (emailTaken)
+			{
+				return ValidationProblem(new ValidationProblemDetails
+				{
+					Errors = { ["email"] = ["En medarbejder med denne e-mailadresse findes allerede."] }
+				});
+			}
+		}
+
 		var s = new Staff
 		{
 			Id = Guid.NewGuid(),
@@ -91,6 +103,18 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 		if (s is null)
 		{
 			return NotFound();
+		}
+
+		if (!string.IsNullOrWhiteSpace(req.Email) && req.Email != s.Email)
+		{
+			var emailTaken = await db.Staff.AnyAsync(other => other.Id != id && other.Email == req.Email, ct);
+			if (emailTaken)
+			{
+				return ValidationProblem(new ValidationProblemDetails
+				{
+					Errors = { ["email"] = ["En medarbejder med denne e-mailadresse findes allerede."] }
+				});
+			}
 		}
 
 		var isAdminChanged = s.IsAdmin != req.IsAdmin;

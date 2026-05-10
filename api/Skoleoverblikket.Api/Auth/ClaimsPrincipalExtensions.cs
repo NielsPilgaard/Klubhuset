@@ -8,4 +8,7 @@ public static class ClaimsPrincipalExtensions
 	/// Try both to handle different middleware configurations.
 	public static string? GetKeycloakSubject(this ClaimsPrincipal user) =>
 		user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub");
+
+	public static string? GetEmail(this ClaimsPrincipal user) =>
+		user.FindFirstValue("email");
 }
