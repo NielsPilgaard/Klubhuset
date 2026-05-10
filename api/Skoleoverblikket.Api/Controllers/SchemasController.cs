@@ -89,14 +89,14 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	public async Task<ActionResult<SchemaDto>> Create(Guid classId, [FromBody] CreateSchemaRequest req,
 		CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
+
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)
 		{
 			return NotFound();
 		}
-
-		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
-		if (!authResult.Succeeded) return Forbid();
 
 		var schema = new Schema
 		{
@@ -254,6 +254,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return NotFound();
 		}
+
+		var sourceAuthResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!sourceAuthResult.Succeeded) return Forbid();
 
 		var authResult = await authz.AuthorizeAsync(User, targetClassId, "EditClass");
 		if (!authResult.Succeeded) return Forbid();

@@ -33,7 +33,7 @@ public sealed class ClassPermissionsTests
         _factory = new ApiFactory();
         await _factory.StartAsync();
         await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
-        _adminClient = _factory.CreateClient();
+        _adminClient = CreateAdminClient();
     }
 
     [After(Test)]
@@ -113,7 +113,7 @@ public sealed class ClassPermissionsTests
             $"/api/v1/classes/{assignedClass.Id}/permissions",
             new { staffId = staff.Id });
 
-        var restrictedClient = CreateAdminClient(subject);
+        using var restrictedClient = CreateAdminClient(subject);
 
         var response = await restrictedClient.PostAsJsonAsync(
             $"/api/v1/classes/{assignedClass.Id}/schemas",
@@ -139,7 +139,7 @@ public sealed class ClassPermissionsTests
             $"/api/v1/classes/{assignedClass.Id}/permissions",
             new { staffId = staff.Id });
 
-        var restrictedClient = CreateAdminClient(subject);
+        using var restrictedClient = CreateAdminClient(subject);
 
         var response = await restrictedClient.PostAsJsonAsync(
             $"/api/v1/classes/{otherClass.Id}/schemas",
@@ -206,7 +206,7 @@ public sealed class ClassPermissionsTests
         await Assert.That(revokeResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         // No more rows → superadmin mode → restricted admin now has full access
-        var restrictedClient = CreateAdminClient(subject);
+        using var restrictedClient = CreateAdminClient(subject);
         var schemaResponse = await restrictedClient.PostAsJsonAsync(
             $"/api/v1/classes/{klass.Id}/schemas",
             new { name = "Skema efter revoke" });
@@ -234,7 +234,7 @@ public sealed class ClassPermissionsTests
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
             _factory.Services, TestTenantContext.DefaultTenantId);
 
-        var client = CreateNonAdminClient();
+        using var client = CreateNonAdminClient();
         var response = await client.GetAsync($"/api/v1/classes/{klass.Id}/permissions");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);

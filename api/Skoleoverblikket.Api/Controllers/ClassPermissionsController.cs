@@ -25,7 +25,6 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 		var permissions = await db.ClassPermissions
 			.AsNoTracking()
 			.Where(p => p.ClassId == classId)
-			.Include(p => p.Staff)
 			.OrderBy(p => p.Staff.Name)
 			.Select(p => new ClassPermissionDto(p.StaffId, p.Staff.Name, p.GrantedAt))
 			.ToListAsync(ct);

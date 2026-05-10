@@ -338,10 +338,8 @@ export default function StaffPage() {
 
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { throwOnError: _throwOnError, ...deleteApiV1StaffByIdMutationOptions } = deleteApiV1StaffByIdMutation()
   const deleteMutation = useMutation({
-    ...deleteApiV1StaffByIdMutationOptions,
+    mutationFn: deleteApiV1StaffByIdMutation().mutationFn,
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }),
     onError: (err: unknown) => {
       const problem = err as { detail?: string; status?: number } | null
