@@ -31,8 +31,7 @@ jobs:
         run: dotnet build api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --no-restore --configuration Release -p:CI=true
 
       - name: Test
-        run: dotnet test --no-build --configuration Release
-        # Tests live in sibling *Tests projects; when none exist yet this is a no-op.
+        run: dotnet run --project api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --configuration Release --no-build
 
       - name: Check OpenAPI spec is up to date
         run: |
