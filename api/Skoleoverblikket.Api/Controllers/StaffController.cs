@@ -215,6 +215,14 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 				statusCode: StatusCodes.Status403Forbidden);
 		}
 
+		var hasSlots = await db.SchemaSlots.AnyAsync(sl => sl.TeacherId == id || sl.AideId == id, ct);
+		if (hasSlots)
+		{
+			return Problem(
+				detail: "Medarbejderen er tildelt en eller flere lektioner og kan ikke slettes. Fjern medarbejderen fra alle lektioner først.",
+				statusCode: StatusCodes.Status409Conflict);
+		}
+
 		if (!string.IsNullOrWhiteSpace(s.KeycloakSubject))
 		{
 			try

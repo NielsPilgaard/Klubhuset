@@ -336,9 +336,19 @@ export default function StaffPage() {
 
   const { data: allInvitations } = useQuery(getApiV1StaffInvitationsOptions())
 
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
   const deleteMutation = useMutation({
     ...deleteApiV1StaffByIdMutation(),
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }),
+    onError: (err: unknown) => {
+      const problem = err as { detail?: string; status?: number } | null
+      if (problem?.status === 409) {
+        setDeleteError(problem.detail ?? 'Medarbejderen kan ikke slettes.')
+      } else {
+        setDeleteError('Der opstod en fejl. Prøv igen.')
+      }
+    },
   })
 
   function getLatestInvite(staffId: string): InvitationDto | undefined {
@@ -347,6 +357,22 @@ export default function StaffPage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+      {deleteError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDeleteError(null)}>
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full mx-4 p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-900">Kan ikke slette medarbejder</h2>
+            <p className="text-sm text-gray-600">{deleteError}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setDeleteError(null)}
+                className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-gray-900">Medarbejdere</h1>
