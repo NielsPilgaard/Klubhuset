@@ -7,10 +7,18 @@ import {
 import { useAuth } from '../auth/useAuth'
 import Logo from './Logo'
 
-const navItems = [
+interface NavItem {
+  to: string
+  label: string
+  icon: React.ReactNode
+  adminOnly?: boolean
+}
+
+const navItems: NavItem[] = [
   {
     to: '/dashboard',
     label: 'Oversigt',
+    adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
@@ -23,6 +31,7 @@ const navItems = [
   {
     to: '/klasser',
     label: 'Klasser',
+    adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -45,8 +54,23 @@ const navItems = [
     ),
   },
   {
+    to: '/mig/skema',
+    label: 'Mit skema',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <line x1="8" y1="14" x2="16" y2="14" />
+        <line x1="8" y1="18" x2="13" y2="18" />
+      </svg>
+    ),
+  },
+  {
     to: '/medarbejdere',
     label: 'Medarbejdere',
+    adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -57,6 +81,7 @@ const navItems = [
   {
     to: '/fag',
     label: 'Fag',
+    adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -67,6 +92,7 @@ const navItems = [
   {
     to: '/lokaler',
     label: 'Lokaler',
+    adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -86,6 +112,7 @@ const navItems = [
   {
     to: '/eksporter',
     label: 'Eksporter',
+    adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -102,7 +129,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { logout, userName } = useAuth()
+  const { logout, userName, isAdmin } = useAuth()
   const { data: school } = useQuery(getApiV1SchoolsSettingsOptions())
   const { data: onboarding } = useQuery({
     ...getApiV1SchoolsOnboardingStatusOptions(),
@@ -110,6 +137,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     staleTime: 60_000,
   })
   const wizardDone = onboarding != null && (onboarding.stepsCompleted ?? 0) >= (onboarding.stepsTotal ?? 0)
+
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   return (
     <>
@@ -134,7 +163,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* Brand */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-brand-700">
           <NavLink
-            to="/dashboard"
+            to={isAdmin ? '/dashboard' : '/mig/skema'}
             onClick={onClose}
             className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
           >
@@ -169,7 +198,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -190,7 +219,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Footer */}
         <div className="px-3 py-4 border-t border-brand-700 space-y-2">
-          {!wizardDone && (
+          {isAdmin && !wizardDone && (
             <NavLink
               to="/setup"
               onClick={onClose}
@@ -208,40 +237,44 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               Opsætningsguide
             </NavLink>
           )}
-          <NavLink
-            to="/abonnement"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-brand-600 text-white'
-                  : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-              }`
-            }
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-              <line x1="1" y1="10" x2="23" y2="10" />
-            </svg>
-            Abonnement
-          </NavLink>
-          <NavLink
-            to="/indstillinger"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-brand-600 text-white'
-                  : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-              }`
-            }
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            Indstillinger
-          </NavLink>
+          {isAdmin && (
+            <NavLink
+              to="/abonnement"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-brand-600 text-white'
+                    : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+                }`
+              }
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+              Abonnement
+            </NavLink>
+          )}
+          {isAdmin && (
+            <NavLink
+              to="/indstillinger"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-brand-600 text-white'
+                    : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+                }`
+              }
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              Indstillinger
+            </NavLink>
+          )}
           {userName && (
             <div className="flex items-center gap-2 px-3 py-2">
               <div className="flex items-center justify-center h-6 w-6 rounded-full bg-brand-600 shrink-0">

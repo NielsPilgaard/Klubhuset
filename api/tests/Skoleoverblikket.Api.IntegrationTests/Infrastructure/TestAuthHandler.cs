@@ -21,14 +21,23 @@ public sealed class TestAuthHandler(
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var claims = new[]
+        // X-Test-Roles: comma-separated role list; defaults to "admin"
+        var rolesHeader = Request.Headers["X-Test-Roles"].FirstOrDefault();
+        var roles = string.IsNullOrWhiteSpace(rolesHeader)
+            ? ["admin"]
+            : rolesHeader.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        // X-Test-Subject: keycloak subject for /me lookups; defaults to "test-user-id"
+        var subject = Request.Headers["X-Test-Subject"].FirstOrDefault() ?? "test-user-id";
+
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
-            new Claim("tenant_id", TestTenantContext.DefaultTenantId.ToString()),
-            // Default role: admin — individual tests can override if needed
-            new Claim(ClaimTypes.Role, "admin"),
+            new(ClaimTypes.Name, "Test User"),
+            new(ClaimTypes.NameIdentifier, subject),
+            new("sub", subject),
+            new("tenant_id", TestTenantContext.DefaultTenantId.ToString()),
         };
+        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);

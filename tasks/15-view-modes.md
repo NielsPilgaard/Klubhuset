@@ -39,82 +39,42 @@ It should be possible to assign admins to classes, a teacher can be an admin, an
 
 Current state: all authenticated users see identical sidebar and all routes. `Staff.IsAdmin` controls Keycloak `admin` realm role (used for backend `[Authorize(Roles = "admin")]`). `Staff.Role` is `Teacher | Aide | Substitute`. No frontend role-awareness exists.
 
-### Step 1 — Backend: `GET /api/v1/staff/me` endpoint
+### Step 1 — Backend: `GET /api/v1/staff/me` endpoint ✅
 
-Add endpoint to `StaffController` returning the current user's Staff record (matched by `KeycloakSubject` claim).
+Already existed. Returns `StaffDto(Id, Name, Email, Phone, Role, IsAdmin, KeycloakSubject)`. Resolves staff by `sub` claim via `ClaimsPrincipalExtensions.GetKeycloakSubject()`. Returns 404 if no match.
 
-```csharp
-// Response DTO
-record CurrentStaffDto(Guid Id, string Name, StaffRole Role, bool IsAdmin);
-```
+### Step 2 — Frontend: current user context ✅
 
-- Resolve staff by matching `HttpContext.User.FindFirst("sub")` against `Staff.KeycloakSubject`
-- Return 404 if no match (uninvited user who somehow authenticated)
-- No migration needed — all fields already exist
+Extended `AuthContext` with `staffRole: StaffRole | null` and `staffId: string | null`. `AuthProvider` fetches `/api/v1/staff/me` on auth via plain `fetch` (outside QueryClientProvider). Values available everywhere via `useAuth()`.
 
-### Step 2 — Frontend: current user context
+### Step 3 — Sidebar: role-filtered nav items ✅
 
-Add `useCurrentStaff` hook that fetches `/api/v1/staff/me` via the generated client. Expose via a `CurrentStaffContext` so any component can read `{ role, isAdmin }` without prop drilling.
+`navItems` now has `adminOnly?: boolean` field. Sidebar filters to `visibleNavItems` based on `isAdmin`. Admin sees all 9 nav items + footer links. Teacher/Aide sees: Kalender, Mit skema, Filer. Footer setup/abonnement/indstillinger links also hidden from non-admins. Logo links to `/dashboard` for admins, `/mig/skema` for teachers.
 
-```ts
-// web/src/auth/CurrentStaffContext.tsx
-interface CurrentStaff {
-  id: string
-  name: string
-  role: 'Teacher' | 'Aide' | 'Substitute'
-  isAdmin: boolean
-}
-```
+### Step 4 — Route protection ✅
 
-Wrap in `Layout.tsx` (already wraps all protected routes) so context is available everywhere.
-
-### Step 3 — Sidebar: role-filtered nav items
-
-Convert `navItems` in [web/src/components/Sidebar.tsx](../web/src/components/Sidebar.tsx) from a static array to a function that takes `CurrentStaff` and returns filtered items.
-
-**Admin sees**: Oversigt, Klasser, Kalender, Medarbejdere, Fag, Lokaler, Filer, Eksporter, Abonnement, Indstillinger  
-**Teacher/Aide sees**: Kalender, Filer  
-(Possibly Vikar dækning in future — keep `roles` field on nav items for easy extension)
-
-Nav item shape:
-```ts
-interface NavItem {
-  to: string
-  label: string
-  icon: ReactNode
-  adminOnly?: boolean  // hidden for teachers/aides
-}
-```
-
-### Step 4 — Route protection
-
-In [web/src/App.tsx](../web/src/App.tsx), wrap admin-only routes (`/klasser`, `/medarbejdere`, `/fag`, `/lokaler`, `/eksporter`, `/dashboard`, `/indstillinger`, `/setup`) with a guard component that redirects non-admins to `/kalender`.
-
-```tsx
-// AdminRoute: redirects to /kalender if !currentStaff.isAdmin
-```
-
-Non-admins landing on `/` also redirect to `/kalender` instead of `/dashboard`.
+`AdminRoute` component in [web/src/App.tsx](../web/src/App.tsx) redirects non-admins to `/mig/skema`. Wrapped routes: dashboard, klasser, medarbejdere, fag, lokaler, eksporter, abonnement, indstillinger, and all sub-routes. Non-admins at `/` redirect to `/mig/skema`.
 
 ### Step 5 — Admin "view as" switcher (optional, lower priority)
 
-Admins can preview the app as a Teacher. Add a dropdown in the sidebar footer (visible to `isAdmin` only) with options: `Admin | Lærer`. When "Lærer" is selected, store in local state and apply the teacher nav filter. Does not change backend permissions — purely cosmetic. Useful for admins who are also teachers and want to see their own schedule view.
+Not implemented. Future work.
 
-### Step 6 — Teacher's "My Schedule" page
+### Step 6 — Teacher's "My Schedule" page ✅
 
-Teachers need a `/mit-skema` page showing:
-- Their SchemaSlots for the current week (query SchemaSlots where `TeacherId = currentStaff.Id`)
-- Daily routine view: "Monday 8:00 — 4A Matematik — Room 12"
+Already existed as `MySchedulePage` at `/mig/skema`. Full weekly timetable grid, grouped by day, mobile-friendly. Added "Mit skema" to sidebar nav for non-admins.
 
-Backend: `GET /api/v1/staff/me/skema?week=2026-W19` — returns slots for that week.  
-Frontend: simple list grouped by day. Mobile-first (phone-friendly).
+### Step 7 — Tests ✅
 
-### Step 7 — Tests
+New file: `ViewModeTests.cs`
+- `GetMe_ReturnsCorrectStaff_ForAuthenticatedUser` — verifies correct staff returned by subject
+- `GetMe_Returns404_WhenSubjectNotLinkedToStaff` — verifies 404 for unknown subject
+- `AdminOnlyEndpoint_Returns403_ForTeacherRole` — verifies POST /staff blocked for non-admin
+- `AdminOnlyEndpoint_Returns201_ForAdminRole` — verifies admin can create staff
+- `GetMe_Returns404_WhenNoSubjectClaim` — verifies 404 when no staff matches default subject
 
-- API integration test: `GET /api/v1/staff/me` returns correct staff for authenticated user
-- API integration test: admin-only route returns 403 for teacher JWT
-- Playwright e2e: teacher login → sees Kalender not Klasser in sidebar
-- Playwright e2e: admin login → sees all nav items
+`TestAuthHandler` extended with `X-Test-Roles` and `X-Test-Subject` headers for per-test role control.
+
+All 45 integration tests pass. TypeScript build clean. dotnet format clean. dotnet build 0 warnings.
 
 ### What stays future
 

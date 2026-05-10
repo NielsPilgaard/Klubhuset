@@ -1,10 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import keycloak, { getInitPromise } from './keycloak'
 import { AuthContext } from './AuthContext'
+import type { StaffRole } from '../api/generated/types.gen'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false)
   const [initialized, setInitialized] = useState(false)
+  const [staffRole, setStaffRole] = useState<StaffRole | null>(null)
+  const [staffId, setStaffId] = useState<string | null>(null)
 
   useEffect(() => {
     getInitPromise()
@@ -28,6 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
   }, [])
 
+  useEffect(() => {
+    if (!authenticated || !keycloak.token) return
+
+    fetch('/api/v1/staff/me', {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { id?: string; role?: StaffRole } | null) => {
+        if (data) {
+          setStaffRole(data.role ?? null)
+          setStaffId(data.id ?? null)
+        }
+      })
+      .catch(() => {
+        // non-critical; leave null
+      })
+  }, [authenticated])
+
   if (!initialized) {
     return null
   }
@@ -49,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         authenticated,
         isAdmin,
+        staffRole,
+        staffId,
         token: keycloak.token,
         userName,
         logout: () => keycloak.logout({ redirectUri: 'https://skoleoverblikket.dk' }),
