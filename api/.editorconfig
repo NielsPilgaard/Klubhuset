@@ -177,7 +177,6 @@ dotnet_style_coalesce_expression = true:suggestion
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:warning
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
-end_of_line = crlf
 dotnet_diagnostic.ca1008.severity = warning
 dotnet_style_prefer_auto_properties = true:warning
 dotnet_style_prefer_collection_expression = true:warning
