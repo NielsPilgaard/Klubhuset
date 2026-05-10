@@ -1,25 +1,6 @@
 import { useState } from 'react'
 import type { CourseDto } from '../api/generated/types.gen'
-
-const CATEGORY_LABELS: Record<string, string> = {
-  Dansk: 'Dansk',
-  Matematik: 'Matematik',
-  Engelsk: 'Engelsk',
-  Naturfag: 'Naturfag',
-  Historie: 'Historie',
-  Musik: 'Musik',
-  Idraet: 'Idræt',
-  Kristendomskundskab: 'Kristendom',
-  Billedkunst: 'Billedkunst',
-  HaandvaerkOgDesign: 'Håndværk & Design',
-  Tysk: 'Tysk',
-  Fransk: 'Fransk',
-  Geografi: 'Geografi',
-  Biologi: 'Biologi',
-  FysikKemi: 'Fysik/Kemi',
-  Samfundsfag: 'Samfundsfag',
-  Fri: 'Fri',
-}
+import { SUBJECT_CATEGORY_LABELS } from '../utils/subjectCategory'
 
 interface CoursesSidebarProps {
   courses: CourseDto[]
@@ -121,7 +102,7 @@ export default function CoursesSidebar({
           ) : (
             filtered.map((course) => {
               const isSelected = course.id === selectedCourseId
-              const categoryLabel = course.category ? CATEGORY_LABELS[course.category] ?? course.category : null
+              const categoryLabel = course.category ? SUBJECT_CATEGORY_LABELS[course.category] ?? course.category : null
               return (
                 <button
                   key={course.id}
