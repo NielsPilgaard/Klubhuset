@@ -1,0 +1,9 @@
+{
+  "sdk": {
+    "rollForward": "latestFeature"
+  },
+  "msbuild-sdks": {},
+  "tools": {
+    "testRunner": "mtp"
+  }
+}
