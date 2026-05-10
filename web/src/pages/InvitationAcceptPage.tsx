@@ -120,6 +120,11 @@ export default function InvitationAcceptPage() {
   }
 
   if (state === 'success') {
+    const roles: string[] = (keycloak.tokenParsed as Record<string, unknown> | undefined)?.['realm_access']
+      ? ((keycloak.tokenParsed as Record<string, unknown>)['realm_access'] as Record<string, string[]>)['roles'] ?? []
+      : []
+    const destination = roles.includes('admin') ? '/dashboard' : '/mig/skema'
+
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
@@ -133,7 +138,7 @@ export default function InvitationAcceptPage() {
             Du er nu tilknyttet <strong>{preview?.schoolName}</strong>. Du kan gå til dit skema herunder.
           </p>
           <a
-            href="/dashboard"
+            href={destination}
             className="inline-block mt-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
             Gå til mit skema
