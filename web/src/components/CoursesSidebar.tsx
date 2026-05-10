@@ -54,7 +54,7 @@ function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRow
       />
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-medium text-gray-800 truncate">{course.name}</span>
-        {categoryLabel && (
+        {categoryLabel && categoryLabel !== course.name && (
           <span className="block text-xs text-gray-400 truncate">{categoryLabel}</span>
         )}
       </span>

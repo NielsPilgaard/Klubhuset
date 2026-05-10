@@ -242,7 +242,7 @@ public sealed class TimeSlotsController(
 				statusCode: 500);
 		}
 
-		return Ok();
+		return NoContent();
 	}
 
 	private async Task CreateBackupAsync(TimeSlotTemplate currentTemplate, CancellationToken ct)
