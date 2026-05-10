@@ -35,7 +35,7 @@ jobs:
           dotnet build api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --no-build --configuration Release
+        run: dotnet test api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --no-build --configuration Release --test-platform mtp
 
       - name: Check OpenAPI spec is up to date
         run: |
