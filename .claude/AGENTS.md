@@ -62,12 +62,14 @@ See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. For testing Str
 
 ## After completing a feature
 
-After finishing any feature or fix, **always run the full test suite** before declaring the work done:
+After finishing any feature or fix, run **all of the following** before declaring done:
 
-1. **Playwright e2e**: `cd web && npx playwright test --reporter=line` — this starts the Aspire stack automatically via `webServer` in `playwright.config.ts`. If the stack is already running, pass `SKIP_ASPIRE=1` to skip startup.
-2. **API integration tests**: `dotnet test`
+1. **TypeScript build**: `cd web && npm run build` — catches type errors that tsc would reject in CI.
+2. **dotnet format**: `dotnet format api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --verify-no-changes` — CI enforces this; fix any violations before committing.
+3. **API integration tests**: `dotnet test`
+4. **Playwright e2e**: `cd web && npx playwright test --reporter=line` — starts Aspire stack automatically. Pass `SKIP_ASPIRE=1` if already running.
 
-Do not report a task as complete until both suites pass. Or use the `/test` skill which handles this for you.
+Do not report a task as complete until all four pass. Or use the `/test` skill which handles steps 3–4 for you.
 
 ## What agents must never do
 
