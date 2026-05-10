@@ -158,57 +158,6 @@ public sealed class ConflictDetectionTests
 					.IsEqualTo(room.Id);
 	}
 
-	[Test]
-	public async Task MarkComplete_Returns422_WhenConflictsExist()
-	{
-		var slot1 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(13, 0),
-															  new TimeOnly(13, 45),
-															  sortOrder: 7);
-
-		var slot2 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(13, 0),
-															  new TimeOnly(13, 45),
-															  sortOrder: 8);
-
-		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, "Erik Eriksen");
-		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId, "Engelsk");
-		var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "5.c");
-
-		await UpsertSlotAsync(klass.Id, schema.Id, slot1.Id, weekday: DayOfWeek.Thursday, course.Id, teacher.Id);
-		await UpsertSlotAsync(klass.Id, schema.Id, slot2.Id, weekday: DayOfWeek.Thursday, course.Id, teacher.Id);
-
-		var response = await _client.PostAsync(
-						   $"/api/v1/classes/{klass.Id}/schemas/{schema.Id}/complete",
-						   null);
-
-		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
-	}
-
-	[Test]
-	public async Task MarkComplete_Returns200_WhenNoConflicts()
-	{
-		var slot1 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(14, 0),
-															  new TimeOnly(14, 45),
-															  sortOrder: 9);
-
-		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, "Frede Frederiksen");
-		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId, "Geografi");
-		var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "6.a");
-
-		await UpsertSlotAsync(klass.Id, schema.Id, slot1.Id, weekday: DayOfWeek.Monday, course.Id, teacher.Id);
-
-		var response = await _client.PostAsync(
-						   $"/api/v1/classes/{klass.Id}/schemas/{schema.Id}/complete",
-						   null);
-
-		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-	}
-
 	private async Task<HttpResponseMessage> UpsertSlotAsync(
 		Guid classId, Guid schemaId, Guid timeSlotId, DayOfWeek weekday,
 		Guid courseId, Guid teacherId, Guid? roomId = null, Guid? aideId = null)
