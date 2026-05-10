@@ -83,63 +83,71 @@ export function DatePicker({
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-3">
-          <style>{`
-            .rdp-dropdown select {
-              appearance: none;
-              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-              background-repeat: no-repeat;
-              background-position: right 6px center;
-              padding-right: 22px !important;
-            }
-            .rdp-dropdown select:focus {
-              outline: 2px solid var(--color-brand-500, #16a34a);
-              outline-offset: 1px;
-            }
-          `}</style>
-          <DayPicker
-            mode="single"
-            locale={da}
-            captionLayout="dropdown"
-            navLayout="around"
-            startMonth={new Date(fromYear, 0)}
-            endMonth={new Date(toYear, 11)}
-            showWeekNumber
-            selected={selected}
-            onSelect={handleSelect}
-            disabled={disabled}
-            defaultMonth={selected ?? (min ? isoToDate(min) : undefined)}
-            classNames={{
-              root: 'text-sm w-72',
-              months: 'flex flex-col',
-              month: 'w-full',
-              month_caption: 'flex items-center justify-between gap-1 px-1 mb-3',
-              caption_label: 'hidden',
-              dropdowns: 'flex items-center gap-1.5',
-              dropdown: 'rdp-dropdown relative',
-              dropdown_root: 'rdp-dropdown relative',
-              months_dropdown: 'px-2 py-1 pr-6 rounded-md border border-gray-200 text-sm font-semibold text-gray-900 bg-white hover:bg-gray-50 cursor-pointer transition-colors',
-              years_dropdown: 'px-2 py-1 pr-6 rounded-md border border-gray-200 text-sm font-semibold text-gray-900 bg-white hover:bg-gray-50 cursor-pointer transition-colors',
-              nav: 'flex items-center gap-0.5 ml-auto',
-              button_previous:
-                'p-1.5 rounded-lg hover:bg-gray-100 text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
-              button_next:
-                'p-1.5 rounded-lg hover:bg-gray-100 text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
-              weeks: 'w-full',
-              week: 'grid grid-cols-8',
-              weekdays: 'grid grid-cols-8 mb-1',
-              weekday: 'text-xs text-center text-gray-400 font-medium py-1',
-              day: 'flex items-center justify-center',
-              day_button:
-                'h-8 w-8 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-400',
-              today: '!border !border-brand-400 !text-brand-700 hover:!bg-brand-50',
-              selected: '!bg-brand-600 !text-white hover:!bg-brand-700',
-              disabled: '!text-gray-300 !cursor-not-allowed hover:!bg-transparent',
-              outside: '!text-gray-300',
-              week_number: 'text-xs text-gray-300 font-normal flex items-center justify-end pr-1 select-none',
-              week_number_header: 'text-xs text-gray-300 font-medium text-right pr-1',
-            }}
-          />
+        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl">
+          <div className="relative p-3">
+            <style>{`
+              .rdp-dropdown select {
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 6px center;
+                padding-right: 22px !important;
+              }
+              .rdp-dropdown select:focus {
+                outline: 2px solid var(--color-brand-500, #16a34a);
+                outline-offset: 1px;
+              }
+            `}</style>
+            <DayPicker
+              mode="single"
+              locale={da}
+              captionLayout="dropdown"
+              startMonth={new Date(fromYear, 0)}
+              endMonth={new Date(toYear, 11)}
+              showWeekNumber
+              selected={selected}
+              onSelect={handleSelect}
+              disabled={disabled}
+              defaultMonth={selected ?? (min ? isoToDate(min) : undefined)}
+              classNames={{
+                root: 'text-sm w-72',
+                months: 'flex flex-col',
+                month: 'w-full',
+                // Nav renders above months (default, no navLayout) — position it absolute top-right
+                nav: 'absolute top-3 right-3 flex items-center gap-0.5',
+                button_previous:
+                  'p-1.5 rounded-lg hover:bg-gray-100 text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
+                button_next:
+                  'p-1.5 rounded-lg hover:bg-gray-100 text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
+                chevron: 'fill-current w-4 h-4',
+                // Caption: just the dropdowns, centered; nav floats top-right above
+                month_caption: 'flex items-center mb-3',
+                caption_label: 'hidden',
+                dropdowns: 'flex items-center gap-1.5',
+                dropdown: 'rdp-dropdown relative',
+                dropdown_root: 'rdp-dropdown relative',
+                months_dropdown:
+                  'px-2 py-1 pr-6 rounded-md border border-gray-200 text-sm font-semibold text-gray-900 bg-white hover:bg-gray-50 cursor-pointer transition-colors',
+                years_dropdown:
+                  'px-2 py-1 pr-6 rounded-md border border-gray-200 text-sm font-semibold text-gray-900 bg-white hover:bg-gray-50 cursor-pointer transition-colors',
+                // Grid
+                weeks: 'w-full',
+                week: 'grid grid-cols-8',
+                weekdays: 'grid grid-cols-8 mb-1',
+                weekday: 'text-xs text-center text-gray-400 font-medium py-1',
+                day: 'flex items-center justify-center',
+                day_button:
+                  'h-8 w-8 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-400',
+                today: '[&>button]:border [&>button]:border-brand-400 [&>button]:text-brand-700 [&>button]:hover:bg-brand-50',
+                selected: '[&>button]:bg-brand-600 [&>button]:text-white [&>button]:hover:bg-brand-700',
+                disabled: '[&>button]:opacity-30 [&>button]:cursor-not-allowed [&>button]:hover:bg-transparent',
+                outside: '[&>button]:opacity-30',
+                week_number:
+                  'text-xs text-gray-300 font-normal flex items-center justify-end pr-1 select-none',
+                week_number_header: 'text-xs text-gray-300 font-medium text-right pr-1',
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
