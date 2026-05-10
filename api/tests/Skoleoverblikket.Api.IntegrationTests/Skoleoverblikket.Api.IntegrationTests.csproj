@@ -7,6 +7,8 @@
     
     <!-- Required for Microsoft.Testing.Platform -->
     <OutputType>Exe</OutputType>
+    <!-- Opt-in to new dotnet test runner (required for .NET 10 SDK + MTP) -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
     <PackageReference Include="TUnit" Version="1.43.2" />
     <PackageReference Include="TUnit.AspNetCore" Version="1.43.2" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />

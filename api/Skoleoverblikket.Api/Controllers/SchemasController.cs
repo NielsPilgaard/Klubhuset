@@ -43,6 +43,8 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	public record CopySchemaRequest([Required][MinLength(1)] string Name);
 
+	public record RenameSchemaRequest([Required][MinLength(1)] string Name);
+
 	public record UpsertSlotRequest(
 		[Required] Guid TimeSlotId,
 		DayOfWeek Weekday,
@@ -292,6 +294,22 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		return CreatedAtAction(nameof(GetById),
 							   new { classId = targetClassId, schemaId = copy.Id },
 							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.StartDate, copy.EndDate));
+	}
+
+	[HttpPut("{schemaId:guid}/rename")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult<SchemaDto>> Rename(Guid classId, Guid schemaId,
+		[FromBody] RenameSchemaRequest req, CancellationToken ct)
+	{
+		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		if (schema is null)
+		{
+			return NotFound();
+		}
+
+		schema.Name = req.Name;
+		await db.SaveChangesAsync(ct);
+		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
 	}
 
 	[HttpDelete("{schemaId:guid}")]

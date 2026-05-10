@@ -8,17 +8,17 @@ namespace Skoleoverblikket.Api.Auth;
 /// Bearer Authorization header on every outgoing Keycloak Admin API request.
 /// </summary>
 public sealed class KeycloakBearerHandler(
-    IKeycloakTokenApi tokenApi,
-    IOptions<KeycloakOptions> options) : DelegatingHandler
+	IKeycloakTokenApi tokenApi,
+	IOptions<KeycloakOptions> options) : DelegatingHandler
 {
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        var kc = options.Value;
-        var tokenResponse = await tokenApi.GetTokenAsync(
-            new TokenRequest("client_credentials", kc.AdminClientId, kc.AdminClientSecret), cancellationToken);
+	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+	{
+		var kc = options.Value;
+		var tokenResponse = await tokenApi.GetTokenAsync(
+			new TokenRequest("client_credentials", kc.AdminClientId, kc.AdminClientSecret), cancellationToken);
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
-        return await base.SendAsync(request, cancellationToken);
-    }
+		return await base.SendAsync(request, cancellationToken);
+	}
 }

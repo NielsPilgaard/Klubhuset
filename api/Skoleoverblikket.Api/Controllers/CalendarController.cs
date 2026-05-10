@@ -15,348 +15,362 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize]
 public sealed class CalendarController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
-    public record CalendarEntryDto(Guid Id, CalendarEntryType Type, string Title, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null, string? ExcludedDates = null);
-    public record CreateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
-    public record UpdateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
-    public record DefaultHolidayDto(string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
+	public record CalendarEntryDto(Guid Id, CalendarEntryType Type, string Title, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null, string? ExcludedDates = null);
+	public record CreateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
+	public record UpdateCalendarEntryRequest([Required][MinLength(1)] string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate, string? RecurrenceRule = null, DateOnly? RecurrenceEnd = null);
+	public record DefaultHolidayDto(string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
 
-    [HttpGet]
-    public async Task<ActionResult<List<CalendarEntryDto>>> GetAll([FromQuery] int? year, CancellationToken ct)
-    {
-        var query = db.CalendarEntries.AsNoTracking();
+	[HttpGet]
+	public async Task<ActionResult<List<CalendarEntryDto>>> GetAll([FromQuery] int? year, CancellationToken ct)
+	{
+		var query = db.CalendarEntries.AsNoTracking();
 
-        if (year.HasValue)
-        {
-            // Include base entries that fall in the year, plus recurring entries whose range may produce occurrences in the year
-            query = query.Where(e =>
-                e.StartDate.Year == year.Value || e.EndDate.Year == year.Value ||
-                (e.RecurrenceRule != null && (e.RecurrenceEnd == null || e.RecurrenceEnd.Value.Year >= year.Value) && e.StartDate.Year <= year.Value));
-        }
+		if (year.HasValue)
+		{
+			// Include base entries that fall in the year, plus recurring entries whose range may produce occurrences in the year
+			query = query.Where(e =>
+				e.StartDate.Year == year.Value || e.EndDate.Year == year.Value ||
+				(e.RecurrenceRule != null && (e.RecurrenceEnd == null || e.RecurrenceEnd.Value.Year >= year.Value) && e.StartDate.Year <= year.Value));
+		}
 
-        var rawEntries = await query
-            .OrderBy(e => e.StartDate)
-            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
-            .ToListAsync(ct);
+		var rawEntries = await query
+			.OrderBy(e => e.StartDate)
+			.Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
+			.ToListAsync(ct);
 
-        var result = new List<CalendarEntryDto>(rawEntries.Count);
-        var filterStart = year.HasValue ? new DateOnly(year.Value, 1, 1) : (DateOnly?)null;
-        var filterEnd   = year.HasValue ? new DateOnly(year.Value, 12, 31) : (DateOnly?)null;
+		var result = new List<CalendarEntryDto>(rawEntries.Count);
+		var filterStart = year.HasValue ? new DateOnly(year.Value, 1, 1) : (DateOnly?)null;
+		var filterEnd = year.HasValue ? new DateOnly(year.Value, 12, 31) : (DateOnly?)null;
 
-        foreach (var entry in rawEntries)
-        {
-            result.Add(entry);
-            if (entry.RecurrenceRule is not null)
-            {
-                var expansionEnd = entry.RecurrenceEnd ?? entry.StartDate.AddYears(2);
-                var occurrences = ExpandRecurrence(entry, expansionEnd, filterStart, filterEnd);
-                result.AddRange(occurrences);
-            }
-        }
+		foreach (var entry in rawEntries)
+		{
+			result.Add(entry);
+			if (entry.RecurrenceRule is not null)
+			{
+				var expansionEnd = entry.RecurrenceEnd ?? entry.StartDate.AddYears(2);
+				var occurrences = ExpandRecurrence(entry, expansionEnd, filterStart, filterEnd);
+				result.AddRange(occurrences);
+			}
+		}
 
-        result.Sort((a, b) => a.StartDate.CompareTo(b.StartDate));
-        return Ok(result);
-    }
+		result.Sort((a, b) => a.StartDate.CompareTo(b.StartDate));
+		return Ok(result);
+	}
 
-    [HttpGet("defaults")]
-    public ActionResult<List<DefaultHolidayDto>> GetDefaults([FromQuery] int? year)
-    {
-        // year is the school start year (e.g. 2025 = 2025/2026)
-        // Default to current school start year
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var targetYear = year ?? (today.Month >= 8 ? today.Year : today.Year - 1);
-        var defaults = ComputeDefaultHolidays(targetYear);
-        return Ok(defaults);
-    }
+	[HttpGet("defaults")]
+	public ActionResult<List<DefaultHolidayDto>> GetDefaults([FromQuery] int? year)
+	{
+		// year is the school start year (e.g. 2025 = 2025/2026)
+		// Default to current school start year
+		var today = DateOnly.FromDateTime(DateTime.Today);
+		var targetYear = year ?? (today.Month >= 8 ? today.Year : today.Year - 1);
+		var defaults = ComputeDefaultHolidays(targetYear);
+		return Ok(defaults);
+	}
 
-    [HttpPost]
-    [Authorize(Roles = "admin")]
-    public async Task<ActionResult<CalendarEntryDto>> Create([FromBody] CreateCalendarEntryRequest req, CancellationToken ct)
-    {
-        if (req.StartDate > req.EndDate)
+	[HttpPost]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult<CalendarEntryDto>> Create([FromBody] CreateCalendarEntryRequest req, CancellationToken ct)
+	{
+		if (req.StartDate > req.EndDate)
 		{
 			return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
 		}
 
 		var entry = new CalendarEntry
-        {
-            Id = Guid.NewGuid(),
-            TenantId = tenant.TenantId,
-            Type = req.Type,
-            Title = req.Title,
-            StartDate = req.StartDate,
-            EndDate = req.EndDate,
-            RecurrenceRule = req.RecurrenceRule,
-            RecurrenceEnd = req.RecurrenceEnd,
-        };
-        db.CalendarEntries.Add(entry);
-        await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
-    }
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenant.TenantId,
+			Type = req.Type,
+			Title = req.Title,
+			StartDate = req.StartDate,
+			EndDate = req.EndDate,
+			RecurrenceRule = req.RecurrenceRule,
+			RecurrenceEnd = req.RecurrenceEnd,
+		};
+		db.CalendarEntries.Add(entry);
+		await db.SaveChangesAsync(ct);
+		return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
+	}
 
-    [HttpPut("{id:guid}")]
-    [Authorize(Roles = "admin")]
-    public async Task<ActionResult<CalendarEntryDto>> Update(Guid id, [FromBody] UpdateCalendarEntryRequest req, CancellationToken ct)
-    {
-        if (req.StartDate > req.EndDate)
+	[HttpPut("{id:guid}")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult<CalendarEntryDto>> Update(Guid id, [FromBody] UpdateCalendarEntryRequest req, CancellationToken ct)
+	{
+		if (req.StartDate > req.EndDate)
 		{
 			return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
 		}
 
 		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
-        if (entry is null)
+		if (entry is null)
 		{
 			return NotFound();
 		}
 
 		entry.Type = req.Type;
-        entry.Title = req.Title;
-        entry.StartDate = req.StartDate;
-        entry.EndDate = req.EndDate;
-        entry.RecurrenceRule = req.RecurrenceRule;
-        entry.RecurrenceEnd = req.RecurrenceEnd;
-        await db.SaveChangesAsync(ct);
-        return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
-    }
+		entry.Title = req.Title;
+		entry.StartDate = req.StartDate;
+		entry.EndDate = req.EndDate;
+		entry.RecurrenceRule = req.RecurrenceRule;
+		entry.RecurrenceEnd = req.RecurrenceEnd;
+		await db.SaveChangesAsync(ct);
+		return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
+	}
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "admin")]
-    public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
-    {
-        var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
-        if (entry is null)
+	[HttpDelete("{id:guid}")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+	{
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		if (entry is null)
 		{
 			return NotFound();
 		}
 
 		db.CalendarEntries.Remove(entry);
-        await db.SaveChangesAsync(ct);
-        return NoContent();
-    }
+		await db.SaveChangesAsync(ct);
+		return NoContent();
+	}
 
-    // Exclude a single occurrence of a recurring event (adds date to ExcludedDates).
-    [HttpDelete("{id:guid}/occurrences/{date}")]
-    [Authorize(Roles = "admin")]
-    public async Task<ActionResult> DeleteOccurrence(Guid id, DateOnly date, CancellationToken ct)
-    {
-        var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
-        if (entry is null) return NotFound();
-        if (entry.RecurrenceRule is null) return Problem("Begivenheden gentages ikke.", statusCode: 400);
+	// Exclude a single occurrence of a recurring event (adds date to ExcludedDates).
+	[HttpDelete("{id:guid}/occurrences/{date}")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult> DeleteOccurrence(Guid id, DateOnly date, CancellationToken ct)
+	{
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		if (entry is null)
+		{
+			return NotFound();
+		}
 
-        var existing = entry.ExcludedDates?
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToHashSet() ?? [];
-        existing.Add(date.ToString("yyyy-MM-dd"));
-        entry.ExcludedDates = string.Join(',', existing.OrderBy(d => d));
-        await db.SaveChangesAsync(ct);
-        return NoContent();
-    }
+		if (entry.RecurrenceRule is null)
+		{
+			return Problem("Begivenheden gentages ikke.", statusCode: 400);
+		}
 
-    // Truncate a recurring event so it ends before the given date (delete this and all subsequent).
-    [HttpDelete("{id:guid}/from/{date}")]
-    [Authorize(Roles = "admin")]
-    public async Task<ActionResult> DeleteFrom(Guid id, DateOnly date, CancellationToken ct)
-    {
-        var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
-        if (entry is null) return NotFound();
-        if (entry.RecurrenceRule is null) return Problem("Begivenheden gentages ikke.", statusCode: 400);
+		var existing = entry.ExcludedDates?
+			.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.ToHashSet() ?? [];
+		existing.Add(date.ToString("yyyy-MM-dd"));
+		entry.ExcludedDates = string.Join(',', existing.OrderBy(d => d));
+		await db.SaveChangesAsync(ct);
+		return NoContent();
+	}
 
-        // If the base occurrence itself is being cut, delete the entire entry.
-        if (date <= entry.StartDate)
-        {
-            db.CalendarEntries.Remove(entry);
-        }
-        else
-        {
-            // Set RecurrenceEnd to one day before the cut date so occurrences from `date` onward are excluded.
-            entry.RecurrenceEnd = date.AddDays(-1);
-            // Remove any excluded dates that are now beyond the new end
-            if (entry.ExcludedDates is not null)
-            {
-                var kept = entry.ExcludedDates
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    .Where(d => DateOnly.TryParse(d, out var parsed) && parsed < date)
-                    .ToList();
-                entry.ExcludedDates = kept.Count > 0 ? string.Join(',', kept) : null;
-            }
-        }
+	// Truncate a recurring event so it ends before the given date (delete this and all subsequent).
+	[HttpDelete("{id:guid}/from/{date}")]
+	[Authorize(Roles = "admin")]
+	public async Task<ActionResult> DeleteFrom(Guid id, DateOnly date, CancellationToken ct)
+	{
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		if (entry is null)
+		{
+			return NotFound();
+		}
 
-        await db.SaveChangesAsync(ct);
-        return NoContent();
-    }
+		if (entry.RecurrenceRule is null)
+		{
+			return Problem("Begivenheden gentages ikke.", statusCode: 400);
+		}
 
-    [HttpGet("export.ics")]
-    public async Task<IActionResult> ExportIcs(CancellationToken ct)
-    {
-        var entries = await db.CalendarEntries
-            .AsNoTracking()
-            .OrderBy(e => e.StartDate)
-            .Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
-            .ToListAsync(ct);
+		// If the base occurrence itself is being cut, delete the entire entry.
+		if (date <= entry.StartDate)
+		{
+			db.CalendarEntries.Remove(entry);
+		}
+		else
+		{
+			// Set RecurrenceEnd to one day before the cut date so occurrences from `date` onward are excluded.
+			entry.RecurrenceEnd = date.AddDays(-1);
+			// Remove any excluded dates that are now beyond the new end
+			if (entry.ExcludedDates is not null)
+			{
+				var kept = entry.ExcludedDates
+					.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+					.Where(d => DateOnly.TryParse(d, out var parsed) && parsed < date)
+					.ToList();
+				entry.ExcludedDates = kept.Count > 0 ? string.Join(',', kept) : null;
+			}
+		}
 
-        var bytes = IcsBuilder.Build(entries);
-        Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleplanen-kalender.ics\"");
-        return File(bytes, "text/calendar; charset=utf-8");
-    }
+		await db.SaveChangesAsync(ct);
+		return NoContent();
+	}
 
-    // Expands a recurring entry into additional occurrences after its base occurrence.
-    // Returns only the extra occurrences (not the original). Each occurrence keeps the same Id.
-    internal static List<CalendarEntryDto> ExpandRecurrencePublic(
-        CalendarEntryDto entry,
-        DateOnly expansionEnd,
-        DateOnly? filterStart,
-        DateOnly? filterEnd) => ExpandRecurrence(entry, expansionEnd, filterStart, filterEnd);
+	[HttpGet("export.ics")]
+	public async Task<IActionResult> ExportIcs(CancellationToken ct)
+	{
+		var entries = await db.CalendarEntries
+			.AsNoTracking()
+			.OrderBy(e => e.StartDate)
+			.Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
+			.ToListAsync(ct);
 
-    private static List<CalendarEntryDto> ExpandRecurrence(
-        CalendarEntryDto entry,
-        DateOnly expansionEnd,
-        DateOnly? filterStart,
-        DateOnly? filterEnd)
-    {
-        var result = new List<CalendarEntryDto>();
-        var rule = entry.RecurrenceRule ?? string.Empty;
+		var bytes = IcsBuilder.Build(entries);
+		Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleplanen-kalender.ics\"");
+		return File(bytes, "text/calendar; charset=utf-8");
+	}
 
-        // Parse FREQ and INTERVAL from rule string, e.g. "FREQ=WEEKLY;INTERVAL=2"
-        var freq = string.Empty;
-        var interval = 1;
-        foreach (var part in rule.Split(';'))
-        {
-            if (part.StartsWith("FREQ=", StringComparison.OrdinalIgnoreCase))
-            {
-                freq = part[5..].Trim().ToUpperInvariant();
-            }
-            else if (part.StartsWith("INTERVAL=", StringComparison.OrdinalIgnoreCase) &&
-                     int.TryParse(part[9..].Trim(), out var parsed))
-            {
-                interval = parsed;
-            }
-        }
+	// Expands a recurring entry into additional occurrences after its base occurrence.
+	// Returns only the extra occurrences (not the original). Each occurrence keeps the same Id.
+	internal static List<CalendarEntryDto> ExpandRecurrencePublic(
+		CalendarEntryDto entry,
+		DateOnly expansionEnd,
+		DateOnly? filterStart,
+		DateOnly? filterEnd) => ExpandRecurrence(entry, expansionEnd, filterStart, filterEnd);
 
-        // Treat BIWEEKLY as WEEKLY with interval 2
-        if (freq == "BIWEEKLY")
-        {
-            freq = "WEEKLY";
-            interval = 2;
-        }
+	private static List<CalendarEntryDto> ExpandRecurrence(
+		CalendarEntryDto entry,
+		DateOnly expansionEnd,
+		DateOnly? filterStart,
+		DateOnly? filterEnd)
+	{
+		var result = new List<CalendarEntryDto>();
+		var rule = entry.RecurrenceRule ?? string.Empty;
 
-        if (freq is not ("WEEKLY" or "MONTHLY"))
-        {
-            return result;
-        }
+		// Parse FREQ and INTERVAL from rule string, e.g. "FREQ=WEEKLY;INTERVAL=2"
+		var freq = string.Empty;
+		var interval = 1;
+		foreach (var part in rule.Split(';'))
+		{
+			if (part.StartsWith("FREQ=", StringComparison.OrdinalIgnoreCase))
+			{
+				freq = part[5..].Trim().ToUpperInvariant();
+			}
+			else if (part.StartsWith("INTERVAL=", StringComparison.OrdinalIgnoreCase) &&
+					 int.TryParse(part[9..].Trim(), out var parsed))
+			{
+				interval = parsed;
+			}
+		}
 
-        var duration = entry.EndDate.DayNumber - entry.StartDate.DayNumber;
-        var current = entry.StartDate;
+		// Treat BIWEEKLY as WEEKLY with interval 2
+		if (freq == "BIWEEKLY")
+		{
+			freq = "WEEKLY";
+			interval = 2;
+		}
 
-        var excluded = entry.ExcludedDates?
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(d => DateOnly.TryParse(d, out var pd) ? pd : (DateOnly?)null)
-            .Where(d => d.HasValue)
-            .Select(d => d!.Value)
-            .ToHashSet() ?? [];
+		if (freq is not ("WEEKLY" or "MONTHLY"))
+		{
+			return result;
+		}
 
-        for (var safety = 0; safety < 500; safety++)
-        {
-            current = freq == "WEEKLY"
-                ? current.AddDays(7 * interval)
-                : current.AddMonths(interval);
+		var duration = entry.EndDate.DayNumber - entry.StartDate.DayNumber;
+		var current = entry.StartDate;
 
-            if (current > expansionEnd)
-            {
-                break;
-            }
+		var excluded = entry.ExcludedDates?
+			.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.Select(d => DateOnly.TryParse(d, out var pd) ? pd : (DateOnly?)null)
+			.Where(d => d.HasValue)
+			.Select(d => d!.Value)
+			.ToHashSet() ?? [];
 
-            if (excluded.Contains(current))
-            {
-                continue;
-            }
+		for (var safety = 0; safety < 500; safety++)
+		{
+			current = freq == "WEEKLY"
+				? current.AddDays(7 * interval)
+				: current.AddMonths(interval);
 
-            var occEnd = DateOnly.FromDayNumber(current.DayNumber + duration);
+			if (current > expansionEnd)
+			{
+				break;
+			}
 
-            // Apply year filter clamping if requested
-            if (filterEnd.HasValue && current > filterEnd.Value)
-            {
-                break;
-            }
+			if (excluded.Contains(current))
+			{
+				continue;
+			}
 
-            if (filterStart.HasValue && occEnd < filterStart.Value)
-            {
-                continue;
-            }
+			var occEnd = DateOnly.FromDayNumber(current.DayNumber + duration);
 
-            result.Add(entry with { StartDate = current, EndDate = occEnd });
-        }
+			// Apply year filter clamping if requested
+			if (filterEnd.HasValue && current > filterEnd.Value)
+			{
+				break;
+			}
 
-        return result;
-    }
+			if (filterStart.HasValue && occEnd < filterStart.Value)
+			{
+				continue;
+			}
 
-    private static List<DefaultHolidayDto> ComputeDefaultHolidays(int year)
-    {
-        // year is treated as the school start year (e.g. 2025 = school year 2025/2026)
-        var schoolStartYear = year;
-        var schoolEndYear = schoolStartYear + 1;
+			result.Add(entry with { StartDate = current, EndDate = occEnd });
+		}
 
-        var easter = ComputeEaster(schoolEndYear);
+		return result;
+	}
 
-        // Palm Sunday = Easter - 7, Easter Monday = Easter + 1
-        var palmSunday = easter.AddDays(-7);
-        var easterMonday = easter.AddDays(1);
+	private static List<DefaultHolidayDto> ComputeDefaultHolidays(int year)
+	{
+		// year is treated as the school start year (e.g. 2025 = school year 2025/2026)
+		var schoolStartYear = year;
+		var schoolEndYear = schoolStartYear + 1;
 
-        // Kristi Himmelfartsdag = Easter + 39
-        var ascension = easter.AddDays(39);
+		var easter = ComputeEaster(schoolEndYear);
 
-        // Pinse: Whit Sunday = Easter + 49, Whit Monday = Easter + 50
-        // Show Fri before + Mon as Ferie
-        var whitFriday = easter.AddDays(48); // Friday before Whit Sunday
-        var whitMonday = easter.AddDays(50);
+		// Palm Sunday = Easter - 7, Easter Monday = Easter + 1
+		var palmSunday = easter.AddDays(-7);
+		var easterMonday = easter.AddDays(1);
 
-        // Efterårsferie: ISO week 42 of school start year
-        var efteraarStart = DateOnly.FromDateTime(ISOWeek.ToDateTime(schoolStartYear, 42, DayOfWeek.Monday));
-        var efteraarEnd = efteraarStart.AddDays(4);
+		// Kristi Himmelfartsdag = Easter + 39
+		var ascension = easter.AddDays(39);
 
-        // Juleferie: Dec 22 through Jan 2
-        var juleStart = new DateOnly(schoolStartYear, 12, 22);
-        var juleEnd = new DateOnly(schoolEndYear, 1, 2);
+		// Pinse: Whit Sunday = Easter + 49, Whit Monday = Easter + 50
+		// Show Fri before + Mon as Ferie
+		var whitFriday = easter.AddDays(48); // Friday before Whit Sunday
+		var whitMonday = easter.AddDays(50);
 
-        // Vinterferie: ISO week 7 of school end year
-        var vinterStart = DateOnly.FromDateTime(ISOWeek.ToDateTime(schoolEndYear, 7, DayOfWeek.Monday));
-        var vinterEnd = vinterStart.AddDays(4);
+		// Efterårsferie: ISO week 42 of school start year
+		var efteraarStart = DateOnly.FromDateTime(ISOWeek.ToDateTime(schoolStartYear, 42, DayOfWeek.Monday));
+		var efteraarEnd = efteraarStart.AddDays(4);
 
-        // Sommerferie: Jun 26 through Aug 7
-        var sommerStart = new DateOnly(schoolEndYear, 6, 26);
-        var sommerEnd = new DateOnly(schoolEndYear, 8, 7);
+		// Juleferie: Dec 22 through Jan 2
+		var juleStart = new DateOnly(schoolStartYear, 12, 22);
+		var juleEnd = new DateOnly(schoolEndYear, 1, 2);
 
-        // Grundlovsdag: June 5
-        var grundlovsdag = new DateOnly(schoolEndYear, 6, 5);
+		// Vinterferie: ISO week 7 of school end year
+		var vinterStart = DateOnly.FromDateTime(ISOWeek.ToDateTime(schoolEndYear, 7, DayOfWeek.Monday));
+		var vinterEnd = vinterStart.AddDays(4);
 
-        return
-        [
-            new DefaultHolidayDto("Efterårsferie", CalendarEntryType.Ferie, efteraarStart, efteraarEnd),
-            new DefaultHolidayDto("Juleferie", CalendarEntryType.Ferie, juleStart, juleEnd),
-            new DefaultHolidayDto("Vinterferie", CalendarEntryType.Ferie, vinterStart, vinterEnd),
-            new DefaultHolidayDto("Påskeferie", CalendarEntryType.Ferie, palmSunday, easterMonday),
-            new DefaultHolidayDto("Kristi Himmelfartsdag", CalendarEntryType.Lukkedag, ascension, ascension),
-            new DefaultHolidayDto("Pinse", CalendarEntryType.Ferie, whitFriday, whitMonday),
-            new DefaultHolidayDto("Grundlovsdag", CalendarEntryType.Lukkedag, grundlovsdag, grundlovsdag),
-            new DefaultHolidayDto("Sommerferie", CalendarEntryType.Ferie, sommerStart, sommerEnd),
-        ];
-    }
+		// Sommerferie: Jun 26 through Aug 7
+		var sommerStart = new DateOnly(schoolEndYear, 6, 26);
+		var sommerEnd = new DateOnly(schoolEndYear, 8, 7);
 
-    private static DateOnly ComputeEaster(int year)
-    {
-        // Anonymous Gregorian algorithm
-        var a = year % 19;
-        var b = year / 100;
-        var c = year % 100;
-        var d = b / 4;
-        var e = b % 4;
-        var f = (b + 8) / 25;
-        var g = (b - f + 1) / 3;
-        var h = (19 * a + b - d - g + 15) % 30;
-        var i = c / 4;
-        var k = c % 4;
-        var l = (32 + 2 * e + 2 * i - h - k) % 7;
-        var m = (a + 11 * h + 22 * l) / 451;
-        var month = (h + l - 7 * m + 114) / 31;
-        var day = (h + l - 7 * m + 114) % 31 + 1;
-        return new DateOnly(year, month, day);
-    }
+		// Grundlovsdag: June 5
+		var grundlovsdag = new DateOnly(schoolEndYear, 6, 5);
+
+		return
+		[
+			new DefaultHolidayDto("Efterårsferie", CalendarEntryType.Ferie, efteraarStart, efteraarEnd),
+			new DefaultHolidayDto("Juleferie", CalendarEntryType.Ferie, juleStart, juleEnd),
+			new DefaultHolidayDto("Vinterferie", CalendarEntryType.Ferie, vinterStart, vinterEnd),
+			new DefaultHolidayDto("Påskeferie", CalendarEntryType.Ferie, palmSunday, easterMonday),
+			new DefaultHolidayDto("Kristi Himmelfartsdag", CalendarEntryType.Lukkedag, ascension, ascension),
+			new DefaultHolidayDto("Pinse", CalendarEntryType.Ferie, whitFriday, whitMonday),
+			new DefaultHolidayDto("Grundlovsdag", CalendarEntryType.Lukkedag, grundlovsdag, grundlovsdag),
+			new DefaultHolidayDto("Sommerferie", CalendarEntryType.Ferie, sommerStart, sommerEnd),
+		];
+	}
+
+	private static DateOnly ComputeEaster(int year)
+	{
+		// Anonymous Gregorian algorithm
+		var a = year % 19;
+		var b = year / 100;
+		var c = year % 100;
+		var d = b / 4;
+		var e = b % 4;
+		var f = (b + 8) / 25;
+		var g = (b - f + 1) / 3;
+		var h = (19 * a + b - d - g + 15) % 30;
+		var i = c / 4;
+		var k = c % 4;
+		var l = (32 + 2 * e + 2 * i - h - k) % 7;
+		var m = (a + 11 * h + 22 * l) / 451;
+		var month = (h + l - 7 * m + 114) / 31;
+		var day = (h + l - 7 * m + 114) % 31 + 1;
+		return new DateOnly(year, month, day);
+	}
 }

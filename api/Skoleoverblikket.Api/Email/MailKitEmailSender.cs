@@ -8,34 +8,34 @@ namespace Skoleoverblikket.Api.Email;
 
 public sealed class MailKitEmailSender(IOptionsMonitor<SmtpOptions> options) : IEmailSender
 {
-    private readonly SmtpOptions _options = options.CurrentValue;
+	private readonly SmtpOptions _options = options.CurrentValue;
 
-    public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
-    {
-        var mime = new MimeMessage();
-        mime.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
-        mime.To.Add(MailboxAddress.Parse(message.To));
-        mime.Subject = message.Subject;
+	public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+	{
+		var mime = new MimeMessage();
+		mime.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
+		mime.To.Add(MailboxAddress.Parse(message.To));
+		mime.Subject = message.Subject;
 
-        var bodyBuilder = new BodyBuilder
-        {
-            HtmlBody = message.HtmlBody,
-            TextBody = message.PlainTextBody,
-        };
-        mime.Body = bodyBuilder.ToMessageBody();
+		var bodyBuilder = new BodyBuilder
+		{
+			HtmlBody = message.HtmlBody,
+			TextBody = message.PlainTextBody,
+		};
+		mime.Body = bodyBuilder.ToMessageBody();
 
-        using var smtp = new SmtpClient();
+		using var smtp = new SmtpClient();
 
-        var tls = string.IsNullOrEmpty(_options.Username) ? SecureSocketOptions.None : SecureSocketOptions.Auto;
-        
-        await smtp.ConnectAsync(_options.Host, _options.Port, tls, cancellationToken);
+		var tls = string.IsNullOrEmpty(_options.Username) ? SecureSocketOptions.None : SecureSocketOptions.Auto;
 
-        if (!string.IsNullOrEmpty(_options.Username) && smtp.Capabilities.HasFlag(SmtpCapabilities.Authentication))
+		await smtp.ConnectAsync(_options.Host, _options.Port, tls, cancellationToken);
+
+		if (!string.IsNullOrEmpty(_options.Username) && smtp.Capabilities.HasFlag(SmtpCapabilities.Authentication))
 		{
 			await smtp.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);
 		}
 
 		await smtp.SendAsync(mime, cancellationToken);
-        await smtp.DisconnectAsync(quit: true, cancellationToken);
-    }
+		await smtp.DisconnectAsync(quit: true, cancellationToken);
+	}
 }

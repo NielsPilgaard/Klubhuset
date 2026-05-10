@@ -12,6 +12,7 @@ import {
   postApiV1ClassesByClassIdSchemasMutation,
   deleteApiV1ClassesByClassIdSchemasBySchemaIdMutation,
   putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation,
+  putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation,
   postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation,
   postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
@@ -330,6 +331,65 @@ function isActiveNow(startDate?: string | null, endDate?: string | null): boolea
   return startDate <= today && endDate >= today
 }
 
+interface RenameSchemaModalProps {
+  classId: string
+  schema: SchemaDto
+  onClose: () => void
+}
+
+function RenameSchemaModal({ classId, schema, onClose }: RenameSchemaModalProps) {
+  const qc = useQueryClient()
+  const [name, setName] = useState(schema.name ?? '')
+
+  const mutation = useMutation({
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
+      onClose()
+    },
+  })
+
+  function handleSave() {
+    if (!name.trim() || mutation.isPending) return
+    mutation.mutate({ path: { classId, schemaId: schema.id! }, body: { name: name.trim() } })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Omdøb skema</h2>
+        </div>
+        <div className="px-6 py-5">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Navn</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
+            autoFocus
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+          {mutation.isError && (
+            <p className="text-sm text-red-600 mt-2">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            Annuller
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!name.trim() || mutation.isPending}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {mutation.isPending ? 'Gemmer...' : 'Gem'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface DateRangeModalProps {
   classId: string
   schema: SchemaDto
@@ -414,6 +474,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
   const [showCreate, setShowCreate] = useState(false)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
   const [editingDateRange, setEditingDateRange] = useState<SchemaDto | null>(null)
+  const [renamingSchema, setRenamingSchema] = useState<SchemaDto | null>(null)
 
   useEffect(() => {
     if (autoOpenCreate) {
@@ -503,6 +564,16 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 Ugeplan
               </button>
               <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/klasser/${classId}/skema/${s.id}`) }}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Rediger
+              </button>
+              <button
                 onClick={(e) => { e.stopPropagation(); setEditingDateRange(s) }}
                 className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
@@ -513,6 +584,15 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
                 Datoer
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setRenamingSchema(s) }}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                </svg>
+                Omdøb
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setCopyingSchema(s) }}
@@ -568,6 +648,13 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
           classId={classId}
           schema={editingDateRange}
           onClose={() => setEditingDateRange(null)}
+        />
+      )}
+      {renamingSchema && (
+        <RenameSchemaModal
+          classId={classId}
+          schema={renamingSchema}
+          onClose={() => setRenamingSchema(null)}
         />
       )}
     </div>

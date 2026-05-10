@@ -69,7 +69,12 @@ After finishing any feature or fix, run **all of the following** before declarin
 3. **API integration tests**: `dotnet test`
 4. **Playwright e2e**: `cd web && npx playwright test --reporter=line` — starts Aspire stack automatically. Pass `SKIP_ASPIRE=1` if already running.
 
-Do not report a task as complete until all four pass. Or use the `/test` skill which handles steps 3–4 for you.
+Do not report a task as complete until all four pass.
+
+**Use the skills instead of running commands manually:**
+- `/verify` — runs steps 1–3 (TypeScript build, dotnet format, dotnet build, API integration tests)
+- `/test` — runs step 4 (Playwright e2e)
+- `/add-migration` — generates a new EF Core migration after model changes
 
 ## What agents must never do
 

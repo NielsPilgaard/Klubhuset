@@ -26,31 +26,31 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder
 
 // Keycloak
 builder.Services.AddOptions<KeycloakOptions>()
-       .BindConfiguration(KeycloakOptions.SectionName)
-       .ValidateDataAnnotations()
-       .ValidateOnStart();
+	   .BindConfiguration(KeycloakOptions.SectionName)
+	   .ValidateDataAnnotations()
+	   .ValidateOnStart();
 
 // Auth — validates Keycloak-issued JWTs
 builder.Services.AddKeycloakAuth();
 
 // Keycloak Admin REST API clients (for creating users during signup)
 builder.Services
-    .AddRefitClient<IKeycloakTokenApi>()
-    .ConfigureHttpClient((sp, c) =>
-    {
-        var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
-        c.BaseAddress = new Uri(kc.TokenBaseUrl);
-    });
+	.AddRefitClient<IKeycloakTokenApi>()
+	.ConfigureHttpClient((sp, c) =>
+	{
+		var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
+		c.BaseAddress = new Uri(kc.TokenBaseUrl);
+	});
 
 builder.Services
-    .AddTransient<KeycloakBearerHandler>()
-    .AddRefitClient<IKeycloakAdminApi>()
-    .ConfigureHttpClient((sp, c) =>
-    {
-        var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
-        c.BaseAddress = new Uri(kc.AdminBaseUrl);
-    })
-    .AddHttpMessageHandler<KeycloakBearerHandler>();
+	.AddTransient<KeycloakBearerHandler>()
+	.AddRefitClient<IKeycloakAdminApi>()
+	.ConfigureHttpClient((sp, c) =>
+	{
+		var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
+		c.BaseAddress = new Uri(kc.AdminBaseUrl);
+	})
+	.AddHttpMessageHandler<KeycloakBearerHandler>();
 
 builder.Services.AddScoped<KeycloakAdminService>();
 
@@ -104,23 +104,23 @@ app.MapDefaultEndpoints();
 var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
 if (!app.Environment.IsProduction() && !isOpenApiGeneration)
 {
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+	await using var scope = app.Services.CreateAsyncScope();
+	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+	await db.Database.MigrateAsync();
 }
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
-    // Seed well-known dev/prod fixtures (idempotent — skipped if already present).
-    if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleoverblikket-db")))
-    {
-        _ = Task.Run(() => app.Services.SeedAsync());
-    }
+	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
+	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleoverblikket-db")))
+	{
+		_ = Task.Run(() => app.Services.SeedAsync());
+	}
 
-    if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
-    {
-        _ = Task.Run(() => app.Services.EnsureS3BucketAsync());
-    }
+	if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
+	{
+		_ = Task.Run(() => app.Services.EnsureS3BucketAsync());
+	}
 }
 
 app.Run();

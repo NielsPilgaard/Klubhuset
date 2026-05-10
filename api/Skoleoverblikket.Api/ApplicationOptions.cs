@@ -4,8 +4,8 @@ namespace Skoleoverblikket.Api;
 
 public sealed class ApplicationOptions
 {
-    public const string SectionName = "App";
+	public const string SectionName = "App";
 
-    [Required(AllowEmptyStrings = false)]
-    public string BaseUrl { get; init; } = "http://localhost:5173";
+	[Required(AllowEmptyStrings = false)]
+	public string BaseUrl { get; init; } = "http://localhost:5173";
 }

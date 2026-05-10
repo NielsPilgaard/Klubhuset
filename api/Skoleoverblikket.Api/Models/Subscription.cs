@@ -6,11 +6,11 @@ namespace Skoleoverblikket.Api.Models;
 
 public enum SubscriptionStatus
 {
-    Trialing,
-    Active,
-    PastDue,
-    Canceled,
-    Unpaid,
+	Trialing,
+	Active,
+	PastDue,
+	Canceled,
+	Unpaid,
 }
 
 /// <summary>
@@ -22,32 +22,32 @@ public enum SubscriptionStatus
 [Index(nameof(SchoolId), IsUnique = true)]
 public sealed class Subscription : IEntityTypeConfiguration<Subscription>
 {
-    public Guid Id { get; set; }
+	public Guid Id { get; set; }
 
-    public Guid SchoolId { get; set; }
+	public Guid SchoolId { get; set; }
 
-    public SubscriptionStatus Status { get; set; }
+	public SubscriptionStatus Status { get; set; }
 
-    /// <summary>Stripe customer ID (cus_xxx)</summary>
-    public string? StripeCustomerId { get; set; }
+	/// <summary>Stripe customer ID (cus_xxx)</summary>
+	public string? StripeCustomerId { get; set; }
 
-    /// <summary>Stripe subscription ID (sub_xxx)</summary>
-    public string? StripeSubscriptionId { get; set; }
+	/// <summary>Stripe subscription ID (sub_xxx)</summary>
+	public string? StripeSubscriptionId { get; set; }
 
-    /// <summary>When the current billing period ends (null during trial)</summary>
-    public DateTimeOffset? CurrentPeriodEnd { get; set; }
+	/// <summary>When the current billing period ends (null during trial)</summary>
+	public DateTimeOffset? CurrentPeriodEnd { get; set; }
 
-    /// <summary>When the trial ends (14 days from school creation)</summary>
-    public DateTimeOffset TrialEnd { get; set; }
+	/// <summary>When the trial ends (14 days from school creation)</summary>
+	public DateTimeOffset TrialEnd { get; set; }
 
-    public DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset UpdatedAt { get; set; }
+	public DateTimeOffset CreatedAt { get; init; }
+	public DateTimeOffset UpdatedAt { get; set; }
 
-    public void Configure(EntityTypeBuilder<Subscription> builder)
-    {
-        builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(s => s.UpdatedAt)
-            .HasDefaultValueSql("now()")
-            .ValueGeneratedOnAddOrUpdate();
-    }
+	public void Configure(EntityTypeBuilder<Subscription> builder)
+	{
+		builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
+		builder.Property(s => s.UpdatedAt)
+			.HasDefaultValueSql("now()")
+			.ValueGeneratedOnAddOrUpdate();
+	}
 }

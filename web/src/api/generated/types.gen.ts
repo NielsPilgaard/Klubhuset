@@ -262,6 +262,10 @@ export type SchoolSettingsDto = {
     logoUrl?: string | null;
 };
 
+export type RenameSchemaRequest = {
+    name: string;
+};
+
 export type SetDateRangeRequest = {
     startDate?: string | null;
     endDate?: string | null;
@@ -1202,6 +1206,25 @@ export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses = {
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses];
 
+export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData = {
+    body?: RenameSchemaRequest;
+    path: {
+        classId: string;
+        schemaId: string;
+    };
+    query?: never;
+    url: '/api/v1/classes/{classId}/schemas/{schemaId}/rename';
+};
+
+export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses = {
+    /**
+     * OK
+     */
+    200: SchemaDto;
+};
+
+export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses];
+
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData = {
     body?: CopySchemaRequest;
     path: {
@@ -1422,13 +1445,6 @@ export type GetApiV1StaffMeData = {
     path?: never;
     query?: never;
     url: '/api/v1/staff/me';
-};
-
-export type GetApiV1StaffMeErrors = {
-    /**
-     * Not Found
-     */
-    404: unknown;
 };
 
 export type GetApiV1StaffMeResponses = {

@@ -56,7 +56,7 @@ export default function InvitationAcceptPage() {
       })
 
     return () => controller.abort()
-  }, [token])
+  }, [token, returningFromLogin])
 
   async function acceptInvitation(inviteToken: string, bearerToken: string) {
     try {

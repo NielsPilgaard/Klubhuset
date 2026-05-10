@@ -1,6 +1,71 @@
 import { useState } from 'react'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import type { CourseDto } from '../api/generated/types.gen'
 import { SUBJECT_CATEGORY_LABELS } from '../utils/subjectCategory'
+
+export function encodeSidebarDragId(courseId: string) {
+  return `sidebar-course:${courseId}`
+}
+
+export function decodeSidebarDragId(id: string): string | null {
+  if (id.startsWith('sidebar-course:')) return id.slice('sidebar-course:'.length)
+  return null
+}
+
+interface DraggableCourseRowProps {
+  course: CourseDto
+  isSelected: boolean
+  onSelect: (id: string) => void
+}
+
+function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRowProps) {
+  const dragId = encodeSidebarDragId(course.id ?? '')
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: dragId })
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), zIndex: 20, position: 'relative' as const, opacity: isDragging ? 0.5 : 1 }
+    : undefined
+
+  const categoryLabel = course.category ? SUBJECT_CATEGORY_LABELS[course.category] ?? course.category : null
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={() => onSelect(course.id ?? '')}
+      data-testid={`sidebar-course-${course.id}`}
+      className={[
+        'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-grab active:cursor-grabbing',
+        isSelected
+          ? 'bg-brand-50 border-l-2 border-brand-500'
+          : 'hover:bg-gray-50 border-l-2 border-transparent',
+      ].join(' ')}
+    >
+      <span
+        className="shrink-0 w-3 h-3 rounded-full border"
+        style={
+          course.color
+            ? { backgroundColor: course.color + '33', borderColor: course.color }
+            : { backgroundColor: '#e5e7eb', borderColor: '#d1d5db' }
+        }
+      />
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-medium text-gray-800 truncate">{course.name}</span>
+        {categoryLabel && (
+          <span className="block text-xs text-gray-400 truncate">{categoryLabel}</span>
+        )}
+      </span>
+      {isSelected && (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-brand-500">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      )}
+    </div>
+  )
+}
 
 interface CoursesSidebarProps {
   courses: CourseDto[]
@@ -35,7 +100,7 @@ export default function CoursesSidebar({
       <button
         type="button"
         onClick={onToggle}
-        className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-full shadow-lg hover:bg-brand-700 transition-colors"
+        className="lg:hidden fixed bottom-4 left-4 z-40 flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-full shadow-lg hover:bg-brand-700 transition-colors"
         aria-label="Vis fag"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -55,12 +120,12 @@ export default function CoursesSidebar({
       {/* Sidebar panel */}
       <aside
         className={[
-          'flex flex-col bg-white border-l border-gray-200',
+          'flex flex-col bg-white border-r border-gray-200',
           // Desktop: always visible, inline
           'lg:relative lg:flex lg:w-64 lg:shrink-0',
           // Mobile: fixed overlay, toggled
           isOpen
-            ? 'fixed inset-y-0 right-0 z-50 w-72 flex flex-col'
+            ? 'fixed inset-y-0 left-0 z-50 w-72 flex flex-col'
             : 'hidden lg:flex',
         ].join(' ')}
       >
@@ -100,44 +165,14 @@ export default function CoursesSidebar({
           {filtered.length === 0 ? (
             <p className="px-4 py-6 text-xs text-gray-400 text-center">Ingen fag fundet</p>
           ) : (
-            filtered.map((course) => {
-              const isSelected = course.id === selectedCourseId
-              const categoryLabel = course.category ? SUBJECT_CATEGORY_LABELS[course.category] ?? course.category : null
-              return (
-                <button
-                  key={course.id}
-                  type="button"
-                  onClick={() => onSelectCourse(course.id ?? '')}
-                  data-testid={`sidebar-course-${course.id}`}
-                  className={[
-                    'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors',
-                    isSelected
-                      ? 'bg-brand-50 border-l-2 border-brand-500'
-                      : 'hover:bg-gray-50 border-l-2 border-transparent',
-                  ].join(' ')}
-                >
-                  <span
-                    className="shrink-0 w-3 h-3 rounded-full border"
-                    style={
-                      course.color
-                        ? { backgroundColor: course.color + '33', borderColor: course.color }
-                        : { backgroundColor: '#e5e7eb', borderColor: '#d1d5db' }
-                    }
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-medium text-gray-800 truncate">{course.name}</span>
-                    {categoryLabel && (
-                      <span className="block text-xs text-gray-400 truncate">{categoryLabel}</span>
-                    )}
-                  </span>
-                  {isSelected && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-brand-500">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              )
-            })
+            filtered.map((course) => (
+              <DraggableCourseRow
+                key={course.id}
+                course={course}
+                isSelected={course.id === selectedCourseId}
+                onSelect={onSelectCourse}
+              />
+            ))
           )}
         </div>
 

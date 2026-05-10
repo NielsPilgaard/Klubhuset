@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { usePageTitle } from '../hooks/usePageTitle'
-import CoursesSidebar from '../components/CoursesSidebar'
+import CoursesSidebar, { decodeSidebarDragId } from '../components/CoursesSidebar'
 import {
   getApiV1ClassesByClassIdSchemasBySchemaIdOptions,
   getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey,
@@ -262,6 +262,48 @@ function AssignmentPanel({
   )
 }
 
+// ─── WIP slot card (course dropped, teacher not yet assigned) ────────────────
+
+interface WipCardProps {
+  courseName: string
+  color?: string | null
+  onClick: () => void
+}
+
+function WipCard({ courseName, color, onClick }: WipCardProps) {
+  const style: React.CSSProperties = color
+    ? { backgroundColor: color + '18', borderColor: color + '88', color }
+    : {}
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="h-full w-full flex flex-col items-start gap-1 p-2 rounded-lg border-2 border-dashed text-left select-none transition-colors hover:brightness-95"
+      style={color ? style : { borderColor: '#94a3b8', backgroundColor: '#f8fafc', color: '#475569' }}
+    >
+      <span className="text-xs font-semibold leading-tight line-clamp-2">{courseName}</span>
+      <span className="text-xs opacity-60">Klik for at tilføje lærer</span>
+    </button>
+  )
+}
+
+// ─── Sidebar drag overlay card ───────────────────────────────────────────────
+
+function SidebarDragOverlayCard({ course }: { course: CourseDto }) {
+  const style: React.CSSProperties = course.color
+    ? { backgroundColor: course.color + '22', borderColor: course.color + '66', color: course.color }
+    : {}
+  return (
+    <div
+      className="h-20 w-36 flex flex-col gap-0.5 p-2 rounded-lg border-2 shadow-lg rotate-1 opacity-90 select-none"
+      style={course.color ? style : { borderColor: '#94a3b8', backgroundColor: '#f1f5f9' }}
+    >
+      <span className="text-xs font-semibold leading-tight line-clamp-2">{course.name}</span>
+      <span className="text-xs opacity-60 mt-auto">Slip for at placere</span>
+    </div>
+  )
+}
+
 // ─── Slot card (used both in grid and DragOverlay) ───────────────────────────
 
 interface SlotCardProps {
@@ -352,16 +394,25 @@ interface DroppableCellProps {
   children: React.ReactNode
   isOver: boolean
   isEmpty: boolean
+  isSidebarDrag?: boolean
   onClick?: () => void
 }
 
-function DroppableCell({ dropId, children, isOver, isEmpty, onClick }: DroppableCellProps) {
+function DroppableCell({ dropId, children, isOver, isEmpty, isSidebarDrag, onClick }: DroppableCellProps) {
   const { setNodeRef } = useDroppable({ id: dropId })
+
+  const highlight = isOver && isEmpty
+    ? 'ring-2 ring-brand-500 ring-offset-1 bg-brand-100'
+    : isOver
+    ? 'ring-2 ring-brand-400 ring-offset-1'
+    : isSidebarDrag && isEmpty
+    ? 'ring-1 ring-brand-200 ring-offset-1 bg-brand-50/50'
+    : ''
 
   return (
     <div
       ref={setNodeRef}
-      className={`h-full w-full transition-all rounded-lg ${isOver && isEmpty ? 'ring-2 ring-brand-400 ring-offset-1 bg-brand-50' : ''} ${isOver && !isEmpty ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
+      className={`h-full w-full transition-all rounded-lg ${highlight}`}
       onClick={onClick}
     >
       {children}
@@ -407,6 +458,7 @@ export default function SchemaBuilderPage() {
   const [overDropId, setOverDropId] = useState<string | null>(null)
   const [selectedCourseId, setSelectedCourseId] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [wipCell, setWipCell] = useState<{ timeSlotId: string; weekday: number; courseId: string } | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -518,8 +570,23 @@ export default function SchemaBuilderPage() {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const src = decodeDragId(active.id as string)
-    const dst = decodeDragId(over.id as string)
+    const activeId = active.id as string
+    const overId = over.id as string
+
+    const sidebarCourseId = decodeSidebarDragId(activeId)
+    if (sidebarCourseId) {
+      const dst = decodeDragId(overId)
+      const dstTs = sortedTimeSlots.find((ts) => ts.id === dst.timeSlotId)
+      if (!dstTs || dstTs.isBreak) return
+      // Drop existing slot → clear wip first, don't overwrite
+      if (slotMap[dst.timeSlotId]?.[dst.weekday]) return
+      setSelectedCourseId(sidebarCourseId)
+      setWipCell({ timeSlotId: dst.timeSlotId, weekday: dst.weekday, courseId: sidebarCourseId })
+      return
+    }
+
+    const src = decodeDragId(activeId)
+    const dst = decodeDragId(overId)
 
     const srcSlot = slotMap[src.timeSlotId]?.[src.weekday]
     const dstSlot = slotMap[dst.timeSlotId]?.[dst.weekday]
@@ -564,11 +631,17 @@ export default function SchemaBuilderPage() {
   }, [slotMap, sortedTimeSlots, upsertSlotMutation, classId, schemaId, qc, detail?.slots])
 
   // Active drag slot (for overlay)
-  const activeDragSlot = useMemo(() => {
+  const activeSidebarCourse = useMemo(() => {
     if (!activeDragId) return null
+    const courseId = decodeSidebarDragId(activeDragId)
+    return courseId ? (courses.find((c) => c.id === courseId) ?? null) : null
+  }, [activeDragId, courses])
+
+  const activeDragSlot = useMemo(() => {
+    if (!activeDragId || activeSidebarCourse) return null
     const { timeSlotId, weekday } = decodeDragId(activeDragId)
     return slotMap[timeSlotId]?.[weekday] ?? null
-  }, [activeDragId, slotMap])
+  }, [activeDragId, activeSidebarCourse, slotMap])
 
   const activeDragColor = activeDragSlot
     ? getCourseColor(activeDragSlot.courseId ?? '', courseIds, courses)
@@ -656,8 +729,23 @@ export default function SchemaBuilderPage() {
         </div>
       </div>
 
-      {/* Content row: grid + sidebar */}
+      {/* Content row: sidebar + grid */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
       <div className="flex flex-1 min-h-0">
+
+      <CoursesSidebar
+        courses={courses}
+        selectedCourseId={selectedCourseId}
+        onSelectCourse={setSelectedCourseId}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen((v) => !v)}
+      />
 
       {/* Main grid */}
       <div className="flex-1 overflow-auto">
@@ -674,13 +762,7 @@ export default function SchemaBuilderPage() {
               ))}
             </div>
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragEnd={handleDragEnd}
-            >
+            <>
               <div className="overflow-x-auto">
                 <div className="min-w-[640px]">
                   {/* Header */}
@@ -734,14 +816,18 @@ export default function SchemaBuilderPage() {
                             const { colorClass, colorStyle } = slot ? getCourseColor(slot.courseId ?? '', courseIds, courses) : { colorClass: '' }
                             const isCurrentlyDragged = activeDragId === dragId
                             const isOver = overDropId === dropId
+                            const isSidebarDrag = activeDragId ? decodeSidebarDragId(activeDragId) !== null : false
+                            const isWip = !slot && wipCell?.timeSlotId === ts.id && wipCell?.weekday === weekday
+                            const wipCourse = isWip ? courses.find((c) => c.id === wipCell?.courseId) : null
 
                             return (
                               <div key={weekday} className="h-20">
                                 <DroppableCell
                                   dropId={dropId}
                                   isOver={isOver}
-                                  isEmpty={!slot}
-                                  onClick={!slot ? () => ts.id && setPanelCell({ timeSlotId: ts.id, weekday }) : undefined}
+                                  isEmpty={!slot && !isWip}
+                                  isSidebarDrag={isSidebarDrag}
+                                  onClick={!slot && !isWip ? () => ts.id && setPanelCell({ timeSlotId: ts.id, weekday }) : undefined}
                                 >
                                   {slot ? (
                                     <DraggableCell
@@ -752,6 +838,15 @@ export default function SchemaBuilderPage() {
                                       colorStyle={colorStyle}
                                       onClick={() => ts.id && setPanelCell({ timeSlotId: ts.id, weekday })}
                                       isBeingDragged={isCurrentlyDragged}
+                                    />
+                                  ) : isWip && wipCourse ? (
+                                    <WipCard
+                                      courseName={wipCourse.name ?? ''}
+                                      color={wipCourse.color}
+                                      onClick={() => {
+                                        setSelectedCourseId(wipCell!.courseId)
+                                        setPanelCell({ timeSlotId: wipCell!.timeSlotId, weekday: wipCell!.weekday })
+                                      }}
                                     />
                                   ) : (
                                     <EmptyCell onClick={() => ts.id && setPanelCell({ timeSlotId: ts.id, weekday })} />
@@ -782,7 +877,9 @@ export default function SchemaBuilderPage() {
 
               {/* Drag overlay — floating card that follows the cursor */}
               <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
-                {activeDragSlot && (
+                {activeSidebarCourse ? (
+                  <SidebarDragOverlayCard course={activeSidebarCourse} />
+                ) : activeDragSlot ? (
                   <div className="h-20 w-36 pointer-events-none">
                     <SlotCard
                       slot={activeDragSlot}
@@ -791,9 +888,9 @@ export default function SchemaBuilderPage() {
                       isDragging
                     />
                   </div>
-                )}
+                ) : null}
               </DragOverlay>
-            </DndContext>
+            </>
           )}
 
           {/* Conflicts panel */}
@@ -833,15 +930,8 @@ export default function SchemaBuilderPage() {
         </div>
       </div>
 
-      <CoursesSidebar
-        courses={courses}
-        selectedCourseId={selectedCourseId}
-        onSelectCourse={setSelectedCourseId}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen((v) => !v)}
-      />
-
       </div>{/* end content row */}
+      </DndContext>
 
       {/* Assignment panel */}
       {openPanel && (
@@ -855,8 +945,8 @@ export default function SchemaBuilderPage() {
           staff={staff}
           rooms={rooms}
           initialCourseId={selectedCourseId}
-          onClose={handleCellDeleted}
-          onSaved={handleCellSaved}
+          onClose={() => { setWipCell(null); handleCellDeleted() }}
+          onSaved={(updated) => { setWipCell(null); handleCellSaved(updated) }}
         />
       )}
     </div>

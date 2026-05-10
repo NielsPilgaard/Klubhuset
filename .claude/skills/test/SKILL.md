@@ -1,11 +1,13 @@
 ---
 name: test
-description: "Run the Playwright E2E test suite for Skoleoverblikket. USE THIS SKILL when the user asks to run tests, check if tests pass, verify a fix, or validate changes — even if they just say 'run tests', 'do the tests pass?', 'check everything still works', or similar. The Aspire stack is assumed to already be running."
+description: "Run the Playwright E2E test suite for Skoleoverblikket. USE THIS SKILL when the user explicitly asks to run Playwright/E2E tests, or after UI changes where browser-level verification is needed. For compile checks, dotnet format, and API integration tests without Playwright, use /verify instead. The Aspire stack is assumed to already be running."
 ---
 
 # Test Skill
 
 Runs the full Playwright E2E suite against the already-running Aspire dev stack.
+
+> For TypeScript build, dotnet format, dotnet build, and API integration tests, use `/verify` instead.
 
 ## Command
 

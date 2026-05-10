@@ -9,16 +9,16 @@ namespace Skoleoverblikket.Api.Tenancy;
 /// </summary>
 public sealed class HttpTenantContext(IHttpContextAccessor accessor) : ITenantContext
 {
-    public Guid TenantId
-    {
-        get
-        {
-            var claim = accessor.HttpContext?.User.FindFirstValue("tenant_id")
-                ?? throw new MissingTenantClaimException();
+	public Guid TenantId
+	{
+		get
+		{
+			var claim = accessor.HttpContext?.User.FindFirstValue("tenant_id")
+				?? throw new MissingTenantClaimException();
 
-            return Guid.Parse(claim);
-        }
-    }
+			return Guid.Parse(claim);
+		}
+	}
 }
 
 /// <summary>
@@ -27,4 +27,4 @@ public sealed class HttpTenantContext(IHttpContextAccessor accessor) : ITenantCo
 /// configured, or when an unauthenticated request bypasses auth middleware.
 /// </summary>
 public sealed class MissingTenantClaimException()
-    : Exception("tenant_id claim not present in JWT. Check Keycloak client mapper configuration.");
+	: Exception("tenant_id claim not present in JWT. Check Keycloak client mapper configuration.");

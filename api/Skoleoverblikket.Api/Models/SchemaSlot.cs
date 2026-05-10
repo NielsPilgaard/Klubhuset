@@ -38,13 +38,13 @@ public sealed class SchemaSlot : ITenantScoped, IEntityTypeConfiguration<SchemaS
 	public void Configure(EntityTypeBuilder<SchemaSlot> builder)
 	{
 		builder.HasOne(s => s.Teacher)
-		       .WithMany()
-		       .HasForeignKey(s => s.TeacherId)
-		       .OnDelete(DeleteBehavior.Restrict);
+			   .WithMany()
+			   .HasForeignKey(s => s.TeacherId)
+			   .OnDelete(DeleteBehavior.Restrict);
 
 		builder.HasOne(s => s.Aide)
-		       .WithMany()
-		       .HasForeignKey(s => s.AideId)
-		       .OnDelete(DeleteBehavior.Restrict);
+			   .WithMany()
+			   .HasForeignKey(s => s.AideId)
+			   .OnDelete(DeleteBehavior.Restrict);
 	}
 }

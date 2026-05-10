@@ -2,11 +2,11 @@ namespace Skoleoverblikket.Api.Email;
 
 public interface IEmailSender
 {
-    Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default);
+	Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default);
 }
 
 public sealed record EmailMessage(
-    string To,
-    string Subject,
-    string HtmlBody,
-    string? PlainTextBody = null);
+	string To,
+	string Subject,
+	string HtmlBody,
+	string? PlainTextBody = null);

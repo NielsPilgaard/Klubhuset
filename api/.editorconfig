@@ -3,6 +3,12 @@
 # IDE0090: Use 'new(...)'
 dotnet_diagnostic.ide0090.severity = none
 
+# Migrations are auto-generated — exempt from style enforcement
+[**/Migrations/*.cs]
+generated_code = true
+csharp_style_namespace_declarations = block_scoped:none
+dotnet_diagnostic.ide0161.severity = none
+
 # IDE0021: Use expression body for constructors
 csharp_style_expression_bodied_constructors = false:suggestion
 
