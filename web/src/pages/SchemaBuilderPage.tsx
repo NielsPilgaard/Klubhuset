@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { usePageTitle } from '../hooks/usePageTitle'
+import CoursesSidebar from '../components/CoursesSidebar'
 import {
   getApiV1ClassesByClassIdSchemasBySchemaIdOptions,
   getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey,
@@ -140,16 +141,17 @@ interface AssignmentPanelProps {
   courses: CourseDto[]
   staff: StaffDto[]
   rooms: RoomDto[]
+  initialCourseId?: string
   onClose: () => void
   onSaved: (updated: SlotsAndConflictsDto) => void
 }
 
 function AssignmentPanel({
   classId, schemaId, timeSlotId, weekday, existing,
-  courses, staff, rooms, onClose, onSaved,
+  courses, staff, rooms, initialCourseId, onClose, onSaved,
 }: AssignmentPanelProps) {
   const [courseId, setCourseId] = useState(
-    existing?.courseId ?? sessionStorage.getItem(SESSION_KEY_COURSE) ?? ''
+    existing?.courseId ?? initialCourseId ?? sessionStorage.getItem(SESSION_KEY_COURSE) ?? ''
   )
   const [teacherId, setTeacherId] = useState(
     existing?.teacherId ?? sessionStorage.getItem(SESSION_KEY_TEACHER) ?? ''
@@ -403,6 +405,8 @@ export default function SchemaBuilderPage() {
   const [localConflicts, setLocalConflicts] = useState<ConflictInfo[] | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [overDropId, setOverDropId] = useState<string | null>(null)
+  const [selectedCourseId, setSelectedCourseId] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -652,6 +656,9 @@ export default function SchemaBuilderPage() {
         </div>
       </div>
 
+      {/* Content row: grid + sidebar */}
+      <div className="flex flex-1 min-h-0">
+
       {/* Main grid */}
       <div className="flex-1 overflow-auto">
         <div className="p-4 lg:p-6">
@@ -826,6 +833,16 @@ export default function SchemaBuilderPage() {
         </div>
       </div>
 
+      <CoursesSidebar
+        courses={courses}
+        selectedCourseId={selectedCourseId}
+        onSelectCourse={setSelectedCourseId}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen((v) => !v)}
+      />
+
+      </div>{/* end content row */}
+
       {/* Assignment panel */}
       {openPanel && (
         <AssignmentPanel
@@ -837,6 +854,7 @@ export default function SchemaBuilderPage() {
           courses={courses}
           staff={staff}
           rooms={rooms}
+          initialCourseId={selectedCourseId}
           onClose={handleCellDeleted}
           onSaved={handleCellSaved}
         />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import keycloak from '../auth/keycloak'
 
 interface InvitationPreview {
@@ -13,9 +13,14 @@ type PageState = 'loading' | 'invalid' | 'ready' | 'accepting' | 'success' | 'er
 
 export default function InvitationAcceptPage() {
   const { token } = useParams<{ token: string }>()
+  const [searchParams] = useSearchParams()
   const [state, setState] = useState<PageState>('loading')
   const [preview, setPreview] = useState<InvitationPreview | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+
+  // 'accept=1' is appended to redirectUri so we know the user just came back
+  // from a fresh Keycloak login and explicitly authenticated for this invitation.
+  const returningFromLogin = searchParams.get('accept') === '1'
 
   useEffect(() => {
     if (!token) { setState('invalid'); return }
@@ -30,16 +35,14 @@ export default function InvitationAcceptPage() {
           const data: InvitationPreview = await res.json()
           setPreview(data)
 
-          if (keycloak.authenticated && keycloak.token) {
-            const tokenEmail = (keycloak.tokenParsed as Record<string, string> | undefined)?.['email']
-            if (tokenEmail && tokenEmail !== data.email) {
-              // Wrong user logged in (e.g. admin opened invitation link).
-              // Log out and redirect back so the correct user can log in.
-              keycloak.logout({ redirectUri: window.location.href })
-              return
-            }
+          if (returningFromLogin && keycloak.authenticated && keycloak.token) {
+            // User just completed a fresh Keycloak login specifically for this invitation.
             setState('accepting')
             await acceptInvitation(token, keycloak.token)
+          } else if (keycloak.authenticated) {
+            // User is already logged in (e.g. admin opened the link).
+            // Log them out so the invited user can log in fresh.
+            keycloak.logout({ redirectUri: window.location.href })
           } else {
             setState('ready')
           }
@@ -82,7 +85,8 @@ export default function InvitationAcceptPage() {
     if (!token) return
     keycloak.login({
       loginHint: preview?.email,
-      redirectUri: window.location.origin + `/invitation/${token}`,
+      redirectUri: window.location.origin + `/invitation/${token}?accept=1`,
+      prompt: 'login',
     })
   }
 

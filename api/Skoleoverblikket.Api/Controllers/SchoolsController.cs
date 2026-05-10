@@ -37,11 +37,13 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 		var school = await db.Schools
 							 .AsNoTracking()
 							 .IgnoreQueryFilters()
-							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+							 .Where(s => s.Id == tenant.TenantId)
+							 .Select(s => new SchoolSettingsDto(s.Name, s.ContactEmail, s.ContactPhone, s.LogoUrl))
+							 .FirstOrDefaultAsync(ct);
 
 		return school is null
 				   ? NotFound()
-				   : Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
+				   : Ok(school);
 	}
 
 	[HttpPut("settings")]

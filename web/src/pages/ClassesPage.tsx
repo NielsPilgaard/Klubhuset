@@ -17,6 +17,7 @@ import {
 } from '../api/generated/@tanstack/react-query.gen'
 import type { ClassDto, SchemaDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
 
 interface CopySchemaModalProps {
   classId: string
@@ -118,6 +119,15 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
+  const [gradeLevel, setGradeLevel] = useState<number | null>(initial?.gradeLevel ?? null)
+
+  function handleNameChange(v: string) {
+    setName(v)
+    if (!initial) {
+      const detected = detectGradeLevel(v)
+      if (detected !== null) setGradeLevel(detected)
+    }
+  }
 
   const createMutation = useMutation({
     ...postApiV1ClassesMutation(),
@@ -132,7 +142,7 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
 
   function handleSave() {
     if (!name.trim() || isPending) return
-    const body = { name, description: description || null }
+    const body = { name, description: description || null, gradeLevel }
     if (initial) {
       updateMutation.mutate({ path: { id: initial.id! }, body })
     } else {
@@ -153,11 +163,24 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
             <input
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="fx 5.a"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Klassetrin</label>
+            <select
+              value={gradeLevel ?? ''}
+              onChange={(e) => setGradeLevel(e.target.value === '' ? null : Number(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              <option value="">— ukendt —</option>
+              {Object.entries(GRADE_LEVEL_LABELS).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivelse</label>

@@ -630,10 +630,19 @@ export default function CalendarPage() {
   }
 
   const [exportPending, setExportPending] = useState(false)
+  const [exportDone, setExportDone] = useState(false)
+  const exportTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
+    }
+  }, [])
 
   async function handleExportIcs() {
     if (exportPending) return
     setExportPending(true)
+    setExportDone(false)
     try {
       await keycloak.updateToken(30)
       const res = await fetch('/api/v1/calendar/export.ics', {
@@ -645,8 +654,14 @@ export default function CalendarPage() {
       const a = document.createElement('a')
       a.href = url
       a.download = 'skoleplanen-kalender.ics'
+      a.style.display = 'none'
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      setExportDone(true)
+      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
+      exportTimeoutRef.current = setTimeout(() => { setExportDone(false); exportTimeoutRef.current = null }, 8000)
     } finally {
       setExportPending(false)
     }
@@ -811,7 +826,7 @@ export default function CalendarPage() {
             title="Åbn filen i Google Calendar, Outlook eller Kalender (iPhone/Mac) for at importere begivenhederne."
             className="border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg px-3 py-1.5 text-sm disabled:opacity-50 transition-colors"
           >
-            {exportPending ? 'Eksporterer...' : 'Eksportér til kalender'}
+            {exportPending ? 'Tilføjer...' : 'Tilføj til kalender'}
           </button>
           {isAdmin && !hasEntries && defaults.length > 0 && (
             <button
@@ -824,6 +839,13 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+
+      {/* Export confirmation */}
+      {exportDone && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-3 text-sm text-green-800">
+          Filen er hentet. Dobbeltklik på den for at importere – eller åbn din kalender og importer derfra.
+        </div>
+      )}
 
       {/* Empty state */}
       {isAdmin && !hasEntries && (

@@ -27,7 +27,7 @@ public static class IcsBuilder
             foreach (var (start, end) in occurrences)
             {
                 sb.AppendLine("BEGIN:VEVENT");
-                sb.AppendLine($"UID:{entry.Id}@skoleplanen");
+                sb.AppendLine($"UID:{entry.Id}-{start:yyyyMMdd}@skoleplanen");
                 sb.AppendLine($"SUMMARY:{EscapeText(entry.Title)}");
                 sb.AppendLine($"DTSTART;VALUE=DATE:{start:yyyyMMdd}");
                 sb.AppendLine($"DTEND;VALUE=DATE:{end.AddDays(1):yyyyMMdd}");

@@ -7,9 +7,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (keycloak.authenticated) {
-      navigate('/dashboard', { replace: true })
+      navigate('/', { replace: true })
     } else {
-      keycloak.login({ redirectUri: window.location.origin + '/dashboard' })
+      keycloak.login({ redirectUri: window.location.origin + '/' })
     }
   }, [navigate])
 

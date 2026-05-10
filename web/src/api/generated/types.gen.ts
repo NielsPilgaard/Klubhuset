@@ -47,6 +47,7 @@ export type ClassDto = {
     id?: string;
     name?: string | null;
     description?: string | null;
+    gradeLevel?: number | null;
 };
 
 export type ConfirmRequest = {
@@ -79,6 +80,7 @@ export type CourseDto = {
     name?: string | null;
     description?: string | null;
     color?: string | null;
+    category?: SubjectCategory;
 };
 
 export type CreateCalendarEntryRequest = {
@@ -296,6 +298,8 @@ export type StaffDto = {
 
 export type StaffRole = 'Teacher' | 'Aide' | 'Substitute';
 
+export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri';
+
 export type SubscriptionDto = {
     status?: SubscriptionStatus;
     trialEnd?: string;
@@ -366,12 +370,14 @@ export type UpsertBreakRequest = {
 export type UpsertClassRequest = {
     name?: string | null;
     description?: string | null;
+    gradeLevel?: number | null;
 };
 
 export type UpsertCourseRequest = {
     name?: string | null;
     description?: string | null;
     color?: string | null;
+    category?: SubjectCategory;
 };
 
 export type UpsertRoomRequest = {
@@ -1410,6 +1416,29 @@ export type PostApiV1StaffResponses = {
 };
 
 export type PostApiV1StaffResponse = PostApiV1StaffResponses[keyof PostApiV1StaffResponses];
+
+export type GetApiV1StaffMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staff/me';
+};
+
+export type GetApiV1StaffMeErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetApiV1StaffMeResponses = {
+    /**
+     * OK
+     */
+    200: StaffDto;
+};
+
+export type GetApiV1StaffMeResponse = GetApiV1StaffMeResponses[keyof GetApiV1StaffMeResponses];
 
 export type DeleteApiV1StaffByIdData = {
     body?: never;

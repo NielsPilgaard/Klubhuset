@@ -35,11 +35,13 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 	{
 		var room = await db.Rooms
 						   .AsNoTracking()
-						   .FirstOrDefaultAsync(r => r.Id == id, ct);
+						   .Where(r => r.Id == id)
+						   .Select(r => new RoomDto(r.Id, r.Name, r.Capacity, r.Description))
+						   .FirstOrDefaultAsync(ct);
 
 		return room is null
 				   ? NotFound()
-				   : Ok(new RoomDto(room.Id, room.Name, room.Capacity, room.Description));
+				   : Ok(room);
 	}
 
 	[HttpPost]

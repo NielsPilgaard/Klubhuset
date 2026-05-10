@@ -14,11 +14,12 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
 
-	public record CourseDto(Guid Id, string Name, string? Description, string? Color);
+	public record CourseDto(Guid Id, string Name, string? Description, string? Color, SubjectCategory? Category);
 	public record UpsertCourseRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
 		[StringLength(2000)] string? Description,
-		[StringLength(7)] string? Color);
+		[StringLength(7)] string? Color,
+		SubjectCategory? Category);
 
 	[HttpGet]
 	public async Task<ActionResult<List<CourseDto>>> GetAll(CancellationToken ct)
@@ -26,7 +27,7 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 		var courses = await db.Courses
 			.AsNoTracking()
 			.OrderBy(c => c.Name)
-			.Select(c => new CourseDto(c.Id, c.Name, c.Description, c.Color))
+			.Select(c => new CourseDto(c.Id, c.Name, c.Description, c.Color, c.Category))
 			.ToListAsync(ct);
 
 		return Ok(courses);
@@ -37,11 +38,13 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 	{
 		var course = await db.Courses
 							 .AsNoTracking()
-							 .FirstOrDefaultAsync(x => x.Id == id, ct);
+							 .Where(x => x.Id == id)
+							 .Select(x => new CourseDto(x.Id, x.Name, x.Description, x.Color, x.Category))
+							 .FirstOrDefaultAsync(ct);
 
 		return course is null
 				   ? NotFound()
-				   : Ok(new CourseDto(course.Id, course.Name, course.Description, course.Color));
+				   : Ok(course);
 	}
 
 	[HttpPost]
@@ -55,13 +58,14 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 			Name = req.Name,
 			Description = req.Description,
 			Color = req.Color,
+			Category = req.Category,
 		};
 
 		db.Courses.Add(course);
 		await db.SaveChangesAsync(ct);
 
 		return CreatedAtAction(nameof(GetById), new { id = course.Id },
-			new CourseDto(course.Id, course.Name, course.Description, course.Color));
+			new CourseDto(course.Id, course.Name, course.Description, course.Color, course.Category));
 	}
 
 	[HttpPut("{id:guid}")]
@@ -77,10 +81,11 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 		course.Name = req.Name;
 		course.Description = req.Description;
 		course.Color = req.Color;
+		course.Category = req.Category;
 
 		await db.SaveChangesAsync(ct);
 
-		return Ok(new CourseDto(course.Id, course.Name, course.Description, course.Color));
+		return Ok(new CourseDto(course.Id, course.Name, course.Description, course.Color, course.Category));
 	}
 
 	[HttpDelete("{id:guid}")]

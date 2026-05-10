@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
@@ -6,8 +6,8 @@ import type { StaffRole } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
 import { LessonDurationSlider } from '../components/LessonDurationSlider'
 import { usePageTitle } from '../hooks/usePageTitle'
-import { STANDARD_COURSES } from '../constants/courses'
 import { useAuth } from '../auth/useAuth'
+import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,13 +20,12 @@ interface WizardStep {
 }
 
 const STEPS: WizardStep[] = [
-  { id: 1, title: 'Skolenavn', description: 'Bekræft eller opdater skolens navn' },
-  { id: 2, title: 'Skoledag', description: 'Definér varighed og pauser for en normal skoledag' },
-  { id: 3, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
-  { id: 4, title: 'Fag', description: 'Tilføj fag, f.eks. dansk, matematik' },
-  { id: 5, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
-  { id: 6, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
-  { id: 7, title: 'Færdig', description: 'Din skole er klar til brug' },
+  { id: 1, title: 'Skolenavn',    description: 'Bekræft eller opdater skolens navn' },
+  { id: 2, title: 'Skoledag',     description: 'Definér varighed og pauser for en normal skoledag' },
+  { id: 3, title: 'Klasser',      description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
+  { id: 4, title: 'Lokaler',      description: 'Tilføj lokaler, f.eks. Lokale 1' },
+  { id: 5, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
+  { id: 6, title: 'Færdig',       description: 'Din skole er klar til brug' },
 ]
 
 
@@ -270,7 +269,6 @@ function StepCreateItems({
 }) {
   const [items, setItems] = useState<string[]>([''])
   const [existingNames, setExistingNames] = useState<Set<string>>(new Set())
-  const [colorMap, setColorMap] = useState<Map<string, string>>(new Map())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [savedBefore, setSavedBefore] = useState(false)
@@ -296,19 +294,6 @@ function StepCreateItems({
     setItems((prev) => prev.filter((_, idx) => idx !== i))
   }
 
-  function importStandard() {
-    setItems((prev) => {
-      const existing = prev.filter(Boolean)
-      const toAdd = STANDARD_COURSES.filter((c) => !existing.includes(c.name)).map((c) => c.name)
-      return [...existing, ...toAdd, '']
-    })
-    setColorMap((prev) => {
-      const next = new Map(prev)
-      for (const c of STANDARD_COURSES) next.set(c.name, c.color)
-      return next
-    })
-  }
-
   async function save() {
     const names = items.map((n) => n.trim()).filter(Boolean)
     const newNames = names.filter((n) => !existingNames.has(n))
@@ -316,7 +301,7 @@ function StepCreateItems({
     setSaving(true)
     setError('')
     try {
-      await Promise.all(newNames.map((name) => api.post(apiPath, { name, color: colorMap.get(name) ?? null })))
+      await Promise.all(newNames.map((name) => api.post(apiPath, { name })))
       onNext()
     } catch {
       setError(`Kunne ikke oprette ${plural.toLowerCase()}. Prøv igen.`)
@@ -330,17 +315,6 @@ function StepCreateItems({
       <p className="text-sm text-gray-600">
         Tilføj de {plural.toLowerCase()}, du vil starte med. Du kan altid tilføje flere senere.
       </p>
-      {apiPath === '/courses' && (
-        <button
-          onClick={importStandard}
-          className="flex items-center gap-1.5 text-sm text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2v10m0 0l-3-3m3 3l3-3M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" />
-          </svg>
-          Importér standardfag
-        </button>
-      )}
       <div className="space-y-2">
         {items.map((val, i) => (
           <div key={i} className="flex gap-2">
@@ -381,6 +355,144 @@ function StepCreateItems({
           className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Opretter…' : `Opret og fortsæt`}
+        </button>
+        <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+          Spring over
+        </button>
+        {savedBefore && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            Gemt
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface ClassEntry {
+  name: string
+  gradeLevel: number | null
+}
+
+function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+  const [items, setItems] = useState<ClassEntry[]>([{ name: '', gradeLevel: null }])
+  const [existingNames, setExistingNames] = useState<Set<string>>(new Set())
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [savedBefore, setSavedBefore] = useState(false)
+  const userHasEditedRef = useRef(false)
+
+  useEffect(() => {
+    api.get<{ name: string; gradeLevel?: number | null }[]>('/classes')
+      .then((existing) => {
+        if (userHasEditedRef.current) return
+        if (existing.length > 0) {
+          setItems(existing.map((e) => ({ name: e.name, gradeLevel: e.gradeLevel ?? null })))
+          setExistingNames(new Set(existing.map((e) => e.name)))
+          setSavedBefore(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  function addRow() {
+    userHasEditedRef.current = true
+    setItems((prev) => [...prev, { name: '', gradeLevel: null }])
+  }
+
+  function updateName(i: number, val: string) {
+    userHasEditedRef.current = true
+    setItems((prev) => prev.map((item, idx) => {
+      if (idx !== i) return item
+      const detected = detectGradeLevel(val)
+      return { name: val, gradeLevel: detected !== null ? detected : item.gradeLevel }
+    }))
+  }
+
+  function updateGradeLevel(i: number, val: number | null) {
+    userHasEditedRef.current = true
+    setItems((prev) => prev.map((item, idx) => idx === i ? { ...item, gradeLevel: val } : item))
+  }
+
+  function removeRow(i: number) {
+    userHasEditedRef.current = true
+    setItems((prev) => prev.filter((_, idx) => idx !== i))
+  }
+
+  async function save() {
+    const valid = items.filter((item) => item.name.trim())
+    const newItems = valid.filter((item) => !existingNames.has(item.name.trim()))
+    if (valid.length === 0) { onNext(); return }
+    setSaving(true)
+    setError('')
+    try {
+      await Promise.all(newItems.map((item) => api.post('/classes', { name: item.name.trim(), gradeLevel: item.gradeLevel })))
+      onNext()
+    } catch {
+      setError('Kunne ikke oprette klasser. Prøv igen.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-600">
+        Tilføj dine klasser. Klassetrin registreres automatisk fra navnet — du kan justere det manuelt.
+      </p>
+      <div className="space-y-3">
+        {items.map((item, i) => (
+          <div key={i} className="flex gap-2 items-start">
+            <div className="flex-1 grid grid-cols-2 gap-2">
+              <input
+                value={item.name}
+                onChange={(e) => updateName(i, e.target.value)}
+                placeholder="fx 1.a"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addRow() } }}
+              />
+              <select
+                value={item.gradeLevel ?? ''}
+                onChange={(e) => updateGradeLevel(i, e.target.value === '' ? null : Number(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+              >
+                <option value="">— klassetrin —</option>
+                {Object.entries(GRADE_LEVEL_LABELS).map(([val, label]) => (
+                  <option key={val} value={val}>{label}</option>
+                ))}
+              </select>
+            </div>
+            {items.length > 1 && (
+              <button
+                onClick={() => removeRow(i)}
+                className="mt-1 p-2 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={addRow}
+          className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 mt-1"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Tilføj klasse
+        </button>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+        >
+          {saving ? 'Opretter…' : 'Opret og fortsæt'}
         </button>
         <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
           Spring over
@@ -677,27 +789,8 @@ export default function SchoolSetupWizardPage() {
         <div className="px-8 pb-8 pt-4">
           {step === 1 && <StepSchoolName initialName={searchParams.get('schoolName') ?? undefined} onNext={advance} onSkip={skip} />}
           {step === 2 && <StepTimeSlots onNext={advance} onSkip={skip} />}
-          {step === 3 && (
-            <StepCreateItems
-              noun="Klasse"
-              plural="Klasser"
-              placeholder="f.eks. 0.a"
-              apiPath="/classes"
-              onNext={advance}
-              onSkip={skip}
-            />
-          )}
+          {step === 3 && <StepCreateClasses onNext={advance} onSkip={skip} />}
           {step === 4 && (
-            <StepCreateItems
-              noun="Fag"
-              plural="Fag"
-              placeholder="f.eks. dansk"
-              apiPath="/courses"
-              onNext={advance}
-              onSkip={skip}
-            />
-          )}
-          {step === 5 && (
             <StepCreateItems
               noun="Lokale"
               plural="Lokaler"
@@ -707,8 +800,8 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 6 && <StepInviteStaff onNext={advance} onSkip={skip} />}
-          {step === 7 && <StepDone onFinish={finish} />}
+          {step === 5 && <StepInviteStaff onNext={advance} onSkip={skip} />}
+          {step === 6 && <StepDone onFinish={finish} />}
         </div>
 
         {/* Step dots */}

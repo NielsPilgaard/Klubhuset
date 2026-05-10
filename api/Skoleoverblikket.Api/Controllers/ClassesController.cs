@@ -13,10 +13,11 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize]
 public sealed class ClassesController(AppDbContext context, ITenantContext tenant) : ControllerBase
 {
-	public record ClassDto(Guid Id, string Name, string? Description);
+	public record ClassDto(Guid Id, string Name, string? Description, int? GradeLevel);
 	public record UpsertClassRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
-		[StringLength(1000)] string? Description);
+		[StringLength(1000)] string? Description,
+		[Range(0, 10)] int? GradeLevel);
 
 	[HttpGet]
 	public async Task<ActionResult<List<ClassDto>>> GetAll(CancellationToken ct)
@@ -24,7 +25,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 		var classes = await context.Classes
 			.AsNoTracking()
 			.OrderBy(c => c.Name)
-			.Select(c => new ClassDto(c.Id, c.Name, c.Description))
+			.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel))
 			.ToListAsync(ct);
 
 		return Ok(classes);
@@ -35,11 +36,13 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	{
 		var @class = await context.Classes
 								  .AsNoTracking()
-								  .FirstOrDefaultAsync(c => c.Id == id, ct);
+								  .Where(c => c.Id == id)
+								  .Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel))
+								  .FirstOrDefaultAsync(ct);
 
 		return @class is null
 				   ? NotFound()
-				   : Ok(new ClassDto(@class.Id, @class.Name, @class.Description));
+				   : Ok(@class);
 	}
 
 	[HttpPost]
@@ -52,6 +55,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 			TenantId = tenant.TenantId,
 			Name = req.Name,
 			Description = req.Description,
+			GradeLevel = req.GradeLevel,
 		};
 
 		context.Classes.Add(@class);
@@ -59,7 +63,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 		await context.SaveChangesAsync(ct);
 
 		return CreatedAtAction(nameof(GetById), new { id = @class.Id },
-			new ClassDto(@class.Id, @class.Name, @class.Description));
+			new ClassDto(@class.Id, @class.Name, @class.Description, @class.GradeLevel));
 	}
 
 	[HttpPut("{id:guid}")]
@@ -74,10 +78,11 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 		@class.Name = req.Name;
 		@class.Description = req.Description;
+		@class.GradeLevel = req.GradeLevel;
 
 		await context.SaveChangesAsync(ct);
 
-		return Ok(new ClassDto(@class.Id, @class.Name, @class.Description));
+		return Ok(new ClassDto(@class.Id, @class.Name, @class.Description, @class.GradeLevel));
 	}
 
 	[HttpDelete("{id:guid}")]

@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using Skoleoverblikket.Api.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace Skoleoverblikket.Api.Models;
 
@@ -14,6 +14,10 @@ public sealed class Class : ITenantScoped
 
 	[StringLength(8000)]
 	public string? Description { get; set; }
+
+	/// <summary>Klassetrin: 0 = børnehaveklasse, 1–10 = 1.–10. klasse. Null means unknown.</summary>
+	[Range(0, 10)]
+	public int? GradeLevel { get; set; }
 
 	public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

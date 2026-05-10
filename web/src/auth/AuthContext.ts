@@ -2,6 +2,7 @@ import { createContext } from 'react'
 
 export interface AuthContextValue {
   authenticated: boolean
+  isAdmin: boolean
   token: string | undefined
   userName: string | undefined
   logout: () => void

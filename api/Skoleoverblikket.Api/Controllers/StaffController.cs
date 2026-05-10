@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,16 +28,39 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 		return Ok(staff);
 	}
 
+	[HttpGet("me")]
+	public async Task<ActionResult<StaffDto>> GetMe(CancellationToken ct)
+	{
+		var subject = User.GetKeycloakSubject();
+
+		if (string.IsNullOrWhiteSpace(subject))
+		{
+			return Unauthorized();
+		}
+
+		var staff = await db.Staff
+			.AsNoTracking()
+			.Where(s => s.KeycloakSubject == subject)
+			.Select(s => new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject))
+			.FirstOrDefaultAsync(ct);
+
+		return staff is null
+			? NotFound()
+			: Ok(staff);
+	}
+
 	[HttpGet("{id:guid}")]
 	public async Task<ActionResult<StaffDto>> GetById(Guid id, CancellationToken ct)
 	{
 		var staff = await db.Staff
 							.AsNoTracking()
-							.FirstOrDefaultAsync(s => s.Id == id, ct);
+							.Where(s => s.Id == id)
+							.Select(s => new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject))
+							.FirstOrDefaultAsync(ct);
 
 		return staff is null
 				   ? NotFound()
-				   : Ok(new StaffDto(staff.Id, staff.Name, staff.Email, staff.Phone, staff.Role, staff.IsAdmin, staff.KeycloakSubject));
+				   : Ok(staff);
 	}
 
 	[HttpPost]
@@ -161,8 +183,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			return NotFound();
 		}
 
-		var currentSubject = User.FindFirstValue(ClaimTypes.NameIdentifier)
-						  ?? User.FindFirstValue("sub");
+		var currentSubject = User.GetKeycloakSubject();
 		if (!string.IsNullOrWhiteSpace(s.KeycloakSubject) && s.KeycloakSubject == currentSubject)
 		{
 			return Problem(
@@ -189,8 +210,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 	private async Task<ActionResult?> ValidateAdminChangeAsync(Guid staffId, bool newIsAdmin, CancellationToken ct)
 	{
-		var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-						 ?? User.FindFirstValue("sub");
+		var currentUserId = User.GetKeycloakSubject();
 
 		var staff = await db.Staff.AsNoTracking().FirstOrDefaultAsync(s => s.Id == staffId, ct);
 		if (staff?.KeycloakSubject is not null && staff.KeycloakSubject == currentUserId && !newIsAdmin)

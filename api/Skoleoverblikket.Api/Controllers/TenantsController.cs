@@ -9,7 +9,7 @@ namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/tenants")]
-public sealed class TenantsController(AppDbContext db, KeycloakAdminService keycloakAdmin) : ControllerBase
+public sealed class TenantsController(AppDbContext context, KeycloakAdminService keycloakAdmin) : ControllerBase
 {
 	public record CreateTenantRequest(
 		[Required]
@@ -47,7 +47,7 @@ public sealed class TenantsController(AppDbContext db, KeycloakAdminService keyc
 			ContactEmail = req.AdminEmail,
 		};
 
-		db.Schools.Add(school);
+		context.Schools.Add(school);
 
 		string keycloakSubject;
 		try
@@ -68,7 +68,7 @@ public sealed class TenantsController(AppDbContext db, KeycloakAdminService keyc
 				statusCode: 502);
 		}
 
-		db.Staff.Add(new Staff
+		context.Staff.Add(new Staff
 		{
 			Id = Guid.NewGuid(),
 			TenantId = school.Id,
@@ -78,7 +78,20 @@ public sealed class TenantsController(AppDbContext db, KeycloakAdminService keyc
 			KeycloakSubject = keycloakSubject,
 		});
 
-		await db.SaveChangesAsync(ct);
+		context.Courses.AddRange(CourseSeeder.BuildStandardCourses(school.Id));
+
+		try
+		{
+			await context.SaveChangesAsync(ct);
+		}
+		catch (Exception ex)
+		{
+			await keycloakAdmin.DeleteStaffUserAsync(keycloakSubject, ct);
+			return Problem(
+				title: "Kunne ikke oprette skole",
+				detail: ex.Message,
+				statusCode: 502);
+		}
 
 		TokenResponse token;
 		try

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -67,7 +66,7 @@ public sealed class StaffInvitationsController(
 			return NotFound();
 		}
 
-		var currentUserSubject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var currentUserSubject = User.GetKeycloakSubject();
 		if (staff.KeycloakSubject != null && staff.KeycloakSubject == currentUserSubject)
 		{
 			return BadRequest(new ProblemDetails { Title = "Ugyldig handling", Detail = "Du kan ikke invitere dig selv.", Status = 400 });
@@ -114,8 +113,7 @@ public sealed class StaffInvitationsController(
 	public async Task<ActionResult> Accept([FromBody] AcceptInvitationRequest req, CancellationToken ct)
 	{
 		// Extract authenticated subject from claims
-		var keycloakSubject = User.FindFirstValue("sub")
-							  ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+		var keycloakSubject = User.GetKeycloakSubject();
 
 		if (string.IsNullOrEmpty(keycloakSubject))
 		{

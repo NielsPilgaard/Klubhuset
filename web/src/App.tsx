@@ -19,6 +19,7 @@ const PrivatlivspolitikPage = lazy(() => import('./pages/PrivatlivspolitikPage')
 
 // Lazy load all other pages
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const MySchedulePage = lazy(() => import('./pages/MySchedulePage'))
 const ClassesPage = lazy(() => import('./pages/ClassesPage'))
 const SchemaBuilderPage = lazy(() => import('./pages/SchemaBuilderPage'))
 const StaffPage = lazy(() => import('./pages/StaffPage'))
@@ -46,9 +47,9 @@ const queryClient = new QueryClient({
 })
 
 function HomeRedirect() {
-  const { authenticated } = useAuth()
+  const { authenticated, isAdmin } = useAuth()
   if (authenticated) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={isAdmin ? '/dashboard' : '/mig/skema'} replace />
   }
   return <LandingPage />
 }
@@ -78,6 +79,7 @@ export default function App() {
           {/* Authenticated app */}
           <Route path="/" element={<Layout />}>
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="mig/skema" element={<MySchedulePage />} />
             <Route path="klasser" element={<ClassesPage />} />
             <Route path="klasser/:classId/skema/:schemaId" element={<SchemaBuilderPage />} />
             <Route path="klasser/:classId/lektioner" element={<ClassTimeSlotsPage />} />

@@ -2357,6 +2357,35 @@
         }
       }
     },
+    "/api/v1/staff/me": {
+      "get": {
+        "tags": [
+          "Staff"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/staff/{id}": {
       "get": {
         "tags": [
@@ -3587,6 +3616,11 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "gradeLevel": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3689,6 +3723,10 @@
           "color": {
             "type": "string",
             "nullable": true
+          },
+          "category": {
+            "nullable": true,
+            "allOf": [{ "$ref": "#/components/schemas/SubjectCategory" }]
           }
         },
         "additionalProperties": false
@@ -4430,6 +4468,28 @@
         ],
         "type": "string"
       },
+      "SubjectCategory": {
+        "enum": [
+          "Dansk",
+          "Matematik",
+          "Engelsk",
+          "Naturfag",
+          "Historie",
+          "Musik",
+          "Idraet",
+          "Kristendomskundskab",
+          "Billedkunst",
+          "HaandvaerkOgDesign",
+          "Tysk",
+          "Fransk",
+          "Geografi",
+          "Biologi",
+          "FysikKemi",
+          "Samfundsfag",
+          "Fri"
+        ],
+        "type": "string"
+      },
       "SubscriptionDto": {
         "type": "object",
         "properties": {
@@ -4661,6 +4721,11 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "gradeLevel": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4679,6 +4744,10 @@
           "color": {
             "type": "string",
             "nullable": true
+          },
+          "category": {
+            "nullable": true,
+            "allOf": [{ "$ref": "#/components/schemas/SubjectCategory" }]
           }
         },
         "additionalProperties": false
