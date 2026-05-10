@@ -674,20 +674,6 @@ export const putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation = (optio
     return mutationOptions;
 };
 
-export const putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation = (options?: Partial<Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData>>): UseMutationOptions<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse, DefaultError, Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData>> => {
-    const mutationOptions: UseMutationOptions<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse, DefaultError, Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await putApiV1ClassesByClassIdSchemasBySchemaIdRename({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
 export const postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation = (options?: Partial<Options<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData>>): UseMutationOptions<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponse, DefaultError, Options<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData>> => {
     const mutationOptions: UseMutationOptions<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponse, DefaultError, Options<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData>> = {
         mutationFn: async (fnOptions) => {
@@ -706,6 +692,20 @@ export const postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMuta
     const mutationOptions: UseMutationOptions<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponse, DefaultError, Options<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation = (options?: Partial<Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData>>): UseMutationOptions<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse, DefaultError, Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData>> => {
+    const mutationOptions: UseMutationOptions<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse, DefaultError, Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putApiV1ClassesByClassIdSchemasBySchemaIdRename({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

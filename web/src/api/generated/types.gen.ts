@@ -219,6 +219,10 @@ export type RenameFolderRequest = {
     name?: string | null;
 };
 
+export type RenameSchemaRequest = {
+    name?: string | null;
+};
+
 export type RoomDto = {
     id?: string;
     name?: string | null;
@@ -260,10 +264,6 @@ export type SchoolSettingsDto = {
     contactEmail?: string | null;
     contactPhone?: string | null;
     logoUrl?: string | null;
-};
-
-export type RenameSchemaRequest = {
-    name: string;
 };
 
 export type SetDateRangeRequest = {
@@ -1206,25 +1206,6 @@ export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses = {
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses];
 
-export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData = {
-    body?: RenameSchemaRequest;
-    path: {
-        classId: string;
-        schemaId: string;
-    };
-    query?: never;
-    url: '/api/v1/classes/{classId}/schemas/{schemaId}/rename';
-};
-
-export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses = {
-    /**
-     * OK
-     */
-    200: SchemaDto;
-};
-
-export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses];
-
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData = {
     body?: CopySchemaRequest;
     path: {
@@ -1263,6 +1244,25 @@ export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdRespo
 };
 
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponse = PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses[keyof PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses];
+
+export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData = {
+    body?: RenameSchemaRequest;
+    path: {
+        classId: string;
+        schemaId: string;
+    };
+    query?: never;
+    url: '/api/v1/classes/{classId}/schemas/{schemaId}/rename';
+};
+
+export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses = {
+    /**
+     * OK
+     */
+    200: SchemaDto;
+};
+
+export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses];
 
 export type GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData = {
     body?: never;

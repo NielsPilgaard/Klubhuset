@@ -667,7 +667,9 @@ export default function ClassesPage() {
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingClass, setEditingClass] = useState<ClassDto | null>(null)
-  const [expandedClass, setExpandedClass] = useState<string | null>(null)
+  const [expandedClass, setExpandedClass] = useState<string | null>(() => {
+    return localStorage.getItem('classes-expanded') ?? null
+  })
   const [newSchemaForClass, setNewSchemaForClass] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
@@ -700,7 +702,12 @@ export default function ClassesPage() {
   })
 
   const toggleExpand = (id: string) => {
-    setExpandedClass((prev) => (prev === id ? null : id))
+    setExpandedClass((prev) => {
+      const next = prev === id ? null : id
+      if (next) localStorage.setItem('classes-expanded', next)
+      else localStorage.removeItem('classes-expanded')
+      return next
+    })
   }
 
   return (

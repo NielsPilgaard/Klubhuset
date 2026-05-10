@@ -338,16 +338,6 @@ export const putApiV1ClassesByClassIdSchemasBySchemaIdDaterange = <ThrowOnError 
     }
 });
 
-export const putApiV1ClassesByClassIdSchemasBySchemaIdRename = <ThrowOnError extends boolean = false>(options: Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData, ThrowOnError>) => (options.client ?? client).put<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/classes/{classId}/schemas/{schemaId}/rename',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
 export const postApiV1ClassesByClassIdSchemasBySchemaIdCopy = <ThrowOnError extends boolean = false>(options: Options<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, ThrowOnError>) => (options.client ?? client).post<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/classes/{classId}/schemas/{schemaId}/copy',
@@ -361,6 +351,16 @@ export const postApiV1ClassesByClassIdSchemasBySchemaIdCopy = <ThrowOnError exte
 export const postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassId = <ThrowOnError extends boolean = false>(options: Options<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, ThrowOnError>) => (options.client ?? client).post<PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/classes/{classId}/schemas/{schemaId}/copy-to/{targetClassId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const putApiV1ClassesByClassIdSchemasBySchemaIdRename = <ThrowOnError extends boolean = false>(options: Options<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData, ThrowOnError>) => (options.client ?? client).put<PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/classes/{classId}/schemas/{schemaId}/rename',
     ...options,
     headers: {
         'Content-Type': 'application/json',
