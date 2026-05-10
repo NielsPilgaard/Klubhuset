@@ -2,8 +2,7 @@
   "sdk": {
     "rollForward": "latestFeature"
   },
-  "msbuild-sdks": {},
-  "tools": {
-    "testRunner": "mtp"
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
   }
 }

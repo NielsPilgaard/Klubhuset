@@ -7,7 +7,6 @@
     
     <!-- Required for Microsoft.Testing.Platform -->
     <OutputType>Exe</OutputType>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
   <ItemGroup>
