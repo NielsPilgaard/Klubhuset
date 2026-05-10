@@ -34,6 +34,7 @@ function hexToAlpha(color: string, alpha: string): string {
 function buildTimeAxis(slots: ScheduleSlotDto[]) {
   const seen = new Map<string, { startTime: string; endTime: string; sort: number }>()
   for (const s of slots) {
+    if (!s.startTime || !s.endTime) continue
     const key = `${s.startTime}-${s.endTime}`
     if (!seen.has(key)) {
       seen.set(key, { startTime: s.startTime, endTime: s.endTime, sort: parseInt(s.startTime.replace(':', ''), 10) })
