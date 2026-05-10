@@ -3725,8 +3725,7 @@
             "nullable": true
           },
           "category": {
-            "nullable": true,
-            "allOf": [{ "$ref": "#/components/schemas/SubjectCategory" }]
+            "$ref": "#/components/schemas/SubjectCategory"
           }
         },
         "additionalProperties": false
@@ -4746,8 +4745,7 @@
             "nullable": true
           },
           "category": {
-            "nullable": true,
-            "allOf": [{ "$ref": "#/components/schemas/SubjectCategory" }]
+            "$ref": "#/components/schemas/SubjectCategory"
           }
         },
         "additionalProperties": false
