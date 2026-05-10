@@ -18,6 +18,7 @@ import {
 } from '../api/generated/@tanstack/react-query.gen'
 import type { ClassDto, SchemaDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { DatePicker } from '../components/DatePicker'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
 
 interface CopySchemaModalProps {
@@ -271,22 +272,11 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
+              <DatePicker value={startDate} onChange={setStartDate} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || undefined}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
+              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} />
             </div>
           </div>
           {dateInvalid && (
@@ -426,22 +416,11 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
+              <DatePicker value={startDate} onChange={setStartDate} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || undefined}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
+              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} />
             </div>
           </div>
           {startDate && endDate && startDate > endDate && (
