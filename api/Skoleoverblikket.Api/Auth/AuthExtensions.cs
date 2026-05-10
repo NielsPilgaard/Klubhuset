@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace Skoleoverblikket.Api.Auth;
@@ -29,7 +30,9 @@ public static class AuthExtensions
 					}
 				});
 
-		services.AddAuthorization();
+		services.AddAuthorization(opt =>
+			opt.AddPolicy("EditClass", p => p.Requirements.Add(new EditClassRequirement())));
+		services.AddScoped<IAuthorizationHandler, EditClassAuthorizationHandler>();
 		services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
 		return services;

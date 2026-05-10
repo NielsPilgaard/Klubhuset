@@ -12,7 +12,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/classes/{classId:guid}/schemas")]
 [Authorize]
-public sealed class SchemasController(AppDbContext db, ITenantContext tenant, ConflictDetectionService conflicts)
+public sealed class SchemasController(AppDbContext db, ITenantContext tenant, ConflictDetectionService conflicts, IAuthorizationService authz)
 	: ControllerBase
 {
 	public record SchemaDto(Guid Id, Guid ClassId, string Name, DateOnly? StartDate, DateOnly? EndDate);
@@ -95,6 +95,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return NotFound();
 		}
 
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
+
 		var schema = new Schema
 		{
 			Id = Guid.NewGuid(),
@@ -147,6 +150,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return NotFound();
 		}
 
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
+
 		if (req.StartDate.HasValue && req.EndDate.HasValue && req.StartDate.Value > req.EndDate.Value)
 		{
 			return Problem(
@@ -175,6 +181,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return NotFound();
 		}
+
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
 
 		var copy = new Schema
 		{
@@ -246,6 +255,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return NotFound();
 		}
 
+		var authResult = await authz.AuthorizeAsync(User, targetClassId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
+
 		var copy = new Schema
 		{
 			Id = Guid.NewGuid(),
@@ -307,6 +319,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return NotFound();
 		}
 
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
+
 		schema.Name = req.Name;
 		await db.SaveChangesAsync(ct);
 		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
@@ -321,6 +336,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return NotFound();
 		}
+
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
 
 		db.Schemas.Remove(schema);
 		await db.SaveChangesAsync(ct);
@@ -347,6 +365,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return NotFound();
 		}
+
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
 
 		var slot = await db.SchemaSlots.FirstOrDefaultAsync(
 					   s => s.SchemaId == schemaId && s.TimeSlotId == req.TimeSlotId && s.Weekday == req.Weekday,
@@ -406,6 +427,9 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return NotFound();
 		}
+
+		var authResult = await authz.AuthorizeAsync(User, classId, "EditClass");
+		if (!authResult.Succeeded) return Forbid();
 
 		var slot = await db.SchemaSlots.FirstOrDefaultAsync(
 					   s => s.SchemaId == schemaId && s.TimeSlotId == timeSlotId && s.Weekday == (DayOfWeek)weekday,

@@ -25,6 +25,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<WeekPlan> WeekPlans => Set<WeekPlan>();
 	public DbSet<WeekPlanSlot> WeekPlanSlots => Set<WeekPlanSlot>();
 	public DbSet<WeekPlanSlotFile> WeekPlanSlotFiles => Set<WeekPlanSlotFile>();
+	public DbSet<ClassPermission> ClassPermissions => Set<ClassPermission>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
