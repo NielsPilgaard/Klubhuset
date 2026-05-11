@@ -1,13 +1,14 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Services;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/reports")]
-[Authorize(Roles = "admin")]
+[Authorize(Roles = Roles.Admin)]
 public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 {
 	/// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>

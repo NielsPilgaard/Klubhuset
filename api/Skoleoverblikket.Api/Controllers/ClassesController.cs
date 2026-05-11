@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 using System.ComponentModel.DataAnnotations;
 
@@ -46,7 +47,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	}
 
 	[HttpPost]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<ClassDto>> Create([FromBody] UpsertClassRequest req, CancellationToken ct)
 	{
 		var @class = new Class
@@ -67,7 +68,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	}
 
 	[HttpPut("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<ClassDto>> Update(Guid id, [FromBody] UpsertClassRequest req, CancellationToken ct)
 	{
 		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
@@ -86,7 +87,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	}
 
 	[HttpDelete("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
 		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);

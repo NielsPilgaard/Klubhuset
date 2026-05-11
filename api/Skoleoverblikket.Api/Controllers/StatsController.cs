@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Models;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -27,7 +28,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 	public record UnassignedClass(Guid ClassId, string ClassName, int EmptySlots, bool HasSchema);
 
 	[HttpGet("dashboard")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<DashboardStats>> GetDashboard(CancellationToken ct)
 	{
 		var classCount = await db.Classes.CountAsync(ct);

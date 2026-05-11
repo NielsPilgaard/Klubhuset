@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/classes/{classId:guid}/permissions")]
-[Authorize(Roles = "admin")]
+[Authorize(Roles = Roles.Admin)]
 public sealed class ClassPermissionsController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
 	public record ClassPermissionDto(Guid StaffId, string StaffName, DateTimeOffset GrantedAt);

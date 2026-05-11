@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Storage;
 using Skoleoverblikket.Api.Tenancy;
 
@@ -10,7 +11,7 @@ namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/schools")]
-[Authorize(Roles = "admin")]
+[Authorize(Roles = Roles.Admin)]
 public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IObjectStorage storage) : ControllerBase
 {
 	public record SchoolSettingsDto(string Name, string? ContactEmail, string? ContactPhone, string? LogoUrl);

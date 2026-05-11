@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -69,7 +70,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 	}
 
 	[HttpPost]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<CalendarEntryDto>> Create([FromBody] CreateCalendarEntryRequest req, CancellationToken ct)
 	{
 		if (req.StartDate > req.EndDate)
@@ -94,7 +95,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 	}
 
 	[HttpPut("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<CalendarEntryDto>> Update(Guid id, [FromBody] UpdateCalendarEntryRequest req, CancellationToken ct)
 	{
 		if (req.StartDate > req.EndDate)
@@ -119,7 +120,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 	}
 
 	[HttpDelete("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
 		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
@@ -135,7 +136,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 
 	// Exclude a single occurrence of a recurring event (adds date to ExcludedDates).
 	[HttpDelete("{id:guid}/occurrences/{date}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> DeleteOccurrence(Guid id, DateOnly date, CancellationToken ct)
 	{
 		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
@@ -160,7 +161,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 
 	// Truncate a recurring event so it ends before the given date (delete this and all subsequent).
 	[HttpDelete("{id:guid}/from/{date}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> DeleteFrom(Guid id, DateOnly date, CancellationToken ct)
 	{
 		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);

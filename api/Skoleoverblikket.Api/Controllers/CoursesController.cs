@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 using System.ComponentModel.DataAnnotations;
 
@@ -48,7 +49,7 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 	}
 
 	[HttpPost]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<CourseDto>> Create([FromBody] UpsertCourseRequest req, CancellationToken ct)
 	{
 		var course = new Course
@@ -69,7 +70,7 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 	}
 
 	[HttpPut("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<CourseDto>> Update(Guid id, [FromBody] UpsertCourseRequest req, CancellationToken ct)
 	{
 		var course = await db.Courses.FirstOrDefaultAsync(x => x.Id == id, ct);
@@ -89,7 +90,7 @@ public sealed class CoursesController(AppDbContext db, ITenantContext tenant) : 
 	}
 
 	[HttpDelete("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
 		var course = await db.Courses.FirstOrDefaultAsync(x => x.Id == id, ct);

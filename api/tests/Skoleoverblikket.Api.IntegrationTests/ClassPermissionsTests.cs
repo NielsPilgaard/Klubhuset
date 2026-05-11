@@ -247,7 +247,7 @@ public sealed class ClassPermissionsTests
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
             _factory.Services, TestTenantContext.DefaultTenantId);
 
-        var client = CreateNonAdminClient();
+        using var client = CreateNonAdminClient();
         var response = await client.PostAsJsonAsync(
             $"/api/v1/classes/{klass.Id}/permissions",
             new { staffId = staff.Id });
