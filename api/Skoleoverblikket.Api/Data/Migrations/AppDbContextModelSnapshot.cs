@@ -95,6 +95,36 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.ToTable("Classes");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ClassPermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("GrantedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassId");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("TenantId", "ClassId", "StaffId")
+                        .IsUnique();
+
+                    b.ToTable("ClassPermissions");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Course", b =>
                 {
                     b.Property<Guid>("Id")
@@ -684,6 +714,25 @@ namespace Skoleoverblikket.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("WeekPlanSlotFiles");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ClassPermission", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Class");
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Schema", b =>
