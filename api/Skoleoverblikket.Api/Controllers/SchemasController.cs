@@ -96,7 +96,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)
 		{
@@ -155,7 +154,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -187,7 +185,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return Forbid();
 		}
-
 
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
@@ -260,13 +257,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-
 		var authResult = await authz.AuthorizeAsync(User, targetClassId, Policies.EditClass);
 		if (!authResult.Succeeded)
 		{
 			return Forbid();
 		}
-
 
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
@@ -343,7 +338,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -364,7 +358,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return Forbid();
 		}
-
 
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -397,7 +390,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return Forbid();
 		}
-
 
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -463,7 +455,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		{
 			return Forbid();
 		}
-
 
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (!schemaExists)
