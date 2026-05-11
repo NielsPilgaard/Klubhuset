@@ -15,11 +15,17 @@ import {
   putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation,
   postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation,
   postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation,
+  getApiV1ClassesByClassIdPermissionsOptions,
+  getApiV1ClassesByClassIdPermissionsQueryKey,
+  postApiV1ClassesByClassIdPermissionsMutation,
+  deleteApiV1ClassesByClassIdPermissionsByStaffIdMutation,
+  getApiV1StaffOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ClassDto, SchemaDto } from '../api/generated/types.gen'
+import type { ClassDto, SchemaDto, StaffDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { DatePicker } from '../components/DatePicker'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
+import { useAuth } from '../auth/useAuth'
 
 interface CopySchemaModalProps {
   classId: string
@@ -447,6 +453,143 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
   )
 }
 
+function ClassPermissionsTab({ classId }: { classId: string }) {
+  const qc = useQueryClient()
+  const [selectedStaffId, setSelectedStaffId] = useState('')
+
+  const { data: rawPermissions, isLoading } = useQuery(
+    getApiV1ClassesByClassIdPermissionsOptions({ path: { classId } })
+  )
+  const permissions = (rawPermissions ?? []) as import('../api/generated/types.gen').ClassPermissionDto[]
+
+  const { data: rawStaff } = useQuery({ ...getApiV1StaffOptions(), select: (d) => (d ?? []) as StaffDto[] })
+  const staff = rawStaff ?? []
+
+  const grantedIds = new Set(permissions.map((p) => p.staffId))
+  const adminStaff = staff.filter((s) => s.isAdmin)
+  const ungrantedAdmins = adminStaff.filter((s) => !grantedIds.has(s.id))
+
+  const allSuperadmin = permissions.length === 0
+
+  const grantMutation = useMutation({
+    ...postApiV1ClassesByClassIdPermissionsMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdPermissionsQueryKey({ path: { classId } }) })
+      setSelectedStaffId('')
+    },
+  })
+
+  const revokeMutation = useMutation({
+    ...deleteApiV1ClassesByClassIdPermissionsByStaffIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdPermissionsQueryKey({ path: { classId } }) }),
+  })
+
+  if (isLoading) {
+    return (
+      <div className="px-6 py-4 animate-pulse space-y-2">
+        {[1, 2].map((i) => <div key={i} className="h-8 bg-gray-100 rounded-lg" />)}
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-t border-gray-100 bg-brand-50/40 px-6 py-4 space-y-4">
+      {allSuperadmin && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          Alle administratorer har adgang til denne klasse.
+        </div>
+      )}
+
+      {permissions.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tildelt adgang</p>
+          {permissions.map((p) => (
+            <div key={p.staffId} className="flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-lg">
+              <span className="text-sm text-gray-800">{p.staffName}</span>
+              <button
+                data-testid={`revoke-permission-${p.staffId}`}
+                onClick={() => revokeMutation.mutate({ path: { classId, staffId: p.staffId! } })}
+                disabled={revokeMutation.isPending}
+                className="text-xs text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
+              >
+                Fjern
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {ungrantedAdmins.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tilføj administrator</p>
+          <div className="flex gap-2">
+            <select
+              value={selectedStaffId}
+              onChange={(e) => setSelectedStaffId(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+            >
+              <option value="">Vælg administrator…</option>
+              {ungrantedAdmins.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+            <button
+              data-testid="grant-permission-btn"
+              disabled={!selectedStaffId || grantMutation.isPending}
+              onClick={() => grantMutation.mutate({ path: { classId }, body: { staffId: selectedStaffId } })}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Tilføj
+            </button>
+          </div>
+          {grantMutation.isError && (
+            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+          )}
+        </div>
+      )}
+
+      {adminStaff.length === 0 && (
+        <p className="text-sm text-gray-400">Ingen administratorer at tildele adgang til.</p>
+      )}
+    </div>
+  )
+}
+
+function ExpandedClassPanel({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
+  const { isAdmin } = useAuth()
+  const [tab, setTab] = useState<'skemaer' | 'adgang'>('skemaer')
+
+  return (
+    <div>
+      {isAdmin && (
+        <div className="flex border-t border-gray-100 bg-gray-50">
+          <button
+            onClick={() => setTab('skemaer')}
+            className={`px-5 py-2.5 text-xs font-semibold transition-colors ${tab === 'skemaer' ? 'text-brand-700 border-b-2 border-brand-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Skemaer
+          </button>
+          <button
+            onClick={() => setTab('adgang')}
+            className={`px-5 py-2.5 text-xs font-semibold transition-colors ${tab === 'adgang' ? 'text-brand-700 border-b-2 border-brand-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Adgang
+          </button>
+        </div>
+      )}
+      {tab === 'skemaer' && (
+        <SchemaList classId={classId} autoOpenCreate={autoOpenCreate} onAutoOpenHandled={onAutoOpenHandled} />
+      )}
+      {tab === 'adgang' && isAdmin && (
+        <ClassPermissionsTab classId={classId} />
+      )}
+    </div>
+  )
+}
+
 function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -811,7 +954,7 @@ export default function ClassesPage() {
               </div>
             </div>
             {expandedClass === cls.id && (
-              <SchemaList
+              <ExpandedClassPanel
                 classId={cls.id}
                 autoOpenCreate={newSchemaForClass === cls.id}
                 onAutoOpenHandled={() => setNewSchemaForClass(null)}
