@@ -24,7 +24,9 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 		Guid classId)
 	{
 		if (!context.User.IsInRole("admin"))
+		{
 			return;
+		}
 
 		var anyPermissions = await db.ClassPermissions.AnyAsync();
 		if (!anyPermissions)
@@ -35,7 +37,9 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 
 		var subject = context.User.GetKeycloakSubject();
 		if (string.IsNullOrEmpty(subject))
+		{
 			return;
+		}
 
 		var staff = await db.Staff
 			.AsNoTracking()
@@ -44,12 +48,16 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 			.FirstOrDefaultAsync();
 
 		if (staff is null)
+		{
 			return;
+		}
 
 		var hasPermission = await db.ClassPermissions
 			.AnyAsync(p => p.ClassId == classId && p.StaffId == staff.Id);
 
 		if (hasPermission)
+		{
 			context.Succeed(requirement);
+		}
 	}
 }

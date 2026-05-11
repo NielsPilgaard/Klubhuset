@@ -21,7 +21,9 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 	{
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)
+		{
 			return NotFound();
+		}
 
 		var permissions = await db.ClassPermissions
 			.AsNoTracking()
@@ -38,11 +40,15 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 	{
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)
+		{
 			return NotFound();
+		}
 
 		var staff = await db.Staff.FirstOrDefaultAsync(s => s.Id == req.StaffId, ct);
 		if (staff is null)
+		{
 			return NotFound();
+		}
 
 		var alreadyExists = await db.ClassPermissions
 			.AnyAsync(p => p.ClassId == classId && p.StaffId == req.StaffId, ct);
@@ -78,7 +84,9 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 			.FirstOrDefaultAsync(p => p.ClassId == classId && p.StaffId == staffId, ct);
 
 		if (permission is null)
+		{
 			return NotFound();
+		}
 
 		db.ClassPermissions.Remove(permission);
 		await db.SaveChangesAsync(ct);

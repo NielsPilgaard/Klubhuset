@@ -91,7 +91,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)
@@ -146,7 +150,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		[FromBody] SetDateRangeRequest req, CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -175,7 +183,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		[FromBody] CopySchemaRequest req, CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
@@ -243,10 +255,18 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		[FromBody] CopySchemaRequest req, CancellationToken ct)
 	{
 		var sourceAuthResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!sourceAuthResult.Succeeded) return Forbid();
+		if (!sourceAuthResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var authResult = await authz.AuthorizeAsync(User, targetClassId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
@@ -318,7 +338,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		[FromBody] RenameSchemaRequest req, CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -336,7 +360,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	public async Task<ActionResult> Delete(Guid classId, Guid schemaId, CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -365,7 +393,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		[FromBody] UpsertSlotRequest req, CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
@@ -427,7 +459,11 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		}
 
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded) return Forbid();
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (!schemaExists)

@@ -12,37 +12,37 @@ namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 /// <see cref="TestTenantContext"/> (injected into AppDbContext), not via claims.
 /// </summary>
 public sealed class TestAuthHandler(
-    IOptionsMonitor<AuthenticationSchemeOptions> options,
-    ILoggerFactory logger,
-    UrlEncoder encoder)
-    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+	IOptionsMonitor<AuthenticationSchemeOptions> options,
+	ILoggerFactory logger,
+	UrlEncoder encoder)
+	: AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
-    public const string SchemeName = "Test";
+	public const string SchemeName = "Test";
 
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-    {
-        // X-Test-Roles: comma-separated role list; defaults to "admin"
-        var rolesHeader = Request.Headers["X-Test-Roles"].FirstOrDefault();
-        var roles = string.IsNullOrWhiteSpace(rolesHeader)
-            ? ["admin"]
-            : rolesHeader.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+	protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+	{
+		// X-Test-Roles: comma-separated role list; defaults to "admin"
+		var rolesHeader = Request.Headers["X-Test-Roles"].FirstOrDefault();
+		var roles = string.IsNullOrWhiteSpace(rolesHeader)
+			? ["admin"]
+			: rolesHeader.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        // X-Test-Subject: keycloak subject for /me lookups; defaults to "test-user-id"
-        var subject = Request.Headers["X-Test-Subject"].FirstOrDefault() ?? "test-user-id";
+		// X-Test-Subject: keycloak subject for /me lookups; defaults to "test-user-id"
+		var subject = Request.Headers["X-Test-Subject"].FirstOrDefault() ?? "test-user-id";
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.Name, "Test User"),
-            new(ClaimTypes.NameIdentifier, subject),
-            new("sub", subject),
-            new("tenant_id", TestTenantContext.DefaultTenantId.ToString()),
-        };
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+		var claims = new List<Claim>
+		{
+			new(ClaimTypes.Name, "Test User"),
+			new(ClaimTypes.NameIdentifier, subject),
+			new("sub", subject),
+			new("tenant_id", TestTenantContext.DefaultTenantId.ToString()),
+		};
+		claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
-        var identity = new ClaimsIdentity(claims, SchemeName);
-        var principal = new ClaimsPrincipal(identity);
-        var ticket = new AuthenticationTicket(principal, SchemeName);
+		var identity = new ClaimsIdentity(claims, SchemeName);
+		var principal = new ClaimsPrincipal(identity);
+		var ticket = new AuthenticationTicket(principal, SchemeName);
 
-        return Task.FromResult(AuthenticateResult.Success(ticket));
-    }
+		return Task.FromResult(AuthenticateResult.Success(ticket));
+	}
 }
