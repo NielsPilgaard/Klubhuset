@@ -140,6 +140,8 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			}
 			catch (KeycloakException ex)
 			{
+				s.IsAdmin = !req.IsAdmin;
+				await db.SaveChangesAsync(ct);
 				return Problem(title: "Keycloak-synkronisering fejlede", detail: ex.Message, statusCode: 502);
 			}
 		}

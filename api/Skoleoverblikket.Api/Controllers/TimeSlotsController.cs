@@ -525,6 +525,7 @@ public sealed class TimeSlotsController(
 			StartTime = upsertTimeSlotRequest.StartTime,
 			EndTime = upsertTimeSlotRequest.EndTime,
 			Label = upsertTimeSlotRequest.Label,
+			IsBreak = upsertTimeSlotRequest.IsBreak,
 		}).ToList();
 
 		context.TimeSlots.AddRange(newSlots);
