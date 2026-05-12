@@ -14,6 +14,7 @@ async function loginAsAdmin(page: Page) {
   await page.locator('#username').fill(ADMIN_EMAIL)
   await page.locator('#password').fill(ADMIN_PASSWORD)
   await page.getByRole('button', { name: /log ind|sign in/i }).click()
+  await page.waitForURL((url) => url.port !== '8080', { timeout: 30_000 })
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 })
 }
 
