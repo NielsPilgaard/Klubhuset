@@ -595,8 +595,16 @@ function ExpandedClassPanel({ classId, autoOpenCreate, onAutoOpenHandled }: { cl
 function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const { isAdmin } = useAuth()
+  const { isAdmin, staffId } = useAuth()
   const [showCreate, setShowCreate] = useState(false)
+
+  const { data: rawPermissions } = useQuery(
+    getApiV1ClassesByClassIdPermissionsOptions({ path: { classId } })
+  )
+  const permissions = (rawPermissions ?? []) as import('../api/generated/types.gen').ClassPermissionDto[]
+  const canEditSchema = isAdmin
+    || permissions.length === 0
+    || permissions.some((p) => p.staffId === staffId)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
   const [editingDateRange, setEditingDateRange] = useState<SchemaDto | null>(null)
   const [renamingSchema, setRenamingSchema] = useState<SchemaDto | null>(null)
@@ -634,7 +642,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
         <div className="flex items-center gap-3">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Skemaer</p>
         </div>
-        {isAdmin && (
+        {canEditSchema && (
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
@@ -690,6 +698,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 </svg>
                 Ugeplan
               </button>
+              {canEditSchema && (
               <button
                 onClick={(e) => { e.stopPropagation(); navigate(`/klasser/${classId}/skema/${s.id}`) }}
                 className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -700,7 +709,8 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 </svg>
                 Rediger
               </button>
-              {isAdmin && (
+              )}
+              {canEditSchema && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingDateRange(s) }}
