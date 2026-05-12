@@ -64,7 +64,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	}
 
 	[HttpPost]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<StaffDto>> Create([FromBody] UpsertStaffRequest req, CancellationToken ct)
 	{
 		if (!string.IsNullOrWhiteSpace(req.Email))
@@ -96,7 +96,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	}
 
 	[HttpPut("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<StaffDto>> Update(Guid id, [FromBody] UpsertStaffRequest req, CancellationToken ct)
 	{
 		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
@@ -140,6 +140,8 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			}
 			catch (KeycloakException ex)
 			{
+				s.IsAdmin = !req.IsAdmin;
+				await db.SaveChangesAsync(ct);
 				return Problem(title: "Keycloak-synkronisering fejlede", detail: ex.Message, statusCode: 502);
 			}
 		}
@@ -152,7 +154,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	}
 
 	[HttpPatch("{id:guid}/admin-permission")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<StaffDto>> PatchAdminPermission(Guid id, [FromBody] PatchAdminPermissionRequest req, CancellationToken ct)
 	{
 		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
@@ -198,7 +200,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	}
 
 	[HttpDelete("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
 		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);

@@ -3,15 +3,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { CourseDto } from '../api/generated/types.gen'
 import { SUBJECT_CATEGORY_LABELS } from '../utils/subjectCategory'
-
-export function encodeSidebarDragId(courseId: string) {
-  return `sidebar-course:${courseId}`
-}
-
-export function decodeSidebarDragId(id: string): string | null {
-  if (id.startsWith('sidebar-course:')) return id.slice('sidebar-course:'.length)
-  return null
-}
+import { encodeSidebarDragId } from '../utils/sidebarDragId'
 
 interface DraggableCourseRowProps {
   course: CourseDto

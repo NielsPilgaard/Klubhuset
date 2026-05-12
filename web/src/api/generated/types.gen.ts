@@ -50,6 +50,12 @@ export type ClassDto = {
     gradeLevel?: number | null;
 };
 
+export type ClassPermissionDto = {
+    staffId?: string;
+    staffName?: string | null;
+    grantedAt?: string;
+};
+
 export type ConfirmRequest = {
     confirmToken?: string | null;
 };
@@ -154,6 +160,10 @@ export type FolderDto = {
     name?: string | null;
     parentId?: string | null;
     createdAt?: string;
+};
+
+export type GrantPermissionRequest = {
+    staffId?: string;
 };
 
 export type HolidayDayDto = {
@@ -733,6 +743,59 @@ export type PutApiV1ClassesByIdResponses = {
 };
 
 export type PutApiV1ClassesByIdResponse = PutApiV1ClassesByIdResponses[keyof PutApiV1ClassesByIdResponses];
+
+export type GetApiV1ClassesByClassIdPermissionsData = {
+    body?: never;
+    path: {
+        classId: string;
+    };
+    query?: never;
+    url: '/api/v1/classes/{classId}/permissions';
+};
+
+export type GetApiV1ClassesByClassIdPermissionsResponses = {
+    /**
+     * OK
+     */
+    200: Array<ClassPermissionDto>;
+};
+
+export type GetApiV1ClassesByClassIdPermissionsResponse = GetApiV1ClassesByClassIdPermissionsResponses[keyof GetApiV1ClassesByClassIdPermissionsResponses];
+
+export type PostApiV1ClassesByClassIdPermissionsData = {
+    body?: GrantPermissionRequest;
+    path: {
+        classId: string;
+    };
+    query?: never;
+    url: '/api/v1/classes/{classId}/permissions';
+};
+
+export type PostApiV1ClassesByClassIdPermissionsResponses = {
+    /**
+     * OK
+     */
+    200: ClassPermissionDto;
+};
+
+export type PostApiV1ClassesByClassIdPermissionsResponse = PostApiV1ClassesByClassIdPermissionsResponses[keyof PostApiV1ClassesByClassIdPermissionsResponses];
+
+export type DeleteApiV1ClassesByClassIdPermissionsByStaffIdData = {
+    body?: never;
+    path: {
+        classId: string;
+        staffId: string;
+    };
+    query?: never;
+    url: '/api/v1/classes/{classId}/permissions/{staffId}';
+};
+
+export type DeleteApiV1ClassesByClassIdPermissionsByStaffIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1CoursesData = {
     body?: never;

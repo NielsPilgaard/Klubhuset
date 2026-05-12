@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/billing")]
-[Authorize(Roles = "admin")]
+[Authorize(Roles = Roles.Admin)]
 public sealed class BillingController(
 	SubscriptionService subscriptionService,
 	ITenantContext tenantContext,

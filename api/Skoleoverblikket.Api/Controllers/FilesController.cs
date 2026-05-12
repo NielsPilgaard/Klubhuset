@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Storage;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -314,7 +315,7 @@ public sealed class FilesController(
 	}
 
 	[HttpDelete("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
 		var file = await db.SchoolFiles.FirstOrDefaultAsync(f => f.Id == id, ct);
@@ -385,7 +386,7 @@ public sealed class FilesController(
 	public record RenameFolderRequest([Required, StringLength(200, MinimumLength = 1)] string Name);
 
 	[HttpDelete("folders/{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> DeleteFolder(Guid id, CancellationToken ct)
 	{
 		var folder = await db.SchoolFileFolders.FirstOrDefaultAsync(f => f.Id == id, ct);

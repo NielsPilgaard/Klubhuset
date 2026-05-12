@@ -30,7 +30,7 @@ public sealed class StaffInvitationsController(
 	public record AcceptInvitationRequest(string Token, string KeycloakSubject);
 
 	[HttpGet]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<List<InvitationDto>>> GetAll(CancellationToken ct)
 	{
 		var invitations = await db.StaffInvitations
@@ -43,7 +43,7 @@ public sealed class StaffInvitationsController(
 	}
 
 	[HttpGet("by-staff/{staffId:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<List<InvitationDto>>> GetByStaff(Guid staffId, CancellationToken ct)
 	{
 		var invitations = await db.StaffInvitations
@@ -57,7 +57,7 @@ public sealed class StaffInvitationsController(
 	}
 
 	[HttpPost("invite/{staffId:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<InvitationDto>> SendInvite(Guid staffId, CancellationToken ct)
 	{
 		var staff = await db.Staff.FirstOrDefaultAsync(s => s.Id == staffId, ct);

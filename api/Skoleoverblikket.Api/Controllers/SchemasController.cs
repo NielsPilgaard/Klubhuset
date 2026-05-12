@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -12,7 +13,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/classes/{classId:guid}/schemas")]
 [Authorize]
-public sealed class SchemasController(AppDbContext db, ITenantContext tenant, ConflictDetectionService conflicts)
+public sealed class SchemasController(AppDbContext db, ITenantContext tenant, ConflictDetectionService conflicts, IAuthorizationService authz)
 	: ControllerBase
 {
 	public record SchemaDto(Guid Id, Guid ClassId, string Name, DateOnly? StartDate, DateOnly? EndDate);
@@ -85,10 +86,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPost]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SchemaDto>> Create(Guid classId, [FromBody] CreateSchemaRequest req,
 		CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)
 		{
@@ -137,10 +143,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPut("{schemaId:guid}/daterange")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SchemaDto>> SetDateRange(Guid classId, Guid schemaId,
 		[FromBody] SetDateRangeRequest req, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -163,10 +174,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPost("{schemaId:guid}/copy")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SchemaDto>> Copy(Guid classId, Guid schemaId,
 		[FromBody] CopySchemaRequest req, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
 							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
@@ -228,10 +244,21 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPost("{schemaId:guid}/copy-to/{targetClassId:guid}")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SchemaDto>> CopyToClass(Guid classId, Guid schemaId, Guid targetClassId,
 		[FromBody] CopySchemaRequest req, CancellationToken ct)
 	{
+		var sourceAuthResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!sourceAuthResult.Succeeded)
+		{
+			return Forbid();
+		}
+
+		var authResult = await authz.AuthorizeAsync(User, targetClassId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
 							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
@@ -297,10 +324,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPut("{schemaId:guid}/rename")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SchemaDto>> Rename(Guid classId, Guid schemaId,
 		[FromBody] RenameSchemaRequest req, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -313,9 +345,14 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpDelete("{schemaId:guid}")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult> Delete(Guid classId, Guid schemaId, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -338,10 +375,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPut("{schemaId:guid}/slots")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SlotsAndConflictsDto>> UpsertSlot(Guid classId, Guid schemaId,
 		[FromBody] UpsertSlotRequest req, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -386,7 +428,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpDelete("{schemaId:guid}/slots/{timeSlotId:guid}/{weekday:int}")]
-	[Authorize(Roles = "admin")]
 	public async Task<ActionResult<SlotsAndConflictsDto>> DeleteSlot(Guid classId, Guid schemaId, Guid timeSlotId,
 		int weekday, CancellationToken ct)
 	{
@@ -399,6 +440,12 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 				Detail = "Ugedagen skal være mellem 0 (søndag) og 6 (lørdag).",
 				Status = 400
 			});
+		}
+
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
 		}
 
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);

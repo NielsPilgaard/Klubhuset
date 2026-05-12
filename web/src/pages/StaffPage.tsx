@@ -13,8 +13,7 @@ import {
   getApiV1StaffInvitationsByStaffByStaffIdQueryKey,
   postApiV1StaffInvitationsInviteByStaffIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { StaffDto, StaffRole, InvitationDto, DeleteApiV1StaffByIdData } from '../api/generated/types.gen'
-import type { Options } from '../api/generated/sdk.gen'
+import type { StaffDto, StaffRole, InvitationDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 
@@ -339,8 +338,8 @@ export default function StaffPage() {
 
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const deleteMutation = useMutation<unknown, unknown, Options<DeleteApiV1StaffByIdData>>({
-    ...deleteApiV1StaffByIdMutation(),
+  const deleteMutation = useMutation({
+    mutationFn: deleteApiV1StaffByIdMutation().mutationFn,
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1StaffQueryKey() }),
     onError: (err: unknown) => {
       const problem = err as { detail?: string; status?: number } | null

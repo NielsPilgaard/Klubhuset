@@ -57,6 +57,20 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 		return Task.FromResult((uploadUrl, publicUrl));
 	}
 
+	public async Task DeleteAsync(string key, CancellationToken ct = default)
+	{
+		await s3.DeleteObjectAsync(_options.DefaultBucketName, key, ct);
+	}
+
+	public string? GetKeyFromPublicUrl(string publicUrl)
+	{
+		var prefix = $"{_options.PublicEndpoint.TrimEnd('/')}/{_options.DefaultBucketName}/";
+
+		return !publicUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+				? null
+				: WebUtility.UrlDecode(publicUrl[prefix.Length..]);
+	}
+
 	private static string RewriteOrigin(string url, string serviceUrl)
 	{
 		var generated = new Uri(url);

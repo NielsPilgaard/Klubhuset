@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -45,7 +46,7 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 	}
 
 	[HttpPost]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<RoomDto>> Create([FromBody] UpsertRoomRequest req, CancellationToken ct)
 	{
 		var room = new Room
@@ -63,7 +64,7 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 	}
 
 	[HttpPut("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<RoomDto>> Update(Guid id, [FromBody] UpsertRoomRequest req, CancellationToken ct)
 	{
 		var room = await db.Rooms.FirstOrDefaultAsync(r => r.Id == id, ct);
@@ -85,7 +86,7 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 	}
 
 	[HttpDelete("{id:guid}")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
 	{
 		var room = await db.Rooms

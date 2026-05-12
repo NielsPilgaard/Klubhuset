@@ -8,6 +8,7 @@ using System.Text.Json;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Storage;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -59,7 +60,7 @@ public sealed class TimeSlotsController(
 	}
 
 	[HttpPut("time-slot-template")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<TemplateDto>> UpsertTemplate([FromBody] UpsertTemplateRequest req, CancellationToken ct)
 	{
 		if (req.Breaks.Count > 0)
@@ -118,7 +119,7 @@ public sealed class TimeSlotsController(
 	}
 
 	[HttpPost("time-slot-template/restore")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<IActionResult> RestoreTemplate(CancellationToken ct)
 	{
 		var key = $"backups/{tenant.TenantId}/default-schedule-backup.json";
@@ -467,7 +468,7 @@ public sealed class TimeSlotsController(
 	}
 
 	[HttpPut("classes/{classId:guid}/schemas/{schemaId:guid}/time-slots")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForSchema(
 		Guid classId, Guid schemaId,
 		[FromBody] IReadOnlyList<UpsertTimeSlotRequest> req,
@@ -503,7 +504,7 @@ public sealed class TimeSlotsController(
 	}
 
 	[HttpPut("classes/{classId:guid}/time-slots")]
-	[Authorize(Roles = "admin")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForClass(Guid classId, [FromBody] IReadOnlyList<UpsertTimeSlotRequest> req, CancellationToken ct)
 	{
 		var exists = await context.Classes.AnyAsync(c => c.Id == classId, ct);
@@ -524,6 +525,7 @@ public sealed class TimeSlotsController(
 			StartTime = upsertTimeSlotRequest.StartTime,
 			EndTime = upsertTimeSlotRequest.EndTime,
 			Label = upsertTimeSlotRequest.Label,
+			IsBreak = upsertTimeSlotRequest.IsBreak,
 		}).ToList();
 
 		context.TimeSlots.AddRange(newSlots);
