@@ -16,7 +16,8 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { usePageTitle } from '../hooks/usePageTitle'
-import CoursesSidebar, { decodeSidebarDragId } from '../components/CoursesSidebar'
+import CoursesSidebar from '../components/CoursesSidebar'
+import { decodeSidebarDragId } from '../utils/sidebarDragId'
 import {
   getApiV1ClassesByClassIdSchemasBySchemaIdOptions,
   getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey,
@@ -476,7 +477,7 @@ export default function SchemaBuilderPage() {
   const timeSlots = useMemo(() => (rawTimeSlots ?? []) as TimeSlotDto[], [rawTimeSlots])
 
   const { data: rawCourses } = useQuery(getApiV1CoursesOptions())
-  const courses = (rawCourses ?? []) as CourseDto[]
+  const courses = useMemo(() => (rawCourses ?? []) as CourseDto[], [rawCourses])
 
   const { data: rawStaff } = useQuery(getApiV1StaffOptions())
   const staff = (rawStaff ?? []) as StaffDto[]
