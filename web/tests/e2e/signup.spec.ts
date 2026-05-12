@@ -21,7 +21,7 @@ test('signup creates a school and redirects to setup wizard', async ({ page }) =
   await expect(page).toHaveURL(/\/setup/, { timeout: 15_000 })
 
   // The wizard should be visible — first step heading
-  await expect(page.getByRole('heading', { name: /skolenavn/i })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('heading', { name: /skoledag/i })).toBeVisible({ timeout: 10_000 })
 })
 
 test('signup shows error when submitting duplicate email', async ({ page }) => {

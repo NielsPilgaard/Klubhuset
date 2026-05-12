@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
 import type { StaffRole } from '../api/client'
@@ -22,76 +22,17 @@ interface WizardStep {
 }
 
 const STEPS: WizardStep[] = [
-  { id: 1, title: 'Skolenavn',    description: 'Bekræft eller opdater skolens navn' },
-  { id: 2, title: 'Skoledag',     description: 'Definér varighed og pauser for en normal skoledag' },
-  { id: 3, title: 'Klasser',      description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
-  { id: 4, title: 'Lokaler',      description: 'Tilføj lokaler, f.eks. Lokale 1' },
-  { id: 5, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
-  { id: 6, title: 'Færdig',       description: 'Din skole er klar til brug' },
+  { id: 1, title: 'Skoledag',     description: 'Definér varighed og pauser for en normal skoledag' },
+  { id: 2, title: 'Klasser',      description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
+  { id: 3, title: 'Lokaler',      description: 'Tilføj lokaler, f.eks. Lokale 1' },
+  { id: 4, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
+  { id: 5, title: 'Færdig',       description: 'Din skole er klar til brug' },
 ]
 
 
 // ---------------------------------------------------------------------------
 // Step components
 // ---------------------------------------------------------------------------
-
-function StepSchoolName({ initialName, onNext, onSkip }: { initialName?: string; onNext: () => void; onSkip: () => void }) {
-  const [name, setName] = useState(initialName ?? '')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    api.get<{ name: string }>('/schools/settings').then((s) => {
-      if (s.name) setName(s.name)
-    }).catch(() => {})
-  }, [])
-
-  async function save() {
-    if (!name.trim()) { onNext(); return }
-    setSaving(true)
-    setError('')
-    try {
-      await api.put('/schools/settings', { name })
-      onNext()
-    } catch {
-      setError('Kunne ikke gemme skolenavn. Prøv igen.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <p className="text-sm text-gray-600">
-        Hvad hedder din skole? Det vises på skemaer og i invitationsemails.
-      </p>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Skolens navn</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Vores Friskole"
-          autoFocus
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-        />
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-3 pt-2">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
-        >
-          {saving ? 'Gemmer…' : 'Gem og fortsæt'}
-        </button>
-        <button onClick={onSkip} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
-          Spring over
-        </button>
-      </div>
-    </div>
-  )
-}
-
 
 interface BreakEntry {
   startTime: string
@@ -739,17 +680,16 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 // ---------------------------------------------------------------------------
 
 function firstIncompleteStep(status: OnboardingStatusDto): number {
-  if ((status.classCount ?? 0) === 0) return 3
-  if ((status.roomCount ?? 0) === 0) return 4
-  if ((status.staffCount ?? 0) === 0) return 5
-  return 6
+  if ((status.classCount ?? 0) === 0) return 1
+  if ((status.roomCount ?? 0) === 0) return 3
+  if ((status.staffCount ?? 0) === 0) return 4
+  return 5
 }
 
 export default function SchoolSetupWizardPage() {
   usePageTitle('Opsætning')
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
   const { authenticated } = useAuth()
 
@@ -808,10 +748,9 @@ export default function SchoolSetupWizardPage() {
 
         {/* Step body */}
         <div className="px-8 pb-8 pt-4">
-          {step === 1 && <StepSchoolName initialName={searchParams.get('schoolName') ?? undefined} onNext={advance} onSkip={skip} />}
-          {step === 2 && <StepTimeSlots onNext={advance} onSkip={skip} />}
-          {step === 3 && <StepCreateClasses onNext={advance} onSkip={skip} />}
-          {step === 4 && (
+          {step === 1 && <StepTimeSlots onNext={advance} onSkip={skip} />}
+          {step === 2 && <StepCreateClasses onNext={advance} onSkip={skip} />}
+          {step === 3 && (
             <StepCreateItems
               noun="Lokale"
               plural="Lokaler"
@@ -821,8 +760,8 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 5 && <StepInviteStaff onNext={advance} onSkip={skip} />}
-          {step === 6 && <StepDone onFinish={finish} />}
+          {step === 4 && <StepInviteStaff onNext={advance} onSkip={skip} />}
+          {step === 5 && <StepDone onFinish={finish} />}
         </div>
 
         {/* Step dots */}

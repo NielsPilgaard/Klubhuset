@@ -27,21 +27,34 @@ test.describe('Staff invitation flow', () => {
     await loginAsAdmin(page)
 
     // --- Step 2: admin creates staff member via API ---
-    // Use the generated client indirectly: call the API with the bearer token from localStorage/cookie.
-    // Easiest: navigate to staff page and create via UI, or call the API directly using request fixture
-    // with the session cookie that Keycloak set after login.
-    const createStaffRes = await page.request.post('/api/v1/staff', {
-      data: { name: staffName, email: staffEmail, role: 'Teacher' },
-    })
-    expect(createStaffRes.ok(), `Create staff failed: ${createStaffRes.status()}`).toBeTruthy()
-    const staff = await createStaffRes.json() as { id: string }
+    // page.request does not carry the Keycloak bearer token. Use page.evaluate so the
+    // fetch runs inside the browser where window.__keycloak (exposed in dev mode) holds the token.
+    const createResult = await page.evaluate(async ({ staffName, staffEmail }: { staffName: string; staffEmail: string }) => {
+      const kc = (window as unknown as { __keycloak: { token: string; updateToken: (n: number) => Promise<boolean> } }).__keycloak
+      await kc.updateToken(30)
+      const res = await fetch('/api/v1/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${kc.token}` },
+        body: JSON.stringify({ name: staffName, email: staffEmail, role: 'Teacher' }),
+      })
+      return { ok: res.ok, status: res.status, body: await res.json() }
+    }, { staffName, staffEmail })
+    expect(createResult.ok, `Create staff failed: ${createResult.status}`).toBeTruthy()
+    const staff = createResult.body as { id: string }
 
     // --- Step 3: admin sends invitation ---
     await request.delete(`${MAILPIT_API}/messages`)
-    const inviteRes = await page.request.post(`/api/v1/staff-invitations/invite/${staff.id}`, {
-      data: {},
-    })
-    expect(inviteRes.ok(), `Send invitation failed: ${inviteRes.status()}`).toBeTruthy()
+    const inviteResult = await page.evaluate(async (staffId: string) => {
+      const kc = (window as unknown as { __keycloak: { token: string; updateToken: (n: number) => Promise<boolean> } }).__keycloak
+      await kc.updateToken(30)
+      const res = await fetch(`/api/v1/staff-invitations/invite/${staffId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${kc.token}` },
+        body: '{}',
+      })
+      return { ok: res.ok, status: res.status }
+    }, staff.id)
+    expect(inviteResult.ok, `Send invitation failed: ${inviteResult.status}`).toBeTruthy()
 
     // --- Step 4: extract invitation link from Mailpit ---
     // Retry a few times in case email delivery is slightly delayed
