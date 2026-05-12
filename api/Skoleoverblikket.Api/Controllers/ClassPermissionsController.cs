@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
-using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -11,7 +11,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/classes/{classId:guid}/permissions")]
 [Authorize]
-public sealed class ClassPermissionsController(AppDbContext db, ITenantContext tenant, IAuthorizationService authz) : ControllerBase
+public sealed class ClassPermissionsController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
 	public record ClassPermissionDto(Guid StaffId, string StaffName, DateTimeOffset GrantedAt);
 	public record GrantPermissionRequest(Guid StaffId);
@@ -37,13 +37,9 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 	}
 
 	[HttpPost]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<ClassPermissionDto>> Grant(Guid classId, [FromBody] GrantPermissionRequest req, CancellationToken ct)
 	{
-		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
-		if (!authResult.Succeeded)
-		{
-			return Forbid();
-		}
 
 		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
 		if (!classExists)

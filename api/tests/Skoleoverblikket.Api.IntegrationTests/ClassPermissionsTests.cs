@@ -101,7 +101,7 @@ public sealed class ClassPermissionsTests
 	{
 		const string subject = "restricted-admin-subject";
 		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
-			isAdmin: true, keycloakSubject: subject);
+			isAdmin: false, keycloakSubject: subject);
 
 		var (assignedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
 			_factory.Services, TestTenantContext.DefaultTenantId, "3.a");
@@ -127,7 +127,7 @@ public sealed class ClassPermissionsTests
 	{
 		const string subject = "restricted-admin-subject-2";
 		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
-			isAdmin: true, keycloakSubject: subject);
+			isAdmin: false, keycloakSubject: subject);
 
 		var (assignedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
 			_factory.Services, TestTenantContext.DefaultTenantId, "5.a");

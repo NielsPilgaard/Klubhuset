@@ -10,10 +10,11 @@ public sealed class EditClassRequirement : IAuthorizationRequirement { }
 /// <summary>
 /// Resource-based handler. Resource is the classId (Guid).
 /// Logic:
-///   1. Admins (IsAdmin = true) always succeed.
-///   2. If no ClassPermission rows exist for the class → open, all authenticated staff succeed.
-///   3. If rows exist and one matches this staff member → succeed.
-///   4. Otherwise → deny.
+///   1. No staff row but admin role claim → full access (superuser not enrolled in school).
+///   2. Staff row has IsAdmin = true → full access (guards against Keycloak/DB desync).
+///   3. No ClassPermission rows exist in the tenant → open, all authenticated staff succeed.
+///   4. Permission rows exist and one matches this staff member → succeed.
+///   5. Otherwise → deny.
 /// </summary>
 public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContext tenant)
 	: AuthorizationHandler<EditClassRequirement, Guid>
@@ -37,6 +38,11 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 
 		if (staff is null)
 		{
+			if (context.User.IsInRole(Roles.Admin))
+			{
+				context.Succeed(requirement);
+			}
+
 			return;
 		}
 
@@ -46,10 +52,9 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 			return;
 		}
 
-		var anyPermissionsForClass = await db.ClassPermissions
-			.AnyAsync(p => p.ClassId == classId);
+		var anyPermissionsExist = await db.ClassPermissions.AnyAsync();
 
-		if (!anyPermissionsForClass)
+		if (!anyPermissionsExist)
 		{
 			context.Succeed(requirement);
 			return;
