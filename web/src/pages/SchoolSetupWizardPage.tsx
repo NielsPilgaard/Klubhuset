@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
 import type { StaffRole } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
@@ -8,6 +8,8 @@ import { LessonDurationSlider } from '../components/LessonDurationSlider'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
+import { getApiV1SchoolsOnboardingStatusOptions } from '../api/generated/@tanstack/react-query.gen'
+import type { OnboardingStatusDto } from '../api/generated/types.gen'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -736,6 +738,13 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 // Main wizard
 // ---------------------------------------------------------------------------
 
+function firstIncompleteStep(status: OnboardingStatusDto): number {
+  if ((status.classCount ?? 0) === 0) return 3
+  if ((status.roomCount ?? 0) === 0) return 4
+  if ((status.staffCount ?? 0) === 0) return 5
+  return 6
+}
+
 export default function SchoolSetupWizardPage() {
   usePageTitle('Opsætning')
   const navigate = useNavigate()
@@ -743,6 +752,18 @@ export default function SchoolSetupWizardPage() {
   const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
   const { authenticated } = useAuth()
+
+  const { data: onboardingStatus } = useQuery({
+    ...getApiV1SchoolsOnboardingStatusOptions(),
+    enabled: authenticated,
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (onboardingStatus) {
+      setStep(firstIncompleteStep(onboardingStatus))
+    }
+  }, [onboardingStatus])
 
   useEffect(() => {
     if (!authenticated) {

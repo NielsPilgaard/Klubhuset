@@ -595,6 +595,7 @@ function ExpandedClassPanel({ classId, autoOpenCreate, onAutoOpenHandled }: { cl
 function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { isAdmin } = useAuth()
   const [showCreate, setShowCreate] = useState(false)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
   const [editingDateRange, setEditingDateRange] = useState<SchemaDto | null>(null)
@@ -633,16 +634,18 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
         <div className="flex items-center gap-3">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Skemaer</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Nyt skema
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Nyt skema
+          </button>
+        )}
       </div>
 
       {schemas && schemas.length === 0 && (
@@ -697,54 +700,58 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
                 </svg>
                 Rediger
               </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setEditingDateRange(s) }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                Datoer
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setRenamingSchema(s) }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                </svg>
-                Omdøb
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setCopyingSchema(s) }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                Kopiér
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (confirm(`Slet skemaet "${s.name}"? Alle lektioner i skemaet slettes også.`)) {
-                    deleteSchemaMutation.mutate({ path: { classId, schemaId: s.id! } })
-                  }
-                }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
-                Slet
-              </button>
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingDateRange(s) }}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    Datoer
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setRenamingSchema(s) }}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                    </svg>
+                    Omdøb
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCopyingSchema(s) }}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    Kopiér
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm(`Slet skemaet "${s.name}"? Alle lektioner i skemaet slettes også.`)) {
+                        deleteSchemaMutation.mutate({ path: { classId, schemaId: s.id! } })
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6M14 11v6" />
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    </svg>
+                    Slet
+                  </button>
+                </>
+              )}
             </div>
           </div>
           )
@@ -787,6 +794,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
 
 export default function ClassesPage() {
   usePageTitle('Klasser')
+  const { isAdmin } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
@@ -842,16 +850,18 @@ export default function ClassesPage() {
           <h1 className="font-display text-2xl font-semibold text-gray-900">Klasser</h1>
           <p className="mt-1 text-sm text-gray-500">Administrer klasser og deres skemaer</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span className="hidden sm:inline">Opret klasse</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span className="hidden sm:inline">Opret klasse</span>
+          </button>
+        )}
       </div>
 
       {/* Error */}
@@ -911,49 +921,51 @@ export default function ClassesPage() {
                   <span className="text-sm text-gray-400 truncate">{cls.description}</span>
                 )}
               </button>
-              <div className="relative shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
-                <button
-                  data-testid={`class-menu-${cls.id}`}
-                  onClick={() => setOpenMenuId(openMenuId === cls.id ? null : cls.id!)}
-                  className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-                  title="Flere handlinger"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
-                  </svg>
-                </button>
-                {openMenuId === cls.id && (
-                  <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                    <button
-                      data-testid={`class-edit-${cls.id}`}
-                      onClick={() => { setEditingClass(cls); setOpenMenuId(null) }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                      Rediger
-                    </button>
-                    <button
-                      data-testid={`class-delete-${cls.id}`}
-                      onClick={() => {
-                        setOpenMenuId(null)
-                        if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate({ path: { id: cls.id! } })
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                      Slet
-                    </button>
-                  </div>
-                )}
-              </div>
+              {isAdmin && (
+                <div className="relative shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    data-testid={`class-menu-${cls.id}`}
+                    onClick={() => setOpenMenuId(openMenuId === cls.id ? null : cls.id!)}
+                    className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                    title="Flere handlinger"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+                    </svg>
+                  </button>
+                  {openMenuId === cls.id && (
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
+                      <button
+                        data-testid={`class-edit-${cls.id}`}
+                        onClick={() => { setEditingClass(cls); setOpenMenuId(null) }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Rediger
+                      </button>
+                      <button
+                        data-testid={`class-delete-${cls.id}`}
+                        onClick={() => {
+                          setOpenMenuId(null)
+                          if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate({ path: { id: cls.id! } })
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                        Slet
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {expandedClass === cls.id && (
               <ExpandedClassPanel

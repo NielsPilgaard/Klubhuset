@@ -239,9 +239,6 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
     },
   })
 
-  const latestInvite = invitations?.[0]
-
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -309,11 +306,7 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
               disabled={sendMutation.isPending}
               className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {sendMutation.isPending
-                ? 'Sender…'
-                : latestInvite && !sent
-                  ? 'Send invitation igen'
-                  : 'Send invitation'}
+              {sendMutation.isPending ? 'Sender…' : 'Send invitation'}
             </button>
           )}
         </div>
@@ -465,7 +458,7 @@ export default function StaffPage() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {!isSelf && <button
+                      {!isSelf && !s.keycloakSubject && <button
                         onClick={() => setInvitingStaff(s)}
                         className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
                         title="Send invitation"

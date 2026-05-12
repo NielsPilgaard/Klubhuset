@@ -10,6 +10,7 @@ import {
 } from '../api/generated/@tanstack/react-query.gen'
 import type { RoomDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useAuth } from '../auth/useAuth'
 
 interface RoomModalProps {
   initial?: RoomDto
@@ -109,6 +110,7 @@ function RoomModal({ initial, onClose, onSaved }: RoomModalProps) {
 
 export default function RoomsPage() {
   usePageTitle('Lokaler')
+  const { isAdmin } = useAuth()
   const qc = useQueryClient()
   const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
@@ -128,17 +130,19 @@ export default function RoomsPage() {
           <h1 className="font-display text-2xl font-semibold text-gray-900">Lokaler</h1>
           <p className="mt-1 text-sm text-gray-500">Administrer undervisningslokaler</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          aria-label="Opret lokale"
-          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span className="hidden sm:inline">Opret lokale</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowCreate(true)}
+            aria-label="Opret lokale"
+            className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span className="hidden sm:inline">Opret lokale</span>
+          </button>
+        )}
       </div>
 
       {isError && (
@@ -199,28 +203,32 @@ export default function RoomsPage() {
                         <line x1="3" y1="10" x2="21" y2="10" />
                       </svg>
                     </button>
-                    <button
-                      onClick={() => setEditingRoom(r)}
-                      className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (r.id && confirm(`Slet lokalet "${r.name ?? 'lokale'}"?`)) deleteMutation.mutate({ path: { id: r.id } })
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => setEditingRoom(r)}
+                          className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (r.id && confirm(`Slet lokalet "${r.name ?? 'lokale'}"?`)) deleteMutation.mutate({ path: { id: r.id } })
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>

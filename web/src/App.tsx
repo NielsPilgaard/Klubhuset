@@ -86,14 +86,14 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route path="dashboard" element={<AdminRoute><DashboardPage /></AdminRoute>} />
             <Route path="mig/skema" element={<MySchedulePage />} />
-            <Route path="klasser" element={<AdminRoute><ClassesPage /></AdminRoute>} />
-            <Route path="klasser/:classId/skema/:schemaId" element={<AdminRoute><SchemaBuilderPage /></AdminRoute>} />
+            <Route path="klasser" element={<ClassesPage />} />
+            <Route path="klasser/:classId/skema/:schemaId" element={<SchemaBuilderPage />} />
             <Route path="klasser/:classId/lektioner" element={<AdminRoute><ClassTimeSlotsPage /></AdminRoute>} />
             <Route path="klasser/:classId/schemas/:schemaId/lektioner" element={<AdminRoute><ClassTimeSlotsPage /></AdminRoute>} />
             <Route path="medarbejdere" element={<AdminRoute><StaffPage /></AdminRoute>} />
             <Route path="medarbejdere/:staffId/skema" element={<AdminRoute><StaffSchedulePage /></AdminRoute>} />
-            <Route path="fag" element={<AdminRoute><CoursesPage /></AdminRoute>} />
-            <Route path="lokaler" element={<AdminRoute><RoomsPage /></AdminRoute>} />
+            <Route path="fag" element={<CoursesPage />} />
+            <Route path="lokaler" element={<RoomsPage />} />
             <Route path="lokaler/:roomId/skema" element={<AdminRoute><RoomSchedulePage /></AdminRoute>} />
             <Route path="filer" element={<FilesPage />} />
             <Route path="eksporter" element={<AdminRoute><ExportsPage /></AdminRoute>} />
