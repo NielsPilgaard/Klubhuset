@@ -466,8 +466,7 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
   const staff = rawStaff ?? []
 
   const grantedIds = new Set(permissions.map((p) => p.staffId))
-  const adminStaff = staff.filter((s) => s.isAdmin)
-  const ungrantedAdmins = adminStaff.filter((s) => !grantedIds.has(s.id))
+  const ungrantedStaff = staff.filter((s) => !grantedIds.has(s.id))
 
   const allSuperadmin = permissions.length === 0
 
@@ -499,7 +498,7 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5">
             <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          Alle administratorer har adgang til denne klasse.
+          Ingen adgangsbegrænsninger. Alle medarbejdere kan redigere denne klasse.
         </div>
       )}
 
@@ -522,17 +521,17 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
         </div>
       )}
 
-      {ungrantedAdmins.length > 0 && (
+      {ungrantedStaff.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tilføj administrator</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tilføj medarbejder</p>
           <div className="flex gap-2">
             <select
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
             >
-              <option value="">Vælg administrator…</option>
-              {ungrantedAdmins.map((s) => (
+              <option value="">Vælg medarbejder…</option>
+              {ungrantedStaff.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
@@ -551,8 +550,11 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
         </div>
       )}
 
-      {adminStaff.length === 0 && (
-        <p className="text-sm text-gray-400">Ingen administratorer at tildele adgang til.</p>
+      {staff.length === 0 && (
+        <p className="text-sm text-gray-400">Ingen medarbejdere at tildele adgang til.</p>
+      )}
+      {staff.length > 0 && ungrantedStaff.length === 0 && permissions.length > 0 && (
+        <p className="text-sm text-gray-400">Alle medarbejdere har fået tildelt adgang.</p>
       )}
     </div>
   )

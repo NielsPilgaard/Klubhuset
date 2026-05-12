@@ -12,6 +12,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize]
 public sealed class StatsController(AppDbContext db) : ControllerBase
 {
+	private const int SchoolDaysPerWeek = 5; // Mon–Fri
 	public record DashboardStats(
 		int ClassCount,
 		int StaffCount,
@@ -37,6 +38,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 		var roomCount = await db.Rooms.CountAsync(ct);
 
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
+		// TODO: Fetching all schemas is overkill, visualize something else
 		var allSchemas = await db.Schemas.AsNoTracking().ToListAsync(ct);
 		var schemasTotal = allSchemas.Count;
 		var schemasComplete = allSchemas.Count(s => s.StartDate.HasValue && s.EndDate.HasValue);
@@ -44,6 +46,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 		// Hours per course per class (active schemas only)
 		var activeSlots = await db.SchemaSlots
 			.AsNoTrackingWithIdentityResolution()
+			.AsSplitQuery()
 			.Where(s => s.Schema.StartDate <= today && s.Schema.EndDate >= today)
 			.Include(s => s.Course)
 			.Include(s => s.Schema).ThenInclude(sc => sc.Class)
@@ -104,7 +107,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 			var applicable = classTimeSlots
 				.Where(ts => ts.ClassId == schema.ClassId || ts.ClassId == null)
 				.ToList();
-			var emptySlots = applicable.Count * 5 - schema.Slots.Count;
+			var emptySlots = applicable.Count * SchoolDaysPerWeek - schema.Slots.Count;
 			return new UnassignedClass(schema.ClassId, schema.Class.Name, Math.Max(0, emptySlots), HasSchema: true);
 		})
 		.Where(u => u.EmptySlots > 0);

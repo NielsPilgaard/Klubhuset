@@ -57,6 +57,7 @@ public static class DbSeeder
 			Email = "admin@debugskolen.dk",
 			Role = StaffRole.Teacher,
 			KeycloakSubject = SeedAdminKeycloakSubject,
+			IsAdmin = true,
 		});
 
 		await db.SaveChangesAsync();

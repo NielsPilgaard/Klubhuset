@@ -10,9 +10,9 @@ public sealed class EditClassRequirement : IAuthorizationRequirement { }
 /// <summary>
 /// Resource-based handler. Resource is the classId (Guid).
 /// Logic:
-///   1. Must hold the "admin" role.
-///   2. If no ClassPermission rows exist for this tenant → superadmin, full access.
-///   3. If rows exist and one matches (staffId, classId) → succeed.
+///   1. Admins (IsAdmin = true) always succeed.
+///   2. If no ClassPermission rows exist for the class → open, all authenticated staff succeed.
+///   3. If rows exist and one matches this staff member → succeed.
 ///   4. Otherwise → deny.
 /// </summary>
 public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContext tenant)
@@ -23,18 +23,6 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 		EditClassRequirement requirement,
 		Guid classId)
 	{
-		if (!context.User.IsInRole("admin"))
-		{
-			return;
-		}
-
-		var anyPermissions = await db.ClassPermissions.AnyAsync();
-		if (!anyPermissions)
-		{
-			context.Succeed(requirement);
-			return;
-		}
-
 		var subject = context.User.GetKeycloakSubject();
 		if (string.IsNullOrEmpty(subject))
 		{
@@ -44,11 +32,26 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 		var staff = await db.Staff
 			.AsNoTracking()
 			.Where(s => s.KeycloakSubject == subject && s.TenantId == tenant.TenantId)
-			.Select(s => new { s.Id })
+			.Select(s => new { s.Id, s.IsAdmin })
 			.FirstOrDefaultAsync();
 
 		if (staff is null)
 		{
+			return;
+		}
+
+		if (staff.IsAdmin)
+		{
+			context.Succeed(requirement);
+			return;
+		}
+
+		var anyPermissionsForClass = await db.ClassPermissions
+			.AnyAsync(p => p.ClassId == classId);
+
+		if (!anyPermissionsForClass)
+		{
+			context.Succeed(requirement);
 			return;
 		}
 

@@ -12,4 +12,12 @@ public interface IObjectStorage
 	/// </summary>
 	Task<(string UploadUrl, string PublicUrl)> GeneratePresignedUploadUrlAsync(
 		string key, string contentType, long contentLength, TimeSpan expiry, CancellationToken ct = default);
+
+	Task DeleteAsync(string key, CancellationToken ct = default);
+
+	/// <summary>
+	/// Derives the storage key from a public URL previously returned by UploadPublicAsync.
+	/// Returns null if the URL does not belong to this storage backend.
+	/// </summary>
+	string? GetKeyFromPublicUrl(string publicUrl);
 }

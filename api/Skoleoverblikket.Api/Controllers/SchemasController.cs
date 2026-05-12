@@ -86,7 +86,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPost]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SchemaDto>> Create(Guid classId, [FromBody] CreateSchemaRequest req,
 		CancellationToken ct)
 	{
@@ -144,7 +143,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPut("{schemaId:guid}/daterange")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SchemaDto>> SetDateRange(Guid classId, Guid schemaId,
 		[FromBody] SetDateRangeRequest req, CancellationToken ct)
 	{
@@ -176,7 +174,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPost("{schemaId:guid}/copy")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SchemaDto>> Copy(Guid classId, Guid schemaId,
 		[FromBody] CopySchemaRequest req, CancellationToken ct)
 	{
@@ -247,7 +244,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPost("{schemaId:guid}/copy-to/{targetClassId:guid}")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SchemaDto>> CopyToClass(Guid classId, Guid schemaId, Guid targetClassId,
 		[FromBody] CopySchemaRequest req, CancellationToken ct)
 	{
@@ -328,7 +324,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPut("{schemaId:guid}/rename")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SchemaDto>> Rename(Guid classId, Guid schemaId,
 		[FromBody] RenameSchemaRequest req, CancellationToken ct)
 	{
@@ -350,7 +345,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpDelete("{schemaId:guid}")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid classId, Guid schemaId, CancellationToken ct)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
@@ -381,7 +375,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpPut("{schemaId:guid}/slots")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SlotsAndConflictsDto>> UpsertSlot(Guid classId, Guid schemaId,
 		[FromBody] UpsertSlotRequest req, CancellationToken ct)
 	{
@@ -435,7 +428,6 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpDelete("{schemaId:guid}/slots/{timeSlotId:guid}/{weekday:int}")]
-	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SlotsAndConflictsDto>> DeleteSlot(Guid classId, Guid schemaId, Guid timeSlotId,
 		int weekday, CancellationToken ct)
 	{

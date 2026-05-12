@@ -145,6 +145,16 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 			return NotFound();
 		}
 
+		if (school.LogoUrl is not null)
+		{
+			var oldKey = storage.GetKeyFromPublicUrl(school.LogoUrl);
+			if (oldKey is not null)
+			{
+				try { await storage.DeleteAsync(oldKey, ct); }
+				catch { /* swallow — old file missing or inaccessible should not block upload */ }
+			}
+		}
+
 		await using var stream = file.OpenReadStream();
 		var key = $"logos/{tenant.TenantId}{ext}";
 		var url = await storage.UploadPublicAsync(key, mimeType, stream, ct);
