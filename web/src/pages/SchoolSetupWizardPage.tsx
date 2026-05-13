@@ -691,6 +691,7 @@ export default function SchoolSetupWizardPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [step, setStep] = useState(1)
+  const stepInitialized = useRef(false)
   const { authenticated } = useAuth()
 
   const { data: onboardingStatus } = useQuery({
@@ -700,7 +701,8 @@ export default function SchoolSetupWizardPage() {
   })
 
   useEffect(() => {
-    if (onboardingStatus) {
+    if (onboardingStatus && !stepInitialized.current) {
+      stepInitialized.current = true
       setStep(firstIncompleteStep(onboardingStatus))
     }
   }, [onboardingStatus])
