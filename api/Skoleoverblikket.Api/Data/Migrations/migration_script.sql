@@ -774,3 +774,76 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510060354_Add_Course_Category_And_Class_GradeLevel') THEN
+    ALTER TABLE "Courses" ADD "Category" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510060354_Add_Course_Category_And_Class_GradeLevel') THEN
+    ALTER TABLE "Classes" ADD "GradeLevel" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510060354_Add_Course_Category_And_Class_GradeLevel') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260510060354_Add_Course_Category_And_Class_GradeLevel', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510203252_AddClassPermissions') THEN
+    CREATE TABLE "ClassPermissions" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "ClassId" uuid NOT NULL,
+        "StaffId" uuid NOT NULL,
+        "GrantedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ClassPermissions" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ClassPermissions_Classes_ClassId" FOREIGN KEY ("ClassId") REFERENCES "Classes" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_ClassPermissions_Staff_StaffId" FOREIGN KEY ("StaffId") REFERENCES "Staff" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510203252_AddClassPermissions') THEN
+    CREATE INDEX "IX_ClassPermissions_ClassId" ON "ClassPermissions" ("ClassId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510203252_AddClassPermissions') THEN
+    CREATE INDEX "IX_ClassPermissions_StaffId" ON "ClassPermissions" ("StaffId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510203252_AddClassPermissions') THEN
+    CREATE UNIQUE INDEX "IX_ClassPermissions_TenantId_ClassId_StaffId" ON "ClassPermissions" ("TenantId", "ClassId", "StaffId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260510203252_AddClassPermissions') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260510203252_AddClassPermissions', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
