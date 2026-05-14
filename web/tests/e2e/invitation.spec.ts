@@ -30,10 +30,6 @@ test.describe('Staff invitation flow', () => {
     // page.request does not carry the Keycloak bearer token. Use page.evaluate so the
     // fetch runs inside the browser where window.__keycloak (exposed in dev mode) holds the token.
     const createResult = await page.evaluate(async ({ staffName, staffEmail }: { staffName: string; staffEmail: string }) => {
-      const deadline = Date.now() + 10_000
-      while (!(window as unknown as { __keycloak?: unknown }).__keycloak && Date.now() < deadline) {
-        await new Promise((r) => setTimeout(r, 100))
-      }
       const kc = (window as unknown as { __keycloak: { token: string; updateToken: (n: number) => Promise<boolean> } }).__keycloak
       await kc.updateToken(30)
       const res = await fetch('/api/v1/staff', {
@@ -49,10 +45,6 @@ test.describe('Staff invitation flow', () => {
     // --- Step 3: admin sends invitation ---
     await request.delete(`${MAILPIT_API}/messages`)
     const inviteResult = await page.evaluate(async (staffId: string) => {
-      const deadline = Date.now() + 10_000
-      while (!(window as unknown as { __keycloak?: unknown }).__keycloak && Date.now() < deadline) {
-        await new Promise((r) => setTimeout(r, 100))
-      }
       const kc = (window as unknown as { __keycloak: { token: string; updateToken: (n: number) => Promise<boolean> } }).__keycloak
       await kc.updateToken(30)
       const res = await fetch(`/api/v1/staff-invitations/invite/${staffId}`, {

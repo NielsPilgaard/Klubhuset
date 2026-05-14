@@ -35,8 +35,6 @@ export function getInitPromise(): Promise<boolean> {
   return initPromise
 }
 
-if (import.meta.env.DEV || import.meta.env.VITE_E2E === 'true') {
-  ;(window as unknown as Record<string, unknown>).__keycloak = keycloak
-}
+;(window as unknown as Record<string, unknown>).__keycloak = keycloak
 
 export default keycloak

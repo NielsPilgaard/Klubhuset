@@ -690,8 +690,8 @@ export default function SchoolSetupWizardPage() {
   usePageTitle('Opsætning')
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const userNavigated = useRef(false)
   const [step, setStep] = useState(1)
-  const stepInitialized = useRef(false)
   const { authenticated } = useAuth()
 
   const { data: onboardingStatus } = useQuery({
@@ -701,8 +701,7 @@ export default function SchoolSetupWizardPage() {
   })
 
   useEffect(() => {
-    if (onboardingStatus && !stepInitialized.current) {
-      stepInitialized.current = true
+    if (onboardingStatus && !userNavigated.current) {
       setStep(firstIncompleteStep(onboardingStatus))
     }
   }, [onboardingStatus])
@@ -715,8 +714,8 @@ export default function SchoolSetupWizardPage() {
 
   if (!authenticated) return null
 
-  const advance = () => setStep((s) => Math.min(s + 1, STEPS.length))
-  const skip = () => setStep((s) => Math.min(s + 1, STEPS.length))
+  const advance = () => { userNavigated.current = true; setStep((s) => Math.min(s + 1, STEPS.length)) }
+  const skip = () => { userNavigated.current = true; setStep((s) => Math.min(s + 1, STEPS.length)) }
 
   function finish() {
     qc.invalidateQueries({ queryKey: ['onboarding-status'] })
