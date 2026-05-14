@@ -16,7 +16,7 @@ Admin (Hanne) opens **Indstillinger → Årsrul**. One page, one action.
 
 1. System shows current classes in a list with a rename field pre-filled with a suggested new name (editable).
 2. Hanne marks which classes to archive (graduating class gets archived, new entry class gets a blank name she fills in).
-3. She clicks **Udfør årsrul**. Confirmation dialog: "Dette omdøber X klasser og arkiverer Y. Det kan ikke fortrydes."
+3. She clicks **Udfør årsrul**. Confirmation dialog: "Dette omdøber X klasser og arkiverer Y. Det kan ikke fortrydes." (It should actually be possible to reverse this, accidents happen)
 4. Done. Classes are renamed. Archived classes are soft-deleted (hidden from schedule builder, accessible in read-only archive view).
 
 ## Data model changes
@@ -46,15 +46,14 @@ Request body:
     { "classId": "...", "newName": "3.b" }
   ],
   "archive": ["<classId-of-graduating-class>"],
-  "create": [
-    { "name": "0.a" }
-  ]
+  "create": [{ "name": "0.a" }]
 }
 ```
 
 Response: `204 No Content` on success, `ProblemDetails` on validation failure.
 
 **Validation:**
+
 - All `classId` values must belong to the tenant
 - `newName` must be unique within tenant after rename (check for collisions)
 - Cannot rename and archive the same class in one request
@@ -69,11 +68,13 @@ Response: `204 No Content` on success, `ProblemDetails` on validation failure.
 New page: **Indstillinger → Årsrul** (route: `/settings/year-roll`).
 
 Layout:
+
 - Table with columns: Nuværende navn | Ny navn (input) | Arkivér (checkbox)
 - "+ Opret ny klasse" row at the bottom for the entry class
 - "Udfør årsrul" button → confirmation dialog → POST → success toast
 
 UX rules:
+
 - Pre-fill new name suggestion: strip trailing digit, increment (best-effort, editable). If name doesn't end in a digit, leave blank for manual entry.
 - Warn inline if two classes would get the same new name (client-side validation before submit).
 - Archived classes disappear from the main nav immediately after roll.
