@@ -10,7 +10,7 @@ public static class IcsBuilder
 		var sb = new StringBuilder();
 		sb.AppendLine("BEGIN:VCALENDAR");
 		sb.AppendLine("VERSION:2.0");
-		sb.AppendLine("PRODID:-//Skoleplanen//Skoleplanen//DA");
+		sb.AppendLine("PRODID:-//Skoleoverblikket//Skoleoverblikket//DA");
 		sb.AppendLine("CALSCALE:GREGORIAN");
 		sb.AppendLine("METHOD:PUBLISH");
 
@@ -27,7 +27,7 @@ public static class IcsBuilder
 			foreach (var (start, end) in occurrences)
 			{
 				sb.AppendLine("BEGIN:VEVENT");
-				sb.AppendLine($"UID:{entry.Id}-{start:yyyyMMdd}@skoleplanen");
+				sb.AppendLine($"UID:{entry.Id}-{start:yyyyMMdd}@skoleoverblikket");
 				sb.AppendLine($"SUMMARY:{EscapeText(entry.Title)}");
 				sb.AppendLine($"DTSTART;VALUE=DATE:{start:yyyyMMdd}");
 				sb.AppendLine($"DTEND;VALUE=DATE:{end.AddDays(1):yyyyMMdd}");

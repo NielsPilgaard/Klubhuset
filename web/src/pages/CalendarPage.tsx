@@ -508,7 +508,7 @@ export default function CalendarPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'skoleplanen-kalender.ics'
+      a.download = 'skoleoverblikket-kalender.ics'
       a.style.display = 'none'
       document.body.appendChild(a)
       a.click()

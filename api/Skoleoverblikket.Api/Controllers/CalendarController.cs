@@ -209,7 +209,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 			.ToListAsync(ct);
 
 		var bytes = IcsBuilder.Build(entries);
-		Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleplanen-kalender.ics\"");
+		Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleoverblikket-kalender.ics\"");
 		return File(bytes, "text/calendar; charset=utf-8");
 	}
 
