@@ -131,7 +131,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const { data: onboarding } = useQuery({
     ...getApiV1SchoolsOnboardingStatusOptions(),
     retry: false,
-    staleTime: 60_000,
+    staleTime: 0,
   })
   const wizardDone = onboarding != null && (onboarding.stepsCompleted ?? 0) >= (onboarding.stepsTotal ?? 0)
 

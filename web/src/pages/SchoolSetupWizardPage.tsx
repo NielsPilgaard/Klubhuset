@@ -8,7 +8,7 @@ import { LessonDurationSlider } from '../components/LessonDurationSlider'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
-import { getApiV1SchoolsOnboardingStatusOptions } from '../api/generated/@tanstack/react-query.gen'
+import { getApiV1SchoolsOnboardingStatusOptions, getApiV1SchoolsOnboardingStatusQueryKey } from '../api/generated/@tanstack/react-query.gen'
 import type { OnboardingStatusDto } from '../api/generated/types.gen'
 
 // ---------------------------------------------------------------------------
@@ -57,7 +57,17 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
         setBreaks(t.breaks.map((b) => ({ startTime: b.startTime.slice(0, 5), durationMinutes: b.durationMinutes })))
         setSavedBefore(true)
       })
-      .catch(() => {})
+      .catch(() => {
+        // No saved template — pre-fill a typical Danish school day.
+        // Break times must align to lesson boundaries: 08:00 + n*45min = 08:00, 08:45, 09:30, 10:15, 11:00, 11:45, 12:30...
+        setDayStart('08:00')
+        setDayEnd('14:00')
+        setLessonDuration(45)
+        setBreaks([
+          { startTime: '10:15', durationMinutes: 15 },
+          { startTime: '12:30', durationMinutes: 30 },
+        ])
+      })
   }, [])
 
   function addBreak() {
@@ -718,7 +728,7 @@ export default function SchoolSetupWizardPage() {
   const skip = () => { userNavigated.current = true; setStep((s) => Math.min(s + 1, STEPS.length)) }
 
   function finish() {
-    qc.invalidateQueries({ queryKey: ['onboarding-status'] })
+    qc.invalidateQueries({ queryKey: getApiV1SchoolsOnboardingStatusQueryKey() })
     navigate('/dashboard')
   }
 
