@@ -4,18 +4,8 @@ import {
   getApiV1RoomsByIdOptions,
   getApiV1RoomsByRoomIdScheduleOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-
-const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
-
-interface ScheduleSlotDto {
-  weekday: number
-  startTime: string
-  endTime: string
-  courseName: string
-  className: string
-  teacherName?: string | null
-  aideName?: string | null
-}
+import type { ScheduleSlotDto } from '../api/generated/types.gen'
+import { WEEKDAYS } from '../lib/weekdays'
 
 export default function RoomSchedulePage() {
   const { roomId } = useParams<{ roomId: string }>()
@@ -29,18 +19,19 @@ export default function RoomSchedulePage() {
     ...getApiV1RoomsByRoomIdScheduleOptions({ path: { roomId: roomId! } }),
     enabled: !!roomId,
   })
-  const slots: ScheduleSlotDto[] = (rawSlots ?? []) as unknown as ScheduleSlotDto[]
+  const slots: ScheduleSlotDto[] = Array.isArray(rawSlots) ? rawSlots as ScheduleSlotDto[] : []
 
-  // Group slots by weekday, sorted by startTime
-  const byDay: Record<number, ScheduleSlotDto[]> = {}
+  // Group slots by weekday string key
+  const byDay: Record<string, ScheduleSlotDto[]> = {}
   for (const slot of slots) {
+    if (!slot.weekday) continue
     if (!byDay[slot.weekday]) byDay[slot.weekday] = []
     byDay[slot.weekday].push(slot)
   }
-  
+
   // Sort each day's slots by startTime
   for (const day in byDay) {
-    byDay[parseInt(day)].sort((a, b) => a.startTime.localeCompare(b.startTime))
+    byDay[day].sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
   }
 
   return (
@@ -100,13 +91,13 @@ export default function RoomSchedulePage() {
         </div>
       )}
 
-      {!isLoading && [1, 2, 3, 4, 5].map((day) => {
-        const daySlots = byDay[day]
+      {!isLoading && WEEKDAYS.map((wd) => {
+        const daySlots = byDay[wd.key]
         if (!daySlots?.length) return null
         return (
-          <div key={day} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div key={wd.key} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-sm font-semibold text-gray-700">{WEEKDAYS[day - 1]}</h2>
+              <h2 className="text-sm font-semibold text-gray-700">{wd.label}</h2>
             </div>
             <div className="divide-y divide-gray-100">
               {daySlots.map((slot, i) => (
@@ -121,7 +112,7 @@ export default function RoomSchedulePage() {
                     </div>
                   </div>
                   <div className="shrink-0 text-xs text-gray-400">
-                    {slot.teacherName}
+                    {slot.teacherName ?? null}
                   </div>
                 </div>
               ))}
