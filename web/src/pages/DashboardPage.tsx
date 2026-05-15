@@ -102,11 +102,15 @@ function SkeletonTable({ rows = 4 }: { rows?: number }) {
 
 export default function DashboardPage() {
   usePageTitle('Oversigt')
-  const { data, isLoading, isError, refetch } = useQuery(getApiV1StatsDashboardOptions())
+  const { data, isLoading, isError, refetch } = useQuery({
+    ...getApiV1StatsDashboardOptions(),
+    staleTime: 0,
+  })
 
   const { data: onboarding } = useQuery({
     ...getApiV1SchoolsOnboardingStatusOptions(),
     retry: false,
+    staleTime: 0,
   })
 
   if (isError) {

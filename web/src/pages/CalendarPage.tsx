@@ -219,11 +219,16 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
   const dayEntries = getDayEntries(year, month, day, entries)
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    function handleClick(e: MouseEvent | PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    const timer = setTimeout(() => {
+      document.addEventListener('pointerdown', handleClick)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('pointerdown', handleClick)
+    }
   }, [onClose])
 
   const formattedDate = new Date(`${dateStr}T00:00:00`).toLocaleDateString('da-DK', {
@@ -666,6 +671,18 @@ export default function CalendarPage() {
       <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
         <h1 className="font-display text-2xl font-semibold text-gray-900">Kalender</h1>
         <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin && (
+            <button
+              onClick={() => setCreateDate(new Date().toISOString().slice(0, 10))}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Tilføj begivenhed
+            </button>
+          )}
           <select
             value={schoolStartYear}
             onChange={(e) => setSchoolStartYear(Number(e.target.value))}
