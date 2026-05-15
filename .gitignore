@@ -365,3 +365,4 @@ media/
 test-results/
 .claude/settings.json
 .playwright-mcp
+*.lscache
