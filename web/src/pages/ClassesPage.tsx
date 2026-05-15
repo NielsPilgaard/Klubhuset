@@ -823,7 +823,12 @@ export default function ClassesPage() {
   }, [openMenuId])
 
   const { data: rawClasses, isLoading, isError, refetch } = useQuery(getApiV1ClassesOptions())
-  const classes = useMemo(() => (rawClasses ?? []) as ClassDto[], [rawClasses])
+  const classes = useMemo(() => {
+    const list = (rawClasses ?? []) as ClassDto[]
+    return [...list].sort((a, b) =>
+      (a.name ?? '').localeCompare(b.name ?? '', 'da', { numeric: true, sensitivity: 'base' })
+    )
+  }, [rawClasses])
 
   useEffect(() => {
     const action = searchParams.get('action')
