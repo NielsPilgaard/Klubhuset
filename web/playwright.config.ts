@@ -9,6 +9,7 @@ const ASPIRE_HOST_DIR = '../infrastructure/aspire/Skoleoverblikket.AppHost'
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,

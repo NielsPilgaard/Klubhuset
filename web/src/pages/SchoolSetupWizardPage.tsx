@@ -58,14 +58,12 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
         setSavedBefore(true)
       })
       .catch(() => {
-        // No saved template — pre-fill a typical Danish school day.
-        // Break times must align to lesson boundaries: 08:00 + n*45min = 08:00, 08:45, 09:30, 10:15, 11:00, 11:45, 12:30...
         setDayStart('08:00')
         setDayEnd('14:00')
         setLessonDuration(45)
         setBreaks([
-          { startTime: '10:15', durationMinutes: 15 },
-          { startTime: '12:30', durationMinutes: 30 },
+          { startTime: '09:30', durationMinutes: 15 },
+          { startTime: '12:00', durationMinutes: 30 },
         ])
       })
   }, [])
