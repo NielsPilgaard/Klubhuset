@@ -14,7 +14,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize]
 public sealed class ClassesController(AppDbContext context, ITenantContext tenant) : ControllerBase
 {
-	public record ClassDto(Guid Id, string Name, string? Description, int? GradeLevel);
+	public record ClassDto(Guid Id, string Name, string? Description, int? GradeLevel, bool IsAccessibleToCurrentUser = true);
 	public record UpsertClassRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
 		[StringLength(1000)] string? Description,
@@ -23,13 +23,49 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	[HttpGet]
 	public async Task<ActionResult<List<ClassDto>>> GetAll(CancellationToken ct)
 	{
-		var classes = await context.Classes
+		var isAdmin = User.IsInRole(Roles.Admin);
+
+		if (isAdmin)
+		{
+			var classes = await context.Classes
+				.AsNoTracking()
+				.OrderBy(c => c.Name)
+				.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel, true))
+				.ToListAsync(ct);
+			return Ok(classes);
+		}
+
+		// For non-admins, resolve their StaffId and filter to accessible classes
+		var subject = User.GetKeycloakSubject();
+		var staffId = await context.Staff
+			.AsNoTracking()
+			.Where(s => s.KeycloakSubject == subject)
+			.Select(s => (Guid?)s.Id)
+			.FirstOrDefaultAsync(ct);
+
+		var allClasses = await context.Classes
 			.AsNoTracking()
 			.OrderBy(c => c.Name)
-			.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel))
+			.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel, true))
 			.ToListAsync(ct);
 
-		return Ok(classes);
+		// Load all permission rows for this tenant (scoped by global query filter)
+		var permissionsByClass = await context.ClassPermissions
+			.AsNoTracking()
+			.GroupBy(p => p.ClassId)
+			.Select(g => new { ClassId = g.Key, StaffIds = g.Select(p => p.StaffId).ToList() })
+			.ToListAsync(ct);
+
+		var restrictedClassIds = permissionsByClass
+			.Where(g => g.StaffIds.Count > 0 && (!staffId.HasValue || !g.StaffIds.Contains(staffId.Value)))
+			.Select(g => g.ClassId)
+			.ToHashSet();
+
+		var result = allClasses
+			.Where(c => !restrictedClassIds.Contains(c.Id))
+			.ToList();
+
+		return Ok(result);
 	}
 
 	[HttpGet("{id:guid}")]
