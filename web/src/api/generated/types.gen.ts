@@ -48,6 +48,7 @@ export type ClassDto = {
     name?: string | null;
     description?: string | null;
     gradeLevel?: number | null;
+    isAccessibleToCurrentUser?: boolean;
 };
 
 export type ClassPermissionDto = {
@@ -247,6 +248,8 @@ export type ScheduleSlotDto = {
     courseName?: string | null;
     courseColor?: string | null;
     className?: string | null;
+    classId?: string;
+    schemaId?: string;
     roomId?: string | null;
     roomName?: string | null;
     aideId?: string | null;

@@ -3827,6 +3827,9 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "isAccessibleToCurrentUser": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -4480,6 +4483,14 @@
           "className": {
             "type": "string",
             "nullable": true
+          },
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schemaId": {
+            "type": "string",
+            "format": "uuid"
           },
           "roomId": {
             "type": "string",
