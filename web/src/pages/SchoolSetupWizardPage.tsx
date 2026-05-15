@@ -57,7 +57,11 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
         setBreaks(t.breaks.map((b) => ({ startTime: b.startTime.slice(0, 5), durationMinutes: b.durationMinutes })))
         setSavedBefore(true)
       })
-      .catch(() => {
+      .catch((err) => {
+        if (!(err instanceof ApiError) || err.status !== 404) return
+        // No saved template yet — pre-fill a typical Danish school day.
+        // Breaks must land on lesson boundaries (08:00 + n*45min).
+        // After break at 09:30 (15min), slots resume at 09:45 → boundaries: 09:45, 10:30, 11:15, 12:00, 12:45...
         setDayStart('08:00')
         setDayEnd('14:00')
         setLessonDuration(45)

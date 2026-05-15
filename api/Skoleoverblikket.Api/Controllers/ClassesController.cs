@@ -56,8 +56,9 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 			.Select(g => new { ClassId = g.Key, StaffIds = g.Select(p => p.StaffId).ToList() })
 			.ToListAsync(ct);
 
+		// staffId == null means no linked Staff row — treat as no access to any restricted class
 		var restrictedClassIds = permissionsByClass
-			.Where(g => g.StaffIds.Count > 0 && (!staffId.HasValue || !g.StaffIds.Contains(staffId.Value)))
+			.Where(g => g.StaffIds.Count > 0 && (staffId == null || !g.StaffIds.Contains(staffId.Value)))
 			.Select(g => g.ClassId)
 			.ToHashSet();
 

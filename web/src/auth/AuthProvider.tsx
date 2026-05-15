@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
       })
       .catch(() => {
         setInitialized(true)
