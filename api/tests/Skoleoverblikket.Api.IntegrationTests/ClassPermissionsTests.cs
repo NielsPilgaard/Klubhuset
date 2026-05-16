@@ -123,7 +123,7 @@ public sealed class ClassPermissionsTests
 	}
 
 	[Test]
-	public async Task RestrictedAdmin_Gets403_OnUnassignedClass()
+	public async Task RestrictedAdmin_Gets403_OnClassLockedToOtherStaff()
 	{
 		const string subject = "restricted-admin-subject-2";
 		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
@@ -131,18 +131,24 @@ public sealed class ClassPermissionsTests
 
 		var (assignedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
 			_factory.Services, TestTenantContext.DefaultTenantId, "5.a");
-		var (otherClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+		var (lockedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
 			_factory.Services, TestTenantContext.DefaultTenantId, "6.b");
 
-		// Grant permission on assignedClass only — activates restricted mode
+		// Grant permission on assignedClass only
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{assignedClass.Id}/permissions",
 			new { staffId = staff.Id });
 
+		// Lock lockedClass to a different staff member — this class now has permission rows that exclude our subject
+		var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await _adminClient.PostAsJsonAsync(
+			$"/api/v1/classes/{lockedClass.Id}/permissions",
+			new { staffId = otherStaff.Id });
+
 		using var restrictedClient = CreateAdminClient(subject);
 
 		var response = await restrictedClient.PostAsJsonAsync(
-			$"/api/v1/classes/{otherClass.Id}/schemas",
+			$"/api/v1/classes/{lockedClass.Id}/schemas",
 			new { name = "Uautoriseret skema" });
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);

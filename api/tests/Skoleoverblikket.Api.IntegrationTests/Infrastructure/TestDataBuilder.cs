@@ -174,4 +174,42 @@ public static class TestDataBuilder
 
 		return (klass, schema);
 	}
+
+	public static async Task<SchemaSlot> CreateSchemaSlotAsync(
+		IServiceProvider services, Guid tenantId,
+		Guid schemaId, Guid timeSlotId, Guid courseId, Guid teacherId,
+		DayOfWeek weekday = DayOfWeek.Monday)
+	{
+		using var scope = services.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var slot = new SchemaSlot
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenantId,
+			SchemaId = schemaId,
+			TimeSlotId = timeSlotId,
+			CourseId = courseId,
+			TeacherId = teacherId,
+			Weekday = weekday,
+		};
+		db.SchemaSlots.Add(slot);
+		await db.SaveChangesAsync();
+		return slot;
+	}
+
+	public static async Task<Room> CreateRoomAsync(
+		IServiceProvider services, Guid tenantId, string name = "Lokale 1")
+	{
+		using var scope = services.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var room = new Room
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenantId,
+			Name = name,
+		};
+		db.Rooms.Add(room);
+		await db.SaveChangesAsync();
+		return room;
+	}
 }
