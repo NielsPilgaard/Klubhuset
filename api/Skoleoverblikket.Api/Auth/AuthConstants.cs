@@ -8,4 +8,5 @@ public static class Roles
 public static class Policies
 {
 	public const string EditClass = "EditClass";
+	public const string EditWeekPlan = "EditWeekPlan";
 }

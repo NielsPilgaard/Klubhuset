@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Tenancy;
@@ -11,7 +12,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/classes/{classId:guid}/ugeplan")]
 [Authorize]
-public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) : ControllerBase
+public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, IAuthorizationService authz) : ControllerBase
 {
 	public record WeekPlanSlotFileDto(Guid Id, Guid SchoolFileId, string FileName, string Url);
 
@@ -231,6 +232,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
 			return Problem("SchemaSlotId tilhører ikke det aktive skema for denne klasse", statusCode: 400);
 		}
 
+		var authResult = await authz.AuthorizeAsync(User, (classId, req.SchemaSlotId), Policies.EditWeekPlan);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		if (req.FagSwapCourseId.HasValue)
 		{
 			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.FagSwapCourseId.Value, ct);
@@ -323,6 +330,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
 			return NotFound();
 		}
 
+		var authResult = await authz.AuthorizeAsync(User, (classId, slot.SchemaSlotId), Policies.EditWeekPlan);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var fileExists = await db.SchoolFiles.AnyAsync(f => f.Id == req.SchoolFileId, ct);
 		if (!fileExists)
 		{
@@ -389,6 +402,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant) :
 		if (link is null)
 		{
 			return NotFound();
+		}
+
+		var authResult = await authz.AuthorizeAsync(User, (classId, link.WeekPlanSlot.SchemaSlotId), Policies.EditWeekPlan);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
 		}
 
 		db.WeekPlanSlotFiles.Remove(link);

@@ -25,12 +25,17 @@ export function getInitPromise(): Promise<boolean> {
     const seeded = raw ? JSON.parse(raw) as { accessToken: string; refreshToken: string } : null
     if (seeded) sessionStorage.removeItem(SIGNUP_TOKEN_KEY)
 
-    initPromise = keycloak.init({
+    const keycloakInit = keycloak.init({
       onLoad: seeded ? undefined : 'check-sso',
       pkceMethod: 'S256',
       checkLoginIframe: false,
       ...(seeded ? { token: seeded.accessToken, refreshToken: seeded.refreshToken } : {}),
     })
+
+    // If Keycloak is slow to start (e.g. during dev stack startup), don't block
+    // public pages indefinitely — resolve false after 8s and let auth retry on navigation.
+    const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 8_000))
+    initPromise = Promise.race([keycloakInit, timeout])
   }
   return initPromise
 }

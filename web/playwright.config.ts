@@ -9,6 +9,7 @@ const ASPIRE_HOST_DIR = '../infrastructure/aspire/Skoleoverblikket.AppHost'
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
@@ -26,12 +27,20 @@ export default defineConfig({
   // Set SKIP_ASPIRE=1 to skip (e.g. when the stack is already up).
   webServer: process.env.SKIP_ASPIRE
     ? undefined
-    : {
-        command: `dotnet run --project ${ASPIRE_HOST_DIR}`,
-        url: WEB_URL,
-        timeout: 180_000,
-        reuseExistingServer: true,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      },
+    : [
+        {
+          command: `dotnet run --project ${ASPIRE_HOST_DIR}`,
+          url: WEB_URL,
+          timeout: 180_000,
+          reuseExistingServer: true,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        },
+        {
+          command: 'echo "waiting for keycloak"',
+          url: 'http://localhost:8080/realms/Skoleoverblikket/.well-known/openid-configuration',
+          timeout: 120_000,
+          reuseExistingServer: true,
+        },
+      ],
 })

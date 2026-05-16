@@ -1,29 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
   getApiV1StaffMeOptions,
   getApiV1StaffByStaffIdScheduleOptions,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { ScheduleSlotDto } from '../api/generated/types.gen'
-
-const WEEKDAYS: { key: string; label: string; num: number }[] = [
-  { key: 'Monday',    label: 'Mandag',  num: 1 },
-  { key: 'Tuesday',   label: 'Tirsdag', num: 2 },
-  { key: 'Wednesday', label: 'Onsdag',  num: 3 },
-  { key: 'Thursday',  label: 'Torsdag', num: 4 },
-  { key: 'Friday',    label: 'Fredag',  num: 5 },
-]
-
-const WEEKDAY_NUM: Record<string, number> = {
-  Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6,
-}
-
-function toNum(weekday: string | number | undefined): number | null {
-  if (weekday === undefined) return null
-  if (typeof weekday === 'number') return weekday
-  const n = WEEKDAY_NUM[weekday]
-  if (n === undefined) { console.warn(`Unknown weekday: ${weekday}`); return null }
-  return n
-}
+import { WEEKDAYS, toWeekdayNum as toNum } from '../lib/weekdays'
 
 function hexToAlpha(color: string, alpha: string): string {
   const hex = color.startsWith('#') ? color.slice(1) : color
@@ -44,6 +26,7 @@ function buildTimeAxis(slots: ScheduleSlotDto[]) {
 }
 
 export default function MySchedulePage() {
+  const navigate = useNavigate()
   const { data: me, isLoading: meLoading, isError: meError } = useQuery(getApiV1StaffMeOptions())
 
   const { data: rawSlots, isLoading: scheduleLoading, isError: scheduleError } = useQuery({
@@ -68,11 +51,24 @@ export default function MySchedulePage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-gray-900">
-          {me ? `${me.name}s skema` : 'Mit skema'}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">Ugentligt skema — aktive klasser</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-gray-900">
+            {me ? `${me.name}s skema` : 'Mit skema'}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">Ugentligt skema — aktive klasser</p>
+        </div>
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors print:hidden"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          Udskriv
+        </button>
       </div>
 
       {isError && (
@@ -122,30 +118,35 @@ export default function MySchedulePage() {
                     const daySlots = slotMap[ts.startTime]?.[d.num]
                     return (
                       <td key={d.key} className="px-2 py-2 align-top">
-                        {daySlots?.map((slot, i) => (
-                          <div
-                            key={i}
-                            className="rounded-lg px-2 py-1.5 mb-1 last:mb-0"
-                            style={slot.courseColor ? {
-                              backgroundColor: hexToAlpha(slot.courseColor, '22'),
-                              borderLeft: `3px solid ${slot.courseColor}`,
-                            } : {
-                              backgroundColor: '#f3f4f6',
-                              borderLeft: '3px solid #d1d5db',
-                            }}
-                          >
-                            <p
-                              className="text-xs font-semibold leading-tight truncate"
-                              style={slot.courseColor ? { color: slot.courseColor } : { color: '#111827' }}
+                        {daySlots?.map((slot, i) => {
+                          const canNavigate = !!slot.classId && !!slot.schemaId
+                          const slotStyle = slot.courseColor ? {
+                            backgroundColor: hexToAlpha(slot.courseColor, '22'),
+                            borderLeft: `3px solid ${slot.courseColor}`,
+                          } : {
+                            backgroundColor: '#f3f4f6',
+                            borderLeft: '3px solid #d1d5db',
+                          }
+                          return (
+                            <div
+                              key={i}
+                              className={`rounded-lg px-2 py-1.5 mb-1 last:mb-0 ${canNavigate ? 'cursor-pointer hover:brightness-95 transition-[filter]' : ''}`}
+                              style={slotStyle}
+                              onClick={canNavigate ? () => navigate(`/klasser/${slot.classId}/ugeplan?schemaId=${slot.schemaId}`) : undefined}
                             >
-                              {slot.courseName}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">{slot.className}</p>
-                            {slot.roomName && (
-                              <p className="text-xs text-gray-400 truncate">{slot.roomName}</p>
-                            )}
-                          </div>
-                        ))}
+                              <p
+                                className="text-xs font-semibold leading-tight truncate"
+                                style={slot.courseColor ? { color: slot.courseColor } : { color: '#111827' }}
+                              >
+                                {slot.courseName}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">{slot.className}</p>
+                              {slot.roomName && (
+                                <p className="text-xs text-gray-400 truncate">{slot.roomName}</p>
+                              )}
+                            </div>
+                          )
+                        })}
                       </td>
                     )
                   })}

@@ -25,7 +25,8 @@ test('login with wrong password stays on Keycloak with error', async ({ page }) 
 
   await page.waitForURL(/localhost:8080/, { timeout: 15_000 })
 
-  await page.locator('#username').fill(TEST_EMAIL)
+  // Use a non-existent account so Keycloak brute-force protection doesn't lock the shared admin account
+  await page.locator('#username').fill('ikkeeksisterende@testskole.dk')
   await page.locator('#password').fill('forkertadgangskode')
   await page.getByRole('button', { name: /log ind|sign in/i }).click()
 

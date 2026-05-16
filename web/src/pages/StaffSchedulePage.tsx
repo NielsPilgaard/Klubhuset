@@ -4,30 +4,8 @@ import {
   getApiV1StaffByIdOptions,
   getApiV1StaffByStaffIdScheduleOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-
-const WEEKDAYS: { key: string; label: string; num: number }[] = [
-  { key: 'Monday',    label: 'Mandag',  num: 1 },
-  { key: 'Tuesday',   label: 'Tirsdag', num: 2 },
-  { key: 'Wednesday', label: 'Onsdag',  num: 3 },
-  { key: 'Thursday',  label: 'Torsdag', num: 4 },
-  { key: 'Friday',    label: 'Fredag',  num: 5 },
-]
-
-const WEEKDAY_NUM: Record<string, number> = {
-  Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6,
-}
-
-interface ScheduleSlotDto {
-  weekday: string | number
-  startTime: string
-  endTime: string
-  courseName: string
-  courseColor?: string | null
-  className: string
-  roomName?: string | null
-  aideName?: string | null
-  teacherName?: string | null
-}
+import type { ScheduleSlotDto } from '../api/generated/types.gen'
+import { WEEKDAYS, WEEKDAY_NUM } from '../lib/weekdays'
 
 function toNum(weekday: string | number): number {
   return typeof weekday === 'string' ? (WEEKDAY_NUM[weekday] ?? -1) : weekday
@@ -36,6 +14,7 @@ function toNum(weekday: string | number): number {
 function buildTimeAxis(slots: ScheduleSlotDto[]) {
   const seen = new Map<string, { startTime: string; endTime: string; sort: number }>()
   for (const s of slots) {
+    if (!s.startTime || !s.endTime) continue
     const key = `${s.startTime}-${s.endTime}`
     if (!seen.has(key)) {
       seen.set(key, { startTime: s.startTime, endTime: s.endTime, sort: parseInt(s.startTime.replace(':', ''), 10) })
@@ -63,6 +42,7 @@ export default function StaffSchedulePage() {
   // slotMap: startTime → weekdayNum → slots[]
   const slotMap: Record<string, Record<number, ScheduleSlotDto[]>> = {}
   for (const s of slots) {
+    if (!s.startTime || !s.weekday) continue
     const day = toNum(s.weekday)
     if (!slotMap[s.startTime]) slotMap[s.startTime] = {}
     if (!slotMap[s.startTime][day]) slotMap[s.startTime][day] = []

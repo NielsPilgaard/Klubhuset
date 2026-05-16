@@ -31,8 +31,12 @@ public static class AuthExtensions
 				});
 
 		services.AddAuthorization(opt =>
-			opt.AddPolicy(Policies.EditClass, p => p.Requirements.Add(new EditClassRequirement())));
+		{
+			opt.AddPolicy(Policies.EditClass, p => p.Requirements.Add(new EditClassRequirement()));
+			opt.AddPolicy(Policies.EditWeekPlan, p => p.Requirements.Add(new EditWeekPlanRequirement()));
+		});
 		services.AddScoped<IAuthorizationHandler, EditClassAuthorizationHandler>();
+		services.AddScoped<IAuthorizationHandler, EditWeekPlanAuthorizationHandler>();
 		services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
 		return services;

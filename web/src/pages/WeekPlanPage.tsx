@@ -172,8 +172,7 @@ function getCourseColor(courseId: string, courseIds: string[]): string {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
-const WEEKDAY_KEYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const
+import { WEEKDAY_LABELS as WEEKDAYS, WEEKDAY_KEYS } from '../lib/weekdays'
 
 // ─── Edit modal ───────────────────────────────────────────────────────────────
 

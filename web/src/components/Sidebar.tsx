@@ -127,11 +127,12 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { logout, userName, isAdmin } = useAuth()
-  const { data: school } = useQuery(getApiV1SchoolsSettingsOptions())
+  const { data: school } = useQuery({ ...getApiV1SchoolsSettingsOptions(), enabled: isAdmin })
   const { data: onboarding } = useQuery({
     ...getApiV1SchoolsOnboardingStatusOptions(),
+    enabled: isAdmin,
     retry: false,
-    staleTime: 60_000,
+    staleTime: 0,
   })
   const wizardDone = onboarding != null && (onboarding.stepsCompleted ?? 0) >= (onboarding.stepsTotal ?? 0)
 

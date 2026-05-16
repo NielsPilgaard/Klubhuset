@@ -123,7 +123,7 @@ public sealed class ClassPermissionsTests
 	}
 
 	[Test]
-	public async Task RestrictedAdmin_Gets403_OnUnassignedClass()
+	public async Task RestrictedAdmin_Gets403_OnClassLockedToOtherStaff()
 	{
 		const string subject = "restricted-admin-subject-2";
 		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
@@ -131,18 +131,24 @@ public sealed class ClassPermissionsTests
 
 		var (assignedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
 			_factory.Services, TestTenantContext.DefaultTenantId, "5.a");
-		var (otherClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+		var (lockedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
 			_factory.Services, TestTenantContext.DefaultTenantId, "6.b");
 
-		// Grant permission on assignedClass only — activates restricted mode
+		// Grant permission on assignedClass only
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{assignedClass.Id}/permissions",
 			new { staffId = staff.Id });
 
+		// Lock lockedClass to a different staff member — this class now has permission rows that exclude our subject
+		var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await _adminClient.PostAsJsonAsync(
+			$"/api/v1/classes/{lockedClass.Id}/permissions",
+			new { staffId = otherStaff.Id });
+
 		using var restrictedClient = CreateAdminClient(subject);
 
 		var response = await restrictedClient.PostAsJsonAsync(
-			$"/api/v1/classes/{otherClass.Id}/schemas",
+			$"/api/v1/classes/{lockedClass.Id}/schemas",
 			new { name = "Uautoriseret skema" });
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
@@ -253,5 +259,101 @@ public sealed class ClassPermissionsTests
 			new { staffId = staff.Id });
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+	}
+
+	// ── GET /api/v1/classes filtering for non-admins ───────────────────────────
+
+	[Test]
+	public async Task GetAll_NonAdmin_SeesAllClasses_WhenNoPermissionRowsExist()
+	{
+		// No ClassPermission rows → no restrictions → teacher sees everything
+		const string subject = "teacher-no-restrictions";
+		await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+			keycloakSubject: subject);
+
+		var (_, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "1.a");
+		var (_, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "1.b");
+
+		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
+		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
+
+		var response = await client.GetAsync("/api/v1/classes");
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+		var classes = await response.Content.ReadFromJsonAsync<List<ClassesController.ClassDto>>(JsonOpts);
+		await Assert.That(classes!.Count).IsGreaterThanOrEqualTo(2);
+	}
+
+	[Test]
+	public async Task GetAll_NonAdmin_HidesClass_LockedToOtherStaff()
+	{
+		// Classes with permission rows but not for this teacher are hidden.
+		// Classes with no permission rows at all remain visible (unrestricted).
+		const string subject = "teacher-restricted";
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+			keycloakSubject: subject);
+
+		var (permittedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "2.a");
+		var (unrestrictedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "2.b");
+		var (adminOnlyClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "2.c");
+
+		// Give teacher perm on permittedClass
+		await _adminClient.PostAsJsonAsync(
+			$"/api/v1/classes/{permittedClass.Id}/permissions",
+			new { staffId = staff.Id });
+
+		// Lock adminOnlyClass to a different admin — teacher should NOT see this
+		var otherAdmin = await TestDataBuilder.CreateStaffAsync(_factory.Services,
+			TestTenantContext.DefaultTenantId, isAdmin: true);
+		await _adminClient.PostAsJsonAsync(
+			$"/api/v1/classes/{adminOnlyClass.Id}/permissions",
+			new { staffId = otherAdmin.Id });
+
+		// unrestrictedClass has no permission rows — visible to all (unrestricted)
+
+		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
+		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
+
+		var response = await client.GetAsync("/api/v1/classes");
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+		var classes = await response.Content.ReadFromJsonAsync<List<ClassesController.ClassDto>>(JsonOpts);
+		var ids = classes!.Select(c => c.Id).ToHashSet();
+
+		await Assert.That(ids.Contains(permittedClass.Id)).IsTrue();
+		await Assert.That(ids.Contains(unrestrictedClass.Id)).IsTrue();
+		await Assert.That(ids.Contains(adminOnlyClass.Id)).IsFalse();
+	}
+
+	[Test]
+	public async Task GetAll_Admin_SeesAllClasses_RegardlessOfPermissionRows()
+	{
+		// Admins always get full list
+		var (classA, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "3.a");
+		var (classB, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+			_factory.Services, TestTenantContext.DefaultTenantId, "3.b");
+
+		var someStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		// Seed a permission row to enter restricted mode
+		await _adminClient.PostAsJsonAsync(
+			$"/api/v1/classes/{classA.Id}/permissions",
+			new { staffId = someStaff.Id });
+
+		var response = await _adminClient.GetAsync("/api/v1/classes");
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+		var classes = await response.Content.ReadFromJsonAsync<List<ClassesController.ClassDto>>(JsonOpts);
+		var ids = classes!.Select(c => c.Id).ToHashSet();
+
+		await Assert.That(ids.Contains(classA.Id)).IsTrue();
+		await Assert.That(ids.Contains(classB.Id)).IsTrue();
 	}
 }

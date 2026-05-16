@@ -43,7 +43,6 @@ test.describe('Staff invitation flow', () => {
     const staff = createResult.body as { id: string }
 
     // --- Step 3: admin sends invitation ---
-    await request.delete(`${MAILPIT_API}/messages`)
     const inviteResult = await page.evaluate(async (staffId: string) => {
       const kc = (window as unknown as { __keycloak: { token: string; updateToken: (n: number) => Promise<boolean> } }).__keycloak
       await kc.updateToken(30)
@@ -80,8 +79,8 @@ test.describe('Staff invitation flow', () => {
     await page.context().clearCookies()
     await page.goto(invitationUrl!)
 
-    // Invitation page should load with school name visible
-    await expect(page.getByText(/inviteret/i)).toBeVisible({ timeout: 10_000 })
+    // Invitation page should load with heading visible
+    await expect(page.getByRole('heading', { name: /inviteret/i })).toBeVisible({ timeout: 10_000 })
 
     // --- Step 6: click login button, get redirected to Keycloak ---
     await page.getByRole('button', { name: /opret konto|acceptér/i }).click()
