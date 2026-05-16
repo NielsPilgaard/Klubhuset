@@ -300,7 +300,7 @@ function InviteModal({ staff, onClose }: InviteModalProps) {
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
             Luk
           </button>
-          {staff.email && (
+          {staff.email && !sent && (
             <button
               onClick={() => { setSent(false); sendMutation.mutate({ path: { staffId: staff.id! } }) }}
               disabled={sendMutation.isPending}
