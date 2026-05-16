@@ -37,7 +37,7 @@ export default function OmPage() {
 
             <p>
               Jeg står for udvikling, drift og support. Det betyder hurtige svar, direkte
-              kontakt og et produkt der udvikler sig i takt med de behov, rigtige skoler har.
+              kontakt og et produkt der udvikler sig i takt med de behov skoler har.
             </p>
 
             <p className="text-brand-700 font-medium">
