@@ -1,4 +1,5 @@
 name: Staging
+run-name: "Staging: ${{ github.event.workflow_run.head_commit.message && format('{0} ({1})', github.event.workflow_run.head_commit.message, github.event.workflow_run.head_sha) || github.event.workflow_run.head_sha }}"
 
 on:
   workflow_run:
