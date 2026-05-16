@@ -101,8 +101,7 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 				return new OnboardingStatusDto(hasLogo, staffCount, classCount, courseCount, roomCount, stepsCompleted, StepsTotal: 5);
 			},
-			new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(5) },
-			ct);
+			token: ct);
 
 		return result is null ? NotFound() : Ok(result);
 	}
