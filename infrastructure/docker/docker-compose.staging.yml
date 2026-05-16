@@ -73,8 +73,11 @@ services:
       ObjectStorage__DefaultBucketName: skoleoverblikket
       ObjectStorage__PublicEndpoint: http://localhost:4566
       ObjectStorage__PresignedUploadSigningKey: stub-signing-key
-      Smtp__Username: test
-      Smtp__Password: test
+      Smtp__Host: mailpit
+      Smtp__Port: 1025
+      Smtp__Username: ""
+      Smtp__Password: ""
+      App__BaseUrl: http://localhost:5173
       Stripe__SecretKey: sk_test_stub
       Stripe__PriceId: price_stub
       Stripe__WebhookSecret: whsec_stub
