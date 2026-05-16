@@ -28,7 +28,7 @@ jobs:
           KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
           # WEB_IMAGE unused here — we build it locally with the staging Keycloak URL
           WEB_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.event.workflow_run.head_sha }}
-        run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull api keycloak keycloak-db postgres mailpit
+        run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull api keycloak keycloak-db postgres mailpit localstack
 
       - name: Build web image with staging Keycloak URL
         # The published web image has the production Keycloak URL baked in (https://auth.skoleoverblikket.dk).

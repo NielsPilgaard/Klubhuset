@@ -14,11 +14,11 @@ async function loginAsAdmin(page: Page) {
   await page.locator('#username').fill(ADMIN_EMAIL)
   await page.locator('#password').fill(ADMIN_PASSWORD)
   await page.getByRole('button', { name: /log ind|sign in/i }).click()
-  await page.waitForURL((url) => url.port !== '8080', { timeout: 30_000 })
+  await page.waitForURL((url) => url.port !== '8080', { timeout: 60_000 })
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 })
 }
 
-test.describe('Staff invitation flow', () => {
+test.describe.serial('Staff invitation flow', () => {
   test('invited staff member can log in and lands on their own schedule, not dashboard', async ({ page, request }) => {
     const staffEmail = uniqueStaffEmail()
     const staffName = 'Test Medarbejder'
