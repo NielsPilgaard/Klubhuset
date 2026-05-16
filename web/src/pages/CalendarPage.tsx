@@ -128,6 +128,12 @@ function DeleteOccurrenceDialog({ entry, occurrenceDate, onClose, onDeleted }: D
   const qc = useQueryClient()
   const [mode, setMode] = useState<DeleteMode>('single')
 
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
   const invalidate = () => qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() })
 
   const deleteSingleMutation = useMutation({
@@ -219,6 +225,12 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
   const dayEntries = getDayEntries(year, month, day, entries)
 
   useEffect(() => {
+    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  useEffect(() => {
     function handleClick(e: MouseEvent | PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
@@ -242,6 +254,7 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
       ref={ref}
       className="absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 w-52 text-left"
       onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="px-3 py-2 border-b border-gray-100">
         <p className="text-xs font-medium text-gray-700 capitalize">{formattedDate}</p>
@@ -310,6 +323,13 @@ interface EntryModalProps {
 
 function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps) {
   const qc = useQueryClient()
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
   const today = new Date()
   const todayStr = toDateString(today.getFullYear(), today.getMonth() + 1, today.getDate())
   const initialDate = defaultDate ?? todayStr

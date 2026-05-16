@@ -134,7 +134,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     retry: false,
     staleTime: 0,
   })
-  const wizardDone = onboarding != null && (onboarding.stepsCompleted ?? 0) >= (onboarding.stepsTotal ?? 0)
+  const wizardDone = onboarding != null &&
+    (onboarding.staffCount ?? 0) > 0 &&
+    (onboarding.classCount ?? 0) > 0 &&
+    (onboarding.roomCount ?? 0) > 0
 
   const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 

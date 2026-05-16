@@ -6,13 +6,14 @@ using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Storage;
 using Skoleoverblikket.Api.Tenancy;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/schools")]
 [Authorize(Roles = Roles.Admin)]
-public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IObjectStorage storage) : ControllerBase
+public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IObjectStorage storage, IFusionCache cache) : ControllerBase
 {
 	public record SchoolSettingsDto(string Name, string? ContactEmail, string? ContactPhone, string? LogoUrl);
 
@@ -69,39 +70,41 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 		return Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
 	}
 
+	internal static string OnboardingCacheKey(Guid tenantId) => $"onboarding:{tenantId}";
+
 	[HttpGet("onboarding-status")]
 	public async Task<ActionResult<OnboardingStatusDto>> GetOnboardingStatus(CancellationToken ct)
 	{
-		var school = await db.Schools
-							 .AsNoTracking()
-							 .IgnoreQueryFilters()
-							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+		var result = await cache.GetOrSetAsync(
+			OnboardingCacheKey(tenant.TenantId),
+			async token =>
+			{
+				var school = await db.Schools
+									 .AsNoTracking()
+									 .IgnoreQueryFilters()
+									 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, token);
 
-		if (school is null)
-		{
-			return NotFound();
-		}
+				if (school is null) return null;
 
-		var staffCount = await db.Staff.CountAsync(ct);
-		var classCount = await db.Classes.CountAsync(ct);
-		var courseCount = await db.Courses.CountAsync(ct);
-		var roomCount = await db.Rooms.CountAsync(ct);
-		var hasLogo = !string.IsNullOrEmpty(school.LogoUrl);
+				var staffCount = await db.Staff.CountAsync(token);
+				var classCount = await db.Classes.CountAsync(token);
+				var courseCount = await db.Courses.CountAsync(token);
+				var roomCount = await db.Rooms.CountAsync(token);
+				var hasLogo = !string.IsNullOrEmpty(school.LogoUrl);
 
-		var stepsCompleted =
-			(hasLogo ? 1 : 0) +
-			(staffCount > 0 ? 1 : 0) +
-			(classCount > 0 ? 1 : 0) +
-			(courseCount > 0 ? 1 : 0) +
-			(roomCount > 0 ? 1 : 0);
+				var stepsCompleted =
+					(hasLogo ? 1 : 0) +
+					(staffCount > 0 ? 1 : 0) +
+					(classCount > 0 ? 1 : 0) +
+					(courseCount > 0 ? 1 : 0) +
+					(roomCount > 0 ? 1 : 0);
 
-		return Ok(new OnboardingStatusDto(hasLogo,
-										  staffCount,
-										  classCount,
-										  courseCount,
-										  roomCount,
-										  stepsCompleted,
-										  StepsTotal: 5));
+				return new OnboardingStatusDto(hasLogo, staffCount, classCount, courseCount, roomCount, stepsCompleted, StepsTotal: 5);
+			},
+			new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(5) },
+			ct);
+
+		return result is null ? NotFound() : Ok(result);
 	}
 
 	[HttpPost("logo")]
@@ -161,6 +164,7 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 		school.LogoUrl = url;
 		await db.SaveChangesAsync(ct);
+		await cache.RemoveAsync(OnboardingCacheKey(tenant.TenantId), token: ct);
 
 		return Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
 	}

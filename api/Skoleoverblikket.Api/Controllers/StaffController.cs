@@ -5,13 +5,14 @@ using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Tenancy;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/staff")]
 [Authorize]
-public sealed class StaffController(AppDbContext db, ITenantContext tenant, KeycloakAdminService keycloak, ILogger<StaffController> logger) : ControllerBase
+public sealed class StaffController(AppDbContext db, ITenantContext tenant, KeycloakAdminService keycloak, ILogger<StaffController> logger, IFusionCache cache) : ControllerBase
 {
 	public record StaffDto(Guid Id, string Name, string? Email, string? Phone, StaffRole Role, bool IsAdmin, string? KeycloakSubject);
 	public record UpsertStaffRequest(string Name, string? Email, string? Phone, StaffRole Role, bool IsAdmin = false);
@@ -91,6 +92,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 		};
 		db.Staff.Add(s);
 		await db.SaveChangesAsync(ct);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
 		return CreatedAtAction(nameof(GetById), new { id = s.Id },
 			new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject));
 	}
@@ -239,6 +241,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 		db.Staff.Remove(s);
 		await db.SaveChangesAsync(ct);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
 		return NoContent();
 	}
 

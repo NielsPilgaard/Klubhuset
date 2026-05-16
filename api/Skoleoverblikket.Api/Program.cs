@@ -11,6 +11,7 @@ using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Storage;
 using Skoleoverblikket.Api.Tenancy;
 using Skoleoverblikket.ServiceDefaults;
+using ZiggyCreatures.Caching.Fusion;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,17 @@ builder.AddServiceDefaults();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddMemoryCache();
+builder.Services.AddFusionCache()
+    .WithDefaultEntryOptions(o =>
+    {
+        o.Duration = TimeSpan.FromMinutes(5);
+        o.IsFailSafeEnabled = true;
+        o.FailSafeMaxDuration = TimeSpan.FromHours(1);
+        o.FailSafeThrottleDuration = TimeSpan.FromSeconds(30);
+        o.EagerRefreshThreshold = 0.9f;
+        o.FactorySoftTimeout = TimeSpan.FromSeconds(1);
+        o.FactoryHardTimeout = TimeSpan.FromSeconds(5);
+    });
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleoverblikket-db")));

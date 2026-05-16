@@ -6,13 +6,14 @@ using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
 using System.ComponentModel.DataAnnotations;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/classes")]
 [Authorize]
-public sealed class ClassesController(AppDbContext context, ITenantContext tenant) : ControllerBase
+public sealed class ClassesController(AppDbContext context, ITenantContext tenant, IFusionCache cache) : ControllerBase
 {
 	public record ClassDto(Guid Id, string Name, string? Description, int? GradeLevel, bool IsAccessibleToCurrentUser = true);
 	public record UpsertClassRequest(
@@ -98,6 +99,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 		context.Classes.Add(@class);
 
 		await context.SaveChangesAsync(ct);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
 
 		return CreatedAtAction(nameof(GetById), new { id = @class.Id },
 			new ClassDto(@class.Id, @class.Name, @class.Description, @class.GradeLevel));
@@ -135,6 +137,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 		context.Classes.Remove(@class);
 
 		await context.SaveChangesAsync(ct);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
 
 		return NoContent();
 	}

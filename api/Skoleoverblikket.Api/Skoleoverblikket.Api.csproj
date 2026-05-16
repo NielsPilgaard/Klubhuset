@@ -38,6 +38,7 @@
     <PackageReference Include="Refit.HttpClientFactory" Version="10.1.6" />
     <PackageReference Include="Stripe.net" Version="47.3.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.6.0" />
   </ItemGroup>
 
 </Project>

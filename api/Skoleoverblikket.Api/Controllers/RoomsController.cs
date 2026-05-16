@@ -6,13 +6,14 @@ using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Tenancy;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/rooms")]
 [Authorize]
-public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : ControllerBase
+public sealed class RoomsController(AppDbContext db, ITenantContext tenant, IFusionCache cache) : ControllerBase
 {
 	public record RoomDto(Guid Id, string Name, int? Capacity, string? Description);
 	public record UpsertRoomRequest(
@@ -59,6 +60,7 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 		};
 		db.Rooms.Add(room);
 		await db.SaveChangesAsync(ct);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
 		return CreatedAtAction(nameof(GetById), new { id = room.Id },
 			new RoomDto(room.Id, room.Name, room.Capacity, room.Description));
 	}
@@ -98,6 +100,7 @@ public sealed class RoomsController(AppDbContext db, ITenantContext tenant) : Co
 
 		db.Rooms.Remove(room);
 		await db.SaveChangesAsync(ct);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
 		return NoContent();
 	}
 }
