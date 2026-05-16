@@ -10,6 +10,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [staffId, setStaffId] = useState<string | null>(null)
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && keycloak.authenticated) {
+        keycloak.updateToken(300).catch(() => keycloak.login())
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     getInitPromise()
       .then((auth) => {
         setAuthenticated(auth)
@@ -25,19 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           })
         }, 60_000)
-
-        // On mobile, tabs suspend and tokens expire silently. Force refresh when tab becomes visible.
-        const handleVisibilityChange = () => {
-          if (document.visibilityState === 'visible') {
-            keycloak.updateToken(300).catch(() => keycloak.login())
-          }
-        }
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
       })
       .catch(() => {
         setInitialized(true)
       })
+
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   useEffect(() => {

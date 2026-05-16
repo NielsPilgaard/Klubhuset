@@ -145,12 +145,13 @@ interface AssignmentPanelProps {
   initialCourseId?: string
   onCourseChange?: (courseId: string) => void
   onClose: () => void
+  onDeleted: () => void
   onSaved: (updated: SlotsAndConflictsDto) => void
 }
 
 function AssignmentPanel({
   classId, schemaId, timeSlotId, weekday, existing,
-  courses, staff, rooms, initialCourseId, onCourseChange, onClose, onSaved,
+  courses, staff, rooms, initialCourseId, onCourseChange, onClose, onDeleted, onSaved,
 }: AssignmentPanelProps) {
   const [courseId, setCourseId] = useState(
     existing?.courseId ?? initialCourseId ?? sessionStorage.getItem(SESSION_KEY_COURSE) ?? ''
@@ -184,7 +185,7 @@ function AssignmentPanel({
 
   const deleteMutation = useMutation({
     ...deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayMutation(),
-    onSuccess: onClose,
+    onSuccess: onDeleted,
   })
 
   function handleSubmit(e: React.FormEvent) {
@@ -530,6 +531,10 @@ export default function SchemaBuilderPage() {
       (old: SchemaDetailDto | undefined) => old ? { ...old, slots: updated.slots, conflicts: updated.conflicts } : old
     )
   }, [qc, classId, schemaId])
+
+  const handlePanelClose = useCallback(() => {
+    setPanelCell(null)
+  }, [])
 
   const handleCellDeleted = useCallback(() => {
     setPanelCell(null)
@@ -935,7 +940,8 @@ export default function SchemaBuilderPage() {
           rooms={rooms}
           initialCourseId={selectedCourseId}
           onCourseChange={setSelectedCourseId}
-          onClose={handleCellDeleted}
+          onClose={handlePanelClose}
+          onDeleted={handleCellDeleted}
           onSaved={handleCellSaved}
         />
       )}
