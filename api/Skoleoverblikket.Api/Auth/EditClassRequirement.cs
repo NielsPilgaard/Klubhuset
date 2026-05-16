@@ -52,9 +52,12 @@ public sealed class EditClassAuthorizationHandler(AppDbContext db, ITenantContex
 			return;
 		}
 
-		var anyPermissionsExist = await db.ClassPermissions.AnyAsync();
+		// Non-admin staff: class-scoped check.
+		// If the class has no ClassPermission rows → open (no restrictions set for this class).
+		// If rows exist for the class → staff must have one.
+		var classHasPermissions = await db.ClassPermissions.AnyAsync(p => p.ClassId == classId);
 
-		if (!anyPermissionsExist)
+		if (!classHasPermissions)
 		{
 			context.Succeed(requirement);
 			return;
