@@ -5,23 +5,23 @@ namespace Skoleoverblikket.Api.Services;
 
 public static class ServicesExtensions
 {
-    public static IServiceCollection AddDomainServices(this IServiceCollection services)
-    {
-        services.AddScoped<ConflictDetectionService>();
-        services.AddScoped<StaffInvitationService>();
-        services.AddScoped<ExcelReportBuilder>();
-        services.AddScoped<SubscriptionService>();
+	public static IServiceCollection AddDomainServices(this IServiceCollection services)
+	{
+		services.AddScoped<ConflictDetectionService>();
+		services.AddScoped<StaffInvitationService>();
+		services.AddScoped<ExcelReportBuilder>();
+		services.AddScoped<SubscriptionService>();
 
-        services.AddOptions<ApplicationOptions>()
-            .BindConfiguration(ApplicationOptions.SectionName)
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+		services.AddOptions<ApplicationOptions>()
+			.BindConfiguration(ApplicationOptions.SectionName)
+			.ValidateDataAnnotations()
+			.ValidateOnStart();
 
-        services.AddProblemDetails();
+		services.AddProblemDetails();
 
-        services.AddControllers()
-            .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+		services.AddControllers()
+			.AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-        return services;
-    }
+		return services;
+	}
 }
