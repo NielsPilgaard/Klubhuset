@@ -6,6 +6,11 @@ public static class StripeExtensions
 {
 	public static IServiceCollection AddStripe(this IServiceCollection services, IConfiguration configuration)
 	{
+		services.AddOptions<StripeOptions>()
+			.BindConfiguration(StripeOptions.SectionName)
+			.ValidateDataAnnotations()
+			.ValidateOnStart();
+
 		// Register Stripe services
 		services.AddSingleton<CustomerService>();
 		services.AddSingleton<Stripe.Checkout.SessionService>();

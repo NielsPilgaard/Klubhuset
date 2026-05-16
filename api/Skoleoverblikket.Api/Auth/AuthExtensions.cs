@@ -9,6 +9,11 @@ public static class AuthExtensions
 {
 	public static IServiceCollection AddKeycloakAuth(this IServiceCollection services)
 	{
+		services.AddOptions<KeycloakOptions>()
+			   .BindConfiguration(KeycloakOptions.SectionName)
+			   .ValidateDataAnnotations()
+			   .ValidateOnStart();
+
 		services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 			   .AddJwtBearer(options =>
 			   {

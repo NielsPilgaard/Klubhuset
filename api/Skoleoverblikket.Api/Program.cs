@@ -1,9 +1,5 @@
-using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Refit;
-using Skoleoverblikket.Api;
 using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Cache;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Email;
 using Skoleoverblikket.Api.OpenApi;
@@ -11,128 +7,31 @@ using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Storage;
 using Skoleoverblikket.Api.Tenancy;
 using Skoleoverblikket.ServiceDefaults;
-using ZiggyCreatures.Caching.Fusion;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Multi-tenancy
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
-builder.Services.AddMemoryCache();
-builder.Services.AddFusionCache()
-	.WithDefaultEntryOptions(o =>
-	{
-		o.Duration = TimeSpan.FromMinutes(5);
-		o.IsFailSafeEnabled = true;
-		o.FailSafeMaxDuration = TimeSpan.FromHours(1);
-		o.FailSafeThrottleDuration = TimeSpan.FromSeconds(30);
-		o.EagerRefreshThreshold = 0.9f;
-		o.FactorySoftTimeout = TimeSpan.FromSeconds(1);
-		o.FactoryHardTimeout = TimeSpan.FromSeconds(5);
-	});
-
-// Database
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("skoleoverblikket-db")));
-
-// Keycloak
-builder.Services.AddOptions<KeycloakOptions>()
-	   .BindConfiguration(KeycloakOptions.SectionName)
-	   .ValidateDataAnnotations()
-	   .ValidateOnStart();
-
-// Auth — validates Keycloak-issued JWTs
+builder.Services.AddTenancy();
+builder.Services.AddFusionCacheDefaults();
+builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddKeycloakAuth();
-
-// Keycloak Admin REST API clients (for creating users during signup)
-builder.Services
-	.AddRefitClient<IKeycloakTokenApi>()
-	.ConfigureHttpClient((sp, c) =>
-	{
-		var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
-		c.BaseAddress = new Uri(kc.TokenBaseUrl);
-	});
-
-builder.Services
-	.AddTransient<KeycloakBearerHandler>()
-	.AddRefitClient<IKeycloakAdminApi>()
-	.ConfigureHttpClient((sp, c) =>
-	{
-		var kc = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
-		c.BaseAddress = new Uri(kc.AdminBaseUrl);
-	})
-	.AddHttpMessageHandler<KeycloakBearerHandler>();
-
-builder.Services.AddScoped<KeycloakAdminService>();
-
+builder.Services.AddKeycloakAdmin();
 builder.Services.AddOpenApi();
-
-builder.Services.AddOptions<ApplicationOptions>()
-	   .BindConfiguration(ApplicationOptions.SectionName)
-	   .ValidateDataAnnotations()
-	   .ValidateOnStart();
-
-builder.Services.AddOptions<SmtpOptions>()
-	   .BindConfiguration(SmtpOptions.SectionName)
-	   .ValidateDataAnnotations()
-	   .ValidateOnStart();
-
-builder.Services.AddOptions<StripeOptions>()
-	   .BindConfiguration(StripeOptions.SectionName)
-	   .ValidateDataAnnotations()
-	   .ValidateOnStart();
-
-builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
-
+builder.Services.AddEmail();
 builder.Services.AddObjectStorage();
-
-builder.Services.AddScoped<ConflictDetectionService>();
-
-builder.Services.AddScoped<StaffInvitationService>();
-builder.Services.AddScoped<ExcelReportBuilder>();
-
-builder.Services.AddScoped<SubscriptionService>();
-
 builder.Services.AddStripe(builder.Configuration);
-
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<MissingTenantClaimExceptionHandler>();
-
-builder.Services.AddControllers()
-	   .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddDomainServices();
 
 var app = builder.Build();
 
 app.UseSwaggerInDevelopment();
-
 app.UseExceptionHandler();
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapDefaultEndpoints();
 
-var isOpenApiGeneration = string.Equals(Environment.GetEnvironmentVariable("OPENAPI_GENERATE"), "true", StringComparison.OrdinalIgnoreCase);
-if (!app.Environment.IsProduction() && !isOpenApiGeneration)
-{
-	await using var scope = app.Services.CreateAsyncScope();
-	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	await db.Database.MigrateAsync();
-}
-
-if (!app.Environment.IsEnvironment("Testing"))
-{
-	// Seed well-known dev/prod fixtures (idempotent — skipped if already present).
-	if (!string.IsNullOrEmpty(app.Configuration.GetConnectionString("skoleoverblikket-db")))
-	{
-		_ = Task.Run(() => app.Services.SeedAsync());
-	}
-
-	if (!string.IsNullOrEmpty(app.Configuration["ObjectStorage:ServiceUrl"]))
-	{
-		_ = Task.Run(() => app.Services.EnsureS3BucketAsync());
-	}
-}
+await app.MigrateAndSeedAsync();
 
 app.Run();
