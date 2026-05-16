@@ -17,86 +17,86 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// </summary>
 public sealed class RoomScheduleTests
 {
-    private static readonly JsonSerializerOptions JsonOpts = new()
-    {
-        Converters = { new JsonStringEnumConverter() },
-        PropertyNameCaseInsensitive = true,
-    };
+	private static readonly JsonSerializerOptions JsonOpts = new()
+	{
+		Converters = { new JsonStringEnumConverter() },
+		PropertyNameCaseInsensitive = true,
+	};
 
-    private ApiFactory _factory = null!;
-    private HttpClient _client = null!;
-    private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
+	private ApiFactory _factory = null!;
+	private HttpClient _client = null!;
+	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
-    [Before(Test)]
-    public async Task SetUp()
-    {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
-        _client = _factory.CreateClient();
-        _client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
-    }
+	[Before(Test)]
+	public async Task SetUp()
+	{
+		_factory = new ApiFactory();
+		await _factory.StartAsync();
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
+		_client = _factory.CreateClient();
+		_client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
+	}
 
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _client.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
-    }
+	[After(Test)]
+	public async Task TearDown()
+	{
+		_client.Dispose();
+		await _factory.StopAsync();
+		await _factory.DisposeAsync();
+	}
 
-    [Test]
-    public async Task GetRoomSchedule_RoomWithNoSlots_ReturnsEmptyList()
-    {
-        var room = await TestDataBuilder.CreateRoomAsync(_factory.Services, _tenantId, "Lokale 101");
+	[Test]
+	public async Task GetRoomSchedule_RoomWithNoSlots_ReturnsEmptyList()
+	{
+		var room = await TestDataBuilder.CreateRoomAsync(_factory.Services, _tenantId, "Lokale 101");
 
-        var response = await _client.GetAsync($"/api/v1/rooms/{room.Id}/schedule");
+		var response = await _client.GetAsync($"/api/v1/rooms/{room.Id}/schedule");
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var slots = await response.Content.ReadFromJsonAsync<List<SchedulesController.ScheduleSlotDto>>(JsonOpts);
-        await Assert.That(slots).IsNotNull();
-        await Assert.That(slots!.Count).IsEqualTo(0);
-    }
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		var slots = await response.Content.ReadFromJsonAsync<List<SchedulesController.ScheduleSlotDto>>(JsonOpts);
+		await Assert.That(slots).IsNotNull();
+		await Assert.That(slots!.Count).IsEqualTo(0);
+	}
 
-    [Test]
-    public async Task GetRoomSchedule_UnknownRoom_Returns404()
-    {
-        var response = await _client.GetAsync($"/api/v1/rooms/{Guid.NewGuid()}/schedule");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
-    }
+	[Test]
+	public async Task GetRoomSchedule_UnknownRoom_Returns404()
+	{
+		var response = await _client.GetAsync($"/api/v1/rooms/{Guid.NewGuid()}/schedule");
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+	}
 
-    [Test]
-    public async Task GetRoomSchedule_RoomWithActiveSlot_ReturnsSlot()
-    {
-        var room = await TestDataBuilder.CreateRoomAsync(_factory.Services, _tenantId, "Gymnastiksalen");
-        var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-            _factory.Services, _tenantId, new TimeOnly(8, 0), new TimeOnly(8, 45));
-        var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId, "Idræt");
-        var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
-        var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "6.a");
+	[Test]
+	public async Task GetRoomSchedule_RoomWithActiveSlot_ReturnsSlot()
+	{
+		var room = await TestDataBuilder.CreateRoomAsync(_factory.Services, _tenantId, "Gymnastiksalen");
+		var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
+			_factory.Services, _tenantId, new TimeOnly(8, 0), new TimeOnly(8, 45));
+		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId, "Idræt");
+		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
+		var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "6.a");
 
-        // Place the schema slot in this room via the API (admin client)
-        using var adminClient = _factory.CreateClient();
-        adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
-        var upsertResp = await adminClient.PutAsJsonAsync(
-            $"/api/v1/classes/{klass.Id}/schemas/{schema.Id}/slots",
-            new
-            {
-                timeSlotId = timeSlot.Id,
-                weekday = (int)DayOfWeek.Wednesday,
-                courseId = course.Id,
-                teacherId = teacher.Id,
-                roomId = room.Id,
-            });
-        upsertResp.EnsureSuccessStatusCode();
+		// Place the schema slot in this room via the API (admin client)
+		using var adminClient = _factory.CreateClient();
+		adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
+		var upsertResp = await adminClient.PutAsJsonAsync(
+			$"/api/v1/classes/{klass.Id}/schemas/{schema.Id}/slots",
+			new
+			{
+				timeSlotId = timeSlot.Id,
+				weekday = (int)DayOfWeek.Wednesday,
+				courseId = course.Id,
+				teacherId = teacher.Id,
+				roomId = room.Id,
+			});
+		upsertResp.EnsureSuccessStatusCode();
 
-        var response = await _client.GetAsync($"/api/v1/rooms/{room.Id}/schedule");
+		var response = await _client.GetAsync($"/api/v1/rooms/{room.Id}/schedule");
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var slots = await response.Content.ReadFromJsonAsync<List<SchedulesController.ScheduleSlotDto>>(JsonOpts);
-        await Assert.That(slots!.Count).IsEqualTo(1);
-        await Assert.That(slots[0].CourseName).IsEqualTo("Idræt");
-        await Assert.That(slots[0].RoomId).IsEqualTo(room.Id);
-        await Assert.That(slots[0].RoomName).IsEqualTo("Gymnastiksalen");
-    }
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		var slots = await response.Content.ReadFromJsonAsync<List<SchedulesController.ScheduleSlotDto>>(JsonOpts);
+		await Assert.That(slots!.Count).IsEqualTo(1);
+		await Assert.That(slots[0].CourseName).IsEqualTo("Idræt");
+		await Assert.That(slots[0].RoomId).IsEqualTo(room.Id);
+		await Assert.That(slots[0].RoomName).IsEqualTo("Gymnastiksalen");
+	}
 }
