@@ -9,6 +9,7 @@ interface DatePickerProps {
   placeholder?: string
   fromYear?: number
   toYear?: number
+  align?: 'left' | 'right'
 }
 
 function isoToDate(iso: string): Date {
@@ -34,6 +35,7 @@ export function DatePicker({
   placeholder = 'Vælg dato',
   fromYear = currentYear - 5,
   toYear = currentYear + 5,
+  align = 'left',
 }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -83,7 +85,7 @@ export function DatePicker({
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl">
+        <div className={`absolute z-50 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-w-[calc(100vw-2rem)] ${align === 'right' ? 'right-0' : 'left-0'}`}>
           <div className="relative p-3">
             <style>{`
               .rdp-dropdown select {
