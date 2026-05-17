@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import keycloak from '../auth/keycloak'
+import CookieBanner from '../components/CookieBanner'
 
 interface InvitationPreview {
   staffName: string
@@ -166,6 +167,7 @@ export default function InvitationAcceptPage() {
 
   // state === 'ready' — show invitation details and login button
   return (
+    <>
     <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
         <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
@@ -205,5 +207,7 @@ export default function InvitationAcceptPage() {
         </div>
       </div>
     </div>
+    <CookieBanner />
+    </>
   )
 }
