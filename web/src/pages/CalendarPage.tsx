@@ -84,6 +84,7 @@ function buildMonthGrid(year: number, month: number): (number | null)[][] {
     while (week.length < 7) week.push(null)
     weeks.push(week)
   }
+  while (weeks.length < 6) weeks.push(Array(7).fill(null))
   return weeks
 }
 
@@ -496,6 +497,9 @@ export default function CalendarPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolStartYear])
 
+  const [highlightedDate, setHighlightedDate] = useState<string | null>(null)
+  const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
   const touchStartX = useRef<number | null>(null)
 
   function handleTouchStart(e: React.TouchEvent) {
@@ -606,11 +610,23 @@ export default function CalendarPage() {
     }
   }
 
+  function handleEntryClick(entry: CalendarEntryDto) {
+    const dateStr = entry.startDate!
+    const [y, m] = dateStr.split('-').map(Number)
+    const key = `${y}-${m}`
+    setHighlightedDate(dateStr)
+    const idx = schoolYearMonths.findIndex(({ year, month }) => year === y && month === m)
+    if (idx >= 0) setCarouselIndex(idx)
+    const el = monthRefs.current.get(key)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => setHighlightedDate(null), 3000)
+  }
+
   function renderMonthCard(year: number, month: number, large = false) {
     const weeks = buildMonthGrid(year, month)
     const dayCellClass = large
-      ? 'text-base text-center py-2.5 rounded-lg select-none font-medium'
-      : 'text-sm text-center py-1 rounded select-none'
+      ? 'text-base text-center py-2.5 h-11 rounded-lg select-none font-medium'
+      : 'text-sm text-center py-1 h-8 rounded select-none'
     const headerClass = large ? 'text-sm text-center pb-2' : 'text-xs text-center pb-1'
     const weekNumClass = large
       ? 'text-xs text-gray-400 text-right pr-2 leading-none flex items-center justify-end'
@@ -618,7 +634,7 @@ export default function CalendarPage() {
     const weekNumCol = large ? '2.5rem' : '2rem'
 
     return (
-      <div key={`${year}-${month}`} className={`bg-white rounded-xl border border-gray-200 ${large ? 'p-6' : 'p-5'}`}>
+      <div key={`${year}-${month}`} ref={(el) => { if (el) monthRefs.current.set(`${year}-${month}`, el); else monthRefs.current.delete(`${year}-${month}`) }} className={`bg-white rounded-xl border border-gray-200 ${large ? 'p-6' : 'p-5'}`}>
         <p className={`font-display font-semibold text-gray-700 mb-3 ${large ? 'text-xl' : 'text-base'}`}>
           {MONTH_NAMES[month - 1]} {year}
         </p>
@@ -636,9 +652,11 @@ export default function CalendarPage() {
               </div>,
               ...week.map((day, di) => {
                 if (day === null) {
-                  return <div key={`${wi}-${di}`} className={di >= 5 ? 'bg-gray-100 rounded' : ''} />
+                  return <div key={`${wi}-${di}`} className={`${large ? 'h-11' : 'h-8'} ${di >= 5 ? 'bg-gray-100 rounded' : ''}`} />
                 }
                 const isWeekend = di >= 5
+                const cellDateStr = toDateString(year, month, day)
+                const isHighlighted = highlightedDate === cellDateStr
                 const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
                 const firstEntry = dayEntries[0]
                 const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type ?? ''] ?? '' : ''
@@ -651,6 +669,7 @@ export default function CalendarPage() {
                       onClick={() => handleDayClick(year, month, day, isWeekend)}
                       className={[
                         dayCellClass,
+                        isHighlighted ? 'ring-2 ring-brand-500' : '',
                         isWeekend
                           ? 'bg-gray-100 text-gray-400 cursor-default'
                           : colorClass
@@ -814,7 +833,7 @@ export default function CalendarPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {allEntries.map((entry) => (
-                <tr key={`${entry.id}-${entry.startDate}`} className="hover:bg-gray-50 transition-colors">
+                <tr key={`${entry.id}-${entry.startDate}`} onClick={() => handleEntryClick(entry)} className="hover:bg-gray-50 transition-colors cursor-pointer">
                   <td className="px-5 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
                       {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
@@ -828,7 +847,7 @@ export default function CalendarPage() {
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => setEditingEntry(entry)}
+                          onClick={(e) => { e.stopPropagation(); setEditingEntry(entry) }}
                           className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                           title="Rediger"
                         >
@@ -838,7 +857,7 @@ export default function CalendarPage() {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteEntry(entry)}
+                          onClick={(e) => { e.stopPropagation(); handleDeleteEntry(entry) }}
                           className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                           title="Slet"
                         >
