@@ -186,7 +186,9 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data?.hoursPerStaff?.map((s) => (
+                  {[...(data?.hoursPerStaff ?? [])].sort((a, b) =>
+                    new Intl.Collator('da', { numeric: true, sensitivity: 'base' }).compare(a.staffName ?? '', b.staffName ?? '')
+                  ).map((s) => (
                     <tr key={s.staffId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-2.5 font-medium text-gray-800">{s.staffName}</td>
                       <td className="px-5 py-2.5 text-gray-500">{s.role ? roleLabel(s.role) : '–'}</td>
