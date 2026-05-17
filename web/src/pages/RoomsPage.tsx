@@ -182,7 +182,9 @@ export default function RoomsPage() {
                 </td>
               </tr>
             )}
-            {rooms?.map((r) => (
+            {[...(rooms ?? [])].sort((a, b) =>
+              new Intl.Collator('da', { numeric: true, sensitivity: 'base' }).compare(a.name ?? '', b.name ?? '')
+            ).map((r) => (
               <tr key={r.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-5 py-3 font-medium text-gray-900">{r.name}</td>
                 <td className="px-5 py-3 text-gray-500 hidden sm:table-cell tabular-nums">
