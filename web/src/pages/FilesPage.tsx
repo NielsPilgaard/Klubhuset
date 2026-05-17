@@ -76,14 +76,16 @@ function fileIcon(contentType: string) {
 interface UploadModalProps {
   courses: CourseDto[] | undefined
   currentFolderId: string | null
+  defaultCourseId?: string
   onClose: () => void
   onUploaded: () => void
 }
 
-function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
+function UploadModal({ courses, defaultCourseId, onClose, onUploaded }: UploadModalProps) {
   const qc = useQueryClient()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [courseId, setCourseId] = useState<string>('')
+  const [editedName, setEditedName] = useState<string>('')
+  const [courseId, setCourseId] = useState<string>(defaultCourseId ?? '')
   const [progress, setProgress] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -92,8 +94,9 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
 
   const mutation = useMutation({
     mutationFn: async ({ file, courseId }: { file: File; courseId?: string }) => {
+      const ext = file.name.includes('.') ? '.' + file.name.split('.').pop()! : ''
       const { data: presign } = await postApiV1FilesPresign({
-        body: { fileName: file.name, fileSizeBytes: file.size, courseId: courseId || undefined },
+        body: { fileName: editedName + ext, fileSizeBytes: file.size, courseId: courseId || undefined },
         throwOnError: true,
       })
       await fetch(presign!.uploadUrl!, {
@@ -125,7 +128,7 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
     setIsDragging(false)
     dragRef.current = false
     const f = e.dataTransfer.files[0]
-    if (f) { setError(null); setSelectedFile(f) }
+    if (f) { setError(null); setSelectedFile(f); setEditedName(f.name.replace(/\.[^.]+$/, '')) }
   }
 
   return (
@@ -181,10 +184,25 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
             <input
               ref={inputRef}
               type="file"
+              accept="*/*"
               className="hidden"
-              onChange={(e) => { setError(null); setProgress(null); setSelectedFile(e.target.files?.[0] ?? null) }}
+              onChange={(e) => { const f = e.target.files?.[0] ?? null; setError(null); setProgress(null); setSelectedFile(f); if (f) setEditedName(f.name.replace(/\.[^.]+$/, '')) }}
             />
           </div>
+
+          {/* Filename */}
+          {selectedFile && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Filnavn</label>
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                disabled={isPending}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
+              />
+            </div>
+          )}
 
           {/* Course */}
           <div>
@@ -224,6 +242,58 @@ function UploadModal({ courses, onClose, onUploaded }: UploadModalProps) {
   )
 }
 
+// ─── File preview modal ───────────────────────────────────────────────────────
+
+interface FilePreviewModalProps {
+  fileName: string
+  contentType: string
+  url: string
+  onClose: () => void
+}
+
+function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewModalProps) {
+  const isImage = contentType.startsWith('image/')
+  const isPdf = contentType.includes('pdf')
+  const isPreviewable = isImage || isPdf
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
+          <span className="font-medium text-gray-900 truncate">{fileName}</span>
+          <button onClick={onClose} className="shrink-0 p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors" title="Luk">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto flex items-center justify-center p-4 min-h-0">
+          {isImage && (
+            <img src={url} alt={fileName} className="max-h-full max-w-full object-contain mx-auto" />
+          )}
+          {isPdf && (
+            <iframe src={url} title={fileName} className="w-full flex-1 min-h-[60vh]" />
+          )}
+          {!isPreviewable && (
+            <div className="text-center space-y-2">
+              <p className="text-gray-700 font-medium">{fileName}</p>
+              <p className="text-sm text-gray-400">{contentType || 'Ukendt filtype'}</p>
+              <a
+                href={url}
+                download={fileName}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+              >
+                Hent fil
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FilesPage() {
@@ -233,6 +303,7 @@ export default function FilesPage() {
 
   const [filterCourseId, setFilterCourseId] = useState<string>('')
   const [showUpload, setShowUpload] = useState(false)
+  const [previewFile, setPreviewFile] = useState<{ fileName: string; contentType: string; url: string } | null>(null)
 
   const { data: courses } = useQuery(getApiV1CoursesOptions())
 
@@ -327,7 +398,12 @@ export default function FilesPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400 shrink-0">{fileIcon(f.contentType ?? '')}</span>
                     <div className="min-w-0">
-                      <span className="font-medium text-gray-900 truncate block">{f.fileName}</span>
+                      <button
+                        onClick={() => setPreviewFile({ fileName: f.fileName ?? '', contentType: f.contentType ?? '', url: f.url ?? '' })}
+                        className="font-medium text-gray-900 truncate block text-left hover:text-brand-600 transition-colors"
+                      >
+                        {f.fileName}
+                      </button>
                       <span className="text-xs text-gray-400">{formatBytes(f.sizeBytes ?? 0)}</span>
                     </div>
                   </div>
@@ -343,6 +419,16 @@ export default function FilesPage() {
                 </td>
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => setPreviewFile({ fileName: f.fileName ?? '', contentType: f.contentType ?? '', url: f.url ?? '' })}
+                      className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                      title="Forhåndsvis"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
                     <a
                       href={f.url || undefined}
                       target="_blank"
@@ -392,10 +478,13 @@ export default function FilesPage() {
         </table>
       </div>
 
+      {previewFile && <FilePreviewModal {...previewFile} onClose={() => setPreviewFile(null)} />}
+
       {showUpload && (
         <UploadModal
           courses={courses ?? []}
           currentFolderId={null}
+          defaultCourseId={filterCourseId || undefined}
           onClose={() => setShowUpload(false)}
           onUploaded={() => setShowUpload(false)}
         />
