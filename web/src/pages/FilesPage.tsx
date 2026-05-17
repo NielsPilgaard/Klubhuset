@@ -5,9 +5,12 @@ import {
   getApiV1FilesOptions,
   getApiV1FilesQueryKey,
   deleteApiV1FilesByIdMutation,
+  postApiV1FilesFoldersMutation,
+  deleteApiV1FilesFoldersByIdMutation,
+  patchApiV1FilesFoldersByIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import { postApiV1FilesPresign, postApiV1FilesConfirm } from '../api/generated/sdk.gen'
-import type { CourseDto } from '../api/generated/types.gen'
+import type { CourseDto, FolderDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 
@@ -70,6 +73,31 @@ function fileIcon(contentType: string) {
   )
 }
 
+function FolderIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function ChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  )
+}
+
 
 // ─── Upload modal ─────────────────────────────────────────────────────────────
 
@@ -81,7 +109,7 @@ interface UploadModalProps {
   onUploaded: () => void
 }
 
-function UploadModal({ courses, defaultCourseId, onClose, onUploaded }: UploadModalProps) {
+function UploadModal({ courses, currentFolderId, defaultCourseId, onClose, onUploaded }: UploadModalProps) {
   const qc = useQueryClient()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [editedName, setEditedName] = useState<string>('')
@@ -96,7 +124,12 @@ function UploadModal({ courses, defaultCourseId, onClose, onUploaded }: UploadMo
     mutationFn: async ({ file, courseId }: { file: File; courseId?: string }) => {
       const ext = file.name.includes('.') ? '.' + file.name.split('.').pop()! : ''
       const { data: presign } = await postApiV1FilesPresign({
-        body: { fileName: editedName + ext, fileSizeBytes: file.size, courseId: courseId || undefined },
+        body: {
+          fileName: editedName + ext,
+          fileSizeBytes: file.size,
+          courseId: courseId || undefined,
+          folderId: currentFolderId || undefined,
+        },
         throwOnError: true,
       })
       await fetch(presign!.uploadUrl!, {
@@ -294,6 +327,141 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
   )
 }
 
+// ─── Create folder modal ──────────────────────────────────────────────────────
+
+interface CreateFolderModalProps {
+  parentId: string | null
+  onClose: () => void
+  onCreated: (folder: FolderDto) => void
+}
+
+function CreateFolderModal({ parentId, onClose, onCreated }: CreateFolderModalProps) {
+  const [name, setName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const { mutationFn } = postApiV1FilesFoldersMutation()
+  const mutation = useMutation({
+    mutationFn,
+    onSuccess: (data) => { if (data) onCreated(data) },
+    onError: () => setError('Kunne ikke oprette mappen. Prøv igen.'),
+  })
+
+  function submit() {
+    const trimmed = name.trim()
+    if (!trimmed) { setError('Mappenavn må ikke være tomt.'); return }
+    setError(null)
+    mutation.mutate({ body: { name: trimmed, parentId: parentId || undefined } })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-display text-lg font-semibold text-gray-900">Opret mappe</h2>
+        </div>
+        <div className="px-6 py-5">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Mappenavn *</label>
+          <input
+            ref={inputRef}
+            autoFocus
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
+            placeholder="F.eks. Matematik, Uge 10…"
+            disabled={mutation.isPending}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
+          />
+          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} disabled={mutation.isPending} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50">
+            Annuller
+          </button>
+          <button
+            onClick={submit}
+            disabled={mutation.isPending}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {mutation.isPending ? 'Opretter…' : 'Opret'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Inline rename input ──────────────────────────────────────────────────────
+
+interface InlineRenameProps {
+  folder: FolderDto
+  onDone: () => void
+}
+
+function InlineRename({ folder, onDone }: InlineRenameProps) {
+  const qc = useQueryClient()
+  const [value, setValue] = useState(folder.name ?? '')
+  const { mutationFn } = patchApiV1FilesFoldersByIdMutation()
+  const mutation = useMutation({
+    mutationFn,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }); onDone() },
+  })
+
+  function submit() {
+    const trimmed = value.trim()
+    if (!trimmed || trimmed === folder.name) { onDone(); return }
+    mutation.mutate({ path: { id: folder.id! }, body: { name: trimmed } })
+  }
+
+  return (
+    <input
+      autoFocus
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={submit}
+      onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onDone() }}
+      disabled={mutation.isPending}
+      className="px-2 py-0.5 border border-brand-400 rounded text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 w-40 disabled:opacity-50"
+      onClick={(e) => e.stopPropagation()}
+    />
+  )
+}
+
+// ─── Breadcrumb ───────────────────────────────────────────────────────────────
+
+interface BreadcrumbProps {
+  trail: { id: string; name: string }[]
+  onNavigate: (folderId: string | null) => void
+}
+
+function Breadcrumb({ trail, onNavigate }: BreadcrumbProps) {
+  return (
+    <nav className="flex items-center gap-1 text-sm flex-wrap">
+      <button
+        onClick={() => onNavigate(null)}
+        className="text-brand-600 hover:text-brand-800 font-medium transition-colors"
+        data-testid="breadcrumb-root"
+      >
+        Filer
+      </button>
+      {trail.map((crumb) => (
+        <span key={crumb.id} className="flex items-center gap-1">
+          <span className="text-gray-400"><ChevronIcon /></span>
+          <button
+            onClick={() => onNavigate(crumb.id)}
+            className="text-brand-600 hover:text-brand-800 font-medium transition-colors"
+            data-testid={`breadcrumb-${crumb.id}`}
+          >
+            {crumb.name}
+          </button>
+        </span>
+      ))}
+    </nav>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FilesPage() {
@@ -303,13 +471,23 @@ export default function FilesPage() {
 
   const [filterCourseId, setFilterCourseId] = useState<string>('')
   const [showUpload, setShowUpload] = useState(false)
+  const [showCreateFolder, setShowCreateFolder] = useState(false)
   const [previewFile, setPreviewFile] = useState<{ fileName: string; contentType: string; url: string } | null>(null)
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
+
+  // folder navigation state: stack of { id, name } representing the breadcrumb trail
+  const [folderTrail, setFolderTrail] = useState<{ id: string; name: string }[]>([])
+  const currentFolderId = folderTrail.length > 0 ? folderTrail[folderTrail.length - 1].id : null
 
   const { data: courses } = useQuery(getApiV1CoursesOptions())
 
-  const { data, isLoading, isError, refetch } = useQuery(
-    getApiV1FilesOptions(filterCourseId ? { query: { courseId: filterCourseId } } : undefined)
-  )
+  const queryOptions = getApiV1FilesOptions({
+    query: {
+      ...(filterCourseId ? { courseId: filterCourseId } : {}),
+      ...(currentFolderId ? { folderId: currentFolderId } : {}),
+    },
+  })
+  const { data, isLoading, isError, refetch } = useQuery(queryOptions)
 
   const { mutationFn: deleteFileMutationFn } = deleteApiV1FilesByIdMutation()
   const deleteMutation = useMutation({
@@ -317,29 +495,77 @@ export default function FilesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
   })
 
+  const { mutationFn: deleteFolderMutationFn } = deleteApiV1FilesFoldersByIdMutation()
+  const deleteFolderMutation = useMutation({
+    mutationFn: deleteFolderMutationFn,
+    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
+  })
+
   const files = data?.files ?? []
-  const isEmpty = !isLoading && files.length === 0
+  const folders = data?.folders ?? []
+  const isEmpty = !isLoading && files.length === 0 && folders.length === 0
+
+  function navigateInto(folder: FolderDto) {
+    setFolderTrail((prev) => [...prev, { id: folder.id!, name: folder.name! }])
+  }
+
+  function navigateTo(folderId: string | null) {
+    if (folderId === null) {
+      setFolderTrail([])
+    } else {
+      const idx = folderTrail.findIndex((f) => f.id === folderId)
+      if (idx !== -1) setFolderTrail(folderTrail.slice(0, idx + 1))
+    }
+  }
+
+  function handleFolderCreated(_folder: FolderDto) {
+    qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
+    setShowCreateFolder(false)
+  }
+
+  function handleDeleteFolder(folder: FolderDto) {
+    if (confirm(`Slet mappen "${folder.name ?? 'mappe'}"? Indholdet i mappen slettes også.`)) {
+      deleteFolderMutation.mutate({ path: { id: folder.id! } })
+    }
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
+        <div className="min-w-0">
           <h1 className="font-display text-2xl font-semibold text-gray-900">Filer</h1>
           <p className="mt-1 text-sm text-gray-500">Filer og mapper tilknyttet skolen og dens fag</p>
         </div>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-          Upload fil
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin && (
+            <button
+              onClick={() => setShowCreateFolder(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              data-testid="create-folder-btn"
+            >
+              <FolderIcon size={16} />
+              Ny mappe
+            </button>
+          )}
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Upload fil
+          </button>
+        </div>
       </div>
+
+      {/* Breadcrumb */}
+      {folderTrail.length > 0 && (
+        <Breadcrumb trail={folderTrail} onNavigate={navigateTo} />
+      )}
 
       {/* Course filter */}
       <div className="flex items-center gap-2">
@@ -392,6 +618,65 @@ export default function FilesPage() {
                 </tr>
               ))}
 
+            {/* Folder rows — shown above files */}
+            {folders.map((folder) => (
+              <tr
+                key={`folder-${folder.id}`}
+                className="hover:bg-amber-50 transition-colors cursor-pointer"
+                data-testid={`folder-row-${folder.id}`}
+                onClick={() => navigateInto(folder)}
+              >
+                <td className="px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 shrink-0"><FolderIcon size={16} /></span>
+                    <div className="min-w-0 flex items-center gap-2">
+                      {renamingFolderId === folder.id ? (
+                        <InlineRename
+                          folder={folder}
+                          onDone={() => setRenamingFolderId(null)}
+                        />
+                      ) : (
+                        <span className="font-medium text-gray-900 truncate">{folder.name}</span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-3 hidden md:table-cell" />
+                <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
+                  {folder.createdAt ? formatDate(folder.createdAt) : '—'}
+                </td>
+                <td className="px-5 py-3 hidden lg:table-cell" />
+                <td className="px-5 py-3 text-right">
+                  {isAdmin && (
+                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setRenamingFolderId(folder.id!)}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                        title="Omdøb mappe"
+                        data-testid={`rename-folder-${folder.id}`}
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteFolder(folder)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                        title="Slet mappe"
+                        data-testid={`delete-folder-${folder.id}`}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+
+            {/* File rows */}
             {files.map((f) => (
               <tr key={f.id} className="hover:bg-gray-50 transition-colors" data-testid={`file-row-${f.id}`}>
                 <td className="px-5 py-3">
@@ -469,8 +754,12 @@ export default function FilesPage() {
             {isEmpty && (
               <tr>
                 <td colSpan={5} className="px-5 py-12 text-center">
-                  <p className="text-gray-400 text-sm">Ingen filer her endnu</p>
-                  <p className="text-gray-300 text-xs mt-1">Klik "Upload fil" for at komme i gang</p>
+                  <p className="text-gray-400 text-sm">
+                    {currentFolderId ? 'Mappen er tom' : 'Ingen filer her endnu'}
+                  </p>
+                  <p className="text-gray-300 text-xs mt-1">
+                    {currentFolderId ? 'Upload filer til denne mappe via "Upload fil"' : 'Klik "Upload fil" for at komme i gang'}
+                  </p>
                 </td>
               </tr>
             )}
@@ -483,10 +772,18 @@ export default function FilesPage() {
       {showUpload && (
         <UploadModal
           courses={courses ?? []}
-          currentFolderId={null}
+          currentFolderId={currentFolderId}
           defaultCourseId={filterCourseId || undefined}
           onClose={() => setShowUpload(false)}
           onUploaded={() => setShowUpload(false)}
+        />
+      )}
+
+      {showCreateFolder && (
+        <CreateFolderModal
+          parentId={currentFolderId}
+          onClose={() => setShowCreateFolder(false)}
+          onCreated={handleFolderCreated}
         />
       )}
     </div>
