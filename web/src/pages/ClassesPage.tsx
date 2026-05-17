@@ -524,11 +524,11 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
       {ungrantedStaff.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tilføj medarbejder</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+              className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
             >
               <option value="">Vælg medarbejder…</option>
               {ungrantedStaff.map((s) => (
@@ -539,7 +539,7 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
               data-testid="grant-permission-btn"
               disabled={!selectedStaffId || grantMutation.isPending}
               onClick={() => grantMutation.mutate({ path: { classId }, body: { staffId: selectedStaffId } })}
-              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
             >
               Tilføj
             </button>
