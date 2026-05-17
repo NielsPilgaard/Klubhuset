@@ -1,6 +1,7 @@
 import './App.css'
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, ScrollRestoration } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import ScrollToTop from './components/ScrollToTop'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/useAuth'
@@ -65,7 +66,7 @@ export default function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <ScrollRestoration />
+          <ScrollToTop />
           <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Indlæser...</div>}>
             <Routes>
           {/* Public routes */}
