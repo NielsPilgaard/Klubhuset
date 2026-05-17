@@ -53,9 +53,14 @@ export default function MySchedulePage() {
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-gray-900">
-            {me ? `${me.name}s skema` : 'Mit skema'}
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="font-display text-2xl font-semibold text-gray-900">
+              {me ? `${me.name}s skema` : 'Mit skema'}
+            </h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700">
+              Mit skema
+            </span>
+          </div>
           <p className="mt-1 text-sm text-gray-500">Ugentligt skema — aktive klasser</p>
         </div>
         <button
