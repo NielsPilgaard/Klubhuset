@@ -53,7 +53,8 @@ test.describe('CalendarPage — entry list focus on click', () => {
 
     await entryRows.first().click()
 
-    await expect(page.locator('.ring-2.ring-brand-500')).toBeVisible({ timeout: 5_000 })
+    const desktopGrid = page.getByTestId('desktop-month-grid')
+    await expect(desktopGrid.locator('.ring-2.ring-brand-500').first()).toBeVisible({ timeout: 5_000 })
   })
 
   test('highlight disappears after 3 seconds', async ({ page }) => {
@@ -62,9 +63,10 @@ test.describe('CalendarPage — entry list focus on click', () => {
     test.skip(count === 0, 'No calendar entries — skipping highlight timeout test')
 
     await entryRows.first().click()
-    await expect(page.locator('.ring-2.ring-brand-500')).toBeVisible({ timeout: 5_000 })
+    const desktopGrid = page.getByTestId('desktop-month-grid')
+    await expect(desktopGrid.locator('.ring-2.ring-brand-500').first()).toBeVisible({ timeout: 5_000 })
 
-    await expect(page.locator('.ring-2.ring-brand-500')).not.toBeVisible({ timeout: 5_000 })
+    await expect(desktopGrid.locator('.ring-2.ring-brand-500').first()).not.toBeVisible({ timeout: 5_000 })
   })
 })
 

@@ -1,5 +1,8 @@
 import { test, expect, type Page } from '@playwright/test'
 
+// Signup creates a new account — must not carry global auth state or Keycloak will skip the flow.
+test.use({ storageState: { cookies: [], origins: [] } })
+
 function uniqueEmail() {
   return `e2e-wizard-${Date.now()}@testskole.dk`
 }

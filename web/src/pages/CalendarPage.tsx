@@ -812,7 +812,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Desktop grid — visible from lg */}
-      <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-6" data-testid="desktop-month-grid">
         {schoolYearMonths.map(({ year, month }) => renderMonthCard(year, month))}
       </div>
 
