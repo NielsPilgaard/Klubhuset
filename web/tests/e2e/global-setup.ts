@@ -1,4 +1,5 @@
-import { request } from '@playwright/test'
+import { chromium, request } from '@playwright/test'
+import { mkdirSync } from 'fs'
 
 const KEYCLOAK_BASE = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
 const ADMIN_EMAIL = 'admin@debugskolen.dk'
@@ -50,4 +51,17 @@ export default async function globalSetup() {
   } catch (e) {
     console.warn('[global-setup] Brute-force reset failed (non-fatal):', e)
   }
+
+  mkdirSync('tests/e2e/.auth', { recursive: true })
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  await page.goto('http://localhost:5173/login')
+  await page.waitForURL(/localhost:8080.*\/auth/, { timeout: 30_000 })
+  await page.fill('#username', 'admin@debugskolen.dk')
+  await page.fill('#password', 'test1234')
+  await page.locator('button').filter({ hasText: /log ind|sign in/i }).click()
+  await page.waitForURL((url) => url.port !== '8080', { timeout: 30_000 })
+  await page.context().storageState({ path: 'tests/e2e/.auth/admin.json' })
+  await browser.close()
+  console.log('[global-setup] Admin storageState saved to tests/e2e/.auth/admin.json')
 }

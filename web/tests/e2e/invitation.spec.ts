@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
+test.use({ storageState: { cookies: [], origins: [] } })
+
 const MAILPIT_API = 'http://localhost:8025/api/v1'
 const ADMIN_EMAIL = 'admin@debugskolen.dk'
 const ADMIN_PASSWORD = 'test1234'

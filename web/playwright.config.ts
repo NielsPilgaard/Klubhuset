@@ -15,6 +15,7 @@ export default defineConfig({
   use: {
     baseURL: WEB_URL,
     trace: 'on-first-retry',
+    storageState: 'tests/e2e/.auth/admin.json',
   },
   projects: [
     {

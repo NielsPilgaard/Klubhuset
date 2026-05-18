@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 
+test.use({ storageState: { cookies: [], origins: [] } })
+
 function uniqueEmail() {
   return `e2e-${Date.now()}@testskole.dk`
 }

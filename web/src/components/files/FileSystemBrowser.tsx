@@ -145,8 +145,9 @@ function UploadModal({ courses, currentFolderId, defaultCourseId, onClose, onUpl
 
           {selectedFile && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filnavn</label>
+              <label htmlFor="upload-filename" className="block text-sm font-medium text-gray-700 mb-1">Filnavn</label>
               <input
+                id="upload-filename"
                 type="text"
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}

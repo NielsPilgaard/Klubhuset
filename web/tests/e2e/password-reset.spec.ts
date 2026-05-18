@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 
+test.use({ storageState: { cookies: [], origins: [] } })
+
 const KEYCLOAK_BASE = 'http://localhost:8080'
 const MAILPIT_API = 'http://localhost:8025/api/v1'
 const TEST_EMAIL = 'admin@debugskolen.dk'

@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test'
 
+// These tests exercise the login flow itself — don't reuse saved auth state.
+test.use({ storageState: { cookies: [], origins: [] } })
+
 const TEST_EMAIL = 'admin@debugskolen.dk'
 const TEST_PASSWORD = 'test1234'
 
