@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1ClassesByClassIdUgeplanOptions,
@@ -8,12 +8,11 @@ import {
   postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation,
   deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdMutation,
   getApiV1CoursesOptions,
-  getApiV1FilesOptions,
   getApiV1ClassesOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import { postApiV1FilesPresign, postApiV1FilesConfirm } from '../api/generated/sdk.gen'
 import type { ClassDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { FilePicker } from '../components/files/FilePicker'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
 
@@ -70,13 +69,6 @@ interface WeekPlanDto {
 interface CourseDto {
   id: string
   name: string
-}
-
-interface FileDto {
-  id: string
-  fileName: string
-  sizeBytes: number
-  url: string
 }
 
 // ─── ISO week helpers ─────────────────────────────────────────────────────────
@@ -184,7 +176,6 @@ interface EditSlotModalProps {
   schemaId: string | null
   weekdayLabel: string
   courses: CourseDto[]
-  files: FileDto[]
   onClose: () => void
 }
 
@@ -194,10 +185,9 @@ function autosaveKey(schemaSlotId: string) {
   return `${AUTOSAVE_PREFIX}${schemaSlotId}`
 }
 
-function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel, courses, files, onClose }: EditSlotModalProps) {
+function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel, courses, onClose }: EditSlotModalProps) {
   const qc = useQueryClient()
 
-  // Restore draft from sessionStorage if available
   const savedDraft = (() => {
     try { return JSON.parse(sessionStorage.getItem(autosaveKey(slot.schemaSlotId)) ?? 'null') } catch { return null }
   })()
@@ -206,10 +196,8 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
   const [lektier, setLektier] = useState(savedDraft?.lektier ?? slot.lektier ?? '')
   const [fagSwapCourseId, setFagSwapCourseId] = useState(slot.originalCourseId ? slot.courseId : '')
   const [justSaved, setJustSaved] = useState(false)
-  const uploadInputRef = useRef<HTMLInputElement>(null)
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Debounced autosave to sessionStorage
   useEffect(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
     autosaveTimer.current = setTimeout(() => {
@@ -220,7 +208,6 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
 
   const ugeplanQueryKey = getApiV1ClassesByClassIdUgeplanQueryKey({ path: { classId }, query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) } })
 
-  // Ensures the slot exists in the DB before attempting file operations.
   async function ensureSlotSaved(): Promise<string> {
     if (slot.id !== '00000000-0000-0000-0000-000000000000') return slot.id
     const { mutationFn } = putApiV1ClassesByClassIdUgeplanSlotsMutation()
@@ -253,28 +240,6 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
   const removeFileMutation = useMutation({
     ...deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdMutation(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ugeplanQueryKey }),
-  })
-
-  const uploadFileMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const slotId = await ensureSlotSaved()
-      const { data: presign } = await postApiV1FilesPresign({
-        body: { fileName: file.name, fileSizeBytes: file.size },
-        throwOnError: true,
-      })
-      await fetch(presign!.uploadUrl!, { method: 'PUT', body: file })
-      const { data: uploaded } = await postApiV1FilesConfirm({
-        body: { confirmToken: presign!.confirmToken },
-        throwOnError: true,
-      })
-      const { mutationFn: addFile } = postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation()
-      await addFile!({ path: { classId, slotId }, body: { schoolFileId: uploaded!.id } }, undefined as never)
-      return uploaded
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ugeplanQueryKey })
-      qc.invalidateQueries({ queryKey: getApiV1FilesOptions().queryKey })
-    },
   })
 
   function handleSave() {
@@ -315,6 +280,9 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
     }
   }
 
+  const selectedFileIds = slot.files.map(f => f.schoolFileId)
+  const isFileMutationPending = addFileMutation.isPending || removeFileMutation.isPending
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/40"
@@ -333,7 +301,6 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* Beskrivelse */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivelse</label>
             <textarea
@@ -347,7 +314,6 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
             />
           </div>
 
-          {/* Lektier */}
           <div>
             <label className="block text-sm font-medium text-blue-700 mb-1">Lektier</label>
             <textarea
@@ -360,7 +326,6 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
             />
           </div>
 
-          {/* Fagbytte */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fagbytte</label>
             <select
@@ -375,68 +340,23 @@ function EditSlotModal({ slot, classId, isoYear, isoWeek, schemaId, weekdayLabel
             </select>
           </div>
 
-          {/* Filer */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">Filer</label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => uploadInputRef.current?.click()}
-                  disabled={uploadFileMutation.isPending}
-                  className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-50"
-                >
-                  {uploadFileMutation.isPending ? 'Uploader...' : '+ Upload ny fil'}
-                </button>
-                <Link
-                  to="/filer"
-                  target="_blank"
-                  className="text-xs text-gray-400 hover:text-gray-600"
-                >
-                  Administrer filer ↗
-                </Link>
-              </div>
+              <a
+                href="/filer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                Administrer filer ↗
+              </a>
             </div>
-            <input
-              ref={uploadInputRef}
-              type="file"
-              accept="*/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) uploadFileMutation.mutate(file)
-                e.target.value = ''
-              }}
+            <FilePicker
+              selectedFileIds={selectedFileIds}
+              onToggle={handleFileToggle}
+              disabled={isFileMutationPending}
             />
-            {uploadFileMutation.isError && (
-              <p className="text-xs text-red-600 mb-2">Upload fejlede. Prøv igen.</p>
-            )}
-            {files.length === 0 ? (
-              <p className="text-xs text-gray-400 py-2">Ingen filer tilgængelige — upload en fil ovenfor.</p>
-            ) : (
-              <div className="space-y-1 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2">
-                {files.map((f) => {
-                  const isChecked = slot.files.some(sf => sf.schoolFileId === f.id)
-                  const isAdding = addFileMutation.isPending
-                  const isRemoving = removeFileMutation.isPending
-                  return (
-                    <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        disabled={isAdding || isRemoving}
-                        onChange={(e) => handleFileToggle(f.id, e.target.checked)}
-                        className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                      />
-                      <span className="text-sm text-gray-800 truncate flex-1">{f.fileName}</span>
-                      <span className="text-xs text-gray-400 shrink-0">
-                        {((f.sizeBytes ?? 0) / 1024).toFixed(0)} KB
-                      </span>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
           </div>
 
           {upsertMutation.isError && (
@@ -514,9 +434,6 @@ export default function WeekPlanPage() {
 
   const { data: rawCourses } = useQuery(getApiV1CoursesOptions())
   const courses = (rawCourses ?? []) as CourseDto[]
-
-  const { data: rawFiles } = useQuery(getApiV1FilesOptions())
-  const files = (rawFiles?.files ?? []) as FileDto[]
 
   // Collect all unique course IDs for color assignment
   const allCourseIds = weekPlanData?.slots.map(s => s.courseId).filter((v, i, a) => a.indexOf(v) === i) ?? []
@@ -753,7 +670,6 @@ export default function WeekPlanPage() {
           schemaId={schemaId}
           weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(editingSlot.weekday)] ?? ''}
           courses={courses}
-          files={files}
           onClose={() => setEditingSlot(null)}
         />
       )}
