@@ -202,7 +202,12 @@ interface FilePreviewModalProps {
 function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewModalProps) {
   const isImage = contentType.startsWith('image/')
   const isPdf = contentType.includes('pdf')
-  const isPreviewable = isImage || isPdf
+
+  if (isPdf) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    onClose()
+    return null
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
@@ -223,8 +228,7 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
               <img src={url} alt={fileName} className="max-h-full max-w-full object-contain mx-auto" />
             </div>
           )}
-          {isPdf && <iframe src={url} title={fileName} className="flex-1 w-full border-0" />}
-          {!isPreviewable && (
+          {!isImage && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
               <p className="text-gray-700 font-medium">{fileName}</p>
               <p className="text-sm text-gray-400">{contentType || 'Ukendt filtype'}</p>
