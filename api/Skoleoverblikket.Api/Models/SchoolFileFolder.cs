@@ -18,6 +18,10 @@ public sealed class SchoolFileFolder : ITenantScoped, IEntityTypeConfiguration<S
 	public Guid? ParentId { get; set; }
 	public SchoolFileFolder? Parent { get; set; }
 
+	/// <summary>Optional link to a course (fag). Null = not course-scoped.</summary>
+	public Guid? CourseId { get; set; }
+	public Course? Course { get; set; }
+
 	public ICollection<SchoolFileFolder> Children { get; set; } = [];
 	public ICollection<SchoolFile> Files { get; set; } = [];
 
@@ -30,5 +34,9 @@ public sealed class SchoolFileFolder : ITenantScoped, IEntityTypeConfiguration<S
 			   .WithMany(f => f.Children)
 			   .HasForeignKey(f => f.ParentId)
 			   .OnDelete(DeleteBehavior.Cascade);
+		builder.HasOne(f => f.Course)
+			   .WithMany()
+			   .HasForeignKey(f => f.CourseId)
+			   .OnDelete(DeleteBehavior.SetNull);
 	}
 }

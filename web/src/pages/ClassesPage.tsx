@@ -230,11 +230,57 @@ interface SchemaModalProps {
   onSaved: () => void
 }
 
+function isoWeekMonday(year: number, week: number): string {
+  // Jan 4 is always in week 1 (ISO 8601)
+  const jan4 = new Date(year, 0, 4)
+  const dayOfWeek = jan4.getDay() || 7
+  const week1Monday = new Date(jan4)
+  week1Monday.setDate(jan4.getDate() - (dayOfWeek - 1))
+  const monday = new Date(week1Monday)
+  monday.setDate(week1Monday.getDate() + (week - 1) * 7)
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`
+}
+
+function isoWeekSunday(year: number, week: number): string {
+  const monday = isoWeekMonday(year, week)
+  const d = new Date(`${monday}T00:00:00`)
+  d.setDate(d.getDate() + 6)
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function getSchoolYearPresets(): { label: string; start: string; end: string }[] {
+  const today = new Date()
+  const year = today.getFullYear()
+  // School year starts week 32 — if we're past that, current school year started this year
+  const schoolYearStart = new Date(`${isoWeekMonday(year, 32)}T00:00:00`)
+  const baseYear = today >= schoolYearStart ? year : year - 1
+  return [
+    {
+      label: `Hele skoleåret ${baseYear}/${baseYear + 1}`,
+      start: isoWeekMonday(baseYear, 32),
+      end: isoWeekSunday(baseYear + 1, 26),
+    },
+    {
+      label: `Efterår ${baseYear} (uge 32–52)`,
+      start: isoWeekMonday(baseYear, 32),
+      end: isoWeekSunday(baseYear, 52),
+    },
+    {
+      label: `Forår ${baseYear + 1} (uge 1–26)`,
+      start: isoWeekMonday(baseYear + 1, 1),
+      end: isoWeekSunday(baseYear + 1, 26),
+    },
+  ]
+}
+
 function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   const qc = useQueryClient()
+  const presets = useMemo(() => getSchoolYearPresets(), [])
   const [name, setName] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState(presets[0].start)
+  const [endDate, setEndDate] = useState(presets[0].end)
 
   const dateInvalid = !!startDate && !!endDate && startDate > endDate
 
@@ -275,6 +321,24 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
+            <div className="flex flex-wrap gap-1.5">
+              {presets.map((p) => {
+                const active = startDate === p.start && endDate === p.end
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => { setStartDate(p.start); setEndDate(p.end) }}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${active ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400 hover:text-brand-700'}`}
+                  >
+                    {p.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
@@ -282,7 +346,7 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} />
+              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} align="right" />
             </div>
           </div>
           {dateInvalid && (
@@ -426,7 +490,7 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} />
+              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} align="right" />
             </div>
           </div>
           {startDate && endDate && startDate > endDate && (

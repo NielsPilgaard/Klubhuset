@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useParams, useSearchParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1ClassesByClassIdUgeplanOptions,
@@ -474,6 +474,7 @@ export default function WeekPlanPage() {
   const { classId } = useParams<{ classId: string }>()
   const [searchParams] = useSearchParams()
   const schemaId = searchParams.get('schemaId')
+  const navigate = useNavigate()
 
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
@@ -554,15 +555,15 @@ export default function WeekPlanPage() {
       {/* Top bar */}
       <div className="shrink-0 sticky top-0 z-10 bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <Link
-            to="/klasser"
+          <button
+            onClick={() => navigate(-1)}
             className="text-gray-400 hover:text-gray-700 transition-colors shrink-0"
-            aria-label="Tilbage til klasser"
+            aria-label="Tilbage"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-          </Link>
+          </button>
           <h1 className="font-display text-base font-semibold text-gray-900 truncate">
             {className} · Ugeplan
           </h1>

@@ -106,7 +106,7 @@ interface UploadModalProps {
   currentFolderId: string | null
   defaultCourseId?: string
   onClose: () => void
-  onUploaded: () => void
+  onUploaded: (courseId: string) => void
 }
 
 function UploadModal({ courses, currentFolderId, defaultCourseId, onClose, onUploaded }: UploadModalProps) {
@@ -146,7 +146,7 @@ function UploadModal({ courses, currentFolderId, defaultCourseId, onClose, onUpl
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
-      onUploaded()
+      onUploaded(courseId)
     },
     onError: () => {
       setProgress(null)
@@ -290,9 +290,9 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
   const isPreviewable = isImage || isPdf
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-[95vw] h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4 shrink-0">
           <span className="font-medium text-gray-900 truncate">{fileName}</span>
           <button onClick={onClose} className="shrink-0 p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors" title="Luk">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -301,12 +301,14 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-auto flex items-center justify-center p-4 min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {isImage && (
-            <img src={url} alt={fileName} className="max-h-full max-w-full object-contain mx-auto" />
+            <div className="flex-1 overflow-auto flex items-center justify-center p-4 min-h-0">
+              <img src={url} alt={fileName} className="max-h-full max-w-full object-contain mx-auto" />
+            </div>
           )}
           {isPdf && (
-            <iframe src={url} title={fileName} className="w-full flex-1 min-h-[60vh]" />
+            <iframe src={url} title={fileName} className="flex-1 w-full border-0" />
           )}
           {!isPreviewable && (
             <div className="text-center space-y-2">
@@ -775,7 +777,7 @@ export default function FilesPage() {
           currentFolderId={currentFolderId}
           defaultCourseId={filterCourseId || undefined}
           onClose={() => setShowUpload(false)}
-          onUploaded={() => setShowUpload(false)}
+          onUploaded={(courseId) => { setShowUpload(false); setFilterCourseId(courseId) }}
         />
       )}
 

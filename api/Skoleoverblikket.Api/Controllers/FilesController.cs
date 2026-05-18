@@ -92,6 +92,8 @@ public sealed class FilesController(
 		Guid Id,
 		string Name,
 		Guid? ParentId,
+		Guid? CourseId,
+		string? CourseName,
 		DateTimeOffset CreatedAt);
 
 	[HttpGet]
@@ -134,11 +136,20 @@ public sealed class FilesController(
 				f.UploadedAt))
 			.ToListAsync(ct);
 
-		var folders = await db.SchoolFileFolders
+		var folderQuery = db.SchoolFileFolders
 			.AsNoTracking()
+			.Include(f => f.Course)
 			.Where(f => f.ParentId == folderId)
+			.AsQueryable();
+
+		if (courseId.HasValue)
+		{
+			folderQuery = folderQuery.Where(f => f.CourseId == courseId.Value);
+		}
+
+		var folders = await folderQuery
 			.OrderBy(f => f.Name)
-			.Select(f => new FolderDto(f.Id, f.Name, f.ParentId, f.CreatedAt))
+			.Select(f => new FolderDto(f.Id, f.Name, f.ParentId, f.CourseId, f.Course != null ? f.Course.Name : null, f.CreatedAt))
 			.ToListAsync(ct);
 
 		return Ok(new FilesResponseDto(files, folders));
@@ -331,7 +342,8 @@ public sealed class FilesController(
 
 	public record CreateFolderRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
-		Guid? ParentId);
+		Guid? ParentId,
+		Guid? CourseId);
 
 	[HttpPost("folders")]
 	public async Task<ActionResult<FolderDto>> CreateFolder(
@@ -350,19 +362,41 @@ public sealed class FilesController(
 			}
 		}
 
+		if (req.CourseId.HasValue)
+		{
+			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.CourseId.Value, ct);
+			if (!courseExists)
+			{
+				return ValidationProblem(new ValidationProblemDetails
+				{
+					Errors = { ["courseId"] = ["Faget findes ikke."] }
+				});
+			}
+		}
+
 		var folder = new SchoolFileFolder
 		{
 			Id = Guid.NewGuid(),
 			TenantId = tenant.TenantId,
 			Name = req.Name.Trim(),
 			ParentId = req.ParentId,
+			CourseId = req.CourseId,
 		};
 
 		db.SchoolFileFolders.Add(folder);
 		await db.SaveChangesAsync(ct);
 
+		string? courseName = null;
+		if (req.CourseId.HasValue)
+		{
+			courseName = await db.Courses.AsNoTracking()
+				.Where(c => c.Id == req.CourseId.Value)
+				.Select(c => c.Name)
+				.FirstOrDefaultAsync(ct);
+		}
+
 		return CreatedAtAction(nameof(GetAll),
-			new FolderDto(folder.Id, folder.Name, folder.ParentId, folder.CreatedAt));
+			new FolderDto(folder.Id, folder.Name, folder.ParentId, folder.CourseId, courseName, folder.CreatedAt));
 	}
 
 	[HttpPatch("folders/{id:guid}")]
@@ -371,7 +405,9 @@ public sealed class FilesController(
 		[FromBody] RenameFolderRequest req,
 		CancellationToken ct)
 	{
-		var folder = await db.SchoolFileFolders.FirstOrDefaultAsync(f => f.Id == id, ct);
+		var folder = await db.SchoolFileFolders
+			.Include(f => f.Course)
+			.FirstOrDefaultAsync(f => f.Id == id, ct);
 		if (folder is null)
 		{
 			return NotFound();
@@ -380,7 +416,7 @@ public sealed class FilesController(
 		folder.Name = req.Name.Trim();
 		await db.SaveChangesAsync(ct);
 
-		return Ok(new FolderDto(folder.Id, folder.Name, folder.ParentId, folder.CreatedAt));
+		return Ok(new FolderDto(folder.Id, folder.Name, folder.ParentId, folder.CourseId, folder.Course?.Name, folder.CreatedAt));
 	}
 
 	public record RenameFolderRequest([Required, StringLength(200, MinimumLength = 1)] string Name);
