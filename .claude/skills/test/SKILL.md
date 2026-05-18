@@ -10,7 +10,7 @@ Runs API integration tests and the full Playwright E2E suite.
 ## Step 1 — API integration tests
 
 ```bash
-dotnet test --configuration Release
+dotnet test --project api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --configuration Release
 ```
 
 Runs all tUnit integration tests via Testcontainers. Needs Docker running. If Docker is not running, say so explicitly rather than claiming failure is a code bug.
@@ -18,10 +18,12 @@ Runs all tUnit integration tests via Testcontainers. Needs Docker running. If Do
 ## Step 2 — Playwright E2E
 
 ```bash
-cd web && SKIP_ASPIRE=1 npx playwright test --reporter=line
+cd web && npx playwright test --reporter=line
 ```
 
-`SKIP_ASPIRE=1` assumes Aspire stack is already running. Omit it if the stack is not running.
+Playwright config starts the full Aspire stack automatically via `aspire run --non-interactive` if not already up. Pass `SKIP_ASPIRE=1` only if the stack is already running.
+
+Do NOT pre-start Aspire manually. Do NOT poll for port readiness. Just run the command — Playwright handles it.
 
 ## What to report
 
@@ -47,4 +49,3 @@ Do not comment out failing tests or lower assertion thresholds to make tests pas
 - API integration tests: `api/tests/`
 - E2E spec files: `web/tests/e2e/`
 - Playwright config: `web/playwright.config.ts`
-- npm script shorthand: `npm run test:e2e:skip-aspire` (from `web/`)

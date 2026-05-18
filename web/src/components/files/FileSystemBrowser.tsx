@@ -457,7 +457,7 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
     }
   }
 
-  function handleFolderCreated(_: FolderDto) {
+  function handleFolderCreated() {
     qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
     setShowCreateFolder(false)
   }

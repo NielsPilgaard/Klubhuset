@@ -7,7 +7,7 @@ async function loginAsAdmin(page: Page) {
   await page.goto('/login')
   // check-sso may bounce via #error=login_required back to /login before the real redirect fires.
   // Wait for Keycloak login page with a generous timeout to survive both bounces.
-  await page.waitForURL(/localhost:8080.*\/login/, { timeout: 30_000 })
+  await page.waitForURL(/localhost:8080.*\/auth/, { timeout: 30_000 })
   await page.locator('#username').fill(ADMIN_EMAIL)
   await page.locator('#password').fill(ADMIN_PASSWORD)
   await page.getByRole('button', { name: /log ind|sign in/i }).click()
