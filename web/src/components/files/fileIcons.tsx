@@ -1,4 +1,3 @@
-import React from 'react'
 
 export function FileIcon({ contentType }: { contentType: string }) {
   if (contentType.startsWith('image/')) {
