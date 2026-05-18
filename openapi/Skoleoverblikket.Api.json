@@ -3998,6 +3998,11 @@
             "type": "string",
             "format": "uuid",
             "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4209,6 +4214,15 @@
           "parentId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "courseName": {
+            "type": "string",
             "nullable": true
           },
           "createdAt": {

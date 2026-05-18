@@ -102,6 +102,7 @@ export type CreateCalendarEntryRequest = {
 export type CreateFolderRequest = {
     name?: string | null;
     parentId?: string | null;
+    courseId?: string | null;
 };
 
 export type CreateSchemaRequest = {
@@ -160,6 +161,8 @@ export type FolderDto = {
     id?: string;
     name?: string | null;
     parentId?: string | null;
+    courseId?: string | null;
+    courseName?: string | null;
     createdAt?: string;
 };
 

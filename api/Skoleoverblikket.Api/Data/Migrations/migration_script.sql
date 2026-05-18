@@ -847,3 +847,35 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260518034929_Add_CourseId_To_SchoolFileFolder') THEN
+    ALTER TABLE "SchoolFileFolders" ADD "CourseId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260518034929_Add_CourseId_To_SchoolFileFolder') THEN
+    CREATE INDEX "IX_SchoolFileFolders_CourseId" ON "SchoolFileFolders" ("CourseId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260518034929_Add_CourseId_To_SchoolFileFolder') THEN
+    ALTER TABLE "SchoolFileFolders" ADD CONSTRAINT "FK_SchoolFileFolders_Courses_CourseId" FOREIGN KEY ("CourseId") REFERENCES "Courses" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260518034929_Add_CourseId_To_SchoolFileFolder') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260518034929_Add_CourseId_To_SchoolFileFolder', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
