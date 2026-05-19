@@ -51,7 +51,7 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 			ContentType = contentType,
 		};
 
-		var uploadUrl = RewriteOrigin(s3.GetPreSignedURL(request), _options.ServiceUrl);
+		var uploadUrl = RewriteOrigin(s3.GetPreSignedURL(request), _options.PublicEndpoint);
 		var publicUrl = BuildPublicUrl(key);
 
 		return Task.FromResult((uploadUrl, publicUrl));
