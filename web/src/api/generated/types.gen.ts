@@ -201,6 +201,12 @@ export type InvitationDto = {
     createdAt?: string;
 };
 
+export type InviteParentRequest = {
+    name?: string | null;
+    email?: string | null;
+    studentIds?: Array<string> | null;
+};
+
 export type OnboardingStatusDto = {
     hasLogo?: boolean;
     staffCount?: number;
@@ -209,6 +215,16 @@ export type OnboardingStatusDto = {
     roomCount?: number;
     stepsCompleted?: number;
     stepsTotal?: number;
+};
+
+export type ParentDto = {
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    students?: Array<StudentRefDto> | null;
+    hasAccount?: boolean;
+    createdAt?: string;
 };
 
 export type PatchAdminPermissionRequest = {
@@ -287,6 +303,15 @@ export type SetDateRangeRequest = {
     endDate?: string | null;
 };
 
+export type SfoShiftDto = {
+    id?: string;
+    dayOfWeek?: number;
+    startTime?: string | null;
+    endTime?: string | null;
+    label?: string | null;
+    staff?: Array<StaffRefDto> | null;
+};
+
 export type SlotDto = {
     id?: string;
     timeSlotId?: string;
@@ -316,7 +341,27 @@ export type StaffDto = {
     keycloakSubject?: string | null;
 };
 
+export type StaffRefDto = {
+    id?: string;
+    name?: string | null;
+};
+
 export type StaffRole = 'Teacher' | 'Aide' | 'Substitute';
+
+export type StudentDto = {
+    id?: string;
+    name?: string | null;
+    classId?: string;
+    className?: string | null;
+    createdAt?: string;
+};
+
+export type StudentRefDto = {
+    id?: string;
+    name?: string | null;
+    classId?: string;
+    className?: string | null;
+};
 
 export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri';
 
@@ -406,6 +451,13 @@ export type UpsertRoomRequest = {
     description?: string | null;
 };
 
+export type UpsertSfoShiftRequest = {
+    dayOfWeek?: number;
+    startTime?: string | null;
+    endTime?: string | null;
+    label?: string | null;
+};
+
 export type UpsertSlotRequest = {
     timeSlotId?: string;
     weekday?: DayOfWeek;
@@ -421,6 +473,11 @@ export type UpsertStaffRequest = {
     phone?: string | null;
     role?: StaffRole;
     isAdmin?: boolean;
+};
+
+export type UpsertStudentRequest = {
+    name?: string | null;
+    classId?: string;
 };
 
 export type UpsertTemplateRequest = {
@@ -482,6 +539,21 @@ export type WeekPlanSlotFileDto = {
     schoolFileId?: string;
     fileName?: string | null;
     url?: string | null;
+};
+
+export type YearRollCreateEntry = {
+    name?: string | null;
+};
+
+export type YearRollRenameEntry = {
+    classId?: string;
+    newName?: string | null;
+};
+
+export type YearRollRequest = {
+    renames?: Array<YearRollRenameEntry> | null;
+    archive?: Array<string> | null;
+    create?: Array<YearRollCreateEntry> | null;
 };
 
 export type GetApiV1BillingSubscriptionData = {
@@ -750,6 +822,36 @@ export type PutApiV1ClassesByIdResponses = {
 
 export type PutApiV1ClassesByIdResponse = PutApiV1ClassesByIdResponses[keyof PutApiV1ClassesByIdResponses];
 
+export type GetApiV1ClassesArchivedData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/classes/archived';
+};
+
+export type GetApiV1ClassesArchivedResponses = {
+    /**
+     * OK
+     */
+    200: Array<ClassDto>;
+};
+
+export type GetApiV1ClassesArchivedResponse = GetApiV1ClassesArchivedResponses[keyof GetApiV1ClassesArchivedResponses];
+
+export type PostApiV1ClassesYearRollData = {
+    body?: YearRollRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/classes/year-roll';
+};
+
+export type PostApiV1ClassesYearRollResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiV1ClassesByClassIdPermissionsData = {
     body?: never;
     path: {
@@ -1003,6 +1105,154 @@ export type PatchApiV1FilesFoldersByIdResponses = {
 };
 
 export type PatchApiV1FilesFoldersByIdResponse = PatchApiV1FilesFoldersByIdResponses[keyof PatchApiV1FilesFoldersByIdResponses];
+
+export type GetApiV1ParentInvitationsPreviewData = {
+    body?: never;
+    path?: never;
+    query?: {
+        token?: string;
+    };
+    url: '/api/v1/parent-invitations/preview';
+};
+
+export type GetApiV1ParentInvitationsPreviewResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1ParentInvitationsAcceptData = {
+    body?: never;
+    path?: never;
+    query?: {
+        token?: string;
+    };
+    url: '/api/v1/parent-invitations/accept';
+};
+
+export type PostApiV1ParentInvitationsAcceptResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1ParentInvitationsByParentIdResendData = {
+    body?: never;
+    path: {
+        parentId: string;
+    };
+    query?: never;
+    url: '/api/v1/parent-invitations/{parentId}/resend';
+};
+
+export type PostApiV1ParentInvitationsByParentIdResendResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1ParentsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/parents';
+};
+
+export type GetApiV1ParentsResponses = {
+    /**
+     * OK
+     */
+    200: Array<ParentDto>;
+};
+
+export type GetApiV1ParentsResponse = GetApiV1ParentsResponses[keyof GetApiV1ParentsResponses];
+
+export type DeleteApiV1ParentsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}';
+};
+
+export type DeleteApiV1ParentsByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1ParentsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}';
+};
+
+export type GetApiV1ParentsByIdResponses = {
+    /**
+     * OK
+     */
+    200: ParentDto;
+};
+
+export type GetApiV1ParentsByIdResponse = GetApiV1ParentsByIdResponses[keyof GetApiV1ParentsByIdResponses];
+
+export type PostApiV1ParentsInviteData = {
+    body?: InviteParentRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/parents/invite';
+};
+
+export type PostApiV1ParentsInviteResponses = {
+    /**
+     * OK
+     */
+    200: ParentDto;
+};
+
+export type PostApiV1ParentsInviteResponse = PostApiV1ParentsInviteResponses[keyof PostApiV1ParentsInviteResponses];
+
+export type DeleteApiV1ParentsByIdStudentsByStudentIdData = {
+    body?: never;
+    path: {
+        id: string;
+        studentId: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}/students/{studentId}';
+};
+
+export type DeleteApiV1ParentsByIdStudentsByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1ParentsByIdStudentsByStudentIdData = {
+    body?: never;
+    path: {
+        id: string;
+        studentId: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}/students/{studentId}';
+};
+
+export type PostApiV1ParentsByIdStudentsByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ReportsHoursStaffXlsxData = {
     body?: never;
@@ -1477,6 +1727,106 @@ export type PostApiV1SchoolsLogoResponses = {
 
 export type PostApiV1SchoolsLogoResponse = PostApiV1SchoolsLogoResponses[keyof PostApiV1SchoolsLogoResponses];
 
+export type GetApiV1SfoShiftsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/sfo/shifts';
+};
+
+export type GetApiV1SfoShiftsResponses = {
+    /**
+     * OK
+     */
+    200: Array<SfoShiftDto>;
+};
+
+export type GetApiV1SfoShiftsResponse = GetApiV1SfoShiftsResponses[keyof GetApiV1SfoShiftsResponses];
+
+export type PostApiV1SfoShiftsData = {
+    body?: UpsertSfoShiftRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/sfo/shifts';
+};
+
+export type PostApiV1SfoShiftsResponses = {
+    /**
+     * OK
+     */
+    200: SfoShiftDto;
+};
+
+export type PostApiV1SfoShiftsResponse = PostApiV1SfoShiftsResponses[keyof PostApiV1SfoShiftsResponses];
+
+export type DeleteApiV1SfoShiftsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/sfo/shifts/{id}';
+};
+
+export type DeleteApiV1SfoShiftsByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutApiV1SfoShiftsByIdData = {
+    body?: UpsertSfoShiftRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/sfo/shifts/{id}';
+};
+
+export type PutApiV1SfoShiftsByIdResponses = {
+    /**
+     * OK
+     */
+    200: SfoShiftDto;
+};
+
+export type PutApiV1SfoShiftsByIdResponse = PutApiV1SfoShiftsByIdResponses[keyof PutApiV1SfoShiftsByIdResponses];
+
+export type DeleteApiV1SfoShiftsByIdStaffByStaffIdData = {
+    body?: never;
+    path: {
+        id: string;
+        staffId: string;
+    };
+    query?: never;
+    url: '/api/v1/sfo/shifts/{id}/staff/{staffId}';
+};
+
+export type DeleteApiV1SfoShiftsByIdStaffByStaffIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1SfoShiftsByIdStaffByStaffIdData = {
+    body?: never;
+    path: {
+        id: string;
+        staffId: string;
+    };
+    query?: never;
+    url: '/api/v1/sfo/shifts/{id}/staff/{staffId}';
+};
+
+export type PostApiV1SfoShiftsByIdStaffByStaffIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiV1StaffData = {
     body?: never;
     path?: never;
@@ -1706,6 +2056,74 @@ export type PostApiV1StripeWebhookResponses = {
      */
     200: unknown;
 };
+
+export type GetApiV1StudentsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        classId?: string;
+    };
+    url: '/api/v1/students';
+};
+
+export type GetApiV1StudentsResponses = {
+    /**
+     * OK
+     */
+    200: Array<StudentDto>;
+};
+
+export type GetApiV1StudentsResponse = GetApiV1StudentsResponses[keyof GetApiV1StudentsResponses];
+
+export type PostApiV1StudentsData = {
+    body?: UpsertStudentRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/students';
+};
+
+export type PostApiV1StudentsResponses = {
+    /**
+     * OK
+     */
+    200: StudentDto;
+};
+
+export type PostApiV1StudentsResponse = PostApiV1StudentsResponses[keyof PostApiV1StudentsResponses];
+
+export type DeleteApiV1StudentsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/students/{id}';
+};
+
+export type DeleteApiV1StudentsByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutApiV1StudentsByIdData = {
+    body?: UpsertStudentRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/students/{id}';
+};
+
+export type PutApiV1StudentsByIdResponses = {
+    /**
+     * OK
+     */
+    200: StudentDto;
+};
+
+export type PutApiV1StudentsByIdResponse = PutApiV1StudentsByIdResponses[keyof PutApiV1StudentsByIdResponses];
 
 export type PostApiV1TenantsData = {
     body?: CreateTenantRequest;

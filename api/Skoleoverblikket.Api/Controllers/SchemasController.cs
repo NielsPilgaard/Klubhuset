@@ -55,8 +55,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		Guid? AideId);
 
 	[HttpGet]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
 	public async Task<ActionResult<List<SchemaDto>>> GetAll(Guid classId, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schemas = await db.Schemas
 							  .AsNoTracking()
 							  .Where(s => s.ClassId == classId)

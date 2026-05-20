@@ -84,7 +84,10 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 									 .IgnoreQueryFilters()
 									 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, token);
 
-				if (school is null) return null;
+				if (school is null)
+				{
+					return null;
+				}
 
 				var staffCount = await db.Staff.CountAsync(token);
 				var classCount = await db.Classes.CountAsync(token);

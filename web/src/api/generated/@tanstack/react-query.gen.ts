@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteApiV1CalendarById, deleteApiV1CalendarByIdFromByDate, deleteApiV1CalendarByIdOccurrencesByDate, deleteApiV1ClassesByClassIdPermissionsByStaffId, deleteApiV1ClassesByClassIdSchemasBySchemaId, deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekday, deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileId, deleteApiV1ClassesById, deleteApiV1CoursesById, deleteApiV1FilesById, deleteApiV1FilesFoldersById, deleteApiV1RoomsById, deleteApiV1StaffById, getApiV1BillingSubscription, getApiV1Calendar, getApiV1CalendarDefaults, getApiV1CalendarExportIcs, getApiV1Classes, getApiV1ClassesByClassIdPermissions, getApiV1ClassesByClassIdSchedule, getApiV1ClassesByClassIdSchemas, getApiV1ClassesByClassIdSchemasBySchemaId, getApiV1ClassesByClassIdSchemasBySchemaIdConflicts, getApiV1ClassesByClassIdSchemasBySchemaIdSlots, getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlots, getApiV1ClassesByClassIdTimeSlots, getApiV1ClassesByClassIdUgeplan, getApiV1ClassesById, getApiV1Courses, getApiV1CoursesById, getApiV1Files, getApiV1ReportsHoursCoursesXlsx, getApiV1ReportsHoursStaffXlsx, getApiV1ReportsSchemaXlsx, getApiV1Rooms, getApiV1RoomsById, getApiV1RoomsByRoomIdSchedule, getApiV1SchoolsOnboardingStatus, getApiV1SchoolsSettings, getApiV1Staff, getApiV1StaffById, getApiV1StaffByStaffIdSchedule, getApiV1StaffInvitations, getApiV1StaffInvitationsByStaffByStaffId, getApiV1StaffInvitationsPreview, getApiV1StaffMe, getApiV1StatsDashboard, getApiV1TimeSlots, getApiV1TimeSlotTemplate, type Options, patchApiV1FilesFoldersById, patchApiV1StaffByIdAdminPermission, postApiV1BillingCheckout, postApiV1BillingPortal, postApiV1Calendar, postApiV1Classes, postApiV1ClassesByClassIdPermissions, postApiV1ClassesByClassIdSchemas, postApiV1ClassesByClassIdSchemasBySchemaIdCopy, postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassId, postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFiles, postApiV1Courses, postApiV1FilesConfirm, postApiV1FilesFolders, postApiV1FilesPresign, postApiV1Rooms, postApiV1SchoolsLogo, postApiV1Staff, postApiV1StaffInvitationsAccept, postApiV1StaffInvitationsInviteByStaffId, postApiV1StripeWebhook, postApiV1Tenants, postApiV1TimeSlotTemplateRestore, putApiV1CalendarById, putApiV1ClassesByClassIdSchemasBySchemaIdDaterange, putApiV1ClassesByClassIdSchemasBySchemaIdRename, putApiV1ClassesByClassIdSchemasBySchemaIdSlots, putApiV1ClassesByClassIdSchemasBySchemaIdTimeSlots, putApiV1ClassesByClassIdTimeSlots, putApiV1ClassesByClassIdUgeplanSlots, putApiV1ClassesById, putApiV1CoursesById, putApiV1RoomsById, putApiV1SchoolsSettings, putApiV1StaffById, putApiV1TimeSlotTemplate } from '../sdk.gen';
-import type { DeleteApiV1CalendarByIdData, DeleteApiV1CalendarByIdFromByDateData, DeleteApiV1CalendarByIdOccurrencesByDateData, DeleteApiV1ClassesByClassIdPermissionsByStaffIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponse, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdData, DeleteApiV1ClassesByIdData, DeleteApiV1CoursesByIdData, DeleteApiV1FilesByIdData, DeleteApiV1FilesFoldersByIdData, DeleteApiV1RoomsByIdData, DeleteApiV1StaffByIdData, GetApiV1BillingSubscriptionData, GetApiV1BillingSubscriptionResponse, GetApiV1CalendarData, GetApiV1CalendarDefaultsData, GetApiV1CalendarDefaultsResponse, GetApiV1CalendarExportIcsData, GetApiV1CalendarResponse, GetApiV1ClassesByClassIdPermissionsData, GetApiV1ClassesByClassIdPermissionsResponse, GetApiV1ClassesByClassIdScheduleData, GetApiV1ClassesByClassIdScheduleResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsData, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdData, GetApiV1ClassesByClassIdSchemasBySchemaIdResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponse, GetApiV1ClassesByClassIdSchemasData, GetApiV1ClassesByClassIdSchemasResponse, GetApiV1ClassesByClassIdTimeSlotsData, GetApiV1ClassesByClassIdTimeSlotsResponse, GetApiV1ClassesByClassIdUgeplanData, GetApiV1ClassesByClassIdUgeplanResponse, GetApiV1ClassesByIdData, GetApiV1ClassesByIdResponse, GetApiV1ClassesData, GetApiV1ClassesResponse, GetApiV1CoursesByIdData, GetApiV1CoursesByIdResponse, GetApiV1CoursesData, GetApiV1CoursesResponse, GetApiV1FilesData, GetApiV1FilesResponse, GetApiV1ReportsHoursCoursesXlsxData, GetApiV1ReportsHoursStaffXlsxData, GetApiV1ReportsSchemaXlsxData, GetApiV1RoomsByIdData, GetApiV1RoomsByIdResponse, GetApiV1RoomsByRoomIdScheduleData, GetApiV1RoomsByRoomIdScheduleResponse, GetApiV1RoomsData, GetApiV1RoomsResponse, GetApiV1SchoolsOnboardingStatusData, GetApiV1SchoolsOnboardingStatusResponse, GetApiV1SchoolsSettingsData, GetApiV1SchoolsSettingsResponse, GetApiV1StaffByIdData, GetApiV1StaffByIdResponse, GetApiV1StaffByStaffIdScheduleData, GetApiV1StaffByStaffIdScheduleResponse, GetApiV1StaffData, GetApiV1StaffInvitationsByStaffByStaffIdData, GetApiV1StaffInvitationsByStaffByStaffIdResponse, GetApiV1StaffInvitationsData, GetApiV1StaffInvitationsPreviewData, GetApiV1StaffInvitationsResponse, GetApiV1StaffMeData, GetApiV1StaffMeResponse, GetApiV1StaffResponse, GetApiV1StatsDashboardData, GetApiV1StatsDashboardResponse, GetApiV1TimeSlotsData, GetApiV1TimeSlotsResponse, GetApiV1TimeSlotTemplateData, GetApiV1TimeSlotTemplateResponse, PatchApiV1FilesFoldersByIdData, PatchApiV1FilesFoldersByIdResponse, PatchApiV1StaffByIdAdminPermissionData, PatchApiV1StaffByIdAdminPermissionResponse, PostApiV1BillingCheckoutData, PostApiV1BillingCheckoutResponse, PostApiV1BillingPortalData, PostApiV1BillingPortalResponse, PostApiV1CalendarData, PostApiV1CalendarResponse, PostApiV1ClassesByClassIdPermissionsData, PostApiV1ClassesByClassIdPermissionsResponse, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponse, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponse, PostApiV1ClassesByClassIdSchemasData, PostApiV1ClassesByClassIdSchemasResponse, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponse, PostApiV1ClassesData, PostApiV1ClassesResponse, PostApiV1CoursesData, PostApiV1CoursesResponse, PostApiV1FilesConfirmData, PostApiV1FilesConfirmResponse, PostApiV1FilesFoldersData, PostApiV1FilesFoldersResponse, PostApiV1FilesPresignData, PostApiV1FilesPresignResponse, PostApiV1RoomsData, PostApiV1RoomsResponse, PostApiV1SchoolsLogoData, PostApiV1SchoolsLogoResponse, PostApiV1StaffData, PostApiV1StaffInvitationsAcceptData, PostApiV1StaffInvitationsInviteByStaffIdData, PostApiV1StaffInvitationsInviteByStaffIdResponse, PostApiV1StaffResponse, PostApiV1StripeWebhookData, PostApiV1TenantsData, PostApiV1TenantsResponse, PostApiV1TimeSlotTemplateRestoreData, PutApiV1CalendarByIdData, PutApiV1CalendarByIdResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponse, PutApiV1ClassesByClassIdTimeSlotsData, PutApiV1ClassesByClassIdTimeSlotsResponse, PutApiV1ClassesByClassIdUgeplanSlotsData, PutApiV1ClassesByClassIdUgeplanSlotsResponse, PutApiV1ClassesByIdData, PutApiV1ClassesByIdResponse, PutApiV1CoursesByIdData, PutApiV1CoursesByIdResponse, PutApiV1RoomsByIdData, PutApiV1RoomsByIdResponse, PutApiV1SchoolsSettingsData, PutApiV1SchoolsSettingsResponse, PutApiV1StaffByIdData, PutApiV1StaffByIdResponse, PutApiV1TimeSlotTemplateData, PutApiV1TimeSlotTemplateResponse } from '../types.gen';
+import { deleteApiV1CalendarById, deleteApiV1CalendarByIdFromByDate, deleteApiV1CalendarByIdOccurrencesByDate, deleteApiV1ClassesByClassIdPermissionsByStaffId, deleteApiV1ClassesByClassIdSchemasBySchemaId, deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekday, deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileId, deleteApiV1ClassesById, deleteApiV1CoursesById, deleteApiV1FilesById, deleteApiV1FilesFoldersById, deleteApiV1ParentsById, deleteApiV1ParentsByIdStudentsByStudentId, deleteApiV1RoomsById, deleteApiV1SfoShiftsById, deleteApiV1SfoShiftsByIdStaffByStaffId, deleteApiV1StaffById, deleteApiV1StudentsById, getApiV1BillingSubscription, getApiV1Calendar, getApiV1CalendarDefaults, getApiV1CalendarExportIcs, getApiV1Classes, getApiV1ClassesArchived, getApiV1ClassesByClassIdPermissions, getApiV1ClassesByClassIdSchedule, getApiV1ClassesByClassIdSchemas, getApiV1ClassesByClassIdSchemasBySchemaId, getApiV1ClassesByClassIdSchemasBySchemaIdConflicts, getApiV1ClassesByClassIdSchemasBySchemaIdSlots, getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlots, getApiV1ClassesByClassIdTimeSlots, getApiV1ClassesByClassIdUgeplan, getApiV1ClassesById, getApiV1Courses, getApiV1CoursesById, getApiV1Files, getApiV1ParentInvitationsPreview, getApiV1Parents, getApiV1ParentsById, getApiV1ReportsHoursCoursesXlsx, getApiV1ReportsHoursStaffXlsx, getApiV1ReportsSchemaXlsx, getApiV1Rooms, getApiV1RoomsById, getApiV1RoomsByRoomIdSchedule, getApiV1SchoolsOnboardingStatus, getApiV1SchoolsSettings, getApiV1SfoShifts, getApiV1Staff, getApiV1StaffById, getApiV1StaffByStaffIdSchedule, getApiV1StaffInvitations, getApiV1StaffInvitationsByStaffByStaffId, getApiV1StaffInvitationsPreview, getApiV1StaffMe, getApiV1StatsDashboard, getApiV1Students, getApiV1TimeSlots, getApiV1TimeSlotTemplate, type Options, patchApiV1FilesFoldersById, patchApiV1StaffByIdAdminPermission, postApiV1BillingCheckout, postApiV1BillingPortal, postApiV1Calendar, postApiV1Classes, postApiV1ClassesByClassIdPermissions, postApiV1ClassesByClassIdSchemas, postApiV1ClassesByClassIdSchemasBySchemaIdCopy, postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassId, postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFiles, postApiV1ClassesYearRoll, postApiV1Courses, postApiV1FilesConfirm, postApiV1FilesFolders, postApiV1FilesPresign, postApiV1ParentInvitationsAccept, postApiV1ParentInvitationsByParentIdResend, postApiV1ParentsByIdStudentsByStudentId, postApiV1ParentsInvite, postApiV1Rooms, postApiV1SchoolsLogo, postApiV1SfoShifts, postApiV1SfoShiftsByIdStaffByStaffId, postApiV1Staff, postApiV1StaffInvitationsAccept, postApiV1StaffInvitationsInviteByStaffId, postApiV1StripeWebhook, postApiV1Students, postApiV1Tenants, postApiV1TimeSlotTemplateRestore, putApiV1CalendarById, putApiV1ClassesByClassIdSchemasBySchemaIdDaterange, putApiV1ClassesByClassIdSchemasBySchemaIdRename, putApiV1ClassesByClassIdSchemasBySchemaIdSlots, putApiV1ClassesByClassIdSchemasBySchemaIdTimeSlots, putApiV1ClassesByClassIdTimeSlots, putApiV1ClassesByClassIdUgeplanSlots, putApiV1ClassesById, putApiV1CoursesById, putApiV1RoomsById, putApiV1SchoolsSettings, putApiV1SfoShiftsById, putApiV1StaffById, putApiV1StudentsById, putApiV1TimeSlotTemplate } from '../sdk.gen';
+import type { DeleteApiV1CalendarByIdData, DeleteApiV1CalendarByIdFromByDateData, DeleteApiV1CalendarByIdOccurrencesByDateData, DeleteApiV1ClassesByClassIdPermissionsByStaffIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponse, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdData, DeleteApiV1ClassesByIdData, DeleteApiV1CoursesByIdData, DeleteApiV1FilesByIdData, DeleteApiV1FilesFoldersByIdData, DeleteApiV1ParentsByIdData, DeleteApiV1ParentsByIdStudentsByStudentIdData, DeleteApiV1RoomsByIdData, DeleteApiV1SfoShiftsByIdData, DeleteApiV1SfoShiftsByIdStaffByStaffIdData, DeleteApiV1StaffByIdData, DeleteApiV1StudentsByIdData, GetApiV1BillingSubscriptionData, GetApiV1BillingSubscriptionResponse, GetApiV1CalendarData, GetApiV1CalendarDefaultsData, GetApiV1CalendarDefaultsResponse, GetApiV1CalendarExportIcsData, GetApiV1CalendarResponse, GetApiV1ClassesArchivedData, GetApiV1ClassesArchivedResponse, GetApiV1ClassesByClassIdPermissionsData, GetApiV1ClassesByClassIdPermissionsResponse, GetApiV1ClassesByClassIdScheduleData, GetApiV1ClassesByClassIdScheduleResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsData, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdData, GetApiV1ClassesByClassIdSchemasBySchemaIdResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponse, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponse, GetApiV1ClassesByClassIdSchemasData, GetApiV1ClassesByClassIdSchemasResponse, GetApiV1ClassesByClassIdTimeSlotsData, GetApiV1ClassesByClassIdTimeSlotsResponse, GetApiV1ClassesByClassIdUgeplanData, GetApiV1ClassesByClassIdUgeplanResponse, GetApiV1ClassesByIdData, GetApiV1ClassesByIdResponse, GetApiV1ClassesData, GetApiV1ClassesResponse, GetApiV1CoursesByIdData, GetApiV1CoursesByIdResponse, GetApiV1CoursesData, GetApiV1CoursesResponse, GetApiV1FilesData, GetApiV1FilesResponse, GetApiV1ParentInvitationsPreviewData, GetApiV1ParentsByIdData, GetApiV1ParentsByIdResponse, GetApiV1ParentsData, GetApiV1ParentsResponse, GetApiV1ReportsHoursCoursesXlsxData, GetApiV1ReportsHoursStaffXlsxData, GetApiV1ReportsSchemaXlsxData, GetApiV1RoomsByIdData, GetApiV1RoomsByIdResponse, GetApiV1RoomsByRoomIdScheduleData, GetApiV1RoomsByRoomIdScheduleResponse, GetApiV1RoomsData, GetApiV1RoomsResponse, GetApiV1SchoolsOnboardingStatusData, GetApiV1SchoolsOnboardingStatusResponse, GetApiV1SchoolsSettingsData, GetApiV1SchoolsSettingsResponse, GetApiV1SfoShiftsData, GetApiV1SfoShiftsResponse, GetApiV1StaffByIdData, GetApiV1StaffByIdResponse, GetApiV1StaffByStaffIdScheduleData, GetApiV1StaffByStaffIdScheduleResponse, GetApiV1StaffData, GetApiV1StaffInvitationsByStaffByStaffIdData, GetApiV1StaffInvitationsByStaffByStaffIdResponse, GetApiV1StaffInvitationsData, GetApiV1StaffInvitationsPreviewData, GetApiV1StaffInvitationsResponse, GetApiV1StaffMeData, GetApiV1StaffMeResponse, GetApiV1StaffResponse, GetApiV1StatsDashboardData, GetApiV1StatsDashboardResponse, GetApiV1StudentsData, GetApiV1StudentsResponse, GetApiV1TimeSlotsData, GetApiV1TimeSlotsResponse, GetApiV1TimeSlotTemplateData, GetApiV1TimeSlotTemplateResponse, PatchApiV1FilesFoldersByIdData, PatchApiV1FilesFoldersByIdResponse, PatchApiV1StaffByIdAdminPermissionData, PatchApiV1StaffByIdAdminPermissionResponse, PostApiV1BillingCheckoutData, PostApiV1BillingCheckoutResponse, PostApiV1BillingPortalData, PostApiV1BillingPortalResponse, PostApiV1CalendarData, PostApiV1CalendarResponse, PostApiV1ClassesByClassIdPermissionsData, PostApiV1ClassesByClassIdPermissionsResponse, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponse, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponse, PostApiV1ClassesByClassIdSchemasData, PostApiV1ClassesByClassIdSchemasResponse, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponse, PostApiV1ClassesData, PostApiV1ClassesResponse, PostApiV1ClassesYearRollData, PostApiV1CoursesData, PostApiV1CoursesResponse, PostApiV1FilesConfirmData, PostApiV1FilesConfirmResponse, PostApiV1FilesFoldersData, PostApiV1FilesFoldersResponse, PostApiV1FilesPresignData, PostApiV1FilesPresignResponse, PostApiV1ParentInvitationsAcceptData, PostApiV1ParentInvitationsByParentIdResendData, PostApiV1ParentsByIdStudentsByStudentIdData, PostApiV1ParentsInviteData, PostApiV1ParentsInviteResponse, PostApiV1RoomsData, PostApiV1RoomsResponse, PostApiV1SchoolsLogoData, PostApiV1SchoolsLogoResponse, PostApiV1SfoShiftsByIdStaffByStaffIdData, PostApiV1SfoShiftsData, PostApiV1SfoShiftsResponse, PostApiV1StaffData, PostApiV1StaffInvitationsAcceptData, PostApiV1StaffInvitationsInviteByStaffIdData, PostApiV1StaffInvitationsInviteByStaffIdResponse, PostApiV1StaffResponse, PostApiV1StripeWebhookData, PostApiV1StudentsData, PostApiV1StudentsResponse, PostApiV1TenantsData, PostApiV1TenantsResponse, PostApiV1TimeSlotTemplateRestoreData, PutApiV1CalendarByIdData, PutApiV1CalendarByIdResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponse, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponse, PutApiV1ClassesByClassIdTimeSlotsData, PutApiV1ClassesByClassIdTimeSlotsResponse, PutApiV1ClassesByClassIdUgeplanSlotsData, PutApiV1ClassesByClassIdUgeplanSlotsResponse, PutApiV1ClassesByIdData, PutApiV1ClassesByIdResponse, PutApiV1CoursesByIdData, PutApiV1CoursesByIdResponse, PutApiV1RoomsByIdData, PutApiV1RoomsByIdResponse, PutApiV1SchoolsSettingsData, PutApiV1SchoolsSettingsResponse, PutApiV1SfoShiftsByIdData, PutApiV1SfoShiftsByIdResponse, PutApiV1StaffByIdData, PutApiV1StaffByIdResponse, PutApiV1StudentsByIdData, PutApiV1StudentsByIdResponse, PutApiV1TimeSlotTemplateData, PutApiV1TimeSlotTemplateResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -269,6 +269,35 @@ export const putApiV1ClassesByIdMutation = (options?: Partial<Options<PutApiV1Cl
     return mutationOptions;
 };
 
+export const getApiV1ClassesArchivedQueryKey = (options?: Options<GetApiV1ClassesArchivedData>) => createQueryKey('getApiV1ClassesArchived', options);
+
+export const getApiV1ClassesArchivedOptions = (options?: Options<GetApiV1ClassesArchivedData>) => queryOptions<GetApiV1ClassesArchivedResponse, DefaultError, GetApiV1ClassesArchivedResponse, ReturnType<typeof getApiV1ClassesArchivedQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiV1ClassesArchived({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiV1ClassesArchivedQueryKey(options)
+});
+
+export const postApiV1ClassesYearRollMutation = (options?: Partial<Options<PostApiV1ClassesYearRollData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiV1ClassesYearRollData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiV1ClassesYearRollData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1ClassesYearRoll({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const getApiV1ClassesByClassIdPermissionsQueryKey = (options: Options<GetApiV1ClassesByClassIdPermissionsData>) => createQueryKey('getApiV1ClassesByClassIdPermissions', options);
 
 export const getApiV1ClassesByClassIdPermissionsOptions = (options: Options<GetApiV1ClassesByClassIdPermissionsData>) => queryOptions<GetApiV1ClassesByClassIdPermissionsResponse, DefaultError, GetApiV1ClassesByClassIdPermissionsResponse, ReturnType<typeof getApiV1ClassesByClassIdPermissionsQueryKey>>({
@@ -473,6 +502,135 @@ export const patchApiV1FilesFoldersByIdMutation = (options?: Partial<Options<Pat
     const mutationOptions: UseMutationOptions<PatchApiV1FilesFoldersByIdResponse, DefaultError, Options<PatchApiV1FilesFoldersByIdData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await patchApiV1FilesFoldersById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiV1ParentInvitationsPreviewQueryKey = (options?: Options<GetApiV1ParentInvitationsPreviewData>) => createQueryKey('getApiV1ParentInvitationsPreview', options);
+
+export const getApiV1ParentInvitationsPreviewOptions = (options?: Options<GetApiV1ParentInvitationsPreviewData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getApiV1ParentInvitationsPreviewQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiV1ParentInvitationsPreview({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiV1ParentInvitationsPreviewQueryKey(options)
+});
+
+export const postApiV1ParentInvitationsAcceptMutation = (options?: Partial<Options<PostApiV1ParentInvitationsAcceptData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiV1ParentInvitationsAcceptData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiV1ParentInvitationsAcceptData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1ParentInvitationsAccept({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const postApiV1ParentInvitationsByParentIdResendMutation = (options?: Partial<Options<PostApiV1ParentInvitationsByParentIdResendData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiV1ParentInvitationsByParentIdResendData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiV1ParentInvitationsByParentIdResendData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1ParentInvitationsByParentIdResend({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiV1ParentsQueryKey = (options?: Options<GetApiV1ParentsData>) => createQueryKey('getApiV1Parents', options);
+
+export const getApiV1ParentsOptions = (options?: Options<GetApiV1ParentsData>) => queryOptions<GetApiV1ParentsResponse, DefaultError, GetApiV1ParentsResponse, ReturnType<typeof getApiV1ParentsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiV1Parents({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiV1ParentsQueryKey(options)
+});
+
+export const deleteApiV1ParentsByIdMutation = (options?: Partial<Options<DeleteApiV1ParentsByIdData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1ParentsByIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1ParentsByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiV1ParentsById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiV1ParentsByIdQueryKey = (options: Options<GetApiV1ParentsByIdData>) => createQueryKey('getApiV1ParentsById', options);
+
+export const getApiV1ParentsByIdOptions = (options: Options<GetApiV1ParentsByIdData>) => queryOptions<GetApiV1ParentsByIdResponse, DefaultError, GetApiV1ParentsByIdResponse, ReturnType<typeof getApiV1ParentsByIdQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiV1ParentsById({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiV1ParentsByIdQueryKey(options)
+});
+
+export const postApiV1ParentsInviteMutation = (options?: Partial<Options<PostApiV1ParentsInviteData>>): UseMutationOptions<PostApiV1ParentsInviteResponse, DefaultError, Options<PostApiV1ParentsInviteData>> => {
+    const mutationOptions: UseMutationOptions<PostApiV1ParentsInviteResponse, DefaultError, Options<PostApiV1ParentsInviteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1ParentsInvite({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteApiV1ParentsByIdStudentsByStudentIdMutation = (options?: Partial<Options<DeleteApiV1ParentsByIdStudentsByStudentIdData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1ParentsByIdStudentsByStudentIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1ParentsByIdStudentsByStudentIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiV1ParentsByIdStudentsByStudentId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const postApiV1ParentsByIdStudentsByStudentIdMutation = (options?: Partial<Options<PostApiV1ParentsByIdStudentsByStudentIdData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiV1ParentsByIdStudentsByStudentIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiV1ParentsByIdStudentsByStudentIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1ParentsByIdStudentsByStudentId({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -875,6 +1033,91 @@ export const postApiV1SchoolsLogoMutation = (options?: Partial<Options<PostApiV1
     return mutationOptions;
 };
 
+export const getApiV1SfoShiftsQueryKey = (options?: Options<GetApiV1SfoShiftsData>) => createQueryKey('getApiV1SfoShifts', options);
+
+export const getApiV1SfoShiftsOptions = (options?: Options<GetApiV1SfoShiftsData>) => queryOptions<GetApiV1SfoShiftsResponse, DefaultError, GetApiV1SfoShiftsResponse, ReturnType<typeof getApiV1SfoShiftsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiV1SfoShifts({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiV1SfoShiftsQueryKey(options)
+});
+
+export const postApiV1SfoShiftsMutation = (options?: Partial<Options<PostApiV1SfoShiftsData>>): UseMutationOptions<PostApiV1SfoShiftsResponse, DefaultError, Options<PostApiV1SfoShiftsData>> => {
+    const mutationOptions: UseMutationOptions<PostApiV1SfoShiftsResponse, DefaultError, Options<PostApiV1SfoShiftsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1SfoShifts({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteApiV1SfoShiftsByIdMutation = (options?: Partial<Options<DeleteApiV1SfoShiftsByIdData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1SfoShiftsByIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1SfoShiftsByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiV1SfoShiftsById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const putApiV1SfoShiftsByIdMutation = (options?: Partial<Options<PutApiV1SfoShiftsByIdData>>): UseMutationOptions<PutApiV1SfoShiftsByIdResponse, DefaultError, Options<PutApiV1SfoShiftsByIdData>> => {
+    const mutationOptions: UseMutationOptions<PutApiV1SfoShiftsByIdResponse, DefaultError, Options<PutApiV1SfoShiftsByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putApiV1SfoShiftsById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteApiV1SfoShiftsByIdStaffByStaffIdMutation = (options?: Partial<Options<DeleteApiV1SfoShiftsByIdStaffByStaffIdData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1SfoShiftsByIdStaffByStaffIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1SfoShiftsByIdStaffByStaffIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiV1SfoShiftsByIdStaffByStaffId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const postApiV1SfoShiftsByIdStaffByStaffIdMutation = (options?: Partial<Options<PostApiV1SfoShiftsByIdStaffByStaffIdData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiV1SfoShiftsByIdStaffByStaffIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiV1SfoShiftsByIdStaffByStaffIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1SfoShiftsByIdStaffByStaffId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const getApiV1StaffQueryKey = (options?: Options<GetApiV1StaffData>) => createQueryKey('getApiV1Staff', options);
 
 export const getApiV1StaffOptions = (options?: Options<GetApiV1StaffData>) => queryOptions<GetApiV1StaffResponse, DefaultError, GetApiV1StaffResponse, ReturnType<typeof getApiV1StaffQueryKey>>({
@@ -1068,6 +1311,63 @@ export const postApiV1StripeWebhookMutation = (options?: Partial<Options<PostApi
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiV1StripeWebhookData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await postApiV1StripeWebhook({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiV1StudentsQueryKey = (options?: Options<GetApiV1StudentsData>) => createQueryKey('getApiV1Students', options);
+
+export const getApiV1StudentsOptions = (options?: Options<GetApiV1StudentsData>) => queryOptions<GetApiV1StudentsResponse, DefaultError, GetApiV1StudentsResponse, ReturnType<typeof getApiV1StudentsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiV1Students({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiV1StudentsQueryKey(options)
+});
+
+export const postApiV1StudentsMutation = (options?: Partial<Options<PostApiV1StudentsData>>): UseMutationOptions<PostApiV1StudentsResponse, DefaultError, Options<PostApiV1StudentsData>> => {
+    const mutationOptions: UseMutationOptions<PostApiV1StudentsResponse, DefaultError, Options<PostApiV1StudentsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiV1Students({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteApiV1StudentsByIdMutation = (options?: Partial<Options<DeleteApiV1StudentsByIdData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1StudentsByIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiV1StudentsByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiV1StudentsById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const putApiV1StudentsByIdMutation = (options?: Partial<Options<PutApiV1StudentsByIdData>>): UseMutationOptions<PutApiV1StudentsByIdResponse, DefaultError, Options<PutApiV1StudentsByIdData>> => {
+    const mutationOptions: UseMutationOptions<PutApiV1StudentsByIdResponse, DefaultError, Options<PutApiV1StudentsByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putApiV1StudentsById({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

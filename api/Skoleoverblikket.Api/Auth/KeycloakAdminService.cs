@@ -16,16 +16,23 @@ public record CredentialRepresentation(
 public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTokenApi tokenApi, IOptions<KeycloakOptions> options, ILogger<KeycloakAdminService> logger)
 {
 	/// <summary>
-	/// Creates a Keycloak user, assigns the admin realm role, and returns the new user's Keycloak subject (UUID).
+	/// Creates a Keycloak user and optionally assigns a realm role.
+	/// Returns the new user's Keycloak subject (UUID).
 	/// </summary>
-	public async Task<string> CreateAdminUserAsync(
+	public async Task<string> CreateUserAsync(
 		string email,
 		string firstName,
 		string lastName,
 		string password,
-		Guid tenantId,
+		Guid? tenantId,
+		string? realmRole,
+		bool forcePasswordReset,
 		CancellationToken ct)
 	{
+		var attributes = tenantId.HasValue
+			? new Dictionary<string, IReadOnlyList<string>> { ["tenant_id"] = [tenantId.Value.ToString()] }
+			: new Dictionary<string, IReadOnlyList<string>>();
+
 		var payload = new CreateUserRequest(
 			Username: email,
 			Email: email,
@@ -33,55 +40,9 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 			LastName: lastName,
 			Enabled: true,
 			EmailVerified: true,
-			Credentials: [new CredentialRepresentation("password", password, Temporary: false)],
-			Attributes: new Dictionary<string, IReadOnlyList<string>>
-			{
-				["tenant_id"] = [tenantId.ToString()],
-			});
-
-		var createResponse = await adminApi.CreateUserAsync(payload, ct);
-
-		if (!createResponse.IsSuccessStatusCode)
-		{
-			var err = await createResponse.Content.ReadAsStringAsync(ct);
-			throw new KeycloakException($"Failed to create Keycloak user: {createResponse.StatusCode} — {err}");
-		}
-
-		var location = createResponse.Headers.Location
-					   ?? throw new KeycloakException("Keycloak did not return a Location header after user creation");
-		var keycloakUserId = location.Segments.Last().TrimEnd('/');
-
-		await AssignRealmRoleAsync(keycloakUserId, "admin", ct);
-
-		return keycloakUserId;
-	}
-
-	/// <summary>
-	/// Creates a Keycloak user for an invited staff member with a temporary password and UPDATE_PASSWORD required action.
-	/// Keycloak will force password change on first login.
-	/// Returns the new user's Keycloak subject (UUID).
-	/// </summary>
-	public async Task<string> CreateStaffUserAsync(
-		string email,
-		string firstName,
-		string lastName,
-		string temporaryPassword,
-		Guid tenantId,
-		CancellationToken ct)
-	{
-		var payload = new CreateUserRequest(
-			Username: email,
-			Email: email,
-			FirstName: firstName,
-			LastName: lastName,
-			Enabled: true,
-			EmailVerified: true,
-			Credentials: [new CredentialRepresentation("password", temporaryPassword, Temporary: true)],
-			Attributes: new Dictionary<string, IReadOnlyList<string>>
-			{
-				["tenant_id"] = [tenantId.ToString()],
-			},
-			RequiredActions: ["UPDATE_PASSWORD"]);
+			Credentials: [new CredentialRepresentation("password", password, Temporary: forcePasswordReset)],
+			Attributes: attributes,
+			RequiredActions: forcePasswordReset ? ["UPDATE_PASSWORD"] : null);
 
 		var createResponse = await adminApi.CreateUserAsync(payload, ct);
 
@@ -95,14 +56,40 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 		if (!createResponse.IsSuccessStatusCode)
 		{
 			var err = await createResponse.Content.ReadAsStringAsync(ct);
-			throw new KeycloakException($"Failed to create Keycloak staff user: {createResponse.StatusCode} — {err}");
+			throw new KeycloakException($"Failed to create Keycloak user: {createResponse.StatusCode} — {err}");
 		}
 
 		var location = createResponse.Headers.Location
 					   ?? throw new KeycloakException("Keycloak did not return a Location header after user creation");
+		var keycloakUserId = location.Segments.Last().TrimEnd('/');
 
-		return location.Segments.Last().TrimEnd('/');
+		if (!string.IsNullOrEmpty(realmRole))
+		{
+			await AssignRealmRoleAsync(keycloakUserId, realmRole, ct);
+		}
+
+		return keycloakUserId;
 	}
+
+	/// <summary>Creates a Keycloak admin user with a permanent password and admin realm role.</summary>
+	public Task<string> CreateAdminUserAsync(
+		string email,
+		string firstName,
+		string lastName,
+		string password,
+		Guid tenantId,
+		CancellationToken ct) =>
+		CreateUserAsync(email, firstName, lastName, password, tenantId, realmRole: "admin", forcePasswordReset: false, ct);
+
+	/// <summary>Creates a Keycloak staff user with a temporary password and UPDATE_PASSWORD required action.</summary>
+	public Task<string> CreateStaffUserAsync(
+		string email,
+		string firstName,
+		string lastName,
+		string temporaryPassword,
+		Guid tenantId,
+		CancellationToken ct) =>
+		CreateUserAsync(email, firstName, lastName, temporaryPassword, tenantId, realmRole: null, forcePasswordReset: true, ct);
 
 	/// <summary>
 	/// Exchanges user credentials for a token via the password grant on the web client.
