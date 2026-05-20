@@ -44,26 +44,34 @@ public sealed class ParentInvitationService(
 		string? temporaryPassword = null;
 		if (string.IsNullOrWhiteSpace(parent.KeycloakSubject))
 		{
-			try
+			if (string.IsNullOrWhiteSpace(parent.Name))
 			{
-				temporaryPassword = GenerateTemporaryPassword();
-				var nameParts = parent.Name.Split(' ', 2);
-				var keycloakSubject = await keycloakAdmin.CreateUserAsync(
-					parent.Email,
-					nameParts[0],
-					nameParts.Length > 1 ? nameParts[1] : string.Empty,
-					temporaryPassword,
-					tenant.TenantId,
-					realmRole: Roles.Parent,
-					forcePasswordReset: true,
-					ct);
-				parent.KeycloakSubject = keycloakSubject;
-				await db.SaveChangesAsync(ct);
+				logger.LogWarning("Skipping Keycloak account creation for invited parent {Email}: name is empty", parent.Email);
 			}
-			catch (KeycloakException ex)
+			else
 			{
-				logger.LogWarning(ex, "Could not pre-create Keycloak account for invited parent {Email}", parent.Email);
-				temporaryPassword = null;
+				try
+				{
+					temporaryPassword = GenerateTemporaryPassword();
+					var trimmedName = parent.Name.Trim();
+					var nameParts = trimmedName.Split(' ', 2);
+					var keycloakSubject = await keycloakAdmin.CreateUserAsync(
+						parent.Email,
+						nameParts[0],
+						nameParts.Length > 1 ? nameParts[1] : string.Empty,
+						temporaryPassword,
+						tenant.TenantId,
+						realmRole: Roles.Parent,
+						forcePasswordReset: true,
+						ct);
+					parent.KeycloakSubject = keycloakSubject;
+					await db.SaveChangesAsync(ct);
+				}
+				catch (KeycloakException ex)
+				{
+					logger.LogWarning(ex, "Could not pre-create Keycloak account for invited parent {Email}", parent.Email);
+					temporaryPassword = null;
+				}
 			}
 		}
 

@@ -227,7 +227,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {[...(data!.unassignedClasses ?? [])].sort((a, b) =>
+                  {[...(data?.unassignedClasses ?? [])].sort((a, b) =>
                     new Intl.Collator('da', { numeric: true, sensitivity: 'base' }).compare(a.className ?? '', b.className ?? '')
                   ).map((c) => (
                     <tr key={c.classId} className="hover:bg-gray-50 transition-colors">

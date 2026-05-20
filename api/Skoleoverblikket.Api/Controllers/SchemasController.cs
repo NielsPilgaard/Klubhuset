@@ -75,8 +75,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpGet("{schemaId:guid}")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
 	public async Task<ActionResult<SchemaDetailDto>> GetById(Guid classId, Guid schemaId, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 		if (schema is null)
 		{
@@ -372,8 +379,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpGet("{schemaId:guid}/slots")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
 	public async Task<ActionResult<List<SlotDto>>> GetSlots(Guid classId, Guid schemaId, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 
 		return schemaExists
@@ -479,8 +493,15 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpGet("{schemaId:guid}/conflicts")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
 	public async Task<ActionResult<List<ConflictInfo>>> GetConflicts(Guid classId, Guid schemaId, CancellationToken ct)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
 
 		return schemaExists

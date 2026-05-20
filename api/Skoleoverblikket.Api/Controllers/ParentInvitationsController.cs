@@ -56,7 +56,7 @@ public sealed class ParentInvitationsController(
 		var invitation = await invitationService.FindValidAsync(token, ct);
 		if (invitation is null)
 		{
-			return Problem(title: "Ugyldig eller udløbet invitation", statusCode: 400);
+			return Problem(title: "Ugyldig eller udløbet invitation", statusCode: 404);
 		}
 
 		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, ct);

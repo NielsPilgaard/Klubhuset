@@ -20,7 +20,7 @@ interface StudentModalProps {
 function StudentModal({ initial, classes, onClose }: StudentModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState(initial?.name ?? '')
-  const [classId, setClassId] = useState(initial?.classId ?? (classes[0]?.id ?? ''))
+  const [classId, setClassId] = useState(initial?.classId ?? classes[0]?.id ?? '')
 
   const createMutation = useMutation({
     ...postApiV1StudentsMutation(),
@@ -219,7 +219,7 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {showCreate && classes && (
+      {showCreate && classes && classes.length > 0 && (
         <StudentModal classes={classes} onClose={() => setShowCreate(false)} />
       )}
       {editingStudent && classes && (

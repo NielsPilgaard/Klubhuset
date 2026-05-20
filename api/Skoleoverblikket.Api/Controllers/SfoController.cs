@@ -36,6 +36,18 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		return Ok(shifts.Select(ToDto).ToList());
 	}
 
+	[HttpGet("{id:guid}")]
+	public async Task<ActionResult<SfoShiftDto>> GetById(Guid id, CancellationToken ct)
+	{
+		var shift = await context.SfoShifts
+			.AsNoTracking()
+			.Include(s => s.StaffAssignments)
+				.ThenInclude(sa => sa.Staff)
+			.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+		return shift is null ? NotFound() : Ok(ToDto(shift));
+	}
+
 	[HttpPost]
 	public async Task<ActionResult<SfoShiftDto>> Create([FromBody] UpsertSfoShiftRequest req, CancellationToken ct)
 	{
@@ -64,7 +76,7 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		context.SfoShifts.Add(shift);
 		await context.SaveChangesAsync(ct);
 
-		return CreatedAtAction(nameof(GetAll), ToDto(shift));
+		return CreatedAtAction(nameof(GetById), new { id = shift.Id }, ToDto(shift));
 	}
 
 	[HttpPut("{id:guid}")]
@@ -84,6 +96,7 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 
 		var shift = await context.SfoShifts
 			.Include(s => s.StaffAssignments)
+				.ThenInclude(sa => sa.Staff)
 			.FirstOrDefaultAsync(s => s.Id == id, ct);
 
 		if (shift is null)

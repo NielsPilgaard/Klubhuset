@@ -194,7 +194,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 			var @class = classes.FirstOrDefault(c => c.Id == rename.ClassId);
 			if (@class is not null)
 			{
-				@class.Name = rename.NewName;
+				@class.Name = rename.NewName.Trim();
 			}
 		}
 
