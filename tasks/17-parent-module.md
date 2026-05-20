@@ -123,6 +123,7 @@ public async Task<string> CreateUserAsync(
 ### Extend existing read endpoints
 
 Allow `parent` role on:
+
 - `GET /api/v1/classes/{classId}/schemas` — add `[Authorize(Roles = "admin,parent")]`
 - `GET /api/v1/calendar` — add `parent` to allowed roles
 - `GET /api/v1/classes/{classId}/ugeplan` — add `parent` to allowed roles
@@ -193,5 +194,5 @@ Extend `InvitationAcceptPage.tsx`. Add contact-info consent step: address, phone
 - Student logins (future Student Module)
 - Parent directory / Kontakt feature (future — data model is ready)
 - Adressebeskyttelse (§28 CPR-loven) — future; `ShareContactInfo=false` default provides basic protection now
-- Fraværsregistrering
+- Fraværsregistrering (Netprotokollen?)
 - Multi-child switcher UI (parent with 2+ students sees all classes; no switcher needed for read-only views)
