@@ -847,10 +847,12 @@ export type PostApiV1ClassesYearRollData = {
 
 export type PostApiV1ClassesYearRollResponses = {
     /**
-     * OK
+     * No Content
      */
-    200: unknown;
+    204: void;
 };
+
+export type PostApiV1ClassesYearRollResponse = PostApiV1ClassesYearRollResponses[keyof PostApiV1ClassesYearRollResponses];
 
 export type GetApiV1ClassesByClassIdPermissionsData = {
     body?: never;

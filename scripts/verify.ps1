@@ -70,7 +70,7 @@ if (-not $SkipDotnet) {
     if (-not $SkipTests) {
         Step "API integration tests" {
             Set-Location $RepoRoot
-            dotnet test api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --configuration Release
+            dotnet test --project api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --configuration Release
         }
     }
 }

@@ -56,6 +56,10 @@
       {
         "name": "aide",
         "description": "Pædagog / aide — read-only access"
+      },
+      {
+        "name": "parent",
+        "description": "Forælder — læseadgang til barnets klasse"
       }
     ]
   },

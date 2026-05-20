@@ -37,6 +37,10 @@ const ExportsPage = lazy(() => import('./pages/ExportsPage'))
 const ClassTimeSlotsPage = lazy(() => import('./pages/ClassTimeSlotsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const WeekPlanPage = lazy(() => import('./pages/WeekPlanPage'))
+const SfoPage = lazy(() => import('./pages/SfoPage'))
+const StudentsPage = lazy(() => import('./pages/StudentsPage'))
+const ParentsPage = lazy(() => import('./pages/ParentsPage'))
+const YearRollPage = lazy(() => import('./pages/AarsrulPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +78,7 @@ export default function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
           <Route path="invitation/:token" element={<InvitationAcceptPage />} />
+          <Route path="parent-invitation/:token" element={<InvitationAcceptPage />} />
           <Route path="om" element={<OmPage />} />
           <Route path="privatlivspolitik" element={<PrivatlivspolitikPage />} />
           <Route path="kontakt" element={<KontaktPage />} />
@@ -103,6 +108,10 @@ export default function App() {
             <Route path="kalender" element={<CalendarPage />} />
             <Route path="klasser/:classId/ugeplan" element={<WeekPlanPage />} />
             <Route path="indstillinger" element={<AdminRoute><SkoleindstillingerPage /></AdminRoute>} />
+            <Route path="sfo" element={<AdminRoute><SfoPage /></AdminRoute>} />
+            <Route path="elever" element={<AdminRoute><StudentsPage /></AdminRoute>} />
+            <Route path="foraeldre" element={<AdminRoute><ParentsPage /></AdminRoute>} />
+            <Route path="aarsrul" element={<AdminRoute><YearRollPage /></AdminRoute>} />
           </Route>
         </Routes>
           </Suspense>

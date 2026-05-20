@@ -23,8 +23,8 @@ public sealed class ParentInvitationService(
 	{
 		// Expire any pending invitations for this parent
 		var existing = await db.ParentInvitations
-							   .Where(i => i.ParentId == parent.Id && i.AcceptedAt == null)
-							   .ToListAsync(ct);
+			.Where(i => i.ParentId == parent.Id && i.AcceptedAt == null)
+			.ToListAsync(ct);
 		db.ParentInvitations.RemoveRange(existing);
 
 		var token = GenerateToken();

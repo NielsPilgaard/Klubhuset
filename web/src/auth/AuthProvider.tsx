@@ -73,12 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // UI-only: used for display/UI hints only. Server enforces actual authorization.
   const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
   const isAdmin = roles.includes('admin')
+  const isParent = roles.includes('parent')
 
   return (
     <AuthContext.Provider
       value={{
         authenticated,
         isAdmin,
+        isParent,
         staffRole,
         staffId,
         token: keycloak.token,

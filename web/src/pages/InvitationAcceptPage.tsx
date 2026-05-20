@@ -3,11 +3,14 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import keycloak from '../auth/keycloak'
 import CookieBanner from '../components/CookieBanner'
 
+type InvitationType = 'staff' | 'parent'
+
 interface InvitationPreview {
-  staffName: string
+  name: string
   email: string
   schoolName: string
   expiresAt: string
+  type: InvitationType
 }
 
 type PageState = 'loading' | 'invalid' | 'ready' | 'accepting' | 'success' | 'error'
@@ -28,47 +31,68 @@ export default function InvitationAcceptPage() {
 
     const controller = new AbortController()
 
-    fetch(`/api/v1/staff-invitations/preview?token=${encodeURIComponent(token)}`, {
-      signal: controller.signal
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          const data: InvitationPreview = await res.json()
-          setPreview(data)
+    async function loadPreview() {
+      // Try staff invitation first; fall back to parent invitation.
+      let res = await fetch(`/api/v1/staff-invitations/preview?token=${encodeURIComponent(token!)}`, {
+        signal: controller.signal,
+      })
 
-          if (returningFromLogin && keycloak.authenticated && keycloak.token) {
-            // User just completed a fresh Keycloak login specifically for this invitation.
-            setState('accepting')
-            await acceptInvitation(token, keycloak.token)
-          } else if (keycloak.authenticated) {
-            // User is already logged in (e.g. admin opened the link).
-            // Log them out so the invited user can log in fresh.
-            keycloak.logout({ redirectUri: window.location.href })
-          } else {
-            setState('ready')
-          }
-        } else {
-          setState('invalid')
-        }
-      })
-      .catch((err) => {
-        if (err.name === 'AbortError') return
+      let type: InvitationType = 'staff'
+      if (res.status === 404) {
+        res = await fetch(`/api/v1/parent-invitations/preview?token=${encodeURIComponent(token!)}`, {
+          signal: controller.signal,
+        })
+        type = 'parent'
+      }
+
+      if (!res.ok) {
         setState('invalid')
-      })
+        return
+      }
+
+      const data = await res.json()
+      const normalized: InvitationPreview = {
+        name: type === 'staff' ? data.staffName : data.parentName,
+        email: data.email,
+        schoolName: data.schoolName,
+        expiresAt: data.expiresAt,
+        type,
+      }
+      setPreview(normalized)
+
+      if (returningFromLogin && keycloak.authenticated && keycloak.token) {
+        setState('accepting')
+        await acceptInvitation(token!, keycloak.token, type)
+      } else if (keycloak.authenticated) {
+        keycloak.logout({ redirectUri: window.location.href })
+      } else {
+        setState('ready')
+      }
+    }
+
+    loadPreview().catch((err) => {
+      if (err.name === 'AbortError') return
+      setState('invalid')
+    })
 
     return () => controller.abort()
   }, [token, returningFromLogin])
 
-  async function acceptInvitation(inviteToken: string, bearerToken: string) {
+  async function acceptInvitation(inviteToken: string, bearerToken: string, type: InvitationType) {
     try {
-      const res = await fetch('/api/v1/staff-invitations/accept', {
+      const url = type === 'staff'
+        ? '/api/v1/staff-invitations/accept'
+        : `/api/v1/parent-invitations/accept?token=${encodeURIComponent(inviteToken)}`
+
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${bearerToken}`,
         },
-        body: JSON.stringify({ token: inviteToken, keycloakSubject: '' }),
+        body: type === 'staff' ? JSON.stringify({ token: inviteToken, keycloakSubject: '' }) : undefined,
       })
+
       if (res.ok || res.status === 204) {
         setState('success')
       } else {
@@ -84,9 +108,10 @@ export default function InvitationAcceptPage() {
 
   function handleLogin() {
     if (!token) return
+    const basePath = preview?.type === 'parent' ? 'parent-invitation' : 'invitation'
     keycloak.login({
       loginHint: preview?.email,
-      redirectUri: window.location.origin + `/invitation/${token}?accept=1`,
+      redirectUri: window.location.origin + `/${basePath}/${token}?accept=1`,
       prompt: 'login',
     })
   }
@@ -121,9 +146,12 @@ export default function InvitationAcceptPage() {
   }
 
   if (state === 'success') {
-    const roles: string[] = (keycloak.tokenParsed as Record<string, unknown> | undefined)?.['realm_access']
-      ? ((keycloak.tokenParsed as Record<string, unknown>)['realm_access'] as Record<string, string[]>)['roles'] ?? []
-      : []
+    const parsed = keycloak.tokenParsed as Record<string, unknown> | undefined
+    const realmAccess = parsed?.['realm_access']
+    const rawRoles = (realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess))
+      ? (realmAccess as Record<string, unknown>)['roles']
+      : undefined
+    const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
     const destination = roles.includes('admin') ? '/dashboard' : '/mig/skema'
 
     return (
@@ -182,7 +210,7 @@ export default function InvitationAcceptPage() {
           <div className="bg-brand-50 rounded-xl p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500 w-20 shrink-0">Navn</span>
-              <span className="font-medium text-gray-900">{preview?.staffName}</span>
+              <span className="font-medium text-gray-900">{preview?.name}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500 w-20 shrink-0">E-mail</span>
