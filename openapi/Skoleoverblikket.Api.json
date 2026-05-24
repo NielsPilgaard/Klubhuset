@@ -5,6 +5,79 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/admin/tenants/{schoolId}/modules": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleOverrideRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleOverrideRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tenants/{schoolId}/modules/{module}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "module",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SubscriptionModule"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/billing/subscription": {
       "get": {
         "tags": [
@@ -30,6 +103,59 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/modules": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/billing/modules/{module}": {
+      "delete": {
+        "tags": [
+          "Billing"
+        ],
+        "parameters": [
+          {
+            "name": "module",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SubscriptionModule"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -655,8 +781,8 @@
           }
         },
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1356,6 +1482,35 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/parents/me": {
+      "get": {
+        "tags": [
+          "ParentMe"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentMeDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentMeDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentMeDto"
+                }
+              }
+            }
           }
         }
       }
@@ -2907,6 +3062,44 @@
       }
     },
     "/api/v1/sfo/shifts/{id}": {
+      "get": {
+        "tags": [
+          "Sfo"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoShiftDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoShiftDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoShiftDto"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "tags": [
           "Sfo"
@@ -3728,6 +3921,44 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/modules": {
+      "get": {
+        "tags": [
+          "SubscriptionModules"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -5106,6 +5337,24 @@
         },
         "additionalProperties": false
       },
+      "ModuleOverrideRequest": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "$ref": "#/components/schemas/SubscriptionModule"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ModuleRequest": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "$ref": "#/components/schemas/SubscriptionModule"
+          }
+        },
+        "additionalProperties": false
+      },
       "OnboardingStatusDto": {
         "type": "object",
         "properties": {
@@ -5135,6 +5384,20 @@
           "stepsTotal": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentClassDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -5171,6 +5434,27 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentMeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "classes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParentClassDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -5681,9 +5965,23 @@
           "trialDaysLeft": {
             "type": "integer",
             "format": "int32"
+          },
+          "activeModules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
+      },
+      "SubscriptionModule": {
+        "enum": [
+          "ParentModule",
+          "BoardModule"
+        ],
+        "type": "string"
       },
       "SubscriptionStatus": {
         "enum": [
@@ -6315,6 +6613,9 @@
   ],
   "tags": [
     {
+      "name": "Admin"
+    },
+    {
       "name": "Billing"
     },
     {
@@ -6334,6 +6635,9 @@
     },
     {
       "name": "ParentInvitations"
+    },
+    {
+      "name": "ParentMe"
     },
     {
       "name": "Parents"
@@ -6370,6 +6674,9 @@
     },
     {
       "name": "Students"
+    },
+    {
+      "name": "SubscriptionModules"
     },
     {
       "name": "Tenants"

@@ -207,6 +207,14 @@ export type InviteParentRequest = {
     studentIds?: Array<string> | null;
 };
 
+export type ModuleOverrideRequest = {
+    module?: SubscriptionModule;
+};
+
+export type ModuleRequest = {
+    module?: SubscriptionModule;
+};
+
 export type OnboardingStatusDto = {
     hasLogo?: boolean;
     staffCount?: number;
@@ -217,6 +225,11 @@ export type OnboardingStatusDto = {
     stepsTotal?: number;
 };
 
+export type ParentClassDto = {
+    classId?: string;
+    className?: string | null;
+};
+
 export type ParentDto = {
     id?: string;
     name?: string | null;
@@ -225,6 +238,12 @@ export type ParentDto = {
     students?: Array<StudentRefDto> | null;
     hasAccount?: boolean;
     createdAt?: string;
+};
+
+export type ParentMeDto = {
+    id?: string;
+    name?: string | null;
+    classes?: Array<ParentClassDto> | null;
 };
 
 export type PatchAdminPermissionRequest = {
@@ -373,7 +392,10 @@ export type SubscriptionDto = {
     isActive?: boolean;
     hasAccess?: boolean;
     trialDaysLeft?: number;
+    activeModules?: Array<string> | null;
 };
+
+export type SubscriptionModule = 'ParentModule' | 'BoardModule';
 
 export type SubscriptionStatus = 'Trialing' | 'Active' | 'PastDue' | 'Canceled' | 'Unpaid';
 
@@ -556,6 +578,39 @@ export type YearRollRequest = {
     create?: Array<YearRollCreateEntry> | null;
 };
 
+export type PostApiV1AdminTenantsBySchoolIdModulesData = {
+    body?: ModuleOverrideRequest;
+    path: {
+        schoolId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/tenants/{schoolId}/modules';
+};
+
+export type PostApiV1AdminTenantsBySchoolIdModulesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiV1AdminTenantsBySchoolIdModulesByModuleData = {
+    body?: never;
+    path: {
+        schoolId: string;
+        module: SubscriptionModule;
+    };
+    query?: never;
+    url: '/api/v1/admin/tenants/{schoolId}/modules/{module}';
+};
+
+export type DeleteApiV1AdminTenantsBySchoolIdModulesByModuleResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiV1BillingSubscriptionData = {
     body?: never;
     path?: never;
@@ -571,6 +626,36 @@ export type GetApiV1BillingSubscriptionResponses = {
 };
 
 export type GetApiV1BillingSubscriptionResponse = GetApiV1BillingSubscriptionResponses[keyof GetApiV1BillingSubscriptionResponses];
+
+export type PostApiV1BillingModulesData = {
+    body?: ModuleRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/billing/modules';
+};
+
+export type PostApiV1BillingModulesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiV1BillingModulesByModuleData = {
+    body?: never;
+    path: {
+        module: SubscriptionModule;
+    };
+    query?: never;
+    url: '/api/v1/billing/modules/{module}';
+};
+
+export type DeleteApiV1BillingModulesByModuleResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type PostApiV1BillingCheckoutData = {
     body?: never;
@@ -847,12 +932,10 @@ export type PostApiV1ClassesYearRollData = {
 
 export type PostApiV1ClassesYearRollResponses = {
     /**
-     * No Content
+     * OK
      */
-    204: void;
+    200: unknown;
 };
-
-export type PostApiV1ClassesYearRollResponse = PostApiV1ClassesYearRollResponses[keyof PostApiV1ClassesYearRollResponses];
 
 export type GetApiV1ClassesByClassIdPermissionsData = {
     body?: never;
@@ -1155,6 +1238,22 @@ export type PostApiV1ParentInvitationsByParentIdResendResponses = {
      */
     200: unknown;
 };
+
+export type GetApiV1ParentsMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/parents/me';
+};
+
+export type GetApiV1ParentsMeResponses = {
+    /**
+     * OK
+     */
+    200: ParentMeDto;
+};
+
+export type GetApiV1ParentsMeResponse = GetApiV1ParentsMeResponses[keyof GetApiV1ParentsMeResponses];
 
 export type GetApiV1ParentsData = {
     body?: never;
@@ -1777,6 +1876,24 @@ export type DeleteApiV1SfoShiftsByIdResponses = {
     200: unknown;
 };
 
+export type GetApiV1SfoShiftsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/sfo/shifts/{id}';
+};
+
+export type GetApiV1SfoShiftsByIdResponses = {
+    /**
+     * OK
+     */
+    200: SfoShiftDto;
+};
+
+export type GetApiV1SfoShiftsByIdResponse = GetApiV1SfoShiftsByIdResponses[keyof GetApiV1SfoShiftsByIdResponses];
+
 export type PutApiV1SfoShiftsByIdData = {
     body?: UpsertSfoShiftRequest;
     path: {
@@ -2126,6 +2243,22 @@ export type PutApiV1StudentsByIdResponses = {
 };
 
 export type PutApiV1StudentsByIdResponse = PutApiV1StudentsByIdResponses[keyof PutApiV1StudentsByIdResponses];
+
+export type GetApiV1ModulesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/modules';
+};
+
+export type GetApiV1ModulesResponses = {
+    /**
+     * OK
+     */
+    200: Array<string>;
+};
+
+export type GetApiV1ModulesResponse = GetApiV1ModulesResponses[keyof GetApiV1ModulesResponses];
 
 export type PostApiV1TenantsData = {
     body?: CreateTenantRequest;
