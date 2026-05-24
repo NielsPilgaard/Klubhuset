@@ -41,6 +41,9 @@ const SfoPage = lazy(() => import('./pages/SfoPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const ParentsPage = lazy(() => import('./pages/ParentsPage'))
 const YearRollPage = lazy(() => import('./pages/AarsrulPage'))
+const ParentSchemaPage = lazy(() => import('./pages/parent/ParentSchemaPage'))
+const ParentCalendarPage = lazy(() => import('./pages/parent/ParentCalendarPage'))
+const ParentUgeplanPage = lazy(() => import('./pages/parent/ParentUgeplanPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,8 +55,9 @@ const queryClient = new QueryClient({
 })
 
 function HomeRedirect() {
-  const { authenticated, isAdmin } = useAuth()
+  const { authenticated, isAdmin, isParent } = useAuth()
   if (authenticated) {
+    if (isParent) return <Navigate to="/foraeldrevisning/skema" replace />
     return <Navigate to={isAdmin ? '/dashboard' : '/mig/skema'} replace />
   }
   return <LandingPage />
@@ -62,6 +66,12 @@ function HomeRedirect() {
 function AdminRoute({ children }: { children: JSX.Element }) {
   const { isAdmin } = useAuth()
   if (!isAdmin) return <Navigate to="/mig/skema" replace />
+  return <>{children}</>
+}
+
+function ParentRoute({ children }: { children: JSX.Element }) {
+  const { isParent } = useAuth()
+  if (!isParent) return <Navigate to="/mig/skema" replace />
   return <>{children}</>
 }
 
@@ -112,6 +122,9 @@ export default function App() {
             <Route path="elever" element={<AdminRoute><StudentsPage /></AdminRoute>} />
             <Route path="foraeldre" element={<AdminRoute><ParentsPage /></AdminRoute>} />
             <Route path="aarsrul" element={<AdminRoute><YearRollPage /></AdminRoute>} />
+            <Route path="foraeldrevisning/skema" element={<ParentRoute><ParentSchemaPage /></ParentRoute>} />
+            <Route path="foraeldrevisning/kalender" element={<ParentRoute><ParentCalendarPage /></ParentRoute>} />
+            <Route path="foraeldrevisning/ugeplan" element={<ParentRoute><ParentUgeplanPage /></ParentRoute>} />
           </Route>
         </Routes>
           </Suspense>
