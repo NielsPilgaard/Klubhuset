@@ -32,6 +32,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<Parent> Parents => Set<Parent>();
 	public DbSet<Student> Students => Set<Student>();
 	public DbSet<ParentInvitation> ParentInvitations => Set<ParentInvitation>();
+	public DbSet<SubscriptionModuleItem> SubscriptionModuleItems => Set<SubscriptionModuleItem>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

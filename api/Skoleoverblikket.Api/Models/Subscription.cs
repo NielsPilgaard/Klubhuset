@@ -43,6 +43,8 @@ public sealed class Subscription : IEntityTypeConfiguration<Subscription>
 	public DateTimeOffset CreatedAt { get; init; }
 	public DateTimeOffset UpdatedAt { get; set; }
 
+	public ICollection<SubscriptionModuleItem> ActiveModules { get; set; } = [];
+
 	public void Configure(EntityTypeBuilder<Subscription> builder)
 	{
 		builder.Property(s => s.CreatedAt).HasDefaultValueSql("now()");
