@@ -60,6 +60,10 @@
       {
         "name": "parent",
         "description": "Forælder — læseadgang til barnets klasse"
+      },
+      {
+        "name": "superadmin",
+        "description": "Platform superadmin — modul-override og administrationsadgang"
       }
     ]
   },
