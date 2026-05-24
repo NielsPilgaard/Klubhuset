@@ -5,6 +5,7 @@ import {
   getApiV1SchoolsOnboardingStatusOptions,
 } from '../api/generated/@tanstack/react-query.gen'
 import { useAuth } from '../auth/useAuth'
+import { useSubscription } from '../hooks/useSubscription'
 import Logo from './Logo'
 
 interface NavItem {
@@ -12,6 +13,8 @@ interface NavItem {
   label: string
   icon: React.ReactNode
   adminOnly?: boolean
+  parentOnly?: boolean
+  moduleGated?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -122,6 +125,7 @@ const navItems: NavItem[] = [
     to: '/elever',
     label: 'Elever',
     adminOnly: true,
+    moduleGated: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -135,6 +139,7 @@ const navItems: NavItem[] = [
     to: '/foraeldre',
     label: 'Forældre',
     adminOnly: true,
+    moduleGated: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -155,6 +160,49 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    to: '/foraeldrevisning/skema',
+    label: 'Skema',
+    parentOnly: true,
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <line x1="8" y1="14" x2="16" y2="14" />
+        <line x1="8" y1="18" x2="13" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    to: '/foraeldrevisning/kalender',
+    label: 'Kalender',
+    parentOnly: true,
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+  },
+  {
+    to: '/foraeldrevisning/ugeplan',
+    label: 'Ugeplan',
+    parentOnly: true,
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6" />
+        <line x1="8" y1="12" x2="21" y2="12" />
+        <line x1="8" y1="18" x2="21" y2="18" />
+        <line x1="3" y1="6" x2="3.01" y2="6" />
+        <line x1="3" y1="12" x2="3.01" y2="12" />
+        <line x1="3" y1="18" x2="3.01" y2="18" />
+      </svg>
+    ),
+  },
 ]
 
 interface SidebarProps {
@@ -163,7 +211,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { logout, userName, isAdmin } = useAuth()
+  const { logout, userName, isAdmin, isParent } = useAuth()
+  const { hasParentModule } = useSubscription()
   const { data: school } = useQuery({ ...getApiV1SchoolsSettingsOptions(), enabled: isAdmin })
   const { data: onboarding } = useQuery({
     ...getApiV1SchoolsOnboardingStatusOptions(),
@@ -176,7 +225,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     (onboarding.classCount ?? 0) > 0 &&
     (onboarding.roomCount ?? 0) > 0
 
-  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin)
+  const visibleNavItems = navItems.filter((item) => {
+    if (isParent) return item.parentOnly === true
+    if (item.moduleGated && !hasParentModule) return false
+    return !item.adminOnly || isAdmin
+  })
 
   return (
     <>
@@ -201,7 +254,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* Brand */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-brand-700">
           <NavLink
-            to={isAdmin ? '/dashboard' : '/mig/skema'}
+            to={isAdmin ? '/dashboard' : isParent ? '/foraeldrevisning/skema' : '/mig/skema'}
             onClick={onClose}
             className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
           >

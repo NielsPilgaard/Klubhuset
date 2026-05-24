@@ -10,6 +10,7 @@ import {
 } from '../api/generated/@tanstack/react-query.gen'
 import type { ParentDto, StudentDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useSubscription } from '../hooks/useSubscription'
 
 interface InviteModalProps {
   students: StudentDto[]
@@ -124,6 +125,7 @@ export default function ParentsPage() {
   usePageTitle('Foraeldre')
   const qc = useQueryClient()
   const [showInvite, setShowInvite] = useState(false)
+  const { hasParentModule } = useSubscription()
 
   const { data: parents, isLoading, isError, refetch } = useQuery(getApiV1ParentsOptions())
   const { data: students } = useQuery(getApiV1StudentsOptions())
@@ -145,9 +147,11 @@ export default function ParentsPage() {
           <p className="mt-1 text-sm text-gray-500">Inviter og administrer foraeldre med adgang til klasseskema</p>
         </div>
         <button
-          onClick={() => setShowInvite(true)}
+          onClick={() => hasParentModule && setShowInvite(true)}
+          disabled={!hasParentModule}
           aria-label="Inviter foraelderne"
-          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          title={!hasParentModule ? 'Kræver forældremodulet — aktivér under Abonnement' : undefined}
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
