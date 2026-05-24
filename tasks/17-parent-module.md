@@ -194,5 +194,5 @@ Extend `InvitationAcceptPage.tsx`. Add contact-info consent step: address, phone
 - Student logins (future Student Module)
 - Parent directory / Kontakt feature (future — data model is ready)
 - Adressebeskyttelse (§28 CPR-loven) — future; `ShareContactInfo=false` default provides basic protection now
-- Fraværsregistrering (Netprotokollen?)
-- Multi-child switcher UI (parent with 2+ students sees all classes; no switcher needed for read-only views)
+- Fraværsregistrering
+- Multi-child switcher UI (do we need a switcher, or simply access to more with multiple children?) (parent with 2+ students sees all classes; no switcher needed for read-only views)

@@ -204,3 +204,17 @@ public async Task<IActionResult> RemoveModule(SubscriptionModule module, Cancell
 3. `dotnet test` — API integration tests pass
 4. Manual: add a module via `POST /api/v1/billing/modules` against a test school with an active Stripe subscription; verify line item appears in Stripe dashboard and row appears in DB
 5. Manual: remove the module; verify line item removed from Stripe and row deleted
+
+---
+
+## Status: Done
+
+Implemented 2026-05-24 as part of todo.md items 3 & 4 (parent module + Stripe gating).
+
+**Deviations from spec:**
+
+- `StripeSubscriptionItemId` is nullable (`string?`) — allows `null` for admin-override rows that bypass Stripe entirely
+- Added `IsAdminOverride` bool property — when `true`, the module was granted by a superadmin without a Stripe subscription item
+- Added `GrantModuleOverrideAsync` method to `SubscriptionService` — inserts a row with `IsAdminOverride = true`, no Stripe call (for beta testers, developer's own school, etc.)
+- `GET /api/v1/modules` (active module list) moved to a separate `SubscriptionModulesController` with only `[Authorize]` — the `BillingController` class-level `[Authorize(Roles = admin)]` would AND with method-level attributes, blocking parent users. All authenticated users (admin, teacher, parent) can call this endpoint.
+- Added `superadmin` Keycloak realm role — gates `POST/DELETE /api/v1/admin/tenants/{schoolId}/modules` override endpoints in new `AdminController`. Assign only to developer's Keycloak user. Must be added manually in production Keycloak Admin UI.
