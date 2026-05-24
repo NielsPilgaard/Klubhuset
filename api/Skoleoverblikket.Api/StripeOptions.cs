@@ -10,8 +10,10 @@ public sealed class StripeOptions
 	public string SecretKey { get; init; } = string.Empty;
 
 	[Required(AllowEmptyStrings = false)]
-	public string PriceId { get; init; } = string.Empty;
+	public string BasePriceId { get; init; } = string.Empty;
 
 	[Required(AllowEmptyStrings = false)]
 	public string WebhookSecret { get; init; } = string.Empty;
+
+	public Dictionary<string, string> ModulePriceIds { get; init; } = new();
 }

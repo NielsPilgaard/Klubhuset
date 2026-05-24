@@ -15,7 +15,8 @@ public sealed class SubscriptionService(
 	ILogger<SubscriptionService> logger,
 	CustomerService customerService,
 	SessionService sessionService,
-	Stripe.BillingPortal.SessionService billingPortalSessionService)
+	Stripe.BillingPortal.SessionService billingPortalSessionService,
+	SubscriptionItemService subscriptionItemService)
 {
 	private const int TrialDays = 14;
 
@@ -73,7 +74,7 @@ public sealed class SubscriptionService(
 		var sub = await GetOrCreateAsync(schoolId, ct);
 		var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, ct);
 
-		var priceId = stripeOptions.Value.PriceId;
+		var priceId = stripeOptions.Value.BasePriceId;
 
 		// Ensure Stripe customer exists
 		var customerId = sub.StripeCustomerId;
@@ -142,6 +143,110 @@ public sealed class SubscriptionService(
 		}, cancellationToken: ct);
 
 		return session.Url ?? throw new InvalidOperationException("Stripe billing portal session URL is null");
+	}
+
+	/// <summary>
+	/// Returns the active module names for the given school's subscription.
+	/// </summary>
+	public async Task<IReadOnlyList<string>> GetActiveModulesAsync(Guid schoolId, CancellationToken ct = default)
+	{
+		var sub = await db.Subscriptions
+			.Include(s => s.ActiveModules)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
+
+		if (sub is null) return [];
+
+		return sub.ActiveModules
+			.Select(m => m.Module.ToString())
+			.ToList();
+	}
+
+	/// <summary>
+	/// Adds a module to the school's subscription via Stripe, then records it in DB.
+	/// </summary>
+	public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+	{
+		var sub = await db.Subscriptions
+			.Include(s => s.ActiveModules)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
+			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+
+		if (sub.StripeSubscriptionId is null)
+			throw new InvalidOperationException("School does not have an active Stripe subscription.");
+
+		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var priceId) || string.IsNullOrEmpty(priceId))
+			throw new InvalidOperationException($"No Stripe price configured for module {module}.");
+
+		if (sub.ActiveModules.Any(m => m.Module == module)) return;
+
+		var item = await subscriptionItemService.CreateAsync(new SubscriptionItemCreateOptions
+		{
+			Subscription = sub.StripeSubscriptionId,
+			Price = priceId,
+			Quantity = 1,
+		}, cancellationToken: ct);
+
+		db.SubscriptionModuleItems.Add(new SubscriptionModuleItem
+		{
+			Id = Guid.NewGuid(),
+			SubscriptionId = sub.Id,
+			Module = module,
+			StripeSubscriptionItemId = item.Id,
+		});
+		await db.SaveChangesAsync(ct);
+	}
+
+	/// <summary>
+	/// Removes a module from the school's subscription via Stripe, then removes it from DB.
+	/// </summary>
+	public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+	{
+		var sub = await db.Subscriptions
+			.Include(s => s.ActiveModules)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
+			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+
+		var moduleItem = sub.ActiveModules.FirstOrDefault(m => m.Module == module);
+		if (moduleItem is null) return;
+
+		if (!moduleItem.IsAdminOverride && moduleItem.StripeSubscriptionItemId is not null)
+		{
+			await subscriptionItemService.DeleteAsync(
+				moduleItem.StripeSubscriptionItemId,
+				new SubscriptionItemDeleteOptions(),
+				cancellationToken: ct);
+		}
+
+		db.SubscriptionModuleItems.Remove(moduleItem);
+		await db.SaveChangesAsync(ct);
+	}
+
+	/// <summary>
+	/// Grants a module to a school via admin override — no Stripe charge.
+	/// </summary>
+	public async Task GrantModuleOverrideAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+	{
+		var sub = await db.Subscriptions
+			.Include(s => s.ActiveModules)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
+			?? await GetOrCreateAsync(schoolId, ct);
+
+		// Re-fetch with modules if GetOrCreateAsync was called
+		if (!db.Entry(sub).Collection(s => s.ActiveModules).IsLoaded)
+		{
+			await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(ct);
+		}
+
+		if (sub.ActiveModules.Any(m => m.Module == module)) return;
+
+		db.SubscriptionModuleItems.Add(new SubscriptionModuleItem
+		{
+			Id = Guid.NewGuid(),
+			SubscriptionId = sub.Id,
+			Module = module,
+			IsAdminOverride = true,
+		});
+		await db.SaveChangesAsync(ct);
 	}
 
 	/// <summary>

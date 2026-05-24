@@ -23,7 +23,8 @@ public sealed class BillingController(
 		bool IsTrialing,
 		bool IsActive,
 		bool HasAccess,
-		int TrialDaysLeft);
+		int TrialDaysLeft,
+		IReadOnlyList<string> ActiveModules);
 
 	public record CheckoutResponse(string Url);
 
@@ -31,8 +32,55 @@ public sealed class BillingController(
 	public async Task<ActionResult<SubscriptionDto>> GetSubscription(CancellationToken ct)
 	{
 		var sub = await subscriptionService.GetOrCreateAsync(tenantContext.TenantId, ct);
-		return Ok(ToDto(sub));
+		var modules = await subscriptionService.GetActiveModulesAsync(tenantContext.TenantId, ct);
+		return Ok(ToDto(sub, modules));
 	}
+
+	[HttpPost("modules")]
+	public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken ct)
+	{
+		try
+		{
+			await subscriptionService.AddModuleAsync(tenantContext.TenantId, request.Module, ct);
+			return NoContent();
+		}
+		catch (InvalidOperationException ex)
+		{
+			return Problem(title: "Modul kunne ikke tilføjes", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+		}
+		catch (Stripe.StripeException ex)
+		{
+			return Problem(
+				title: "Betalingsgateway fejl",
+				detail: "Kunne ikke tilføje modul. Prøv igen eller kontakt support.",
+				statusCode: StatusCodes.Status502BadGateway,
+				extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
+		}
+	}
+
+	[HttpDelete("modules/{module}")]
+	public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken ct)
+	{
+		try
+		{
+			await subscriptionService.RemoveModuleAsync(tenantContext.TenantId, module, ct);
+			return NoContent();
+		}
+		catch (InvalidOperationException ex)
+		{
+			return Problem(title: "Modul kunne ikke fjernes", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+		}
+		catch (Stripe.StripeException ex)
+		{
+			return Problem(
+				title: "Betalingsgateway fejl",
+				detail: "Kunne ikke fjerne modul. Prøv igen eller kontakt support.",
+				statusCode: StatusCodes.Status502BadGateway,
+				extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
+		}
+	}
+
+	public record ModuleRequest(SubscriptionModule Module);
 
 	[HttpPost("checkout")]
 	public async Task<ActionResult<CheckoutResponse>> CreateCheckout(CancellationToken ct)
@@ -78,7 +126,7 @@ public sealed class BillingController(
 		}
 	}
 
-	private static SubscriptionDto ToDto(Subscription sub)
+	private static SubscriptionDto ToDto(Subscription sub, IReadOnlyList<string> activeModules)
 	{
 		var now = DateTimeOffset.UtcNow;
 		var isTrialing = sub.Status == SubscriptionStatus.Trialing && sub.TrialEnd > now;
@@ -93,6 +141,7 @@ public sealed class BillingController(
 			isTrialing,
 			isActive,
 			hasAccess,
-			trialDaysLeft);
+			trialDaysLeft,
+			activeModules);
 	}
 }
