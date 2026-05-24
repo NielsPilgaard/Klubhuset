@@ -17,6 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
+    let intervalId: ReturnType<typeof setInterval> | undefined
+
     getInitPromise()
       .then((auth) => {
         setAuthenticated(auth)
@@ -25,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!auth) return
 
         // Proactively refresh token before it expires (30s before expiry)
-        setInterval(() => {
+        intervalId = setInterval(() => {
           keycloak.updateToken(30).catch(() => {
             if (document.visibilityState === 'visible') {
               keycloak.login()
@@ -37,7 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setInitialized(true)
       })
 
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(intervalId)
+    }
   }, [])
 
   useEffect(() => {

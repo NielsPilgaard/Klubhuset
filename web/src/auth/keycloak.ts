@@ -29,6 +29,8 @@ export function getInitPromise(): Promise<boolean> {
       onLoad: seeded ? undefined : 'check-sso',
       pkceMethod: 'S256',
       checkLoginIframe: false,
+      // tokenStore is a valid runtime option not yet reflected in the @types/keycloak-js typings
+      ...({ tokenStore: 'localStorage' } as object),
       ...(seeded ? { token: seeded.accessToken, refreshToken: seeded.refreshToken } : {}),
     })
 
