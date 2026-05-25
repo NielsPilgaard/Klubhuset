@@ -70,7 +70,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			return Problem("isoYear og isoWeek er påkrævet", statusCode: 400);
 		}
 
-		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
+		if (!IsoWeekValidation.IsValid(isoYear.Value, isoWeek.Value))
 		{
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
 		}
@@ -203,7 +203,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			return Problem("isoYear og isoWeek er påkrævet", statusCode: 400);
 		}
 
-		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
+		if (!IsoWeekValidation.IsValid(isoYear.Value, isoWeek.Value))
 		{
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
 		}

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -51,7 +50,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			return Problem("årstal eller ugenummer er påkrævet", statusCode: 400);
 		}
 
-		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
+		if (!IsoWeekValidation.IsValid(isoYear.Value, isoWeek.Value))
 		{
 
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
@@ -92,7 +91,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		[FromBody] UpsertSfoWeekPlanShiftRequest request,
 		CancellationToken ct)
 	{
-		if (request.IsoYear < 2020 || request.IsoYear > 2100 || request.IsoWeek < 1 || request.IsoWeek > 53)
+		if (!IsoWeekValidation.IsValid(request.IsoYear, request.IsoWeek))
 		{
 
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
@@ -109,39 +108,52 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			return NotFound();
 		}
 
-		var weekPlan = await db.SfoWeekPlans
-			.Include(w => w.Shifts)
-			.FirstOrDefaultAsync(w => w.IsoYear == request.IsoYear && w.IsoWeek == request.IsoWeek, ct);
-
-		if (weekPlan is null)
+		SfoWeekPlanShift weekShift;
+		const int maxRetries = 3;
+		for (var attempt = 0; ; attempt++)
 		{
-			weekPlan = new SfoWeekPlan
+			db.ChangeTracker.Clear();
+
+			var weekPlan = await db.SfoWeekPlans
+				.Include(w => w.Shifts)
+				.FirstOrDefaultAsync(w => w.IsoYear == request.IsoYear && w.IsoWeek == request.IsoWeek, ct);
+
+			if (weekPlan is null)
 			{
-				Id = Guid.NewGuid(),
-				TenantId = tenant.TenantId,
-				IsoYear = request.IsoYear,
-				IsoWeek = request.IsoWeek,
-			};
-			db.SfoWeekPlans.Add(weekPlan);
-		}
+				weekPlan = new SfoWeekPlan
+				{
+					Id = Guid.NewGuid(),
+					TenantId = tenant.TenantId,
+					IsoYear = request.IsoYear,
+					IsoWeek = request.IsoWeek,
+				};
+				db.SfoWeekPlans.Add(weekPlan);
+			}
 
-		var weekShift = weekPlan.Shifts.FirstOrDefault(ws => ws.SfoShiftId == request.SfoShiftId);
-		if (weekShift is null)
-		{
-			weekShift = new SfoWeekPlanShift
+			weekShift = weekPlan.Shifts.FirstOrDefault(ws => ws.SfoShiftId == request.SfoShiftId)
+				?? new SfoWeekPlanShift
+				{
+					Id = Guid.NewGuid(),
+					TenantId = tenant.TenantId,
+					SfoWeekPlanId = weekPlan.Id,
+					SfoShiftId = request.SfoShiftId,
+				};
+
+			if (!weekPlan.Shifts.Contains(weekShift))
+				weekPlan.Shifts.Add(weekShift);
+
+			weekShift.Beskrivelse = request.Beskrivelse;
+			weekShift.UpdatedAt = DateTimeOffset.UtcNow;
+
+			try
 			{
-				Id = Guid.NewGuid(),
-				TenantId = tenant.TenantId,
-				SfoWeekPlanId = weekPlan.Id,
-				SfoShiftId = request.SfoShiftId,
-			};
-			weekPlan.Shifts.Add(weekShift);
+				await db.SaveChangesAsync(ct);
+				break;
+			}
+			catch (DbUpdateException) when (attempt < maxRetries)
+			{
+			}
 		}
-
-		weekShift.Beskrivelse = request.Beskrivelse;
-		weekShift.UpdatedAt = DateTimeOffset.UtcNow;
-
-		await db.SaveChangesAsync(ct);
 
 		return Ok(new SfoWeekPlanShiftDto(
 			weekShift.Id,
