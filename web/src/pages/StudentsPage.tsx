@@ -118,17 +118,23 @@ export default function StudentsPage() {
           <h1 className="font-display text-2xl font-semibold text-gray-900">Elever</h1>
           <p className="mt-1 text-sm text-gray-500">Administrer skolens elever og deres klasser</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          aria-label="Opret elev"
-          className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span className="hidden sm:inline">Opret elev</span>
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={() => setShowCreate(true)}
+            disabled={!classes || classes.length === 0}
+            aria-label="Opret elev"
+            className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span className="hidden sm:inline">Opret elev</span>
+          </button>
+          {classes && classes.length === 0 && (
+            <p className="text-xs text-gray-500">Opret en klasse først</p>
+          )}
+        </div>
       </div>
 
       {classes && classes.length > 0 && (

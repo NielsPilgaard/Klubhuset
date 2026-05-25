@@ -45,7 +45,7 @@ function InviteModal({ students, onClose }: InviteModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Inviter foraeldrene</h2>
+          <h2 className="font-display text-lg font-semibold text-gray-900">Inviter forældrene</h2>
         </div>
         {sent ? (
           <div className="px-6 py-8 text-center space-y-3">
@@ -55,7 +55,7 @@ function InviteModal({ students, onClose }: InviteModalProps) {
               </svg>
             </div>
             <p className="text-sm text-gray-700 font-medium">Invitation sendt!</p>
-            <p className="text-xs text-gray-500">Foraeldrene modtager en e-mail med link til at oprette adgang.</p>
+            <p className="text-xs text-gray-500">Forældrene modtager en e-mail med link til at oprette adgang.</p>
             <button onClick={onClose} className="mt-4 px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Luk</button>
           </div>
         ) : (
@@ -66,7 +66,7 @@ function InviteModal({ students, onClose }: InviteModalProps) {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Foraelder navn"
+                  placeholder="Forælder navn"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
@@ -76,7 +76,7 @@ function InviteModal({ students, onClose }: InviteModalProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
-                  placeholder="foraeldrene@eksempel.dk"
+                  placeholder="forældrene@eksempel.dk"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
@@ -101,7 +101,7 @@ function InviteModal({ students, onClose }: InviteModalProps) {
                 </div>
               </div>
               {inviteMutation.isError && (
-                <p className="text-sm text-red-600">Der opstod en fejl. Prov igen.</p>
+                <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
               )}
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
@@ -122,7 +122,7 @@ function InviteModal({ students, onClose }: InviteModalProps) {
 }
 
 export default function ParentsPage() {
-  usePageTitle('Foraeldre')
+  usePageTitle('Forældre')
   const qc = useQueryClient()
   const [showInvite, setShowInvite] = useState(false)
   const { hasParentModule } = useSubscription()
@@ -143,13 +143,13 @@ export default function ParentsPage() {
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-gray-900">Foraeldre</h1>
-          <p className="mt-1 text-sm text-gray-500">Inviter og administrer foraeldre med adgang til klasseskema</p>
+          <h1 className="font-display text-2xl font-semibold text-gray-900">Forældre</h1>
+          <p className="mt-1 text-sm text-gray-500">Inviter og administrer forældre med adgang til klasseskema</p>
         </div>
         <button
           onClick={() => hasParentModule && setShowInvite(true)}
           disabled={!hasParentModule}
-          aria-label="Inviter foraelderne"
+          aria-label="Inviter forældrene"
           title={!hasParentModule ? 'Kræver forældremodulet — aktivér under Abonnement' : undefined}
           className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
@@ -157,14 +157,14 @@ export default function ParentsPage() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          <span className="hidden sm:inline">Inviter foraelder</span>
+          <span className="hidden sm:inline">Inviter forælder</span>
         </button>
       </div>
 
       {isError && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-center justify-between">
-          <p className="text-red-700 text-sm font-medium">Kunne ikke hente foraeldre</p>
-          <button onClick={() => refetch()} className="text-sm px-3 py-1.5 bg-red-100 text-red-700 rounded-lg">Prov igen</button>
+          <p className="text-red-700 text-sm font-medium">Kunne ikke hente forældre</p>
+          <button onClick={() => refetch()} className="text-sm px-3 py-1.5 bg-red-100 text-red-700 rounded-lg">Prøv igen</button>
         </div>
       )}
 
@@ -193,8 +193,8 @@ export default function ParentsPage() {
               {!isLoading && (parents ?? []).length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center">
-                    <p className="text-gray-400 font-medium">Ingen foraeldre inviteret endnu</p>
-                    <p className="text-gray-400 text-xs mt-1">Inviter den forste foraeldrene for at give adgang til klasseskemaet</p>
+                    <p className="text-gray-400 font-medium">Ingen forældre inviteret endnu</p>
+                    <p className="text-gray-400 text-xs mt-1">Inviter den første forældrene for at give adgang til klasseskemaet</p>
                   </td>
                 </tr>
               )}

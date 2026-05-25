@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1BillingSubscriptionOptions,
+  getApiV1ModulesOptions,
   postApiV1BillingCheckoutMutation,
   postApiV1BillingPortalMutation,
   postApiV1BillingModulesMutation,
@@ -79,6 +81,7 @@ export default function BillingPage() {
     ...postApiV1BillingModulesMutation(),
     onSuccess: () => {
       void queryClient.invalidateQueries(getApiV1BillingSubscriptionOptions())
+      void queryClient.invalidateQueries(getApiV1ModulesOptions())
     },
     onError: (error) => {
       const errorMessage = error instanceof Error ? error.message : 'Kunne ikke aktivere modul'
@@ -91,6 +94,7 @@ export default function BillingPage() {
     ...deleteApiV1BillingModulesByModuleMutation(),
     onSuccess: () => {
       void queryClient.invalidateQueries(getApiV1BillingSubscriptionOptions())
+      void queryClient.invalidateQueries(getApiV1ModulesOptions())
     },
     onError: (error) => {
       const errorMessage = error instanceof Error ? error.message : 'Kunne ikke deaktivere modul'
@@ -151,11 +155,11 @@ export default function BillingPage() {
           description="Giv forældre adgang til at se klassernes skema, kalender og ugeplan. Inviter forældre via e-mail og knyt dem til deres barns klasse."
           price="499 kr/md"
           isActive={activeModules.includes('ParentModule')}
-          canToggle={data?.hasAccess ?? false}
+          canToggle={data?.isActive ?? false}
           isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
           onActivate={() => addModuleMutation.mutate({ body: { module: 'ParentModule' } })}
           onDeactivate={() => removeModuleMutation.mutate({ path: { module: 'ParentModule' } })}
-          blockedReason={!data?.hasAccess ? 'Kræver aktivt abonnement eller prøveperiode' : undefined}
+          blockedReason={!data?.isActive ? 'Kræver aktivt betalt abonnement' : undefined}
         />
       </div>
     </div>
@@ -324,6 +328,64 @@ function StatusCard({
   )
 }
 
+function ActivateModuleModal({
+  name,
+  price,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  name: string
+  price: string
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
+      <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-600">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <h2 className="text-base font-semibold text-gray-900">Aktiver {name}?</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-1">
+          Du er ved at tilføje et tilkøb til dit abonnement:
+        </p>
+        <div className="bg-gray-50 rounded-lg px-4 py-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-800">{name}</span>
+            <span className="text-sm font-semibold text-gray-900 tabular-nums">+{price}</span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">Beløbet lægges til din næste faktura og fortsætter månedligt, indtil du deaktiverer modulet.</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isPending}
+            className="flex-1 px-4 py-2.5 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Annuller
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isPending}
+            className="flex-1 px-4 py-2.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isPending ? 'Aktiverer...' : 'Ja, aktiver'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ModuleCard({
   name,
   description,
@@ -345,46 +407,68 @@ function ModuleCard({
   onDeactivate: () => void
   blockedReason?: string
 }) {
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  function handleActivateClick() {
+    setShowConfirm(true)
+  }
+
+  function handleConfirm() {
+    onActivate()
+    setShowConfirm(false)
+  }
+
   return (
-    <div className={`bg-white rounded-xl border ${isActive ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}>
-      <div className="px-6 py-5 flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-700">{name}</h3>
-            {isActive && (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
-                Aktiv
-              </span>
-            )}
+    <>
+      {showConfirm && (
+        <ActivateModuleModal
+          name={name}
+          price={price}
+          onConfirm={handleConfirm}
+          onCancel={() => setShowConfirm(false)}
+          isPending={isPending}
+        />
+      )}
+      <div className={`bg-white rounded-xl border ${isActive ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}>
+        <div className="px-6 py-5 flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-gray-700">{name}</h3>
+              {isActive && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
+                  Aktiv
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-gray-500">{description}</p>
           </div>
-          <p className="mt-1 text-xs text-gray-500">{description}</p>
+          <div className="text-right shrink-0">
+            <span className="text-lg font-semibold text-gray-900 tabular-nums">{price}</span>
+          </div>
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-lg font-semibold text-gray-900 tabular-nums">{price}</span>
+        <div className="px-6 pb-5">
+          {blockedReason ? (
+            <p className="text-xs text-gray-400 italic">{blockedReason}</p>
+          ) : isActive ? (
+            <button
+              onClick={onDeactivate}
+              disabled={isPending}
+              className="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isPending ? 'Vent...' : 'Deaktiver'}
+            </button>
+          ) : (
+            <button
+              onClick={handleActivateClick}
+              disabled={isPending || !canToggle}
+              className="px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Aktiver
+            </button>
+          )}
         </div>
       </div>
-      <div className="px-6 pb-5">
-        {blockedReason ? (
-          <p className="text-xs text-gray-400 italic">{blockedReason}</p>
-        ) : isActive ? (
-          <button
-            onClick={onDeactivate}
-            disabled={isPending}
-            className="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? 'Vent...' : 'Deaktiver'}
-          </button>
-        ) : (
-          <button
-            onClick={onActivate}
-            disabled={isPending || !canToggle}
-            className="px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? 'Vent...' : 'Aktiver'}
-          </button>
-        )}
-      </div>
-    </div>
+    </>
   )
 }
 

@@ -183,12 +183,15 @@ export default function SfoPage() {
     <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-gray-900">SFO vagtplan</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-2xl font-semibold text-gray-900">SFO Ugeplan</h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700">Ugeplan</span>
+          </div>
           <p className="mt-1 text-sm text-gray-500">Tildel medarbejdere til SFO-vagtblokke pr. ugedag.</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to="/udskriv/sfo"
+            to={`/udskriv/sfo?isoYear=${isoYear}&isoWeek=${isoWeek}`}
             target="_blank"
             className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -370,6 +373,7 @@ export default function SfoPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start</label>
                 <input
                   type="time"
+                  lang="da"
                   value={form.startTime}
                   onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -379,6 +383,7 @@ export default function SfoPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Slut</label>
                 <input
                   type="time"
+                  lang="da"
                   value={form.endTime}
                   onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
