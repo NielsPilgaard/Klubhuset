@@ -32,7 +32,7 @@ interface NewClassRow {
 }
 
 export default function AarsrulPage() {
-  usePageTitle('Aarsrul')
+  usePageTitle('Årsrul')
   const qc = useQueryClient()
 
   const { data: classes, isLoading } = useQuery(getApiV1ClassesOptions())
@@ -120,7 +120,7 @@ export default function AarsrulPage() {
     if (!rows) return
     const conflicts = getNameConflicts()
     if (conflicts.size > 0) {
-      setError('To eller flere klasser ville fa det samme navn. Ret navnene inden du fortsaetter.')
+      setError('To eller flere klasser ville få det samme navn. Ret navnene inden du fortsætter.')
       return
     }
     setError(null)
@@ -156,9 +156,9 @@ export default function AarsrulPage() {
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-gray-900">Aarsrul</h1>
+        <h1 className="font-display text-2xl font-semibold text-gray-900">Årsrul</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Omdobn klasser til naeste skolear, arkiver afgangselever, og opret nye indskrivningsklasser.
+          Omdøb klasser til næste skoleår, arkiver afgangselever, og opret nye indskrivningsklasser.
         </p>
       </div>
 
@@ -172,7 +172,7 @@ export default function AarsrulPage() {
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
-          Aarsrul
+          Årsrul
         </button>
         <button
           onClick={() => setActiveTab('archived')}
@@ -199,26 +199,26 @@ export default function AarsrulPage() {
         <>
           {success && (
             <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-              <p className="text-sm text-green-800 font-medium">Aarsrul gennemfort. Klasserne er omdobnt.</p>
+              <p className="text-sm text-green-800 font-medium">Årsrul gennemført. Klasserne er omdøbt.</p>
             </div>
           )}
 
           {rows === null ? (
             <div className="bg-white rounded-xl border border-gray-200 px-6 py-8 text-center space-y-4">
               <p className="text-sm text-gray-600">
-                Klik pa knappen herunder for at starte aarsrullet. Du kan redigere navnene inden du bekraefter.
+                Klik på knappen herunder for at starte årsrullet. Du kan redigere navnene inden du bekræfter.
               </p>
               <button
                 onClick={() => initRows(classes ?? [])}
                 className="px-5 py-2.5 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
               >
-                Start aarsrul
+                Start årsrul
               </button>
             </div>
           ) : (
             <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
               <div className="px-4 py-3 grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                <div className="col-span-4">Nuvaerende navn</div>
+                <div className="col-span-4">Nuværende navn</div>
                 <div className="col-span-5">Nyt navn</div>
                 <div className="col-span-3 text-center">Arkiver</div>
               </div>
@@ -319,7 +319,7 @@ export default function AarsrulPage() {
                 className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 data-testid="year-roll-submit"
               >
-                Udfoor aarsrul
+                Udfør årsrul
               </button>
             </div>
           )}
@@ -330,9 +330,9 @@ export default function AarsrulPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowConfirm(false)} />
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Bekraeft aarsrul</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Bekræft årsrul</h2>
             <p className="text-sm text-gray-600">
-              Dette omdobner{' '}
+              Dette omdøber{' '}
               <span className="font-semibold">{renameCount} {renameCount === 1 ? 'klasse' : 'klasser'}</span>
               {archiveCount > 0 && (
                 <>, arkiverer{' '}
@@ -359,7 +359,7 @@ export default function AarsrulPage() {
                 className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
                 data-testid="year-roll-confirm"
               >
-                {rollMutation.isPending ? 'Udforer...' : 'Bekraeft aarsrul'}
+                {rollMutation.isPending ? 'Udfører...' : 'Bekræft årsrul'}
               </button>
             </div>
           </div>

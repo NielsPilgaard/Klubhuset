@@ -227,6 +227,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
   const visibleNavItems = navItems.filter((item) => {
     if (isParent) return item.parentOnly === true
+    if (item.parentOnly) return false
     if (item.moduleGated && !hasParentModule) return false
     return !item.adminOnly || isAdmin
   })
