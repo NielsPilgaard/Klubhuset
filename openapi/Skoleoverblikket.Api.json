@@ -3241,6 +3241,101 @@
         }
       }
     },
+    "/api/v1/sfo/ugeplan": {
+      "get": {
+        "tags": [
+          "SfoWeekPlan"
+        ],
+        "parameters": [
+          {
+            "name": "isoYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "isoWeek",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoWeekPlanDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoWeekPlanDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoWeekPlanDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sfo/ugeplan/shifts": {
+      "put": {
+        "tags": [
+          "SfoWeekPlan"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSfoWeekPlanShiftRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSfoWeekPlanShiftRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSfoWeekPlanShiftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoWeekPlanShiftDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoWeekPlanShiftDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SfoWeekPlanShiftDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/staff": {
       "get": {
         "tags": [
@@ -3956,6 +4051,84 @@
                   "items": {
                     "type": "string"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tenants": {
+      "get": {
+        "tags": [
+          "SuperAdminTenants"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantListItemDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantListItemDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantListItemDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tenants/{schoolId}": {
+      "get": {
+        "tags": [
+          "SuperAdminTenants"
+        ],
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDetailDto"
                 }
               }
             }
@@ -5337,6 +5510,22 @@
         },
         "additionalProperties": false
       },
+      "ModuleItemDto": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "$ref": "#/components/schemas/SubscriptionModule"
+          },
+          "isAdminOverride": {
+            "type": "boolean"
+          },
+          "stripeSubscriptionItemId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ModuleOverrideRequest": {
         "type": "object",
         "properties": {
@@ -5743,6 +5932,86 @@
         },
         "additionalProperties": false
       },
+      "SfoStaffRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SfoWeekPlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isoYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isoWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "shifts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SfoWeekPlanShiftDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SfoWeekPlanShiftDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sfoShiftId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dayOfWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "staff": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SfoStaffRefDto"
+            },
+            "nullable": true
+          },
+          "beskrivelse": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SlotDto": {
         "type": "object",
         "properties": {
@@ -6056,6 +6325,97 @@
         },
         "additionalProperties": false
       },
+      "TenantDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subscriptionStatus": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "stripeCustomerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "stripeSubscriptionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "trialEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currentPeriodEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TenantListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subscriptionStatus": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "trialEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currentPeriodEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "activeModuleCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "TimeSlotDto": {
         "type": "object",
         "properties": {
@@ -6248,6 +6608,28 @@
             "nullable": true
           },
           "label": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpsertSfoWeekPlanShiftRequest": {
+        "type": "object",
+        "properties": {
+          "isoYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isoWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sfoShiftId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "beskrivelse": {
             "type": "string",
             "nullable": true
           }
@@ -6661,6 +7043,9 @@
       "name": "Sfo"
     },
     {
+      "name": "SfoWeekPlan"
+    },
+    {
       "name": "Staff"
     },
     {
@@ -6677,6 +7062,9 @@
     },
     {
       "name": "SubscriptionModules"
+    },
+    {
+      "name": "SuperAdminTenants"
     },
     {
       "name": "Tenants"

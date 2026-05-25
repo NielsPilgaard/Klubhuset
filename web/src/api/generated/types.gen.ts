@@ -207,6 +207,12 @@ export type InviteParentRequest = {
     studentIds?: Array<string> | null;
 };
 
+export type ModuleItemDto = {
+    module?: SubscriptionModule;
+    isAdminOverride?: boolean;
+    stripeSubscriptionItemId?: string | null;
+};
+
 export type ModuleOverrideRequest = {
     module?: SubscriptionModule;
 };
@@ -331,6 +337,29 @@ export type SfoShiftDto = {
     staff?: Array<StaffRefDto> | null;
 };
 
+export type SfoStaffRefDto = {
+    id?: string;
+    name?: string | null;
+};
+
+export type SfoWeekPlanDto = {
+    id?: string;
+    isoYear?: number;
+    isoWeek?: number;
+    shifts?: Array<SfoWeekPlanShiftDto> | null;
+};
+
+export type SfoWeekPlanShiftDto = {
+    id?: string;
+    sfoShiftId?: string;
+    dayOfWeek?: number;
+    startTime?: string | null;
+    endTime?: string | null;
+    label?: string | null;
+    staff?: Array<SfoStaffRefDto> | null;
+    beskrivelse?: string | null;
+};
+
 export type SlotDto = {
     id?: string;
     timeSlotId?: string;
@@ -417,6 +446,31 @@ export type TenantCreatedDto = {
     expiresIn?: number;
 };
 
+export type TenantDetailDto = {
+    id?: string;
+    name?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    createdAt?: string;
+    subscriptionStatus?: SubscriptionStatus;
+    stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    trialEnd?: string;
+    currentPeriodEnd?: string | null;
+    modules?: Array<ModuleItemDto> | null;
+};
+
+export type TenantListItemDto = {
+    id?: string;
+    name?: string | null;
+    contactEmail?: string | null;
+    createdAt?: string;
+    subscriptionStatus?: SubscriptionStatus;
+    trialEnd?: string;
+    currentPeriodEnd?: string | null;
+    activeModuleCount?: number;
+};
+
 export type TimeSlotDto = {
     id?: string;
     classId?: string | null;
@@ -478,6 +532,13 @@ export type UpsertSfoShiftRequest = {
     startTime?: string | null;
     endTime?: string | null;
     label?: string | null;
+};
+
+export type UpsertSfoWeekPlanShiftRequest = {
+    isoYear?: number;
+    isoWeek?: number;
+    sfoShiftId?: string;
+    beskrivelse?: string | null;
 };
 
 export type UpsertSlotRequest = {
@@ -1946,6 +2007,41 @@ export type PostApiV1SfoShiftsByIdStaffByStaffIdResponses = {
     200: unknown;
 };
 
+export type GetApiV1SfoUgeplanData = {
+    body?: never;
+    path?: never;
+    query?: {
+        isoYear?: number;
+        isoWeek?: number;
+    };
+    url: '/api/v1/sfo/ugeplan';
+};
+
+export type GetApiV1SfoUgeplanResponses = {
+    /**
+     * OK
+     */
+    200: SfoWeekPlanDto;
+};
+
+export type GetApiV1SfoUgeplanResponse = GetApiV1SfoUgeplanResponses[keyof GetApiV1SfoUgeplanResponses];
+
+export type PutApiV1SfoUgeplanShiftsData = {
+    body?: UpsertSfoWeekPlanShiftRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/sfo/ugeplan/shifts';
+};
+
+export type PutApiV1SfoUgeplanShiftsResponses = {
+    /**
+     * OK
+     */
+    200: SfoWeekPlanShiftDto;
+};
+
+export type PutApiV1SfoUgeplanShiftsResponse = PutApiV1SfoUgeplanShiftsResponses[keyof PutApiV1SfoUgeplanShiftsResponses];
+
 export type GetApiV1StaffData = {
     body?: never;
     path?: never;
@@ -2259,6 +2355,40 @@ export type GetApiV1ModulesResponses = {
 };
 
 export type GetApiV1ModulesResponse = GetApiV1ModulesResponses[keyof GetApiV1ModulesResponses];
+
+export type GetApiV1AdminTenantsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/tenants';
+};
+
+export type GetApiV1AdminTenantsResponses = {
+    /**
+     * OK
+     */
+    200: Array<TenantListItemDto>;
+};
+
+export type GetApiV1AdminTenantsResponse = GetApiV1AdminTenantsResponses[keyof GetApiV1AdminTenantsResponses];
+
+export type GetApiV1AdminTenantsBySchoolIdData = {
+    body?: never;
+    path: {
+        schoolId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/tenants/{schoolId}';
+};
+
+export type GetApiV1AdminTenantsBySchoolIdResponses = {
+    /**
+     * OK
+     */
+    200: TenantDetailDto;
+};
+
+export type GetApiV1AdminTenantsBySchoolIdResponse = GetApiV1AdminTenantsBySchoolIdResponses[keyof GetApiV1AdminTenantsBySchoolIdResponses];
 
 export type PostApiV1TenantsData = {
     body?: CreateTenantRequest;
