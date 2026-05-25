@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -36,6 +36,7 @@ function getISOWeeksInYear(year: number): number {
 }
 
 const DAY_NAMES = ['', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
+const DAY_NAMES_SHORT = ['', 'Man', 'Tir', 'Ons', 'Tor', 'Fre']
 
 interface ShiftForm {
   dayOfWeek: number
@@ -61,7 +62,8 @@ export default function SfoPage() {
 
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
-  const [editingWeekShift, setEditingWeekShift] = useState<SfoWeekPlanShiftDto | null>(null)
+  const [showYearPicker, setShowYearPicker] = useState(false)
+  const [selectedCell, setSelectedCell] = useState<{ shift: SfoShiftDto; weekShift: SfoWeekPlanShiftDto | undefined } | null>(null)
 
   const { data: weekPlan } = useQuery(getApiV1SfoUgeplanOptions({ query: { isoYear, isoWeek } }))
 
@@ -69,7 +71,7 @@ export default function SfoPage() {
     ...putApiV1SfoUgeplanShiftsMutation(),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: getApiV1SfoUgeplanQueryKey({ query: { isoYear, isoWeek } }) })
-      setEditingWeekShift(null)
+      setSelectedCell(null)
     },
   })
 
@@ -162,173 +164,225 @@ export default function SfoPage() {
     }
   }
 
-  // Group by day
-  const byDay = new Map<number, SfoShiftDto[]>()
+  // Collect unique time slots across all days, sorted by start time
+  const uniqueSlotKeys = new Map<string, { startTime: string; endTime: string; label: string | null | undefined }>()
   for (const shift of shifts ?? []) {
-    const d = shift.dayOfWeek ?? 1
-    if (!byDay.has(d)) byDay.set(d, [])
-    byDay.get(d)!.push(shift)
+    const key = `${shift.startTime}–${shift.endTime}`
+    if (!uniqueSlotKeys.has(key)) {
+      uniqueSlotKeys.set(key, { startTime: shift.startTime ?? '', endTime: shift.endTime ?? '', label: shift.label })
+    }
   }
+  const sortedTimeSlots = Array.from(uniqueSlotKeys.entries())
+    .sort((a, b) => a[1].startTime.localeCompare(b[1].startTime))
 
   if (isLoading) {
     return (
-      <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
-        <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+      <div className="flex flex-col h-full">
+        <div className="shrink-0 sticky top-0 z-10 bg-white border-b border-gray-200 px-4 lg:px-6 py-3">
+          <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="flex-1 p-6">
+          <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-display text-2xl font-semibold text-gray-900">SFO Ugeplan</h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700">Ugeplan</span>
+    <div>
+      {/* Top bar */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 lg:px-8 py-3 flex items-center justify-between gap-2">
+        <h1 className="font-display text-base font-semibold text-gray-900 shrink-0">SFO Ugeplan</h1>
+
+        {/* Week navigator */}
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <button
+            onClick={prevWeek}
+            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
+            title="Forrige uge"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={goToThisWeek}
+              className="px-2 sm:px-3 py-1.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 rounded-md transition-colors tabular-nums"
+              title="Gå til denne uge"
+            >
+              Uge {isoWeek}
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowYearPicker(p => !p)}
+                className="px-2 py-1.5 text-sm font-semibold text-brand-600 hover:bg-brand-50 rounded-md transition-colors tabular-nums"
+                title="Skift år"
+              >
+                {isoYear}
+              </button>
+              {showYearPicker && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowYearPicker(false)} />
+                  <div className="absolute left-1/2 -translate-x-1/2 top-9 z-30 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[90px]">
+                    {[-2, -1, 0, 1, 2].map(offset => {
+                      const y = getISOWeekYear(new Date()) + offset
+                      return (
+                        <button
+                          key={y}
+                          onClick={() => { setIsoYear(y); setShowYearPicker(false) }}
+                          className={`w-full px-4 py-2 text-sm text-center hover:bg-gray-50 transition-colors tabular-nums ${y === isoYear ? 'font-semibold text-brand-600' : 'text-gray-700'}`}
+                        >
+                          {y}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          <p className="mt-1 text-sm text-gray-500">Tildel medarbejdere til SFO-vagtblokke pr. ugedag.</p>
+          <button
+            onClick={nextWeek}
+            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
+            title="Næste uge"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 shrink-0">
           <Link
             to={`/udskriv/sfo?isoYear=${isoYear}&isoWeek=${isoWeek}`}
             target="_blank"
-            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Udskriv"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 6 2 18 2 18 9" />
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
             </svg>
-            Udskriv
+            <span className="hidden sm:inline">Udskriv</span>
           </Link>
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Ny vagt
+            <span className="hidden sm:inline">Ny vagt</span>
+            <span className="sm:hidden">Ny</span>
           </button>
         </div>
       </div>
 
-      {(shifts ?? []).length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 text-center">
-          <p className="text-sm text-gray-500">Ingen vagtblokke oprettet endnu.</p>
-          <button
-            onClick={openCreate}
-            className="mt-3 px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-          >
-            Opret første vagt
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map(day => {
-            const dayShifts = byDay.get(day) ?? []
-            if (dayShifts.length === 0) return null
-            return (
-              <div key={day} className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-                <div className="px-4 py-3">
-                  <h2 className="text-sm font-semibold text-gray-700">{DAY_NAMES[day]}</h2>
-                </div>
-                {dayShifts.map(shift => (
-                  <ShiftRow
-                    key={shift.id}
-                    shift={shift}
-                    staff={staff ?? []}
-                    onEdit={() => openEdit(shift)}
-                    onDelete={() => deleteMutation.mutate({ path: { id: shift.id! } })}
-                    onAssignStaff={(staffId) => assignStaffMutation.mutate({ path: { id: shift.id!, staffId } })}
-                    onRemoveStaff={(staffId) => removeStaffMutation.mutate({ path: { id: shift.id!, staffId } })}
-                  />
-                ))}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Per-week activities */}
-      {(shifts ?? []).length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-gray-800">Aktiviteter denne uge</h2>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={prevWeek}
-                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
-                title="Forrige uge"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-              </button>
-              <button
-                onClick={goToThisWeek}
-                className="px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-colors tabular-nums"
-              >
-                Uge {isoWeek}, {isoYear}
-              </button>
-              <button
-                onClick={nextWeek}
-                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
-                title="Næste uge"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </div>
+      {/* Grid area */}
+      <div className="p-4 sm:p-6 lg:p-8">
+        {(shifts ?? []).length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-sm text-gray-500">Ingen vagtblokke oprettet endnu.</p>
+            <button
+              onClick={openCreate}
+              className="mt-3 px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            >
+              Opret første vagt
+            </button>
           </div>
+        ) : (
+          <div className="max-w-5xl mx-auto rounded-xl border border-gray-200 overflow-x-auto">
+            <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] min-w-[520px]">
+              {/* Header row */}
+              <div className="bg-gray-50 border-b border-r border-gray-200 p-3" />
+              {[1, 2, 3, 4, 5].map(day => (
+                <div key={day} className="bg-gray-50 border-b border-r border-gray-200 py-3 px-3 text-center">
+                  <div className="text-sm font-semibold text-gray-700 hidden sm:block">{DAY_NAMES[day]}</div>
+                  <div className="text-sm font-semibold text-gray-700 sm:hidden">{DAY_NAMES_SHORT[day]}</div>
+                </div>
+              ))}
 
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {[1, 2, 3, 4, 5].map(day => {
-              const dayShifts = byDay.get(day) ?? []
-              if (dayShifts.length === 0) return null
-              return (
-                <div key={day}>
-                  <div className="px-4 py-2 bg-gray-50">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{DAY_NAMES[day]}</span>
+              {/* Time slot rows */}
+              {sortedTimeSlots.map(([slotKey, slotMeta]) => (
+                <div key={slotKey} className="contents">
+                  {/* Row label */}
+                  <div className="bg-gray-50 border-b border-r border-gray-200 p-3 flex flex-col justify-center">
+                    <span className="text-xs text-gray-500 font-mono leading-tight whitespace-nowrap">{slotMeta.startTime}</span>
+                    <span className="text-xs text-gray-400 font-mono leading-tight whitespace-nowrap">– {slotMeta.endTime}</span>
+                    {slotMeta.label && (
+                      <span className="text-xs text-gray-400 mt-1 truncate">{slotMeta.label}</span>
+                    )}
                   </div>
-                  {dayShifts.map(shift => {
+
+                  {/* Day cells */}
+                  {[1, 2, 3, 4, 5].map(day => {
+                    const shift = (shifts ?? []).find(
+                      s => s.dayOfWeek === day &&
+                        `${s.startTime}–${s.endTime}` === slotKey
+                    )
+                    if (!shift) {
+                      return (
+                        <div
+                          key={`empty-${slotKey}-${day}`}
+                          className="border-b border-r border-gray-200 bg-gray-50 min-h-[160px]"
+                        />
+                      )
+                    }
+
                     const weekShift = weekPlan?.shifts?.find(ws => ws.sfoShiftId === shift.id)
+
                     return (
                       <div
-                        key={shift.id}
-                        className="px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 cursor-pointer group"
-                        onClick={() => setEditingWeekShift({ sfoShiftId: shift.id, dayOfWeek: shift.dayOfWeek, startTime: shift.startTime, endTime: shift.endTime, label: shift.label, staff: (shift.staff ?? []) as SfoWeekPlanShiftDto['staff'], beskrivelse: weekShift?.beskrivelse ?? null, id: weekShift?.id ?? '' })}
+                        key={`cell-${shift.id}`}
+                        className="border-b border-r border-gray-200 bg-white min-h-[160px] p-3 flex flex-col gap-2 cursor-pointer hover:bg-brand-50/30 transition-colors"
+                        onClick={() => setSelectedCell({ shift, weekShift })}
                       >
-                        <div className="min-w-0">
-                          <span className="text-sm text-gray-700 font-medium">{shift.startTime} – {shift.endTime}</span>
-                          {shift.label && <span className="ml-2 text-xs text-gray-400">{shift.label}</span>}
+                        {(shift.staff ?? []).length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {(shift.staff ?? []).map(s => (
+                              <span key={s.id} className="px-1.5 py-0.5 text-xs bg-brand-50 text-brand-700 rounded-full">{s.name}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-xs text-gray-300">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Ingen</span>
+                          </div>
+                        )}
+                        <div className="flex-1">
                           {weekShift?.beskrivelse ? (
-                            <p className="mt-0.5 text-sm text-gray-600 line-clamp-2">{weekShift.beskrivelse}</p>
+                            <p className="text-xs text-gray-600 line-clamp-4 whitespace-pre-wrap">{weekShift.beskrivelse}</p>
                           ) : (
-                            <p className="mt-0.5 text-xs text-gray-400 italic group-hover:text-brand-500">Klik for at tilføje aktivitet…</p>
+                            <p className="text-xs text-gray-300 italic">Aktivitet…</p>
                           )}
                         </div>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-300 group-hover:text-brand-500 mt-0.5">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
                       </div>
                     )
                   })}
                 </div>
-              )
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Beskrivelse edit modal */}
-      {editingWeekShift && (
-        <BeskrivelsModal
-          shift={editingWeekShift}
+      {/* Cell modal */}
+      {selectedCell && (
+        <CellModal
+          shift={selectedCell.shift}
+          weekShift={selectedCell.weekShift}
           isoYear={isoYear}
           isoWeek={isoWeek}
-          onSave={(beskrivelse) => upsertBeskrivelseMutation.mutate({ body: { isoYear, isoWeek, sfoShiftId: editingWeekShift.sfoShiftId, beskrivelse } })}
-          onClose={() => setEditingWeekShift(null)}
-          isPending={upsertBeskrivelseMutation.isPending}
+          staff={staff ?? []}
+          onClose={() => setSelectedCell(null)}
+          onSaveBeskrivelse={(beskrivelse) =>
+            upsertBeskrivelseMutation.mutate({ body: { isoYear, isoWeek, sfoShiftId: selectedCell.shift.id!, beskrivelse } })
+          }
+          isSavingBeskrivelse={upsertBeskrivelseMutation.isPending}
+          onAssignStaff={(staffId) => assignStaffMutation.mutate({ path: { id: selectedCell.shift.id!, staffId } })}
+          onRemoveStaff={(staffId) => removeStaffMutation.mutate({ path: { id: selectedCell.shift.id!, staffId } })}
+          onEdit={() => { setSelectedCell(null); openEdit(selectedCell.shift) }}
+          onDelete={() => { deleteMutation.mutate({ path: { id: selectedCell.shift.id! } }); setSelectedCell(null) }}
         />
       )}
 
@@ -371,23 +425,11 @@ export default function SfoPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start</label>
-                <input
-                  type="time"
-                  lang="da"
-                  value={form.startTime}
-                  onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
+                <TimeSelect value={form.startTime} onChange={v => setForm(f => ({ ...f, startTime: v }))} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Slut</label>
-                <input
-                  type="time"
-                  lang="da"
-                  value={form.endTime}
-                  onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
+                <TimeSelect value={form.endTime} onChange={v => setForm(f => ({ ...f, endTime: v }))} />
               </div>
             </div>
 
@@ -425,162 +467,199 @@ export default function SfoPage() {
   )
 }
 
-function BeskrivelsModal({ shift, isoYear, isoWeek, onSave, onClose, isPending }: {
-  shift: SfoWeekPlanShiftDto
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const MINUTES = ['00', '15', '30', '45']
+
+function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [h, m] = value.split(':')
+  return (
+    <div className="flex items-center gap-1">
+      <select
+        value={h}
+        onChange={e => onChange(`${e.target.value}:${m}`)}
+        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+      >
+        {HOURS.map(hour => <option key={hour} value={hour}>{hour}</option>)}
+      </select>
+      <span className="text-gray-400 font-medium">:</span>
+      <select
+        value={m}
+        onChange={e => onChange(`${h}:${e.target.value}`)}
+        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+      >
+        {MINUTES.map(min => <option key={min} value={min}>{min}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveBeskrivelse, isSavingBeskrivelse, onAssignStaff, onRemoveStaff, onEdit, onDelete }: {
+  shift: SfoShiftDto
+  weekShift: SfoWeekPlanShiftDto | undefined
   isoYear: number
   isoWeek: number
-  onSave: (beskrivelse: string | null) => void
+  staff: { id?: string; name?: string | null }[]
   onClose: () => void
-  isPending: boolean
+  onSaveBeskrivelse: (beskrivelse: string | null) => void
+  isSavingBeskrivelse: boolean
+  onAssignStaff: (staffId: string) => void
+  onRemoveStaff: (staffId: string) => void
+  onEdit: () => void
+  onDelete: () => void
 }) {
-  const [text, setText] = useState(shift.beskrivelse ?? '')
+  const [text, setText] = useState(weekShift?.beskrivelse ?? '')
+  const [staffQuery, setStaffQuery] = useState('')
+  const [staffOpen, setStaffOpen] = useState(false)
+  const comboboxRef = useRef<HTMLDivElement>(null)
+  const assignedIds = new Set((shift.staff ?? []).map(s => s.id))
+  const filteredUnassigned = staff.filter(s =>
+    !assignedIds.has(s.id) && (s.name ?? '').toLowerCase().includes(staffQuery.toLowerCase())
+  )
+
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) {
+        setStaffOpen(false)
+        setStaffQuery('')
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [])
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Escape') onClose()
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); onSave(text || null) }
+    if (e.key === 'Escape') { if (staffOpen) { setStaffOpen(false); setStaffQuery('') } else onClose() }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); onSaveBeskrivelse(text || null) }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-4">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">
-            {shift.startTime} – {shift.endTime}{shift.label ? ` · ${shift.label}` : ''}
-          </h2>
-          <p className="text-xs text-gray-400 mt-0.5">Uge {isoWeek}, {isoYear}</p>
-        </div>
-        <textarea
-          autoFocus
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Beskriv aktiviteter for denne vagt denne uge…"
-          rows={5}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-        />
-        <p className="text-xs text-gray-400">Ctrl+S for at gemme · Esc for at lukke</p>
-        <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            Annuller
-          </button>
-          <button
-            onClick={() => onSave(text || null)}
-            disabled={isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
-          >
-            {isPending ? 'Gemmer...' : 'Gem'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-interface ShiftRowProps {
-  shift: SfoShiftDto
-  staff: { id?: string; name?: string | null }[]
-  onEdit: () => void
-  onDelete: () => void
-  onAssignStaff: (staffId: string) => void
-  onRemoveStaff: (staffId: string) => void
-}
-
-function ShiftRow({ shift, staff, onEdit, onDelete, onAssignStaff, onRemoveStaff }: ShiftRowProps) {
-  const [showStaffPicker, setShowStaffPicker] = useState(false)
-  const assignedIds = new Set((shift.staff ?? []).map(s => s.id))
-  return (
-    <div className="px-4 py-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-800">
-            {shift.startTime} – {shift.endTime}
-          </span>
-          {shift.label && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{shift.label}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onEdit}
-            className="p-1 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
-            title="Rediger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
-            title="Slet"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Staff assignment */}
-      <div className="flex flex-wrap gap-1.5 items-center">
-        {(shift.staff ?? []).map(s => (
-          <span
-            key={s.id}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-brand-50 text-brand-700 rounded-full"
-          >
-            {s.name}
-            <button
-              onClick={() => onRemoveStaff(s.id!)}
-              className="text-brand-400 hover:text-brand-700"
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 flex flex-col" style={{ maxHeight: '90dvh' }}>
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                {shift.startTime} – {shift.endTime}{shift.label ? ` · ${shift.label}` : ''}
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">Uge {isoWeek}, {isoYear}</p>
+            </div>
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
-          </span>
-        ))}
-        {staff.length > 0 && (
-          <div className="relative">
-            <button
-              onClick={() => setShowStaffPicker(p => !p)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs border border-dashed border-gray-300 text-gray-500 rounded-full hover:border-brand-400 hover:text-brand-600 transition-colors"
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-              </svg>
-              Medarbejdere
-            </button>
-            {showStaffPicker && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowStaffPicker(false)} />
-                <div className="absolute left-0 top-7 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[200px]">
-                  {staff.map(s => {
-                    const assigned = assignedIds.has(s.id)
-                    return (
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+          {/* Staff */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Medarbejdere</p>
+            {/* Assigned chips */}
+            {(shift.staff ?? []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {(shift.staff ?? []).map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => onRemoveStaff(s.id!)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+                  >
+                    {s.name}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Combobox */}
+            {staff.length > 0 ? (
+              <div ref={comboboxRef} className="relative">
+                <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 shrink-0">
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    value={staffQuery}
+                    onChange={e => { setStaffQuery(e.target.value); setStaffOpen(true) }}
+                    onFocus={() => setStaffOpen(true)}
+                    placeholder="Tilføj medarbejder…"
+                    className="flex-1 text-sm outline-none placeholder-gray-400 bg-transparent"
+                  />
+                </div>
+                {staffOpen && filteredUnassigned.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filteredUnassigned.map(s => (
                       <button
                         key={s.id}
-                        onClick={() => assigned ? onRemoveStaff(s.id!) : onAssignStaff(s.id!)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                        onPointerDown={e => { e.preventDefault(); onAssignStaff(s.id!); setStaffQuery(''); setStaffOpen(false) }}
+                        className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${assigned ? 'bg-brand-600 border-brand-600' : 'border-gray-300'}`}>
-                          {assigned && (
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </span>
                         {s.name}
                       </button>
-                    )
-                  })}
-                </div>
-              </>
+                    ))}
+                  </div>
+                )}
+                {staffOpen && staffQuery.length > 0 && filteredUnassigned.length === 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <p className="px-3 py-2 text-sm text-gray-400">Ingen resultater</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">Ingen medarbejdere oprettet.</p>
             )}
           </div>
-        )}
+
+          {/* Beskrivelse */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Aktivitet denne uge</p>
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Beskriv aktiviteter for denne vagt…"
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">Ctrl+S for at gemme</p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Rediger vagt
+            </button>
+            <button
+              onClick={onDelete}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
+              </svg>
+              Slet
+            </button>
+          </div>
+          <button
+            onClick={() => onSaveBeskrivelse(text || null)}
+            disabled={isSavingBeskrivelse}
+            className="px-4 py-1.5 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+          >
+            {isSavingBeskrivelse ? 'Gemmer...' : 'Gem'}
+          </button>
+        </div>
       </div>
     </div>
   )
