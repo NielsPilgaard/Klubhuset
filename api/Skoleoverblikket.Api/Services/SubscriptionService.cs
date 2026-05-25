@@ -174,6 +174,11 @@ public sealed class SubscriptionService(
 			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
 
+		if (sub.Status != SubscriptionStatus.Active)
+		{
+			throw new InvalidOperationException("School does not have an active paid subscription. Modules can only be added to an active subscription.");
+		}
+
 		if (sub.StripeSubscriptionId is null)
 		{
 			throw new InvalidOperationException("School does not have an active Stripe subscription.");
@@ -389,7 +394,7 @@ public sealed class SubscriptionService(
 			return;
 		}
 
-		sub.Status = stripeSub.Status switch
+		var newStatus = stripeSub.Status switch
 		{
 			"active" => SubscriptionStatus.Active,
 			"trialing" => SubscriptionStatus.Trialing,
@@ -398,6 +403,16 @@ public sealed class SubscriptionService(
 			"unpaid" => SubscriptionStatus.Unpaid,
 			_ => sub.Status,
 		};
+
+		// Never downgrade Active to Trialing via a subscription.updated event —
+		// Stripe keeps the subscription in "trialing" state when adding items mid-trial,
+		// which would undo the Active status written by checkout.session.completed.
+		if (sub.Status == SubscriptionStatus.Active && newStatus == SubscriptionStatus.Trialing)
+		{
+			newStatus = SubscriptionStatus.Active;
+		}
+
+		sub.Status = newStatus;
 
 		// Stripe SDK returns DateTime.MinValue when unset — treat that as null
 		sub.CurrentPeriodEnd = stripeSub.CurrentPeriodEnd > DateTime.UnixEpoch

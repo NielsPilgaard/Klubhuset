@@ -14,7 +14,8 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class BillingController(
 	SubscriptionService subscriptionService,
 	ITenantContext tenantContext,
-	IOptions<ApplicationOptions> appOptions) : ControllerBase
+	IOptions<ApplicationOptions> appOptions,
+	ILogger<BillingController> logger) : ControllerBase
 {
 	public record SubscriptionDto(
 		SubscriptionStatus Status,
@@ -50,6 +51,7 @@ public sealed class BillingController(
 		}
 		catch (Stripe.StripeException ex)
 		{
+			logger.LogError(ex, "AddModule Stripe error: {Code} {Message}", ex.StripeError?.Code, ex.Message);
 			return Problem(
 				title: "Betalingsgateway fejl",
 				detail: "Kunne ikke tilføje modul. Prøv igen eller kontakt support.",
