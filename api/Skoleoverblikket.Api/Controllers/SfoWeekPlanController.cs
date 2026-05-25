@@ -48,7 +48,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		if (isoYear is null || isoWeek is null)
 		{
 
-			return Problem("isoYear og isoWeek er påkrævet", statusCode: 400);
+			return Problem("årstal eller ugenummer er påkrævet", statusCode: 400);
 		}
 
 		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
@@ -98,7 +98,6 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
 		}
 
-
 		var shift = await db.SfoShifts
 			.AsNoTracking()
 			.Include(s => s.StaffAssignments).ThenInclude(ss => ss.Staff)
@@ -109,7 +108,6 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 
 			return NotFound();
 		}
-
 
 		var weekPlan = await db.SfoWeekPlans
 			.Include(w => w.Shifts)

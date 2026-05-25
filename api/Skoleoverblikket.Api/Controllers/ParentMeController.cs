@@ -29,7 +29,6 @@ public sealed class ParentMeController(AppDbContext db) : ControllerBase
 			return Unauthorized();
 		}
 
-
 		var parent = await db.Parents
 			.AsNoTracking()
 			.Include(p => p.Students).ThenInclude(s => s.Class)
@@ -39,7 +38,6 @@ public sealed class ParentMeController(AppDbContext db) : ControllerBase
 		{
 			return NotFound();
 		}
-
 
 		var classes = parent.Students
 			.Select(s => new ParentClassDto(s.ClassId, s.Class?.Name ?? string.Empty))
