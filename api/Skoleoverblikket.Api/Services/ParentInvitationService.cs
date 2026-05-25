@@ -64,10 +64,18 @@ public sealed class ParentInvitationService(
 	private async Task<string?> EnsureKeycloakAccountAsync(Parent parent, CancellationToken ct)
 	{
 		if (!string.IsNullOrWhiteSpace(parent.KeycloakSubject))
+		{
+
 			return null;
+		}
+
 
 		if (string.IsNullOrWhiteSpace(parent.Name))
+		{
+
 			throw new InvalidOperationException($"Cannot create Keycloak account for parent {parent.Email}: name is empty.");
+		}
+
 
 		var temporaryPassword = GenerateTemporaryPassword();
 		var nameParts = parent.Name.Trim().Split(' ', 2);
