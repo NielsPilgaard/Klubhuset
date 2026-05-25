@@ -330,7 +330,7 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
                   <button
                     key={p.label}
                     type="button"
-                    onClick={() => { setStartDate(p.start); setEndDate(p.end) }}
+                    onClick={() => { setStartDate(p.start); setEndDate(p.end); if (!name.trim()) setName(p.label) }}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${active ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400 hover:text-brand-700'}`}
                   >
                     {p.label}
