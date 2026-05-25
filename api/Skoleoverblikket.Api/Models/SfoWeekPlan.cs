@@ -37,7 +37,7 @@ public sealed class SfoWeekPlanShift : ITenantScoped, IEntityTypeConfiguration<S
 
 	public void Configure(EntityTypeBuilder<SfoWeekPlanShift> builder)
 	{
-		builder.Property(s => s.UpdatedAt).HasDefaultValueSql("now()");
+		builder.Property(s => s.UpdatedAt).ValueGeneratedNever();
 		builder.HasOne(s => s.SfoWeekPlan).WithMany(w => w.Shifts).HasForeignKey(s => s.SfoWeekPlanId).OnDelete(DeleteBehavior.Cascade);
 		builder.HasOne(s => s.SfoShift).WithMany().HasForeignKey(s => s.SfoShiftId).OnDelete(DeleteBehavior.Cascade);
 		builder.HasIndex(s => new { s.SfoWeekPlanId, s.SfoShiftId }).IsUnique();
