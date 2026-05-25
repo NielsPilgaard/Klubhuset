@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import keycloak, { getInitPromise } from './keycloak'
-import { AuthContext } from './AuthContext'
+import { AuthContext, type ViewAs } from './AuthContext'
 import type { StaffRole } from '../api/generated/types.gen'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -8,6 +8,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false)
   const [staffRole, setStaffRole] = useState<StaffRole | null>(null)
   const [staffId, setStaffId] = useState<string | null>(null)
+  const [viewAs, setViewAs] = useState<ViewAs>('default')
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -77,9 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     : undefined
   // UI-only: used for display/UI hints only. Server enforces actual authorization.
   const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
-  const isAdmin = roles.includes('admin')
-  const isParent = roles.includes('parent')
   const isSuperAdmin = roles.includes('superadmin')
+
+  const effectiveViewAs = isSuperAdmin ? viewAs : 'default'
+  const isAdmin = effectiveViewAs === 'admin' || (effectiveViewAs === 'default' && roles.includes('admin'))
+  const isParent = effectiveViewAs === 'parent' || (effectiveViewAs === 'default' && roles.includes('parent'))
 
   return (
     <AuthContext.Provider
@@ -93,6 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token: keycloak.token,
         userName,
         logout: () => keycloak.logout({ redirectUri: 'https://skoleoverblikket.dk' }),
+        viewAs: effectiveViewAs,
+        setViewAs,
       }}
     >
       {children}

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/useAuth'
 import Layout from './components/Layout'
+import ViewModeToolbar from './components/ViewModeToolbar'
 
 // Keep critical public pages as regular imports
 import LandingPage from './pages/LandingPage'
@@ -59,9 +60,9 @@ const queryClient = new QueryClient({
 })
 
 function HomeRedirect() {
-  const { authenticated, isAdmin, isParent, isSuperAdmin } = useAuth()
+  const { authenticated, isAdmin, isParent, isSuperAdmin, viewAs } = useAuth()
   if (authenticated) {
-    if (isSuperAdmin) return <Navigate to="/backoffice" replace />
+    if (isSuperAdmin && viewAs === 'default') return <Navigate to="/backoffice" replace />
     if (isParent) return <Navigate to="/foraeldrevisning/skema" replace />
     return <Navigate to={isAdmin ? '/dashboard' : '/mig/skema'} replace />
   }
@@ -92,6 +93,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <ScrollToTop />
+          <ViewModeToolbar />
           <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Indlæser...</div>}>
             <Routes>
           {/* Public routes */}
