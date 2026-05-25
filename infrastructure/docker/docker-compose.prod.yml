@@ -104,7 +104,6 @@ services:
       OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS}
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       Stripe__SecretKey: ${Stripe_SecretKey}
-      Stripe__PriceId: ${Stripe_PriceId}
       Stripe__WebhookSecret: ${Stripe_WebhookSecret}
       Stripe__BasePriceId: ${Stripe_BasePriceId}
       Stripe__ModulePriceIds__ParentModule: ${Stripe_ModulePriceIds_ParentModule}
