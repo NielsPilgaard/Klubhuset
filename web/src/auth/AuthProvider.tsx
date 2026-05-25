@@ -79,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
   const isAdmin = roles.includes('admin')
   const isParent = roles.includes('parent')
+  const isSuperAdmin = roles.includes('superadmin')
 
   return (
     <AuthContext.Provider
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authenticated,
         isAdmin,
         isParent,
+        isSuperAdmin,
         staffRole,
         staffId,
         token: keycloak.token,

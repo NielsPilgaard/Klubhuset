@@ -5,6 +5,7 @@ export interface AuthContextValue {
   authenticated: boolean
   isAdmin: boolean
   isParent: boolean
+  isSuperAdmin: boolean
   staffRole: StaffRole | null
   staffId: string | null
   token: string | undefined

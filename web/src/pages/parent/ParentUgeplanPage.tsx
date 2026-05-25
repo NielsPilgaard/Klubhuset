@@ -29,6 +29,13 @@ function getISOWeekYear(date: Date): number {
   return d.getUTCFullYear()
 }
 
+function getISOWeeksInYear(year: number): number {
+  // A year has 53 ISO weeks if Jan 1 or Dec 31 falls on Thursday
+  const jan1 = new Date(Date.UTC(year, 0, 1)).getUTCDay()
+  const dec31 = new Date(Date.UTC(year, 11, 31)).getUTCDay()
+  return jan1 === 4 || dec31 === 4 ? 53 : 52
+}
+
 interface Slot {
   id: string
   weekday: string
@@ -121,15 +128,21 @@ export default function ParentUgeplanPage() {
 
   function prevWeek() {
     if (isoWeek === 1) {
-      setIsoYear(y => y - 1)
-      setIsoWeek(52)
+      const prevYear = isoYear - 1
+      setIsoYear(prevYear)
+      setIsoWeek(getISOWeeksInYear(prevYear))
     } else {
       setIsoWeek(w => w - 1)
     }
   }
 
   function nextWeek() {
-    setIsoWeek(w => w + 1)
+    if (isoWeek >= getISOWeeksInYear(isoYear)) {
+      setIsoYear(y => y + 1)
+      setIsoWeek(1)
+    } else {
+      setIsoWeek(w => w + 1)
+    }
   }
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">Indlæser...</div>

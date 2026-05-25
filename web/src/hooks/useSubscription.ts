@@ -8,6 +8,6 @@ export function useSubscription() {
   const modules: string[] = Array.isArray(data) ? (data as string[]) : []
   return {
     hasParentModule: modules.includes('ParentModule'),
-    hasboardModule: modules.includes('BoardModule'),
+    hasBoardModule: modules.includes('BoardModule'),
   }
 }

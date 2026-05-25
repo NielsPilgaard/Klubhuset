@@ -41,7 +41,8 @@ export default function ParentCalendarPage() {
   if (isError) return <div className="p-6 text-sm text-red-600">Kunne ikke hente kalender.</div>
 
   const grouped = entries.reduce<Record<number, CalendarEntryDto[]>>((acc, entry) => {
-    const month = new Date(entry.startDate!).getMonth()
+    if (!entry.startDate) return acc
+    const month = new Date(entry.startDate).getMonth()
     if (!acc[month]) acc[month] = []
     acc[month].push(entry)
     return acc
@@ -71,8 +72,8 @@ export default function ParentCalendarPage() {
                   </span>
                   <span className="text-sm text-gray-900 flex-1">{entry.title}</span>
                   <span className="text-xs text-gray-400 shrink-0">
-                    {formatDate(entry.startDate!)}
-                    {entry.endDate !== entry.startDate && ` – ${formatDate(entry.endDate!)}`}
+                    {entry.startDate && formatDate(entry.startDate)}
+                    {entry.endDate && entry.endDate !== entry.startDate && ` – ${formatDate(entry.endDate)}`}
                   </span>
                 </div>
               ))}

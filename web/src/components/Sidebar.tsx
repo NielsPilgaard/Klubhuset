@@ -15,6 +15,7 @@ interface NavItem {
   adminOnly?: boolean
   parentOnly?: boolean
   moduleGated?: boolean
+  group?: string
 }
 
 const navItems: NavItem[] = [
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   {
     to: '/klasser',
     label: 'Klasser',
+    group: 'Planlægning',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -70,9 +72,21 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    to: '/sfo',
+    label: 'SFO',
+    adminOnly: true,
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+  },
+  {
     to: '/medarbejdere',
     label: 'Medarbejdere',
     adminOnly: true,
+    group: 'Stamdata',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -97,27 +111,6 @@ const navItems: NavItem[] = [
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
         <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-  },
-  {
-    to: '/filer',
-    label: 'Filer',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-  },
-  {
-    to: '/eksporter',
-    label: 'Eksporter',
-    adminOnly: true,
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
       </svg>
     ),
   },
@@ -150,13 +143,24 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    to: '/sfo',
-    label: 'SFO',
+    to: '/filer',
+    label: 'Filer',
+    group: 'Filer & Eksport',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/eksporter',
+    label: 'Eksporter',
     adminOnly: true,
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
       </svg>
     ),
   },
@@ -289,24 +293,34 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {visibleNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-brand-600 text-white'
-                    : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-                }`
-              }
-            >
-              <span className="shrink-0">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          {visibleNavItems.map((item, index) => {
+            const prevItem = visibleNavItems[index - 1]
+            const showGroupLabel = item.group != null && item.group !== prevItem?.group
+            return (
+              <div key={item.to}>
+                {showGroupLabel && (
+                  <p className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-brand-400 select-none">
+                    {item.group}
+                  </p>
+                )}
+                <NavLink
+                  to={item.to}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-brand-600 text-white'
+                        : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+                    }`
+                  }
+                >
+                  <span className="shrink-0">{item.icon}</span>
+                  {item.label}
+                </NavLink>
+              </div>
+            )
+          })}
         </nav>
 
         {/* Footer */}

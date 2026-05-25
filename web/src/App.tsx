@@ -29,6 +29,7 @@ const CoursesPage = lazy(() => import('./pages/CoursesPage'))
 const RoomsPage = lazy(() => import('./pages/RoomsPage'))
 const RoomSchedulePage = lazy(() => import('./pages/RoomSchedulePage'))
 const PrintSchemaPage = lazy(() => import('./pages/PrintSchemaPage'))
+const SfoPrintPage = lazy(() => import('./pages/SfoPrintPage'))
 const SkoleindstillingerPage = lazy(() => import('./pages/SkoleindstillingerPage'))
 const SchoolSetupWizardPage = lazy(() => import('./pages/SchoolSetupWizardPage'))
 const FilesPage = lazy(() => import('./pages/FilesPage'))
@@ -44,6 +45,9 @@ const YearRollPage = lazy(() => import('./pages/AarsrulPage'))
 const ParentSchemaPage = lazy(() => import('./pages/parent/ParentSchemaPage'))
 const ParentCalendarPage = lazy(() => import('./pages/parent/ParentCalendarPage'))
 const ParentUgeplanPage = lazy(() => import('./pages/parent/ParentUgeplanPage'))
+const BackofficeLayout = lazy(() => import('./pages/backoffice/BackofficeLayout'))
+const BackofficeTenantsPage = lazy(() => import('./pages/backoffice/BackofficeTenantsPage'))
+const BackofficeTenantDetailPage = lazy(() => import('./pages/backoffice/BackofficeTenantDetailPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,8 +59,9 @@ const queryClient = new QueryClient({
 })
 
 function HomeRedirect() {
-  const { authenticated, isAdmin, isParent } = useAuth()
+  const { authenticated, isAdmin, isParent, isSuperAdmin } = useAuth()
   if (authenticated) {
+    if (isSuperAdmin) return <Navigate to="/backoffice" replace />
     if (isParent) return <Navigate to="/foraeldrevisning/skema" replace />
     return <Navigate to={isAdmin ? '/dashboard' : '/mig/skema'} replace />
   }
@@ -72,6 +77,12 @@ function AdminRoute({ children }: { children: JSX.Element }) {
 function ParentRoute({ children }: { children: JSX.Element }) {
   const { isParent } = useAuth()
   if (!isParent) return <Navigate to="/mig/skema" replace />
+  return <>{children}</>
+}
+
+function SuperAdminRoute({ children }: { children: JSX.Element }) {
+  const { isSuperAdmin } = useAuth()
+  if (!isSuperAdmin) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
@@ -95,9 +106,15 @@ export default function App() {
           <Route path="udskriv/klasse/:classId" element={<PrintSchemaPage />} />
           <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
           <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />
+          <Route path="udskriv/sfo" element={<SfoPrintPage />} />
 
           {/* Pages outside Layout (no sidebar) */}
           <Route path="setup" element={<SchoolSetupWizardPage />} />
+          <Route path="backoffice" element={<SuperAdminRoute><BackofficeLayout /></SuperAdminRoute>}>
+            <Route index element={<Navigate to="tenants" replace />} />
+            <Route path="tenants" element={<BackofficeTenantsPage />} />
+            <Route path="tenants/:schoolId" element={<BackofficeTenantDetailPage />} />
+          </Route>
 
           {/* Authenticated app */}
           <Route path="/" element={<Layout />}>

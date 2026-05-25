@@ -1,8 +1,10 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1BillingSubscriptionOptions,
   postApiV1BillingCheckoutMutation,
   postApiV1BillingPortalMutation,
+  postApiV1BillingModulesMutation,
+  deleteApiV1BillingModulesByModuleMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { SubscriptionDto } from '../api/generated/types.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -46,6 +48,7 @@ function CheckIcon() {
 
 export default function BillingPage() {
   usePageTitle('Abonnement')
+  const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useQuery(getApiV1BillingSubscriptionOptions())
 
   const checkoutMutation = useMutation({
@@ -72,7 +75,32 @@ export default function BillingPage() {
     },
   })
 
+  const addModuleMutation = useMutation({
+    ...postApiV1BillingModulesMutation(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(getApiV1BillingSubscriptionOptions())
+    },
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Kunne ikke aktivere modul'
+      console.error('Add module error:', error)
+      alert(errorMessage)
+    },
+  })
+
+  const removeModuleMutation = useMutation({
+    ...deleteApiV1BillingModulesByModuleMutation(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(getApiV1BillingSubscriptionOptions())
+    },
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Kunne ikke deaktivere modul'
+      console.error('Remove module error:', error)
+      alert(errorMessage)
+    },
+  })
+
   const isRedirecting = checkoutMutation.isPending || portalMutation.isPending
+  const activeModules = data?.activeModules ?? []
 
   return (
     <div className="p-6 pb-12 lg:p-8 max-w-2xl mx-auto space-y-8">
@@ -114,6 +142,22 @@ export default function BillingPage() {
         onCheckout={() => checkoutMutation.mutate({})}
         isRedirecting={isRedirecting}
       />
+
+      {/* Add-on modules */}
+      <div>
+        <h2 className="font-display text-lg font-semibold text-gray-900 mb-3">Tilkøb</h2>
+        <ModuleCard
+          name="Forældremodul"
+          description="Giv forældre adgang til at se klassernes skema, kalender og ugeplan. Inviter forældre via e-mail og knyt dem til deres barns klasse."
+          price="499 kr/md"
+          isActive={activeModules.includes('ParentModule')}
+          canToggle={data?.hasAccess ?? false}
+          isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
+          onActivate={() => addModuleMutation.mutate({ body: { module: 'ParentModule' } })}
+          onDeactivate={() => removeModuleMutation.mutate({ path: { module: 'ParentModule' } })}
+          blockedReason={!data?.hasAccess ? 'Kræver aktivt abonnement eller prøveperiode' : undefined}
+        />
+      </div>
     </div>
   )
 }
@@ -275,6 +319,70 @@ function StatusCard({
             </button>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function ModuleCard({
+  name,
+  description,
+  price,
+  isActive,
+  canToggle,
+  isPending,
+  onActivate,
+  onDeactivate,
+  blockedReason,
+}: {
+  name: string
+  description: string
+  price: string
+  isActive: boolean
+  canToggle: boolean
+  isPending: boolean
+  onActivate: () => void
+  onDeactivate: () => void
+  blockedReason?: string
+}) {
+  return (
+    <div className={`bg-white rounded-xl border ${isActive ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}>
+      <div className="px-6 py-5 flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-700">{name}</h3>
+            {isActive && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
+                Aktiv
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">{description}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="text-lg font-semibold text-gray-900 tabular-nums">{price}</span>
+        </div>
+      </div>
+      <div className="px-6 pb-5">
+        {blockedReason ? (
+          <p className="text-xs text-gray-400 italic">{blockedReason}</p>
+        ) : isActive ? (
+          <button
+            onClick={onDeactivate}
+            disabled={isPending}
+            className="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isPending ? 'Vent...' : 'Deaktiver'}
+          </button>
+        ) : (
+          <button
+            onClick={onActivate}
+            disabled={isPending || !canToggle}
+            className="px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isPending ? 'Vent...' : 'Aktiver'}
+          </button>
+        )}
       </div>
     </div>
   )
