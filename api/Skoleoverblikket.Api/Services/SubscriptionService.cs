@@ -154,7 +154,10 @@ public sealed class SubscriptionService(
 			.Include(s => s.ActiveModules)
 			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
 
-		if (sub is null) return [];
+		if (sub is null)
+		{
+			return [];
+		}
 
 		return sub.ActiveModules
 			.Select(m => m.Module.ToString())
@@ -172,12 +175,19 @@ public sealed class SubscriptionService(
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
 
 		if (sub.StripeSubscriptionId is null)
+		{
 			throw new InvalidOperationException("School does not have an active Stripe subscription.");
+		}
 
 		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var priceId) || string.IsNullOrEmpty(priceId))
+		{
 			throw new InvalidOperationException($"No Stripe price configured for module {module}.");
+		}
 
-		if (sub.ActiveModules.Any(m => m.Module == module)) return;
+		if (sub.ActiveModules.Any(m => m.Module == module))
+		{
+			return;
+		}
 
 		var item = await subscriptionItemService.CreateAsync(new SubscriptionItemCreateOptions
 		{
@@ -193,7 +203,26 @@ public sealed class SubscriptionService(
 			Module = module,
 			StripeSubscriptionItemId = item.Id,
 		});
-		await db.SaveChangesAsync(ct);
+
+		try
+		{
+			await db.SaveChangesAsync(ct);
+		}
+		catch (DbUpdateException ex)
+		{
+			// Compensate: remove the Stripe item so billing matches DB state.
+			logger.LogWarning(ex, "AddModuleAsync: DB save failed after Stripe item {ItemId} created for school {SchoolId}, module {Module}. Removing Stripe item.", item.Id, schoolId, module);
+			try
+			{
+				await subscriptionItemService.DeleteAsync(item.Id, new SubscriptionItemDeleteOptions(), cancellationToken: ct);
+			}
+			catch (Exception stripeEx)
+			{
+				logger.LogError(stripeEx, "AddModuleAsync: compensation delete of Stripe item {ItemId} also failed — manual cleanup required.", item.Id);
+			}
+
+			throw;
+		}
 	}
 
 	/// <summary>
@@ -207,18 +236,23 @@ public sealed class SubscriptionService(
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
 
 		var moduleItem = sub.ActiveModules.FirstOrDefault(m => m.Module == module);
-		if (moduleItem is null) return;
-
-		if (!moduleItem.IsAdminOverride && moduleItem.StripeSubscriptionItemId is not null)
+		if (moduleItem is null)
 		{
-			await subscriptionItemService.DeleteAsync(
-				moduleItem.StripeSubscriptionItemId,
-				new SubscriptionItemDeleteOptions(),
-				cancellationToken: ct);
+			return;
 		}
+
+		var stripeItemId = (!moduleItem.IsAdminOverride) ? moduleItem.StripeSubscriptionItemId : null;
 
 		db.SubscriptionModuleItems.Remove(moduleItem);
 		await db.SaveChangesAsync(ct);
+
+		if (stripeItemId is not null)
+		{
+			await subscriptionItemService.DeleteAsync(
+				stripeItemId,
+				new SubscriptionItemDeleteOptions(),
+				cancellationToken: ct);
+		}
 	}
 
 	/// <summary>
@@ -237,7 +271,10 @@ public sealed class SubscriptionService(
 			await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(ct);
 		}
 
-		if (sub.ActiveModules.Any(m => m.Module == module)) return;
+		if (sub.ActiveModules.Any(m => m.Module == module))
+		{
+			return;
+		}
 
 		db.SubscriptionModuleItems.Add(new SubscriptionModuleItem
 		{
@@ -246,7 +283,23 @@ public sealed class SubscriptionService(
 			Module = module,
 			IsAdminOverride = true,
 		});
-		await db.SaveChangesAsync(ct);
+
+		try
+		{
+			await db.SaveChangesAsync(ct);
+		}
+		catch (DbUpdateException)
+		{
+			// Concurrent request inserted the same module — treat as no-op.
+			var alreadyExists = await db.SubscriptionModuleItems
+				.AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, ct);
+			if (!alreadyExists)
+			{
+				throw;
+			}
+
+			logger.LogDebug("GrantModuleOverrideAsync: duplicate insert for school {SchoolId}, module {Module} — ignored", schoolId, module);
+		}
 	}
 
 	/// <summary>

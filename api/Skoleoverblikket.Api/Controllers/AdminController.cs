@@ -23,6 +23,10 @@ public sealed class AdminController(SubscriptionService subscriptionService) : C
 			await subscriptionService.GrantModuleOverrideAsync(schoolId, request.Module, ct);
 			return NoContent();
 		}
+		catch (InvalidOperationException ex) when (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+		{
+			return NotFound(new { detail = ex.Message });
+		}
 		catch (InvalidOperationException ex)
 		{
 			return Problem(title: "Modul override fejlede", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
@@ -36,6 +40,10 @@ public sealed class AdminController(SubscriptionService subscriptionService) : C
 		{
 			await subscriptionService.RemoveModuleAsync(schoolId, module, ct);
 			return NoContent();
+		}
+		catch (InvalidOperationException ex) when (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+		{
+			return NotFound(new { detail = ex.Message });
 		}
 		catch (InvalidOperationException ex)
 		{
