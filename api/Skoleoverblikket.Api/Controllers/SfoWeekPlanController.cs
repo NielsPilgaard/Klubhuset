@@ -93,7 +93,6 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 	{
 		if (!IsoWeekValidation.IsValid(request.IsoYear, request.IsoWeek))
 		{
-
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
 		}
 
@@ -104,56 +103,38 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 
 		if (shift is null)
 		{
-
 			return NotFound();
 		}
 
-		SfoWeekPlanShift weekShift;
-		const int maxRetries = 3;
-		for (var attempt = 0; ; attempt++)
+		var weekPlanId = await GetOrCreateWeekPlanId(request.IsoYear, request.IsoWeek, ct);
+		if (weekPlanId is null)
 		{
-			db.ChangeTracker.Clear();
+			return Problem("Kunne ikke oprette ugeplan", statusCode: 500);
+		}
 
-			var weekPlan = await db.SfoWeekPlans
-				.Include(w => w.Shifts)
-				.FirstOrDefaultAsync(w => w.IsoYear == request.IsoYear && w.IsoWeek == request.IsoWeek, ct);
+		var weekShift = await db.SfoWeekPlanShifts
+			.FirstOrDefaultAsync(ws => ws.SfoWeekPlanId == weekPlanId.Value && ws.SfoShiftId == request.SfoShiftId, ct);
 
-			if (weekPlan is null)
-			{
-				weekPlan = new SfoWeekPlan
-				{
-					Id = Guid.NewGuid(),
-					TenantId = tenant.TenantId,
-					IsoYear = request.IsoYear,
-					IsoWeek = request.IsoWeek,
-				};
-				db.SfoWeekPlans.Add(weekPlan);
-			}
-
-			weekShift = weekPlan.Shifts.FirstOrDefault(ws => ws.SfoShiftId == request.SfoShiftId)
-				?? new SfoWeekPlanShift
-				{
-					Id = Guid.NewGuid(),
-					TenantId = tenant.TenantId,
-					SfoWeekPlanId = weekPlan.Id,
-					SfoShiftId = request.SfoShiftId,
-				};
-
-			if (!weekPlan.Shifts.Contains(weekShift))
-				weekPlan.Shifts.Add(weekShift);
-
+		if (weekShift is not null)
+		{
 			weekShift.Beskrivelse = request.Beskrivelse;
 			weekShift.UpdatedAt = DateTimeOffset.UtcNow;
-
-			try
-			{
-				await db.SaveChangesAsync(ct);
-				break;
-			}
-			catch (DbUpdateException) when (attempt < maxRetries)
-			{
-			}
 		}
+		else
+		{
+			weekShift = new SfoWeekPlanShift
+			{
+				Id = Guid.NewGuid(),
+				TenantId = tenant.TenantId,
+				SfoWeekPlanId = weekPlanId.Value,
+				SfoShiftId = request.SfoShiftId,
+				Beskrivelse = request.Beskrivelse,
+				UpdatedAt = DateTimeOffset.UtcNow,
+			};
+			db.SfoWeekPlanShifts.Add(weekShift);
+		}
+
+		await db.SaveChangesAsync(ct);
 
 		return Ok(new SfoWeekPlanShiftDto(
 			weekShift.Id,
@@ -164,5 +145,34 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			shift.Label,
 			shift.StaffAssignments.Select(sa => new SfoStaffRefDto(sa.StaffId, sa.Staff.Name)).ToList(),
 			weekShift.Beskrivelse));
+	}
+
+	private async Task<Guid?> GetOrCreateWeekPlanId(int isoYear, int isoWeek, CancellationToken ct)
+	{
+		var id = await db.SfoWeekPlans
+			.Where(w => w.IsoYear == isoYear && w.IsoWeek == isoWeek)
+			.Select(w => (Guid?)w.Id)
+			.FirstOrDefaultAsync(ct);
+
+		if (id is not null)
+		{
+			return id;
+		}
+
+		db.SfoWeekPlans.Add(new SfoWeekPlan
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenant.TenantId,
+			IsoYear = isoYear,
+			IsoWeek = isoWeek,
+		});
+
+		try { await db.SaveChangesAsync(ct); }
+		catch (DbUpdateException) { db.ChangeTracker.Clear(); }
+
+		return await db.SfoWeekPlans
+			.Where(w => w.IsoYear == isoYear && w.IsoWeek == isoWeek)
+			.Select(w => (Guid?)w.Id)
+			.FirstOrDefaultAsync(ct);
 	}
 }
