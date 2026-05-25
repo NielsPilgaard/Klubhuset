@@ -879,3 +879,266 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    ALTER TABLE "Classes" ADD "ArchivedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE TABLE "Parents" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "Email" character varying(500) NOT NULL,
+        "Phone" character varying(50),
+        "Address" character varying(500),
+        "PostalCode" character varying(10),
+        "City" character varying(100),
+        "ShareContactInfo" boolean NOT NULL,
+        "KeycloakSubject" character varying(128),
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_Parents" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE TABLE "SfoShifts" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "DayOfWeek" integer NOT NULL,
+        "StartTime" time without time zone NOT NULL,
+        "EndTime" time without time zone NOT NULL,
+        "Label" character varying(200),
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_SfoShifts" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE TABLE "Students" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "ClassId" uuid NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_Students" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_Students_Classes_ClassId" FOREIGN KEY ("ClassId") REFERENCES "Classes" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE TABLE "ParentInvitations" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "ParentId" uuid NOT NULL,
+        "Email" character varying(500) NOT NULL,
+        "Token" character varying(128) NOT NULL,
+        "ExpiresAt" timestamp with time zone NOT NULL,
+        "AcceptedAt" timestamp with time zone,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "RowVersion" bytea,
+        CONSTRAINT "PK_ParentInvitations" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ParentInvitations_Parents_ParentId" FOREIGN KEY ("ParentId") REFERENCES "Parents" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE TABLE "SfoShiftStaff" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "ShiftId" uuid NOT NULL,
+        "StaffId" uuid NOT NULL,
+        CONSTRAINT "PK_SfoShiftStaff" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SfoShiftStaff_SfoShifts_ShiftId" FOREIGN KEY ("ShiftId") REFERENCES "SfoShifts" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_SfoShiftStaff_Staff_StaffId" FOREIGN KEY ("StaffId") REFERENCES "Staff" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE TABLE "ParentStudents" (
+        "ParentId" uuid NOT NULL,
+        "StudentId" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        CONSTRAINT "PK_ParentStudents" PRIMARY KEY ("ParentId", "StudentId"),
+        CONSTRAINT "FK_ParentStudents_Parents_ParentId" FOREIGN KEY ("ParentId") REFERENCES "Parents" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_ParentStudents_Students_StudentId" FOREIGN KEY ("StudentId") REFERENCES "Students" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE INDEX "IX_ParentInvitations_ParentId" ON "ParentInvitations" ("ParentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE UNIQUE INDEX "IX_ParentInvitations_Token" ON "ParentInvitations" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE INDEX "IX_ParentStudents_StudentId" ON "ParentStudents" ("StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE UNIQUE INDEX "IX_ParentStudents_TenantId_ParentId_StudentId" ON "ParentStudents" ("TenantId", "ParentId", "StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE INDEX "IX_SfoShiftStaff_ShiftId" ON "SfoShiftStaff" ("ShiftId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE INDEX "IX_SfoShiftStaff_StaffId" ON "SfoShiftStaff" ("StaffId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    CREATE INDEX "IX_Students_ClassId" ON "Students" ("ClassId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260520135716_AddArchivedAtToClass') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260520135716_AddArchivedAtToClass', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260523103235_Add_SubscriptionModuleItems') THEN
+    CREATE TABLE "SubscriptionModuleItems" (
+        "Id" uuid NOT NULL,
+        "SubscriptionId" uuid NOT NULL,
+        "Module" integer NOT NULL,
+        "StripeSubscriptionItemId" text,
+        "IsAdminOverride" boolean NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_SubscriptionModuleItems" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SubscriptionModuleItems_Subscriptions_SubscriptionId" FOREIGN KEY ("SubscriptionId") REFERENCES "Subscriptions" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260523103235_Add_SubscriptionModuleItems') THEN
+    CREATE UNIQUE INDEX "IX_SubscriptionModuleItems_SubscriptionId_Module" ON "SubscriptionModuleItems" ("SubscriptionId", "Module");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260523103235_Add_SubscriptionModuleItems') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260523103235_Add_SubscriptionModuleItems', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525061406_Add_SfoWeekPlan') THEN
+    CREATE TABLE "SfoWeekPlans" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "IsoYear" integer NOT NULL,
+        "IsoWeek" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_SfoWeekPlans" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525061406_Add_SfoWeekPlan') THEN
+    CREATE TABLE "SfoWeekPlanShifts" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "SfoWeekPlanId" uuid NOT NULL,
+        "SfoShiftId" uuid NOT NULL,
+        "Beskrivelse" character varying(4000),
+        "UpdatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_SfoWeekPlanShifts" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SfoWeekPlanShifts_SfoShifts_SfoShiftId" FOREIGN KEY ("SfoShiftId") REFERENCES "SfoShifts" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_SfoWeekPlanShifts_SfoWeekPlans_SfoWeekPlanId" FOREIGN KEY ("SfoWeekPlanId") REFERENCES "SfoWeekPlans" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525061406_Add_SfoWeekPlan') THEN
+    CREATE UNIQUE INDEX "IX_SfoWeekPlans_TenantId_IsoYear_IsoWeek" ON "SfoWeekPlans" ("TenantId", "IsoYear", "IsoWeek");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525061406_Add_SfoWeekPlan') THEN
+    CREATE INDEX "IX_SfoWeekPlanShifts_SfoShiftId" ON "SfoWeekPlanShifts" ("SfoShiftId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525061406_Add_SfoWeekPlan') THEN
+    CREATE UNIQUE INDEX "IX_SfoWeekPlanShifts_SfoWeekPlanId_SfoShiftId" ON "SfoWeekPlanShifts" ("SfoWeekPlanId", "SfoShiftId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525061406_Add_SfoWeekPlan') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260525061406_Add_SfoWeekPlan', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -29,6 +29,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<ClassPermission> ClassPermissions => Set<ClassPermission>();
 	public DbSet<SfoShift> SfoShifts => Set<SfoShift>();
 	public DbSet<SfoShiftStaff> SfoShiftStaff => Set<SfoShiftStaff>();
+	public DbSet<SfoWeekPlan> SfoWeekPlans => Set<SfoWeekPlan>();
+	public DbSet<SfoWeekPlanShift> SfoWeekPlanShifts => Set<SfoWeekPlanShift>();
 	public DbSet<Parent> Parents => Set<Parent>();
 	public DbSet<Student> Students => Set<Student>();
 	public DbSet<ParentInvitation> ParentInvitations => Set<ParentInvitation>();
