@@ -46,10 +46,16 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		CancellationToken ct)
 	{
 		if (isoYear is null || isoWeek is null)
+		{
+
 			return Problem("isoYear og isoWeek er påkrævet", statusCode: 400);
+		}
 
 		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
+		{
+
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
+		}
 
 		var shifts = await db.SfoShifts
 			.AsNoTracking()
@@ -87,7 +93,11 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		CancellationToken ct)
 	{
 		if (request.IsoYear < 2020 || request.IsoYear > 2100 || request.IsoWeek < 1 || request.IsoWeek > 53)
+		{
+
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
+		}
+
 
 		var shift = await db.SfoShifts
 			.AsNoTracking()
@@ -95,7 +105,11 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			.FirstOrDefaultAsync(s => s.Id == request.SfoShiftId, ct);
 
 		if (shift is null)
+		{
+
 			return NotFound();
+		}
+
 
 		var weekPlan = await db.SfoWeekPlans
 			.Include(w => w.Shifts)

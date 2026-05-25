@@ -24,14 +24,22 @@ public sealed class ParentMeController(AppDbContext db) : ControllerBase
 		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier)
 			?? User.FindFirstValue("sub");
 
-		if (subject is null) return Unauthorized();
+		if (subject is null)
+		{
+			return Unauthorized();
+		}
+
 
 		var parent = await db.Parents
 			.AsNoTracking()
 			.Include(p => p.Students).ThenInclude(s => s.Class)
 			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
 
-		if (parent is null) return NotFound();
+		if (parent is null)
+		{
+			return NotFound();
+		}
+
 
 		var classes = parent.Students
 			.Select(s => new ParentClassDto(s.ClassId, s.Class?.Name ?? string.Empty))
