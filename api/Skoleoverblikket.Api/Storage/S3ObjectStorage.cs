@@ -64,7 +64,7 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 
 	public string? GetKeyFromPublicUrl(string publicUrl)
 	{
-		var prefix = $"{_options.PublicEndpoint.TrimEnd('/')}/{_options.DefaultBucketName}/";
+		var prefix = $"{_options.SanitizedPublicEndpoint}/{_options.DefaultBucketName}/";
 
 		return !publicUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
 				? null
@@ -82,6 +82,6 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 	private string BuildPublicUrl(string key)
 	{
 		var encodedKey = WebUtility.UrlEncode(key.TrimStart('/'));
-		return $"{_options.PublicEndpoint.TrimEnd('/')}/{_options.DefaultBucketName}/{encodedKey}";
+		return $"{_options.SanitizedPublicEndpoint}/{_options.DefaultBucketName}/{encodedKey}";
 	}
 }

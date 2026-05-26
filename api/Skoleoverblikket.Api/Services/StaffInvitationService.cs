@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Email;
@@ -13,7 +14,7 @@ public sealed class StaffInvitationService(
 	AppDbContext db,
 	ITenantContext tenant,
 	IEmailSender email,
-	IConfiguration config,
+	IOptions<ApplicationOptions> appOptions,
 	KeycloakAdminService keycloakAdmin,
 	ILogger<StaffInvitationService> logger)
 {
@@ -77,15 +78,7 @@ public sealed class StaffInvitationService(
 							 .FirstOrDefaultAsync(ct) ??
 					 "Skoleoverblikket";
 
-		var baseUrl = config["App:BaseUrl"];
-		if (string.IsNullOrWhiteSpace(baseUrl))
-		{
-			throw new InvalidOperationException(
-				"Configuration 'App:BaseUrl' is not set or is empty. This must be configured to generate valid invitation links.");
-		}
-
-		baseUrl = baseUrl.TrimEnd('/');
-		var link = $"{baseUrl}/invitation/{token}";
+		var link = $"{appOptions.Value.SanitizedBaseUrl}/invitation/{token}";
 
 		await email.SendAsync(new EmailMessage(
 								  To: staff.Email,
@@ -184,30 +177,20 @@ public sealed class StaffInvitationService(
 			  """
 			: string.Empty;
 
-		return $"""
-				<!DOCTYPE html>
-				<html lang="da">
-				<head><meta charset="utf-8" /><title>Invitation til {encodedSchoolName}</title></head>
-				<body style="font-family:system-ui,sans-serif;color:#111;background:#f9fafb;margin:0;padding:32px;">
-				  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:40px;border:1px solid #e5e7eb;">
-				    <div style="margin-bottom:28px;">
-				      <img src="https://skoleoverblikket.dk/logo-transparent.png" alt="Skoleoverblikket" height="40" style="display:block;height:40px;width:auto;" />
-				    </div>
-				    <h1 style="font-size:20px;font-weight:600;color:#111827;margin:0 0 16px;">Du er inviteret til {encodedSchoolName}</h1>
-				    <p style="color:#374151;margin:0 0 24px;">Hej {encodedName},<br><br>
-				    Du er inviteret til at oprette din konto på Skoleoverblikket som medarbejder på <strong>{encodedSchoolName}</strong>.
-				    Klik på knappen herunder for at logge ind. Linket er gyldigt i 14 dage.</p>
-				    {passwordBlock}
-				    <a href="{encodedLink}" style="display:inline-block;padding:12px 24px;background:#1f6321;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
-				      Opret konto og acceptér
-				    </a>
-				    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
-				      Eller kopiér dette link: <a href="{encodedLink}" style="color:#1d4ed8;">{encodedLink}</a>
-				    </p>
-				  </div>
-				</body>
-				</html>
-				""";
+		return EmailTemplate.Wrap($"Invitation til {encodedSchoolName}", $"""
+			<h1>Du er inviteret til {encodedSchoolName}</h1>
+			<p>Hej {encodedName},<br><br>
+			Du er inviteret til at oprette din konto på Skoleoverblikket som medarbejder på <strong>{encodedSchoolName}</strong>.
+			Klik på knappen herunder for at logge ind. Linket er gyldigt i 14 dage.</p>
+			{passwordBlock}
+			<div class="btn-wrapper">
+			  <a href="{encodedLink}" class="btn">Opret konto og acceptér</a>
+			</div>
+			<div class="notice">
+			  <p style="margin-bottom:0;">Har du problemer med knappen? Kopier dette link direkte i din browser:<br>
+			  <a href="{encodedLink}" style="color:#1f6321;word-break:break-all;">{encodedLink}</a></p>
+			</div>
+			""");
 	}
 
 	private static string BuildPlainEmail(string name, string schoolName, string link, string? temporaryPassword)

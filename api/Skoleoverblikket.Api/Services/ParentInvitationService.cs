@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Email;
@@ -13,12 +14,11 @@ public sealed class ParentInvitationService(
 	AppDbContext db,
 	ITenantContext tenant,
 	IEmailSender email,
-	IConfiguration config,
+	IOptions<ApplicationOptions> appOptions,
 	KeycloakAdminService keycloakAdmin)
 {
 	private static readonly TimeSpan InvitationValidity = TimeSpan.FromDays(14);
-	private readonly string BaseUrl = (config["App:BaseUrl"]
-				?? throw new InvalidOperationException("Configuration 'App:BaseUrl' is not set.")).TrimEnd('/');
+	private readonly string BaseUrl = appOptions.Value.SanitizedBaseUrl;
 
 	public async Task<ParentInvitation> CreateAndSendAsync(Parent parent, CancellationToken ct)
 	{
@@ -69,13 +69,11 @@ public sealed class ParentInvitationService(
 			return null;
 		}
 
-
 		if (string.IsNullOrWhiteSpace(parent.Name))
 		{
 
 			throw new InvalidOperationException($"Cannot create Keycloak account for parent {parent.Email}: name is empty.");
 		}
-
 
 		var temporaryPassword = GenerateTemporaryPassword();
 		var nameParts = parent.Name.Trim().Split(' ', 2);
@@ -167,27 +165,20 @@ public sealed class ParentInvitationService(
 			  """
 			: string.Empty;
 
-		return $"""
-				<!DOCTYPE html>
-				<html lang="da">
-				<head><meta charset="utf-8" /><title>Invitation til {encodedSchoolName}</title></head>
-				<body style="font-family:system-ui,sans-serif;color:#111;background:#f9fafb;margin:0;padding:32px;">
-				  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:40px;border:1px solid #e5e7eb;">
-				    <h1 style="font-size:20px;font-weight:600;color:#111827;margin:0 0 16px;">Adgang til {encodedSchoolName}</h1>
-				    <p style="color:#374151;margin:0 0 24px;">Hej {encodedName},<br><br>
-				    Du er inviteret til at se dit barns skema på <strong>{encodedSchoolName}</strong> via Skoleoverblikket.
-				    Klik pa knappen herunder for at oprette din konto. Linket er gyldigt i 14 dage.</p>
-				    {passwordBlock}
-				    <a href="{encodedLink}" style="display:inline-block;padding:12px 24px;background:#1f6321;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
-				      Opret konto
-				    </a>
-				    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
-				      Eller kopier dette link: <a href="{encodedLink}" style="color:#1d4ed8;">{encodedLink}</a>
-				    </p>
-				  </div>
-				</body>
-				</html>
-				""";
+		return EmailTemplate.Wrap($"Adgang til {encodedSchoolName}", $"""
+			<h1>Adgang til {encodedSchoolName}</h1>
+			<p>Hej {encodedName},<br><br>
+			Du er inviteret til at se dit barns skema på <strong>{encodedSchoolName}</strong> via Skoleoverblikket.
+			Klik på knappen herunder for at oprette din konto. Linket er gyldigt i 14 dage.</p>
+			{passwordBlock}
+			<div class="btn-wrapper">
+			  <a href="{encodedLink}" class="btn">Opret konto</a>
+			</div>
+			<div class="notice">
+			  <p style="margin-bottom:0;">Har du problemer med knappen? Kopier dette link direkte i din browser:<br>
+			  <a href="{encodedLink}" style="color:#1f6321;word-break:break-all;">{encodedLink}</a></p>
+			</div>
+			""");
 	}
 
 	private static string BuildPlainEmail(string name, string schoolName, string link, string? temporaryPassword)

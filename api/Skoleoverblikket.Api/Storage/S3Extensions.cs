@@ -36,7 +36,7 @@ public static class S3Extensions
 	{
 		var s3 = services.GetRequiredService<IAmazonS3>();
 		var opts = services.GetRequiredService<IOptions<S3Options>>().Value;
-		var appOpts = services.GetRequiredService<IOptions<ApplicationOptions>>().Value;
+		var applicationOptions = services.GetRequiredService<IOptions<ApplicationOptions>>().Value;
 
 		var exists = await AmazonS3Util.DoesS3BucketExistV2Async(s3, opts.DefaultBucketName);
 		if (!exists)
@@ -57,7 +57,7 @@ public static class S3Extensions
 					new CORSRule
 					{
 						AllowedMethods = ["PUT", "GET", "HEAD"],
-						AllowedOrigins = [appOpts.BaseUrl.TrimEnd('/')],
+						AllowedOrigins = [applicationOptions.SanitizedBaseUrl],
 						AllowedHeaders = ["*"],
 						MaxAgeSeconds = 3600,
 					}
