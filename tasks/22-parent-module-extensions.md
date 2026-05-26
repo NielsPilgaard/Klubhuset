@@ -476,3 +476,69 @@ Key E2E paths:
 - Parent sends besked to teacher → teacher inbox shows it → marks read
 - Parent disables email notifications → sends message → no email delivered
 - Kontakt page: parent with `ShareContactInfo=false` not visible to other parents; visible to admin
+
+---
+
+## Implementation progress
+
+### ✅ Feature 1: Profile Images — DONE
+- Added `AvatarUrl string?` to Parent, Staff, Student models
+- Added presign+confirm endpoints to ParentMeController, StaffMeController (new), StudentsController
+- Migration `AddAvatarUrls` applied
+
+### ✅ Feature 2: Contact Info Onboarding — DONE
+- Added `PATCH /api/v1/parents/me/contact` to ParentMeController
+- Extended InvitationAcceptPage with `'contact-info'` state (phone, address, postalCode, city, shareContactInfo toggle, "Spring over" skip)
+- Parent invites go to contact-info step; staff go directly to success
+
+### ✅ Feature 3: Kontakt Directory — DONE
+- Created KontaktController.cs (`GET /api/v1/kontakt`) with role-based filtering
+- Created ParentDirectoryPage.tsx (search, avatar/initials, bearer fetch)
+- Routes: `/foraeldrevisning/kontakt` (ParentRoute), `/foraeldre/kontakt` (auth)
+- Sidebar: "Kontakt" for parents and staff (moduleGated)
+- Fixed: task spec used `s.Classes.Any(...)` but Student has single `ClassId` scalar — corrected query
+
+### ✅ Feature 4: Fraværsregistrering — DONE
+- Created AbsenceReport model + migration `AddAbsenceReport`
+- Created AbsenceController (POST report, GET mine, GET list, POST confirm, POST dismiss, DELETE cancel)
+- Created INotificationService + NullNotificationService (stub, registered in DI)
+- Extended ParentMeDto with `IReadOnlyList<ParentStudentDto> Students` (needed by absence form)
+- Created ParentFravaerPage.tsx (child picker, date range, reason, status badges, cancel)
+- Created FravaerPage.tsx (staff view: confirm/dismiss, date filter, pending badge)
+- Routes + sidebar added
+
+### 🔲 Feature 5: Notifications — PENDING
+Key note: `NotificationPreferencesPage` must be accessible by ALL authenticated users (not AdminRoute only) — parents need to opt out of notification types.
+
+Files to create:
+- `api/.../Models/Notification.cs`
+- `api/.../Models/NotificationPreference.cs`
+- `api/.../Services/NotificationService.cs` (replaces NullNotificationService in DI)
+- `api/.../Controllers/NotificationsController.cs` (GET last 50, POST /{id}/read, POST /read-all, GET /api/v1/notification-preferences, PUT /api/v1/notification-preferences)
+- Migration `AddNotifications`
+- `web/src/components/NotificationBell.tsx` (bell + unread badge + dropdown, polls every 60s)
+- `web/src/pages/NotificationPreferencesPage.tsx` (all roles, route `/indstillinger/notifikationer`)
+- Update ServicesExtensions.cs: swap NullNotificationService → NotificationService
+- Update App.tsx + Sidebar.tsx
+
+### 🔲 Feature 6: Kontaktbog — PENDING
+Files to create:
+- `api/.../Models/ContactThread.cs` (unique index TenantId+StudentId)
+- `api/.../Models/ContactMessage.cs` (SenderType: Parent|Staff, Body max 4000)
+- `api/.../Controllers/ContactThreadsController.cs`
+- Migration `AddContactBook`
+- `web/src/pages/parent/ParentKontaktbogPage.tsx`
+- `web/src/pages/KontaktbogPage.tsx`
+- Routes: `/foraeldrevisning/kontaktbog` (ParentRoute), `/kontaktbog` (auth)
+- Sidebar + App.tsx
+
+### 🔲 Feature 7: Beskeder — PENDING
+Files to create:
+- `api/.../Models/Message.cs` (SenderId/SenderType, RecipientId/RecipientType, Subject max 200, Body max 10000)
+- `api/.../Controllers/MessagesController.cs` (GET inbox, GET sent, POST send with consent check, POST read, GET recipients?q=)
+- Migration `AddMessages`
+- `web/src/pages/BeskederPage.tsx` (folder tabs Indbakke/Sendt, compose modal with recipient typeahead)
+- Routes: `/beskeder` (all auth)
+- Sidebar + App.tsx
+
+### 🔲 /verify — run after all features complete
