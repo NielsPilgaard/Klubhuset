@@ -13,7 +13,7 @@ interface InvitationPreview {
   type: InvitationType
 }
 
-type PageState = 'loading' | 'invalid' | 'ready' | 'accepting' | 'success' | 'error'
+type PageState = 'loading' | 'invalid' | 'ready' | 'accepting' | 'success' | 'contact-info' | 'error'
 
 export default function InvitationAcceptPage() {
   const { token } = useParams<{ token: string }>()
@@ -21,6 +21,13 @@ export default function InvitationAcceptPage() {
   const [state, setState] = useState<PageState>('loading')
   const [preview, setPreview] = useState<InvitationPreview | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [city, setCity] = useState('')
+  const [shareContactInfo, setShareContactInfo] = useState(false)
+  const [submittingContact, setSubmittingContact] = useState(false)
+  const [contactError, setContactError] = useState('')
 
   // 'accept=1' is appended to redirectUri so we know the user just came back
   // from a fresh Keycloak login and explicitly authenticated for this invitation.
@@ -94,7 +101,11 @@ export default function InvitationAcceptPage() {
       })
 
       if (res.ok || res.status === 204) {
-        setState('success')
+        if (type === 'parent') {
+          setState('contact-info')
+        } else {
+          setState('success')
+        }
       } else {
         const body = await res.json().catch(() => ({}))
         setErrorMsg(body?.detail ?? 'Der opstod en fejl. Invitationen er muligvis allerede brugt eller udløbet.')
@@ -114,6 +125,37 @@ export default function InvitationAcceptPage() {
       redirectUri: window.location.origin + `/${basePath}/${token}?accept=1`,
       prompt: 'login',
     })
+  }
+
+  async function submitContactInfo() {
+    setSubmittingContact(true)
+    setContactError('')
+    try {
+      const res = await fetch('/api/v1/parents/me/contact', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${keycloak.token}`,
+        },
+        body: JSON.stringify({
+          phone: phone || null,
+          address: address || null,
+          postalCode: postalCode || null,
+          city: city || null,
+          shareContactInfo,
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setContactError(body?.detail ?? 'Der opstod en fejl. Prøv igen.')
+        return
+      }
+      window.location.href = '/foraeldrevisning/skema'
+    } catch {
+      setContactError('Kunne ikke oprette forbindelse til serveren.')
+    } finally {
+      setSubmittingContact(false)
+    }
   }
 
   if (state === 'loading' || state === 'accepting') {
@@ -188,6 +230,96 @@ export default function InvitationAcceptPage() {
           </div>
           <h1 className="font-display text-xl font-semibold text-gray-900">Noget gik galt</h1>
           <p className="text-sm text-gray-500">{errorMsg}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (state === 'contact-info') {
+    return (
+      <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
+          <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h1 className="font-display text-xl font-semibold text-gray-900">Invitation accepteret!</h1>
+            <p className="mt-1 text-sm text-gray-500">Udfyld dine kontaktoplysninger — du kan altid ændre dem senere.</p>
+          </div>
+
+          <div className="px-8 py-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="Valgfrit"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <input
+                type="text"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                placeholder="Valgfrit"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div className="flex gap-3">
+              <div className="w-28">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                <input
+                  type="text"
+                  value={postalCode}
+                  onChange={e => setPostalCode(e.target.value)}
+                  placeholder="Valgfrit"
+                  maxLength={10}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  placeholder="Valgfrit"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            </div>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={shareContactInfo}
+                onChange={e => setShareContactInfo(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              <span className="text-sm text-gray-700">Tillad andre forældre at se mine kontaktoplysninger</span>
+            </label>
+
+            {contactError && (
+              <p className="text-sm text-red-600">{contactError}</p>
+            )}
+            <button
+              onClick={submitContactInfo}
+              disabled={submittingContact}
+              className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
+            >
+              {submittingContact ? 'Gemmer…' : 'Gem og fortsæt'}
+            </button>
+            <button
+              onClick={() => { window.location.href = '/foraeldrevisning/skema' }}
+              className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Spring over
+            </button>
+          </div>
         </div>
       </div>
     )

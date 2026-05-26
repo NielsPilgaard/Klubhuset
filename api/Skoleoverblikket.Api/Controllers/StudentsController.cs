@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Storage;
 using Skoleoverblikket.Api.Tenancy;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,7 +13,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/students")]
 [Authorize(Roles = Roles.Admin)]
-public sealed class StudentsController(AppDbContext db, ITenantContext tenant) : ControllerBase
+public sealed class StudentsController(AppDbContext db, ITenantContext tenant, IObjectStorage storage) : ControllerBase
 {
 	public record StudentDto(Guid Id, string Name, Guid ClassId, string ClassName, DateTimeOffset CreatedAt);
 	public record UpsertStudentRequest(
@@ -98,4 +99,78 @@ public sealed class StudentsController(AppDbContext db, ITenantContext tenant) :
 		await db.SaveChangesAsync(ct);
 		return NoContent();
 	}
+
+	public record AvatarPresignRequest(string ContentType, long FileSizeBytes);
+	public record AvatarPresignResponse(string UploadUrl, string ObjectKey);
+
+	[HttpPost("{id:guid}/avatar/presign")]
+	public async Task<ActionResult<AvatarPresignResponse>> PresignAvatar(
+		Guid id, [FromBody] AvatarPresignRequest req, CancellationToken ct)
+	{
+		if (!IsAllowedImageContentType(req.ContentType))
+		{
+			return BadRequest(new { detail = "ContentType must be image/jpeg, image/png, or image/webp." });
+		}
+
+		if (req.FileSizeBytes is <= 0 or > 5 * 1024 * 1024)
+		{
+			return BadRequest(new { detail = "File must be between 1 byte and 5 MB." });
+		}
+
+		var student = await db.Students.AsNoTracking()
+			.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+		if (student is null)
+		{
+			return NotFound();
+		}
+
+		var ext = ContentTypeToExtension(req.ContentType);
+		var key = $"avatars/{student.TenantId}/students/{student.Id}{ext}";
+		var expiry = TimeSpan.FromMinutes(15);
+
+		var (uploadUrl, _) = await storage.GeneratePresignedUploadUrlAsync(
+			key, req.ContentType, req.FileSizeBytes, expiry, ct);
+
+		return Ok(new AvatarPresignResponse(uploadUrl, key));
+	}
+
+	public record AvatarConfirmRequest(string ObjectKey);
+
+	[HttpPost("{id:guid}/avatar/confirm")]
+	public async Task<IActionResult> ConfirmAvatar(
+		Guid id, [FromBody] AvatarConfirmRequest req, CancellationToken ct)
+	{
+		var student = await db.Students.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+		if (student is null)
+		{
+			return NotFound();
+		}
+
+		var expectedPrefix = $"avatars/{student.TenantId}/students/{student.Id}";
+		if (!req.ObjectKey.StartsWith(expectedPrefix, StringComparison.Ordinal))
+		{
+			return BadRequest(new { detail = "Invalid object key." });
+		}
+
+		var (_, publicUrl) = await storage.GeneratePresignedUploadUrlAsync(
+			req.ObjectKey, "image/jpeg", 1, TimeSpan.FromSeconds(1), ct);
+
+		student.AvatarUrl = publicUrl;
+		await db.SaveChangesAsync(ct);
+
+		return NoContent();
+	}
+
+	private static bool IsAllowedImageContentType(string contentType) =>
+		contentType is "image/jpeg" or "image/png" or "image/webp";
+
+	private static string ContentTypeToExtension(string contentType) => contentType switch
+	{
+		"image/jpeg" => ".jpg",
+		"image/png" => ".png",
+		"image/webp" => ".webp",
+		_ => ".bin",
+	};
 }
