@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiV1AdminTenantsBySchoolIdModulesByModuleData, DeleteApiV1AdminTenantsBySchoolIdModulesByModuleResponses, DeleteApiV1BillingModulesByModuleData, DeleteApiV1BillingModulesByModuleResponses, DeleteApiV1CalendarByIdData, DeleteApiV1CalendarByIdFromByDateData, DeleteApiV1CalendarByIdFromByDateResponses, DeleteApiV1CalendarByIdOccurrencesByDateData, DeleteApiV1CalendarByIdOccurrencesByDateResponses, DeleteApiV1CalendarByIdResponses, DeleteApiV1ClassesByClassIdPermissionsByStaffIdData, DeleteApiV1ClassesByClassIdPermissionsByStaffIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponses, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdData, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdResponses, DeleteApiV1ClassesByIdData, DeleteApiV1ClassesByIdResponses, DeleteApiV1CoursesByIdData, DeleteApiV1CoursesByIdResponses, DeleteApiV1FilesByIdData, DeleteApiV1FilesByIdResponses, DeleteApiV1FilesFoldersByIdData, DeleteApiV1FilesFoldersByIdResponses, DeleteApiV1ParentsByIdData, DeleteApiV1ParentsByIdResponses, DeleteApiV1ParentsByIdStudentsByStudentIdData, DeleteApiV1ParentsByIdStudentsByStudentIdResponses, DeleteApiV1RoomsByIdData, DeleteApiV1RoomsByIdResponses, DeleteApiV1SfoShiftsByIdData, DeleteApiV1SfoShiftsByIdResponses, DeleteApiV1SfoShiftsByIdStaffByStaffIdData, DeleteApiV1SfoShiftsByIdStaffByStaffIdResponses, DeleteApiV1StaffByIdData, DeleteApiV1StaffByIdResponses, DeleteApiV1StudentsByIdData, DeleteApiV1StudentsByIdResponses, GetApiV1AdminTenantsBySchoolIdData, GetApiV1AdminTenantsBySchoolIdResponses, GetApiV1AdminTenantsData, GetApiV1AdminTenantsResponses, GetApiV1BillingSubscriptionData, GetApiV1BillingSubscriptionResponses, GetApiV1CalendarData, GetApiV1CalendarDefaultsData, GetApiV1CalendarDefaultsResponses, GetApiV1CalendarExportIcsData, GetApiV1CalendarExportIcsResponses, GetApiV1CalendarResponses, GetApiV1ClassesArchivedData, GetApiV1ClassesArchivedResponses, GetApiV1ClassesByClassIdPermissionsData, GetApiV1ClassesByClassIdPermissionsResponses, GetApiV1ClassesByClassIdScheduleData, GetApiV1ClassesByClassIdScheduleResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsData, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdData, GetApiV1ClassesByClassIdSchemasBySchemaIdResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, GetApiV1ClassesByClassIdSchemasData, GetApiV1ClassesByClassIdSchemasResponses, GetApiV1ClassesByClassIdTimeSlotsData, GetApiV1ClassesByClassIdTimeSlotsResponses, GetApiV1ClassesByClassIdUgeplanData, GetApiV1ClassesByClassIdUgeplanResponses, GetApiV1ClassesByIdData, GetApiV1ClassesByIdResponses, GetApiV1ClassesData, GetApiV1ClassesResponses, GetApiV1CoursesByIdData, GetApiV1CoursesByIdResponses, GetApiV1CoursesData, GetApiV1CoursesResponses, GetApiV1FilesData, GetApiV1FilesResponses, GetApiV1ModulesData, GetApiV1ModulesResponses, GetApiV1ParentInvitationsPreviewData, GetApiV1ParentInvitationsPreviewResponses, GetApiV1ParentsByIdData, GetApiV1ParentsByIdResponses, GetApiV1ParentsData, GetApiV1ParentsMeData, GetApiV1ParentsMeResponses, GetApiV1ParentsResponses, GetApiV1ReportsHoursCoursesXlsxData, GetApiV1ReportsHoursCoursesXlsxResponses, GetApiV1ReportsHoursStaffXlsxData, GetApiV1ReportsHoursStaffXlsxResponses, GetApiV1ReportsSchemaXlsxData, GetApiV1ReportsSchemaXlsxResponses, GetApiV1RoomsByIdData, GetApiV1RoomsByIdResponses, GetApiV1RoomsByRoomIdScheduleData, GetApiV1RoomsByRoomIdScheduleResponses, GetApiV1RoomsData, GetApiV1RoomsResponses, GetApiV1SchoolsOnboardingStatusData, GetApiV1SchoolsOnboardingStatusResponses, GetApiV1SchoolsSettingsData, GetApiV1SchoolsSettingsResponses, GetApiV1SfoShiftsByIdData, GetApiV1SfoShiftsByIdResponses, GetApiV1SfoShiftsData, GetApiV1SfoShiftsResponses, GetApiV1SfoUgeplanData, GetApiV1SfoUgeplanResponses, GetApiV1StaffByIdData, GetApiV1StaffByIdResponses, GetApiV1StaffByStaffIdScheduleData, GetApiV1StaffByStaffIdScheduleResponses, GetApiV1StaffData, GetApiV1StaffInvitationsByStaffByStaffIdData, GetApiV1StaffInvitationsByStaffByStaffIdResponses, GetApiV1StaffInvitationsData, GetApiV1StaffInvitationsPreviewData, GetApiV1StaffInvitationsPreviewResponses, GetApiV1StaffInvitationsResponses, GetApiV1StaffMeData, GetApiV1StaffMeResponses, GetApiV1StaffResponses, GetApiV1StatsDashboardData, GetApiV1StatsDashboardResponses, GetApiV1StudentsData, GetApiV1StudentsResponses, GetApiV1TimeSlotsData, GetApiV1TimeSlotsResponses, GetApiV1TimeSlotTemplateData, GetApiV1TimeSlotTemplateResponses, PatchApiV1FilesFoldersByIdData, PatchApiV1FilesFoldersByIdResponses, PatchApiV1StaffByIdAdminPermissionData, PatchApiV1StaffByIdAdminPermissionResponses, PostApiV1AdminTenantsBySchoolIdModulesData, PostApiV1AdminTenantsBySchoolIdModulesResponses, PostApiV1BillingCheckoutData, PostApiV1BillingCheckoutResponses, PostApiV1BillingModulesData, PostApiV1BillingModulesResponses, PostApiV1BillingPortalData, PostApiV1BillingPortalResponses, PostApiV1CalendarData, PostApiV1CalendarResponses, PostApiV1ClassesByClassIdPermissionsData, PostApiV1ClassesByClassIdPermissionsResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses, PostApiV1ClassesByClassIdSchemasData, PostApiV1ClassesByClassIdSchemasResponses, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses, PostApiV1ClassesData, PostApiV1ClassesResponses, PostApiV1ClassesYearRollData, PostApiV1ClassesYearRollResponses, PostApiV1CoursesData, PostApiV1CoursesResponses, PostApiV1FilesConfirmData, PostApiV1FilesConfirmResponses, PostApiV1FilesFoldersData, PostApiV1FilesFoldersResponses, PostApiV1FilesPresignData, PostApiV1FilesPresignResponses, PostApiV1ParentInvitationsAcceptData, PostApiV1ParentInvitationsAcceptResponses, PostApiV1ParentInvitationsByParentIdResendData, PostApiV1ParentInvitationsByParentIdResendResponses, PostApiV1ParentsByIdStudentsByStudentIdData, PostApiV1ParentsByIdStudentsByStudentIdResponses, PostApiV1ParentsInviteData, PostApiV1ParentsInviteResponses, PostApiV1RoomsData, PostApiV1RoomsResponses, PostApiV1SchoolsLogoData, PostApiV1SchoolsLogoResponses, PostApiV1SfoShiftsByIdStaffByStaffIdData, PostApiV1SfoShiftsByIdStaffByStaffIdResponses, PostApiV1SfoShiftsData, PostApiV1SfoShiftsResponses, PostApiV1StaffData, PostApiV1StaffInvitationsAcceptData, PostApiV1StaffInvitationsAcceptResponses, PostApiV1StaffInvitationsInviteByStaffIdData, PostApiV1StaffInvitationsInviteByStaffIdResponses, PostApiV1StaffResponses, PostApiV1StripeWebhookData, PostApiV1StripeWebhookResponses, PostApiV1StudentsData, PostApiV1StudentsResponses, PostApiV1TenantsData, PostApiV1TenantsResponses, PostApiV1TimeSlotTemplateRestoreData, PostApiV1TimeSlotTemplateRestoreResponses, PutApiV1CalendarByIdData, PutApiV1CalendarByIdResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, PutApiV1ClassesByClassIdTimeSlotsData, PutApiV1ClassesByClassIdTimeSlotsResponses, PutApiV1ClassesByClassIdUgeplanSlotsData, PutApiV1ClassesByClassIdUgeplanSlotsResponses, PutApiV1ClassesByIdData, PutApiV1ClassesByIdResponses, PutApiV1CoursesByIdData, PutApiV1CoursesByIdResponses, PutApiV1RoomsByIdData, PutApiV1RoomsByIdResponses, PutApiV1SchoolsSettingsData, PutApiV1SchoolsSettingsResponses, PutApiV1SfoShiftsByIdData, PutApiV1SfoShiftsByIdResponses, PutApiV1SfoUgeplanShiftsData, PutApiV1SfoUgeplanShiftsResponses, PutApiV1StaffByIdData, PutApiV1StaffByIdResponses, PutApiV1StudentsByIdData, PutApiV1StudentsByIdResponses, PutApiV1TimeSlotTemplateData, PutApiV1TimeSlotTemplateResponses } from './types.gen';
+import type { DeleteApiV1AbsenceByIdData, DeleteApiV1AbsenceByIdResponses, DeleteApiV1AdminTenantsBySchoolIdModulesByModuleData, DeleteApiV1AdminTenantsBySchoolIdModulesByModuleResponses, DeleteApiV1BillingModulesByModuleData, DeleteApiV1BillingModulesByModuleResponses, DeleteApiV1CalendarByIdData, DeleteApiV1CalendarByIdFromByDateData, DeleteApiV1CalendarByIdFromByDateResponses, DeleteApiV1CalendarByIdOccurrencesByDateData, DeleteApiV1CalendarByIdOccurrencesByDateResponses, DeleteApiV1CalendarByIdResponses, DeleteApiV1ClassesByClassIdPermissionsByStaffIdData, DeleteApiV1ClassesByClassIdPermissionsByStaffIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdResponses, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayData, DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponses, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdData, DeleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdResponses, DeleteApiV1ClassesByIdData, DeleteApiV1ClassesByIdResponses, DeleteApiV1CoursesByIdData, DeleteApiV1CoursesByIdResponses, DeleteApiV1FilesByIdData, DeleteApiV1FilesByIdResponses, DeleteApiV1FilesFoldersByIdData, DeleteApiV1FilesFoldersByIdResponses, DeleteApiV1ParentsByIdData, DeleteApiV1ParentsByIdResponses, DeleteApiV1ParentsByIdStudentsByStudentIdData, DeleteApiV1ParentsByIdStudentsByStudentIdResponses, DeleteApiV1RoomsByIdData, DeleteApiV1RoomsByIdResponses, DeleteApiV1SfoShiftsByIdData, DeleteApiV1SfoShiftsByIdResponses, DeleteApiV1SfoShiftsByIdStaffByStaffIdData, DeleteApiV1SfoShiftsByIdStaffByStaffIdResponses, DeleteApiV1StaffByIdData, DeleteApiV1StaffByIdResponses, DeleteApiV1StudentsByIdData, DeleteApiV1StudentsByIdResponses, GetApiV1AbsenceData, GetApiV1AbsenceMineData, GetApiV1AbsenceMineResponses, GetApiV1AbsenceResponses, GetApiV1AdminTenantsBySchoolIdData, GetApiV1AdminTenantsBySchoolIdResponses, GetApiV1AdminTenantsData, GetApiV1AdminTenantsResponses, GetApiV1BillingSubscriptionData, GetApiV1BillingSubscriptionResponses, GetApiV1CalendarData, GetApiV1CalendarDefaultsData, GetApiV1CalendarDefaultsResponses, GetApiV1CalendarExportIcsData, GetApiV1CalendarExportIcsResponses, GetApiV1CalendarResponses, GetApiV1ClassesArchivedData, GetApiV1ClassesArchivedResponses, GetApiV1ClassesByClassIdPermissionsData, GetApiV1ClassesByClassIdPermissionsResponses, GetApiV1ClassesByClassIdScheduleData, GetApiV1ClassesByClassIdScheduleResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsData, GetApiV1ClassesByClassIdSchemasBySchemaIdConflictsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdData, GetApiV1ClassesByClassIdSchemasBySchemaIdResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, GetApiV1ClassesByClassIdSchemasData, GetApiV1ClassesByClassIdSchemasResponses, GetApiV1ClassesByClassIdTimeSlotsData, GetApiV1ClassesByClassIdTimeSlotsResponses, GetApiV1ClassesByClassIdUgeplanData, GetApiV1ClassesByClassIdUgeplanResponses, GetApiV1ClassesByIdData, GetApiV1ClassesByIdResponses, GetApiV1ClassesData, GetApiV1ClassesResponses, GetApiV1ContactThreadsByThreadIdMessagesData, GetApiV1ContactThreadsByThreadIdMessagesResponses, GetApiV1ContactThreadsData, GetApiV1ContactThreadsResponses, GetApiV1CoursesByIdData, GetApiV1CoursesByIdResponses, GetApiV1CoursesData, GetApiV1CoursesResponses, GetApiV1FilesData, GetApiV1FilesResponses, GetApiV1KontaktData, GetApiV1KontaktResponses, GetApiV1ModulesData, GetApiV1ModulesResponses, GetApiV1NotificationPreferencesData, GetApiV1NotificationPreferencesResponses, GetApiV1NotificationsData, GetApiV1NotificationsResponses, GetApiV1ParentInvitationsPreviewData, GetApiV1ParentInvitationsPreviewResponses, GetApiV1ParentsByIdData, GetApiV1ParentsByIdResponses, GetApiV1ParentsData, GetApiV1ParentsMeData, GetApiV1ParentsMeResponses, GetApiV1ParentsResponses, GetApiV1ReportsHoursCoursesXlsxData, GetApiV1ReportsHoursCoursesXlsxResponses, GetApiV1ReportsHoursStaffXlsxData, GetApiV1ReportsHoursStaffXlsxResponses, GetApiV1ReportsSchemaXlsxData, GetApiV1ReportsSchemaXlsxResponses, GetApiV1RoomsByIdData, GetApiV1RoomsByIdResponses, GetApiV1RoomsByRoomIdScheduleData, GetApiV1RoomsByRoomIdScheduleResponses, GetApiV1RoomsData, GetApiV1RoomsResponses, GetApiV1SchoolsOnboardingStatusData, GetApiV1SchoolsOnboardingStatusResponses, GetApiV1SchoolsSettingsData, GetApiV1SchoolsSettingsResponses, GetApiV1SfoShiftsByIdData, GetApiV1SfoShiftsByIdResponses, GetApiV1SfoShiftsData, GetApiV1SfoShiftsResponses, GetApiV1SfoUgeplanData, GetApiV1SfoUgeplanResponses, GetApiV1StaffByIdData, GetApiV1StaffByIdResponses, GetApiV1StaffByStaffIdScheduleData, GetApiV1StaffByStaffIdScheduleResponses, GetApiV1StaffData, GetApiV1StaffInvitationsByStaffByStaffIdData, GetApiV1StaffInvitationsByStaffByStaffIdResponses, GetApiV1StaffInvitationsData, GetApiV1StaffInvitationsPreviewData, GetApiV1StaffInvitationsPreviewResponses, GetApiV1StaffInvitationsResponses, GetApiV1StaffMeData, GetApiV1StaffMeResponses, GetApiV1StaffResponses, GetApiV1StatsDashboardData, GetApiV1StatsDashboardResponses, GetApiV1StudentsData, GetApiV1StudentsResponses, GetApiV1TimeSlotsData, GetApiV1TimeSlotsResponses, GetApiV1TimeSlotTemplateData, GetApiV1TimeSlotTemplateResponses, PatchApiV1FilesFoldersByIdData, PatchApiV1FilesFoldersByIdResponses, PatchApiV1ParentsMeContactData, PatchApiV1ParentsMeContactResponses, PatchApiV1StaffByIdAdminPermissionData, PatchApiV1StaffByIdAdminPermissionResponses, PostApiV1AbsenceByIdConfirmData, PostApiV1AbsenceByIdConfirmResponses, PostApiV1AbsenceByIdDismissData, PostApiV1AbsenceByIdDismissResponses, PostApiV1AbsenceData, PostApiV1AbsenceResponses, PostApiV1AdminTenantsBySchoolIdModulesData, PostApiV1AdminTenantsBySchoolIdModulesResponses, PostApiV1BillingCheckoutData, PostApiV1BillingCheckoutResponses, PostApiV1BillingModulesData, PostApiV1BillingModulesResponses, PostApiV1BillingPortalData, PostApiV1BillingPortalResponses, PostApiV1CalendarData, PostApiV1CalendarResponses, PostApiV1ClassesByClassIdPermissionsData, PostApiV1ClassesByClassIdPermissionsResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData, PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses, PostApiV1ClassesByClassIdSchemasData, PostApiV1ClassesByClassIdSchemasResponses, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData, PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses, PostApiV1ClassesData, PostApiV1ClassesResponses, PostApiV1ClassesYearRollData, PostApiV1ClassesYearRollResponses, PostApiV1ContactThreadsByThreadIdMessagesData, PostApiV1ContactThreadsByThreadIdMessagesResponses, PostApiV1ContactThreadsByThreadIdReadData, PostApiV1ContactThreadsByThreadIdReadResponses, PostApiV1ContactThreadsData, PostApiV1ContactThreadsResponses, PostApiV1CoursesData, PostApiV1CoursesResponses, PostApiV1FilesConfirmData, PostApiV1FilesConfirmResponses, PostApiV1FilesFoldersData, PostApiV1FilesFoldersResponses, PostApiV1FilesPresignData, PostApiV1FilesPresignResponses, PostApiV1NotificationsByIdReadData, PostApiV1NotificationsByIdReadResponses, PostApiV1NotificationsReadAllData, PostApiV1NotificationsReadAllResponses, PostApiV1ParentInvitationsAcceptData, PostApiV1ParentInvitationsAcceptResponses, PostApiV1ParentInvitationsByParentIdResendData, PostApiV1ParentInvitationsByParentIdResendResponses, PostApiV1ParentsByIdStudentsByStudentIdData, PostApiV1ParentsByIdStudentsByStudentIdResponses, PostApiV1ParentsInviteData, PostApiV1ParentsInviteResponses, PostApiV1ParentsMeAvatarConfirmData, PostApiV1ParentsMeAvatarConfirmResponses, PostApiV1ParentsMeAvatarPresignData, PostApiV1ParentsMeAvatarPresignResponses, PostApiV1RoomsData, PostApiV1RoomsResponses, PostApiV1SchoolsLogoData, PostApiV1SchoolsLogoResponses, PostApiV1SfoShiftsByIdStaffByStaffIdData, PostApiV1SfoShiftsByIdStaffByStaffIdResponses, PostApiV1SfoShiftsData, PostApiV1SfoShiftsResponses, PostApiV1StaffData, PostApiV1StaffInvitationsAcceptData, PostApiV1StaffInvitationsAcceptResponses, PostApiV1StaffInvitationsInviteByStaffIdData, PostApiV1StaffInvitationsInviteByStaffIdResponses, PostApiV1StaffMeAvatarConfirmData, PostApiV1StaffMeAvatarConfirmResponses, PostApiV1StaffMeAvatarPresignData, PostApiV1StaffMeAvatarPresignResponses, PostApiV1StaffResponses, PostApiV1StripeWebhookData, PostApiV1StripeWebhookResponses, PostApiV1StudentsByIdAvatarConfirmData, PostApiV1StudentsByIdAvatarConfirmResponses, PostApiV1StudentsByIdAvatarPresignData, PostApiV1StudentsByIdAvatarPresignResponses, PostApiV1StudentsData, PostApiV1StudentsResponses, PostApiV1TenantsData, PostApiV1TenantsResponses, PostApiV1TimeSlotTemplateRestoreData, PostApiV1TimeSlotTemplateRestoreResponses, PutApiV1CalendarByIdData, PutApiV1CalendarByIdResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData, PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData, PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData, PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses, PutApiV1ClassesByClassIdTimeSlotsData, PutApiV1ClassesByClassIdTimeSlotsResponses, PutApiV1ClassesByClassIdUgeplanSlotsData, PutApiV1ClassesByClassIdUgeplanSlotsResponses, PutApiV1ClassesByIdData, PutApiV1ClassesByIdResponses, PutApiV1CoursesByIdData, PutApiV1CoursesByIdResponses, PutApiV1NotificationPreferencesData, PutApiV1NotificationPreferencesResponses, PutApiV1RoomsByIdData, PutApiV1RoomsByIdResponses, PutApiV1SchoolsSettingsData, PutApiV1SchoolsSettingsResponses, PutApiV1SfoShiftsByIdData, PutApiV1SfoShiftsByIdResponses, PutApiV1SfoUgeplanShiftsData, PutApiV1SfoUgeplanShiftsResponses, PutApiV1StaffByIdData, PutApiV1StaffByIdResponses, PutApiV1StudentsByIdData, PutApiV1StudentsByIdResponses, PutApiV1TimeSlotTemplateData, PutApiV1TimeSlotTemplateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -17,6 +17,46 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
+
+export const getApiV1Absence = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1AbsenceData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1AbsenceResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/absence',
+    ...options
+});
+
+export const postApiV1Absence = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1AbsenceData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1AbsenceResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/absence',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const getApiV1AbsenceMine = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1AbsenceMineData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1AbsenceMineResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/absence/mine',
+    ...options
+});
+
+export const postApiV1AbsenceByIdConfirm = <ThrowOnError extends boolean = false>(options: Options<PostApiV1AbsenceByIdConfirmData, ThrowOnError>) => (options.client ?? client).post<PostApiV1AbsenceByIdConfirmResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/absence/{id}/confirm',
+    ...options
+});
+
+export const postApiV1AbsenceByIdDismiss = <ThrowOnError extends boolean = false>(options: Options<PostApiV1AbsenceByIdDismissData, ThrowOnError>) => (options.client ?? client).post<PostApiV1AbsenceByIdDismissResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/absence/{id}/dismiss',
+    ...options
+});
+
+export const deleteApiV1AbsenceById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiV1AbsenceByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiV1AbsenceByIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/absence/{id}',
+    ...options
+});
 
 export const postApiV1AdminTenantsBySchoolIdModules = <ThrowOnError extends boolean = false>(options: Options<PostApiV1AdminTenantsBySchoolIdModulesData, ThrowOnError>) => (options.client ?? client).post<PostApiV1AdminTenantsBySchoolIdModulesResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -200,6 +240,44 @@ export const deleteApiV1ClassesByClassIdPermissionsByStaffId = <ThrowOnError ext
     ...options
 });
 
+export const getApiV1ContactThreads = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1ContactThreadsData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1ContactThreadsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/contact-threads',
+    ...options
+});
+
+export const postApiV1ContactThreads = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1ContactThreadsData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1ContactThreadsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/contact-threads',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const getApiV1ContactThreadsByThreadIdMessages = <ThrowOnError extends boolean = false>(options: Options<GetApiV1ContactThreadsByThreadIdMessagesData, ThrowOnError>) => (options.client ?? client).get<GetApiV1ContactThreadsByThreadIdMessagesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/contact-threads/{threadId}/messages',
+    ...options
+});
+
+export const postApiV1ContactThreadsByThreadIdMessages = <ThrowOnError extends boolean = false>(options: Options<PostApiV1ContactThreadsByThreadIdMessagesData, ThrowOnError>) => (options.client ?? client).post<PostApiV1ContactThreadsByThreadIdMessagesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/contact-threads/{threadId}/messages',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiV1ContactThreadsByThreadIdRead = <ThrowOnError extends boolean = false>(options: Options<PostApiV1ContactThreadsByThreadIdReadData, ThrowOnError>) => (options.client ?? client).post<PostApiV1ContactThreadsByThreadIdReadResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/contact-threads/{threadId}/read',
+    ...options
+});
+
 export const getApiV1Courses = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1CoursesData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1CoursesResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/courses',
@@ -296,6 +374,46 @@ export const patchApiV1FilesFoldersById = <ThrowOnError extends boolean = false>
     }
 });
 
+export const getApiV1Kontakt = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1KontaktData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1KontaktResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/kontakt',
+    ...options
+});
+
+export const getApiV1NotificationPreferences = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1NotificationPreferencesData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1NotificationPreferencesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/notification-preferences',
+    ...options
+});
+
+export const putApiV1NotificationPreferences = <ThrowOnError extends boolean = false>(options?: Options<PutApiV1NotificationPreferencesData, ThrowOnError>) => (options?.client ?? client).put<PutApiV1NotificationPreferencesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/notification-preferences',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const getApiV1Notifications = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1NotificationsData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1NotificationsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/notifications',
+    ...options
+});
+
+export const postApiV1NotificationsByIdRead = <ThrowOnError extends boolean = false>(options: Options<PostApiV1NotificationsByIdReadData, ThrowOnError>) => (options.client ?? client).post<PostApiV1NotificationsByIdReadResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/notifications/{id}/read',
+    ...options
+});
+
+export const postApiV1NotificationsReadAll = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1NotificationsReadAllData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1NotificationsReadAllResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/notifications/read-all',
+    ...options
+});
+
 export const getApiV1ParentInvitationsPreview = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1ParentInvitationsPreviewData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1ParentInvitationsPreviewResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/parent-invitations/preview',
@@ -318,6 +436,36 @@ export const getApiV1ParentsMe = <ThrowOnError extends boolean = false>(options?
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/parents/me',
     ...options
+});
+
+export const postApiV1ParentsMeAvatarPresign = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1ParentsMeAvatarPresignData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1ParentsMeAvatarPresignResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/parents/me/avatar/presign',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const patchApiV1ParentsMeContact = <ThrowOnError extends boolean = false>(options?: Options<PatchApiV1ParentsMeContactData, ThrowOnError>) => (options?.client ?? client).patch<PatchApiV1ParentsMeContactResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/parents/me/contact',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const postApiV1ParentsMeAvatarConfirm = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1ParentsMeAvatarConfirmData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1ParentsMeAvatarConfirmResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/parents/me/avatar/confirm',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
 });
 
 export const getApiV1Parents = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1ParentsData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1ParentsResponses, unknown, ThrowOnError>({
@@ -717,6 +865,26 @@ export const getApiV1StaffInvitationsPreview = <ThrowOnError extends boolean = f
     ...options
 });
 
+export const postApiV1StaffMeAvatarPresign = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1StaffMeAvatarPresignData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1StaffMeAvatarPresignResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/staff/me/avatar/presign',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const postApiV1StaffMeAvatarConfirm = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1StaffMeAvatarConfirmData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1StaffMeAvatarConfirmResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/staff/me/avatar/confirm',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
 export const getApiV1StatsDashboard = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1StatsDashboardData, ThrowOnError>) => (options?.client ?? client).get<GetApiV1StatsDashboardResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/stats/dashboard',
@@ -754,6 +922,26 @@ export const deleteApiV1StudentsById = <ThrowOnError extends boolean = false>(op
 export const putApiV1StudentsById = <ThrowOnError extends boolean = false>(options: Options<PutApiV1StudentsByIdData, ThrowOnError>) => (options.client ?? client).put<PutApiV1StudentsByIdResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/students/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiV1StudentsByIdAvatarPresign = <ThrowOnError extends boolean = false>(options: Options<PostApiV1StudentsByIdAvatarPresignData, ThrowOnError>) => (options.client ?? client).post<PostApiV1StudentsByIdAvatarPresignResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/students/{id}/avatar/presign',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiV1StudentsByIdAvatarConfirm = <ThrowOnError extends boolean = false>(options: Options<PostApiV1StudentsByIdAvatarConfirmData, ThrowOnError>) => (options.client ?? client).post<PostApiV1StudentsByIdAvatarConfirmResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/students/{id}/avatar/confirm',
     ...options,
     headers: {
         'Content-Type': 'application/json',

@@ -4,29 +4,50 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
-export type AcceptInvitationRequest = {
-    token?: string | null;
-    keycloakSubject?: string | null;
-};
-
-export type AddFileToSlotRequest = {
-    schoolFileId?: string;
-};
-
-export type BreakDto = {
+export type AbsenceControllerAbsenceReportDto = {
     id?: string;
-    startTime?: string;
-    durationMinutes?: number;
+    studentId?: string;
+    studentName?: string | null;
+    date?: string;
+    endDate?: string | null;
+    reason?: string | null;
+    status?: AbsenceStatus;
+    createdAt?: string;
 };
 
-export type BreakTimeSlotDto = {
-    timeSlotId?: string;
-    timeSlotLabel?: string | null;
-    startTime?: string;
-    endTime?: string;
+export type AbsenceControllerReportAbsenceRequest = {
+    studentId?: string;
+    date?: string;
+    endDate?: string | null;
+    reason?: string | null;
 };
 
-export type CalendarEntryDto = {
+export type AbsenceStatus = 'Reported' | 'Confirmed' | 'Dismissed';
+
+export type AdminControllerModuleOverrideRequest = {
+    module?: SubscriptionModule;
+};
+
+export type BillingControllerCheckoutResponse = {
+    url?: string | null;
+};
+
+export type BillingControllerModuleRequest = {
+    module?: SubscriptionModule;
+};
+
+export type BillingControllerSubscriptionDto = {
+    status?: SubscriptionStatus;
+    trialEnd?: string;
+    currentPeriodEnd?: string | null;
+    isTrialing?: boolean;
+    isActive?: boolean;
+    hasAccess?: boolean;
+    trialDaysLeft?: number;
+    activeModules?: Array<string> | null;
+};
+
+export type CalendarControllerCalendarEntryDto = {
     id?: string;
     type?: CalendarEntryType;
     title?: string | null;
@@ -37,13 +58,44 @@ export type CalendarEntryDto = {
     excludedDates?: string | null;
 };
 
-export type CalendarEntryType = 'Ferie' | 'Lukkedag' | 'Arbejdsdag' | 'Begivenhed';
-
-export type CheckoutResponse = {
-    url?: string | null;
+export type CalendarControllerCreateCalendarEntryRequest = {
+    title?: string | null;
+    type?: CalendarEntryType;
+    startDate?: string;
+    endDate?: string;
+    recurrenceRule?: string | null;
+    recurrenceEnd?: string | null;
 };
 
-export type ClassDto = {
+export type CalendarControllerDefaultHolidayDto = {
+    title?: string | null;
+    type?: CalendarEntryType;
+    startDate?: string;
+    endDate?: string;
+};
+
+export type CalendarControllerUpdateCalendarEntryRequest = {
+    title?: string | null;
+    type?: CalendarEntryType;
+    startDate?: string;
+    endDate?: string;
+    recurrenceRule?: string | null;
+    recurrenceEnd?: string | null;
+};
+
+export type CalendarEntryType = 'Ferie' | 'Lukkedag' | 'Arbejdsdag' | 'Begivenhed';
+
+export type ClassPermissionsControllerClassPermissionDto = {
+    staffId?: string;
+    staffName?: string | null;
+    grantedAt?: string;
+};
+
+export type ClassPermissionsControllerGrantPermissionRequest = {
+    staffId?: string;
+};
+
+export type ClassesControllerClassDto = {
     id?: string;
     name?: string | null;
     description?: string | null;
@@ -51,14 +103,25 @@ export type ClassDto = {
     isAccessibleToCurrentUser?: boolean;
 };
 
-export type ClassPermissionDto = {
-    staffId?: string;
-    staffName?: string | null;
-    grantedAt?: string;
+export type ClassesControllerUpsertClassRequest = {
+    name?: string | null;
+    description?: string | null;
+    gradeLevel?: number | null;
 };
 
-export type ConfirmRequest = {
-    confirmToken?: string | null;
+export type ClassesControllerYearRollCreateEntry = {
+    name?: string | null;
+};
+
+export type ClassesControllerYearRollRenameEntry = {
+    classId?: string;
+    newName?: string | null;
+};
+
+export type ClassesControllerYearRollRequest = {
+    renames?: Array<ClassesControllerYearRollRenameEntry> | null;
+    archive?: Array<string> | null;
+    create?: Array<ClassesControllerYearRollCreateEntry> | null;
 };
 
 export type ConflictInfo = {
@@ -78,11 +141,43 @@ export type ConflictInfo = {
 
 export type ConflictType = 'TeacherDoubleBooked' | 'RoomDoubleBooked' | 'AideDoubleBooked';
 
-export type CopySchemaRequest = {
-    name?: string | null;
+export type ContactThreadsControllerAddMessageRequest = {
+    body?: string | null;
 };
 
-export type CourseDto = {
+export type ContactThreadsControllerContactMessageDto = {
+    id?: string;
+    senderType?: SenderType;
+    senderId?: string;
+    senderName?: string | null;
+    body?: string | null;
+    sentAt?: string;
+    readAt?: string | null;
+};
+
+export type ContactThreadsControllerContactThreadDto = {
+    id?: string;
+    studentId?: string;
+    studentName?: string | null;
+    lastMessageBody?: string | null;
+    lastMessageSentAt?: string | null;
+    lastMessageSenderType?: SenderType;
+    unreadCount?: number;
+};
+
+export type ContactThreadsControllerFindOrCreateThreadRequest = {
+    studentId?: string;
+    body?: string | null;
+};
+
+export type ContactThreadsControllerPagedResult1 = {
+    items?: Array<ContactThreadsControllerContactMessageDto> | null;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+};
+
+export type CoursesControllerCourseDto = {
     id?: string;
     name?: string | null;
     description?: string | null;
@@ -90,56 +185,26 @@ export type CourseDto = {
     category?: SubjectCategory;
 };
 
-export type CreateCalendarEntryRequest = {
-    title?: string | null;
-    type?: CalendarEntryType;
-    startDate?: string;
-    endDate?: string;
-    recurrenceRule?: string | null;
-    recurrenceEnd?: string | null;
+export type CoursesControllerUpsertCourseRequest = {
+    name?: string | null;
+    description?: string | null;
+    color?: string | null;
+    category?: SubjectCategory;
 };
 
-export type CreateFolderRequest = {
+export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
+
+export type FilesControllerConfirmRequest = {
+    confirmToken?: string | null;
+};
+
+export type FilesControllerCreateFolderRequest = {
     name?: string | null;
     parentId?: string | null;
     courseId?: string | null;
 };
 
-export type CreateSchemaRequest = {
-    name?: string | null;
-    copyTimeSlotsFromSchemaId?: string | null;
-};
-
-export type CreateTenantRequest = {
-    name?: string | null;
-    adminEmail?: string | null;
-    adminFirstName?: string | null;
-    adminLastName?: string | null;
-    adminPassword?: string | null;
-};
-
-export type DashboardStats = {
-    classCount?: number;
-    staffCount?: number;
-    courseCount?: number;
-    roomCount?: number;
-    schemasComplete?: number;
-    schemasTotal?: number;
-    hoursPerCourse?: Array<HoursPerCourse> | null;
-    hoursPerStaff?: Array<HoursPerStaff> | null;
-    unassignedClasses?: Array<UnassignedClass> | null;
-};
-
-export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
-
-export type DefaultHolidayDto = {
-    title?: string | null;
-    type?: CalendarEntryType;
-    startDate?: string;
-    endDate?: string;
-};
-
-export type FileDto = {
+export type FilesControllerFileDto = {
     id?: string;
     fileName?: string | null;
     contentType?: string | null;
@@ -152,12 +217,12 @@ export type FileDto = {
     uploadedAt?: string;
 };
 
-export type FilesResponseDto = {
-    files?: Array<FileDto> | null;
-    folders?: Array<FolderDto> | null;
+export type FilesControllerFilesResponseDto = {
+    files?: Array<FilesControllerFileDto> | null;
+    folders?: Array<FilesControllerFolderDto> | null;
 };
 
-export type FolderDto = {
+export type FilesControllerFolderDto = {
     id?: string;
     name?: string | null;
     parentId?: string | null;
@@ -166,45 +231,33 @@ export type FolderDto = {
     createdAt?: string;
 };
 
-export type GrantPermissionRequest = {
-    staffId?: string;
+export type FilesControllerPresignRequest = {
+    fileName?: string | null;
+    fileSizeBytes?: number;
+    courseId?: string | null;
+    folderId?: string | null;
 };
 
-export type HolidayDayDto = {
-    weekday?: DayOfWeek;
-    title?: string | null;
+export type FilesControllerPresignResponse = {
+    fileId?: string;
+    uploadUrl?: string | null;
+    confirmToken?: string | null;
+    contentType?: string | null;
 };
 
-export type HoursPerCourse = {
-    courseId?: string;
-    courseName?: string | null;
-    classId?: string;
-    className?: string | null;
-    hours?: number;
-};
-
-export type HoursPerStaff = {
-    staffId?: string;
-    staffName?: string | null;
-    role?: StaffRole;
-    hours?: number;
-};
-
-export type InvitationDto = {
-    id?: string;
-    staffId?: string;
-    staffName?: string | null;
-    email?: string | null;
-    status?: string | null;
-    expiresAt?: string;
-    acceptedAt?: string | null;
-    createdAt?: string;
-};
-
-export type InviteParentRequest = {
+export type FilesControllerRenameFolderRequest = {
     name?: string | null;
-    email?: string | null;
-    studentIds?: Array<string> | null;
+};
+
+export type KontaktControllerKontaktParentDto = {
+    id?: string;
+    name?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    avatarUrl?: string | null;
+    studentNames?: Array<string> | null;
 };
 
 export type ModuleItemDto = {
@@ -213,79 +266,107 @@ export type ModuleItemDto = {
     stripeSubscriptionItemId?: string | null;
 };
 
-export type ModuleOverrideRequest = {
-    module?: SubscriptionModule;
+export type NotificationPreferencesControllerNotificationPreferenceDto = {
+    type?: NotificationType;
+    inApp?: boolean;
+    email?: boolean;
 };
 
-export type ModuleRequest = {
-    module?: SubscriptionModule;
+export type NotificationPreferencesControllerUpsertPreferenceItem = {
+    type?: NotificationType;
+    inApp?: boolean;
+    email?: boolean;
 };
 
-export type OnboardingStatusDto = {
-    hasLogo?: boolean;
-    staffCount?: number;
-    classCount?: number;
-    courseCount?: number;
-    roomCount?: number;
-    stepsCompleted?: number;
-    stepsTotal?: number;
+export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanChanged' | 'AbsenceConfirmed' | 'AbsenceDismissed';
+
+export type NotificationsControllerNotificationDto = {
+    id?: string;
+    type?: NotificationType;
+    body?: string | null;
+    createdAt?: string;
+    readAt?: string | null;
+    referenceId?: string | null;
 };
 
-export type ParentClassDto = {
+export type ParentMeControllerAvatarConfirmRequest = {
+    objectKey?: string | null;
+};
+
+export type ParentMeControllerAvatarPresignRequest = {
+    contentType?: string | null;
+    fileSizeBytes?: number;
+};
+
+export type ParentMeControllerAvatarPresignResponse = {
+    uploadUrl?: string | null;
+    objectKey?: string | null;
+};
+
+export type ParentMeControllerParentClassDto = {
     classId?: string;
     className?: string | null;
 };
 
-export type ParentDto = {
+export type ParentMeControllerParentMeDto = {
+    id?: string;
+    name?: string | null;
+    avatarUrl?: string | null;
+    classes?: Array<ParentMeControllerParentClassDto> | null;
+    students?: Array<ParentMeControllerParentStudentDto> | null;
+};
+
+export type ParentMeControllerParentStudentDto = {
+    studentId?: string;
+    studentName?: string | null;
+    classId?: string;
+};
+
+export type ParentMeControllerUpdateContactRequest = {
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    shareContactInfo?: boolean;
+};
+
+export type ParentsControllerInviteParentRequest = {
+    name?: string | null;
+    email?: string | null;
+    studentIds?: Array<string> | null;
+};
+
+export type ParentsControllerParentDto = {
     id?: string;
     name?: string | null;
     email?: string | null;
     phone?: string | null;
-    students?: Array<StudentRefDto> | null;
+    students?: Array<ParentsControllerStudentRefDto> | null;
     hasAccount?: boolean;
     createdAt?: string;
 };
 
-export type ParentMeDto = {
+export type ParentsControllerStudentRefDto = {
     id?: string;
     name?: string | null;
-    classes?: Array<ParentClassDto> | null;
+    classId?: string;
+    className?: string | null;
 };
 
-export type PatchAdminPermissionRequest = {
-    isAdmin?: boolean;
-};
-
-export type PresignRequest = {
-    fileName?: string | null;
-    fileSizeBytes?: number;
-    courseId?: string | null;
-    folderId?: string | null;
-};
-
-export type PresignResponse = {
-    fileId?: string;
-    uploadUrl?: string | null;
-    confirmToken?: string | null;
-    contentType?: string | null;
-};
-
-export type RenameFolderRequest = {
-    name?: string | null;
-};
-
-export type RenameSchemaRequest = {
-    name?: string | null;
-};
-
-export type RoomDto = {
+export type RoomsControllerRoomDto = {
     id?: string;
     name?: string | null;
     capacity?: number | null;
     description?: string | null;
 };
 
-export type ScheduleSlotDto = {
+export type RoomsControllerUpsertRoomRequest = {
+    name?: string | null;
+    capacity?: number | null;
+    description?: string | null;
+};
+
+export type SchedulesControllerScheduleSlotDto = {
     weekday?: DayOfWeek;
     startTime?: string | null;
     endTime?: string | null;
@@ -302,13 +383,26 @@ export type ScheduleSlotDto = {
     teacherName?: string | null;
 };
 
-export type SchemaDetailDto = {
-    schema?: SchemaDto;
-    slots?: Array<SlotDto> | null;
+export type SchemasControllerCopySchemaRequest = {
+    name?: string | null;
+};
+
+export type SchemasControllerCreateSchemaRequest = {
+    name?: string | null;
+    copyTimeSlotsFromSchemaId?: string | null;
+};
+
+export type SchemasControllerRenameSchemaRequest = {
+    name?: string | null;
+};
+
+export type SchemasControllerSchemaDetailDto = {
+    schema?: SchemasControllerSchemaDto;
+    slots?: Array<SchemasControllerSlotDto> | null;
     conflicts?: Array<ConflictInfo> | null;
 };
 
-export type SchemaDto = {
+export type SchemasControllerSchemaDto = {
     id?: string;
     classId?: string;
     name?: string | null;
@@ -316,51 +410,12 @@ export type SchemaDto = {
     endDate?: string | null;
 };
 
-export type SchoolSettingsDto = {
-    name?: string | null;
-    contactEmail?: string | null;
-    contactPhone?: string | null;
-    logoUrl?: string | null;
-};
-
-export type SetDateRangeRequest = {
+export type SchemasControllerSetDateRangeRequest = {
     startDate?: string | null;
     endDate?: string | null;
 };
 
-export type SfoShiftDto = {
-    id?: string;
-    dayOfWeek?: number;
-    startTime?: string | null;
-    endTime?: string | null;
-    label?: string | null;
-    staff?: Array<StaffRefDto> | null;
-};
-
-export type SfoStaffRefDto = {
-    id?: string;
-    name?: string | null;
-};
-
-export type SfoWeekPlanDto = {
-    id?: string;
-    isoYear?: number;
-    isoWeek?: number;
-    shifts?: Array<SfoWeekPlanShiftDto> | null;
-};
-
-export type SfoWeekPlanShiftDto = {
-    id?: string;
-    sfoShiftId?: string;
-    dayOfWeek?: number;
-    startTime?: string | null;
-    endTime?: string | null;
-    label?: string | null;
-    staff?: Array<SfoStaffRefDto> | null;
-    beskrivelse?: string | null;
-};
-
-export type SlotDto = {
+export type SchemasControllerSlotDto = {
     id?: string;
     timeSlotId?: string;
     weekday?: DayOfWeek;
@@ -374,12 +429,101 @@ export type SlotDto = {
     aideName?: string | null;
 };
 
-export type SlotsAndConflictsDto = {
-    slots?: Array<SlotDto> | null;
+export type SchemasControllerSlotsAndConflictsDto = {
+    slots?: Array<SchemasControllerSlotDto> | null;
     conflicts?: Array<ConflictInfo> | null;
 };
 
-export type StaffDto = {
+export type SchemasControllerUpsertSlotRequest = {
+    timeSlotId?: string;
+    weekday?: DayOfWeek;
+    courseId?: string;
+    teacherId?: string;
+    roomId?: string | null;
+    aideId?: string | null;
+};
+
+export type SchoolsControllerOnboardingStatusDto = {
+    hasLogo?: boolean;
+    staffCount?: number;
+    classCount?: number;
+    courseCount?: number;
+    roomCount?: number;
+    stepsCompleted?: number;
+    stepsTotal?: number;
+};
+
+export type SchoolsControllerSchoolSettingsDto = {
+    name?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    logoUrl?: string | null;
+};
+
+export type SchoolsControllerUpdateSchoolSettingsRequest = {
+    name?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+};
+
+export type SenderType = 'Parent' | 'Staff';
+
+export type SfoControllerSfoShiftDto = {
+    id?: string;
+    dayOfWeek?: number;
+    startTime?: string | null;
+    endTime?: string | null;
+    label?: string | null;
+    staff?: Array<SfoControllerStaffRefDto> | null;
+};
+
+export type SfoControllerStaffRefDto = {
+    id?: string;
+    name?: string | null;
+};
+
+export type SfoControllerUpsertSfoShiftRequest = {
+    dayOfWeek?: number;
+    startTime?: string | null;
+    endTime?: string | null;
+    label?: string | null;
+};
+
+export type SfoWeekPlanControllerSfoStaffRefDto = {
+    id?: string;
+    name?: string | null;
+};
+
+export type SfoWeekPlanControllerSfoWeekPlanDto = {
+    id?: string;
+    isoYear?: number;
+    isoWeek?: number;
+    shifts?: Array<SfoWeekPlanControllerSfoWeekPlanShiftDto> | null;
+};
+
+export type SfoWeekPlanControllerSfoWeekPlanShiftDto = {
+    id?: string;
+    sfoShiftId?: string;
+    dayOfWeek?: number;
+    startTime?: string | null;
+    endTime?: string | null;
+    label?: string | null;
+    staff?: Array<SfoWeekPlanControllerSfoStaffRefDto> | null;
+    beskrivelse?: string | null;
+};
+
+export type SfoWeekPlanControllerUpsertSfoWeekPlanShiftRequest = {
+    isoYear?: number;
+    isoWeek?: number;
+    sfoShiftId?: string;
+    beskrivelse?: string | null;
+};
+
+export type StaffControllerPatchAdminPermissionRequest = {
+    isAdmin?: boolean;
+};
+
+export type StaffControllerStaffDto = {
     id?: string;
     name?: string | null;
     email?: string | null;
@@ -389,14 +533,95 @@ export type StaffDto = {
     keycloakSubject?: string | null;
 };
 
-export type StaffRefDto = {
-    id?: string;
+export type StaffControllerUpsertStaffRequest = {
     name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    role?: StaffRole;
+    isAdmin?: boolean;
+};
+
+export type StaffInvitationsControllerAcceptInvitationRequest = {
+    token?: string | null;
+    keycloakSubject?: string | null;
+};
+
+export type StaffInvitationsControllerInvitationDto = {
+    id?: string;
+    staffId?: string;
+    staffName?: string | null;
+    email?: string | null;
+    status?: string | null;
+    expiresAt?: string;
+    acceptedAt?: string | null;
+    createdAt?: string;
+};
+
+export type StaffMeControllerAvatarConfirmRequest = {
+    objectKey?: string | null;
+};
+
+export type StaffMeControllerAvatarPresignRequest = {
+    contentType?: string | null;
+    fileSizeBytes?: number;
+};
+
+export type StaffMeControllerAvatarPresignResponse = {
+    uploadUrl?: string | null;
+    objectKey?: string | null;
 };
 
 export type StaffRole = 'Teacher' | 'Aide' | 'Substitute';
 
-export type StudentDto = {
+export type StatsControllerDashboardStats = {
+    classCount?: number;
+    staffCount?: number;
+    courseCount?: number;
+    roomCount?: number;
+    schemasComplete?: number;
+    schemasTotal?: number;
+    hoursPerCourse?: Array<StatsControllerHoursPerCourse> | null;
+    hoursPerStaff?: Array<StatsControllerHoursPerStaff> | null;
+    unassignedClasses?: Array<StatsControllerUnassignedClass> | null;
+};
+
+export type StatsControllerHoursPerCourse = {
+    courseId?: string;
+    courseName?: string | null;
+    classId?: string;
+    className?: string | null;
+    hours?: number;
+};
+
+export type StatsControllerHoursPerStaff = {
+    staffId?: string;
+    staffName?: string | null;
+    role?: StaffRole;
+    hours?: number;
+};
+
+export type StatsControllerUnassignedClass = {
+    classId?: string;
+    className?: string | null;
+    emptySlots?: number;
+    hasSchema?: boolean;
+};
+
+export type StudentsControllerAvatarConfirmRequest = {
+    objectKey?: string | null;
+};
+
+export type StudentsControllerAvatarPresignRequest = {
+    contentType?: string | null;
+    fileSizeBytes?: number;
+};
+
+export type StudentsControllerAvatarPresignResponse = {
+    uploadUrl?: string | null;
+    objectKey?: string | null;
+};
+
+export type StudentsControllerStudentDto = {
     id?: string;
     name?: string | null;
     classId?: string;
@@ -404,47 +629,16 @@ export type StudentDto = {
     createdAt?: string;
 };
 
-export type StudentRefDto = {
-    id?: string;
+export type StudentsControllerUpsertStudentRequest = {
     name?: string | null;
     classId?: string;
-    className?: string | null;
 };
 
 export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri';
 
-export type SubscriptionDto = {
-    status?: SubscriptionStatus;
-    trialEnd?: string;
-    currentPeriodEnd?: string | null;
-    isTrialing?: boolean;
-    isActive?: boolean;
-    hasAccess?: boolean;
-    trialDaysLeft?: number;
-    activeModules?: Array<string> | null;
-};
-
 export type SubscriptionModule = 'ParentModule' | 'BoardModule';
 
 export type SubscriptionStatus = 'Trialing' | 'Active' | 'PastDue' | 'Canceled' | 'Unpaid';
-
-export type TemplateDto = {
-    id?: string;
-    lessonDurationMinutes?: number;
-    dayStartTime?: string;
-    dayEndTime?: string;
-    activeDays?: string | null;
-    breaks?: Array<BreakDto> | null;
-};
-
-export type TenantCreatedDto = {
-    id?: string;
-    name?: string | null;
-    adminEmail?: string | null;
-    accessToken?: string | null;
-    refreshToken?: string | null;
-    expiresIn?: number;
-};
 
 export type TenantDetailDto = {
     id?: string;
@@ -471,7 +665,39 @@ export type TenantListItemDto = {
     activeModuleCount?: number;
 };
 
-export type TimeSlotDto = {
+export type TenantsControllerCreateTenantRequest = {
+    name?: string | null;
+    adminEmail?: string | null;
+    adminFirstName?: string | null;
+    adminLastName?: string | null;
+    adminPassword?: string | null;
+};
+
+export type TenantsControllerTenantCreatedDto = {
+    id?: string;
+    name?: string | null;
+    adminEmail?: string | null;
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    expiresIn?: number;
+};
+
+export type TimeSlotsControllerBreakDto = {
+    id?: string;
+    startTime?: string;
+    durationMinutes?: number;
+};
+
+export type TimeSlotsControllerTemplateDto = {
+    id?: string;
+    lessonDurationMinutes?: number;
+    dayStartTime?: string;
+    dayEndTime?: string;
+    activeDays?: string | null;
+    breaks?: Array<TimeSlotsControllerBreakDto> | null;
+};
+
+export type TimeSlotsControllerTimeSlotDto = {
     id?: string;
     classId?: string | null;
     sortOrder?: number;
@@ -481,97 +707,20 @@ export type TimeSlotDto = {
     isBreak?: boolean;
 };
 
-export type UnassignedClass = {
-    classId?: string;
-    className?: string | null;
-    emptySlots?: number;
-    hasSchema?: boolean;
-};
-
-export type UpdateCalendarEntryRequest = {
-    title?: string | null;
-    type?: CalendarEntryType;
-    startDate?: string;
-    endDate?: string;
-    recurrenceRule?: string | null;
-    recurrenceEnd?: string | null;
-};
-
-export type UpdateSchoolSettingsRequest = {
-    name?: string | null;
-    contactEmail?: string | null;
-    contactPhone?: string | null;
-};
-
-export type UpsertBreakRequest = {
+export type TimeSlotsControllerUpsertBreakRequest = {
     startTime?: string;
     durationMinutes?: number;
 };
 
-export type UpsertClassRequest = {
-    name?: string | null;
-    description?: string | null;
-    gradeLevel?: number | null;
-};
-
-export type UpsertCourseRequest = {
-    name?: string | null;
-    description?: string | null;
-    color?: string | null;
-    category?: SubjectCategory;
-};
-
-export type UpsertRoomRequest = {
-    name?: string | null;
-    capacity?: number | null;
-    description?: string | null;
-};
-
-export type UpsertSfoShiftRequest = {
-    dayOfWeek?: number;
-    startTime?: string | null;
-    endTime?: string | null;
-    label?: string | null;
-};
-
-export type UpsertSfoWeekPlanShiftRequest = {
-    isoYear?: number;
-    isoWeek?: number;
-    sfoShiftId?: string;
-    beskrivelse?: string | null;
-};
-
-export type UpsertSlotRequest = {
-    timeSlotId?: string;
-    weekday?: DayOfWeek;
-    courseId?: string;
-    teacherId?: string;
-    roomId?: string | null;
-    aideId?: string | null;
-};
-
-export type UpsertStaffRequest = {
-    name?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    role?: StaffRole;
-    isAdmin?: boolean;
-};
-
-export type UpsertStudentRequest = {
-    name?: string | null;
-    classId?: string;
-};
-
-export type UpsertTemplateRequest = {
+export type TimeSlotsControllerUpsertTemplateRequest = {
     lessonDurationMinutes?: number;
     dayStartTime?: string;
     dayEndTime?: string;
     activeDays?: string | null;
-    breaks?: Array<UpsertBreakRequest> | null;
+    breaks?: Array<TimeSlotsControllerUpsertBreakRequest> | null;
 };
 
-export type UpsertTimeSlotRequest = {
+export type TimeSlotsControllerUpsertTimeSlotRequest = {
     sortOrder?: number;
     startTime?: string;
     endTime?: string;
@@ -579,14 +728,30 @@ export type UpsertTimeSlotRequest = {
     isBreak?: boolean;
 };
 
-export type UpsertWeekPlanSlotRequest = {
+export type WeekPlanControllerAddFileToSlotRequest = {
+    schoolFileId?: string;
+};
+
+export type WeekPlanControllerBreakTimeSlotDto = {
+    timeSlotId?: string;
+    timeSlotLabel?: string | null;
+    startTime?: string;
+    endTime?: string;
+};
+
+export type WeekPlanControllerHolidayDayDto = {
+    weekday?: DayOfWeek;
+    title?: string | null;
+};
+
+export type WeekPlanControllerUpsertWeekPlanSlotRequest = {
     schemaSlotId?: string;
     beskrivelse?: string | null;
     lektier?: string | null;
     fagSwapCourseId?: string | null;
 };
 
-export type WeekPlanDto = {
+export type WeekPlanControllerWeekPlanDto = {
     id?: string;
     classId?: string;
     isoYear?: number;
@@ -595,12 +760,12 @@ export type WeekPlanDto = {
     weekEndDate?: string;
     isHolidayWeek?: boolean;
     holidayTitle?: string | null;
-    holidayDays?: Array<HolidayDayDto> | null;
-    breakSlots?: Array<BreakTimeSlotDto> | null;
-    slots?: Array<WeekPlanSlotDto> | null;
+    holidayDays?: Array<WeekPlanControllerHolidayDayDto> | null;
+    breakSlots?: Array<WeekPlanControllerBreakTimeSlotDto> | null;
+    slots?: Array<WeekPlanControllerWeekPlanSlotDto> | null;
 };
 
-export type WeekPlanSlotDto = {
+export type WeekPlanControllerWeekPlanSlotDto = {
     id?: string;
     schemaSlotId?: string;
     weekday?: DayOfWeek;
@@ -614,33 +779,116 @@ export type WeekPlanSlotDto = {
     originalCourseName?: string | null;
     beskrivelse?: string | null;
     lektier?: string | null;
-    files?: Array<WeekPlanSlotFileDto> | null;
+    files?: Array<WeekPlanControllerWeekPlanSlotFileDto> | null;
 };
 
-export type WeekPlanSlotFileDto = {
+export type WeekPlanControllerWeekPlanSlotFileDto = {
     id?: string;
     schoolFileId?: string;
     fileName?: string | null;
     url?: string | null;
 };
 
-export type YearRollCreateEntry = {
-    name?: string | null;
+export type GetApiV1AbsenceData = {
+    body?: never;
+    path?: never;
+    query?: {
+        classId?: string;
+        from?: string;
+        to?: string;
+    };
+    url: '/api/v1/absence';
 };
 
-export type YearRollRenameEntry = {
-    classId?: string;
-    newName?: string | null;
+export type GetApiV1AbsenceResponses = {
+    /**
+     * OK
+     */
+    200: Array<AbsenceControllerAbsenceReportDto>;
 };
 
-export type YearRollRequest = {
-    renames?: Array<YearRollRenameEntry> | null;
-    archive?: Array<string> | null;
-    create?: Array<YearRollCreateEntry> | null;
+export type GetApiV1AbsenceResponse = GetApiV1AbsenceResponses[keyof GetApiV1AbsenceResponses];
+
+export type PostApiV1AbsenceData = {
+    body?: AbsenceControllerReportAbsenceRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/absence';
+};
+
+export type PostApiV1AbsenceResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1AbsenceMineData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/absence/mine';
+};
+
+export type GetApiV1AbsenceMineResponses = {
+    /**
+     * OK
+     */
+    200: Array<AbsenceControllerAbsenceReportDto>;
+};
+
+export type GetApiV1AbsenceMineResponse = GetApiV1AbsenceMineResponses[keyof GetApiV1AbsenceMineResponses];
+
+export type PostApiV1AbsenceByIdConfirmData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/absence/{id}/confirm';
+};
+
+export type PostApiV1AbsenceByIdConfirmResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1AbsenceByIdDismissData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/absence/{id}/dismiss';
+};
+
+export type PostApiV1AbsenceByIdDismissResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiV1AbsenceByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/absence/{id}';
+};
+
+export type DeleteApiV1AbsenceByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
 };
 
 export type PostApiV1AdminTenantsBySchoolIdModulesData = {
-    body?: ModuleOverrideRequest;
+    body?: AdminControllerModuleOverrideRequest;
     path: {
         schoolId: string;
     };
@@ -683,13 +931,13 @@ export type GetApiV1BillingSubscriptionResponses = {
     /**
      * OK
      */
-    200: SubscriptionDto;
+    200: BillingControllerSubscriptionDto;
 };
 
 export type GetApiV1BillingSubscriptionResponse = GetApiV1BillingSubscriptionResponses[keyof GetApiV1BillingSubscriptionResponses];
 
 export type PostApiV1BillingModulesData = {
-    body?: ModuleRequest;
+    body?: BillingControllerModuleRequest;
     path?: never;
     query?: never;
     url: '/api/v1/billing/modules';
@@ -729,7 +977,7 @@ export type PostApiV1BillingCheckoutResponses = {
     /**
      * OK
      */
-    200: CheckoutResponse;
+    200: BillingControllerCheckoutResponse;
 };
 
 export type PostApiV1BillingCheckoutResponse = PostApiV1BillingCheckoutResponses[keyof PostApiV1BillingCheckoutResponses];
@@ -745,7 +993,7 @@ export type PostApiV1BillingPortalResponses = {
     /**
      * OK
      */
-    200: CheckoutResponse;
+    200: BillingControllerCheckoutResponse;
 };
 
 export type PostApiV1BillingPortalResponse = PostApiV1BillingPortalResponses[keyof PostApiV1BillingPortalResponses];
@@ -763,13 +1011,13 @@ export type GetApiV1CalendarResponses = {
     /**
      * OK
      */
-    200: Array<CalendarEntryDto>;
+    200: Array<CalendarControllerCalendarEntryDto>;
 };
 
 export type GetApiV1CalendarResponse = GetApiV1CalendarResponses[keyof GetApiV1CalendarResponses];
 
 export type PostApiV1CalendarData = {
-    body?: CreateCalendarEntryRequest;
+    body?: CalendarControllerCreateCalendarEntryRequest;
     path?: never;
     query?: never;
     url: '/api/v1/calendar';
@@ -779,7 +1027,7 @@ export type PostApiV1CalendarResponses = {
     /**
      * OK
      */
-    200: CalendarEntryDto;
+    200: CalendarControllerCalendarEntryDto;
 };
 
 export type PostApiV1CalendarResponse = PostApiV1CalendarResponses[keyof PostApiV1CalendarResponses];
@@ -797,7 +1045,7 @@ export type GetApiV1CalendarDefaultsResponses = {
     /**
      * OK
      */
-    200: Array<DefaultHolidayDto>;
+    200: Array<CalendarControllerDefaultHolidayDto>;
 };
 
 export type GetApiV1CalendarDefaultsResponse = GetApiV1CalendarDefaultsResponses[keyof GetApiV1CalendarDefaultsResponses];
@@ -819,7 +1067,7 @@ export type DeleteApiV1CalendarByIdResponses = {
 };
 
 export type PutApiV1CalendarByIdData = {
-    body?: UpdateCalendarEntryRequest;
+    body?: CalendarControllerUpdateCalendarEntryRequest;
     path: {
         id: string;
     };
@@ -831,7 +1079,7 @@ export type PutApiV1CalendarByIdResponses = {
     /**
      * OK
      */
-    200: CalendarEntryDto;
+    200: CalendarControllerCalendarEntryDto;
 };
 
 export type PutApiV1CalendarByIdResponse = PutApiV1CalendarByIdResponses[keyof PutApiV1CalendarByIdResponses];
@@ -895,13 +1143,13 @@ export type GetApiV1ClassesResponses = {
     /**
      * OK
      */
-    200: Array<ClassDto>;
+    200: Array<ClassesControllerClassDto>;
 };
 
 export type GetApiV1ClassesResponse = GetApiV1ClassesResponses[keyof GetApiV1ClassesResponses];
 
 export type PostApiV1ClassesData = {
-    body?: UpsertClassRequest;
+    body?: ClassesControllerUpsertClassRequest;
     path?: never;
     query?: never;
     url: '/api/v1/classes';
@@ -911,7 +1159,7 @@ export type PostApiV1ClassesResponses = {
     /**
      * OK
      */
-    200: ClassDto;
+    200: ClassesControllerClassDto;
 };
 
 export type PostApiV1ClassesResponse = PostApiV1ClassesResponses[keyof PostApiV1ClassesResponses];
@@ -945,13 +1193,13 @@ export type GetApiV1ClassesByIdResponses = {
     /**
      * OK
      */
-    200: ClassDto;
+    200: ClassesControllerClassDto;
 };
 
 export type GetApiV1ClassesByIdResponse = GetApiV1ClassesByIdResponses[keyof GetApiV1ClassesByIdResponses];
 
 export type PutApiV1ClassesByIdData = {
-    body?: UpsertClassRequest;
+    body?: ClassesControllerUpsertClassRequest;
     path: {
         id: string;
     };
@@ -963,7 +1211,7 @@ export type PutApiV1ClassesByIdResponses = {
     /**
      * OK
      */
-    200: ClassDto;
+    200: ClassesControllerClassDto;
 };
 
 export type PutApiV1ClassesByIdResponse = PutApiV1ClassesByIdResponses[keyof PutApiV1ClassesByIdResponses];
@@ -979,13 +1227,13 @@ export type GetApiV1ClassesArchivedResponses = {
     /**
      * OK
      */
-    200: Array<ClassDto>;
+    200: Array<ClassesControllerClassDto>;
 };
 
 export type GetApiV1ClassesArchivedResponse = GetApiV1ClassesArchivedResponses[keyof GetApiV1ClassesArchivedResponses];
 
 export type PostApiV1ClassesYearRollData = {
-    body?: YearRollRequest;
+    body?: ClassesControllerYearRollRequest;
     path?: never;
     query?: never;
     url: '/api/v1/classes/year-roll';
@@ -1011,13 +1259,13 @@ export type GetApiV1ClassesByClassIdPermissionsResponses = {
     /**
      * OK
      */
-    200: Array<ClassPermissionDto>;
+    200: Array<ClassPermissionsControllerClassPermissionDto>;
 };
 
 export type GetApiV1ClassesByClassIdPermissionsResponse = GetApiV1ClassesByClassIdPermissionsResponses[keyof GetApiV1ClassesByClassIdPermissionsResponses];
 
 export type PostApiV1ClassesByClassIdPermissionsData = {
-    body?: GrantPermissionRequest;
+    body?: ClassPermissionsControllerGrantPermissionRequest;
     path: {
         classId: string;
     };
@@ -1029,7 +1277,7 @@ export type PostApiV1ClassesByClassIdPermissionsResponses = {
     /**
      * OK
      */
-    200: ClassPermissionDto;
+    200: ClassPermissionsControllerClassPermissionDto;
 };
 
 export type PostApiV1ClassesByClassIdPermissionsResponse = PostApiV1ClassesByClassIdPermissionsResponses[keyof PostApiV1ClassesByClassIdPermissionsResponses];
@@ -1051,6 +1299,89 @@ export type DeleteApiV1ClassesByClassIdPermissionsByStaffIdResponses = {
     200: unknown;
 };
 
+export type GetApiV1ContactThreadsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/contact-threads';
+};
+
+export type GetApiV1ContactThreadsResponses = {
+    /**
+     * OK
+     */
+    200: Array<ContactThreadsControllerContactThreadDto>;
+};
+
+export type GetApiV1ContactThreadsResponse = GetApiV1ContactThreadsResponses[keyof GetApiV1ContactThreadsResponses];
+
+export type PostApiV1ContactThreadsData = {
+    body?: ContactThreadsControllerFindOrCreateThreadRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/contact-threads';
+};
+
+export type PostApiV1ContactThreadsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1ContactThreadsByThreadIdMessagesData = {
+    body?: never;
+    path: {
+        threadId: string;
+    };
+    query?: {
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/v1/contact-threads/{threadId}/messages';
+};
+
+export type GetApiV1ContactThreadsByThreadIdMessagesResponses = {
+    /**
+     * OK
+     */
+    200: ContactThreadsControllerPagedResult1;
+};
+
+export type GetApiV1ContactThreadsByThreadIdMessagesResponse = GetApiV1ContactThreadsByThreadIdMessagesResponses[keyof GetApiV1ContactThreadsByThreadIdMessagesResponses];
+
+export type PostApiV1ContactThreadsByThreadIdMessagesData = {
+    body?: ContactThreadsControllerAddMessageRequest;
+    path: {
+        threadId: string;
+    };
+    query?: never;
+    url: '/api/v1/contact-threads/{threadId}/messages';
+};
+
+export type PostApiV1ContactThreadsByThreadIdMessagesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1ContactThreadsByThreadIdReadData = {
+    body?: never;
+    path: {
+        threadId: string;
+    };
+    query?: never;
+    url: '/api/v1/contact-threads/{threadId}/read';
+};
+
+export type PostApiV1ContactThreadsByThreadIdReadResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiV1CoursesData = {
     body?: never;
     path?: never;
@@ -1062,13 +1393,13 @@ export type GetApiV1CoursesResponses = {
     /**
      * OK
      */
-    200: Array<CourseDto>;
+    200: Array<CoursesControllerCourseDto>;
 };
 
 export type GetApiV1CoursesResponse = GetApiV1CoursesResponses[keyof GetApiV1CoursesResponses];
 
 export type PostApiV1CoursesData = {
-    body?: UpsertCourseRequest;
+    body?: CoursesControllerUpsertCourseRequest;
     path?: never;
     query?: never;
     url: '/api/v1/courses';
@@ -1078,7 +1409,7 @@ export type PostApiV1CoursesResponses = {
     /**
      * OK
      */
-    200: CourseDto;
+    200: CoursesControllerCourseDto;
 };
 
 export type PostApiV1CoursesResponse = PostApiV1CoursesResponses[keyof PostApiV1CoursesResponses];
@@ -1112,13 +1443,13 @@ export type GetApiV1CoursesByIdResponses = {
     /**
      * OK
      */
-    200: CourseDto;
+    200: CoursesControllerCourseDto;
 };
 
 export type GetApiV1CoursesByIdResponse = GetApiV1CoursesByIdResponses[keyof GetApiV1CoursesByIdResponses];
 
 export type PutApiV1CoursesByIdData = {
-    body?: UpsertCourseRequest;
+    body?: CoursesControllerUpsertCourseRequest;
     path: {
         id: string;
     };
@@ -1130,7 +1461,7 @@ export type PutApiV1CoursesByIdResponses = {
     /**
      * OK
      */
-    200: CourseDto;
+    200: CoursesControllerCourseDto;
 };
 
 export type PutApiV1CoursesByIdResponse = PutApiV1CoursesByIdResponses[keyof PutApiV1CoursesByIdResponses];
@@ -1149,13 +1480,13 @@ export type GetApiV1FilesResponses = {
     /**
      * OK
      */
-    200: FilesResponseDto;
+    200: FilesControllerFilesResponseDto;
 };
 
 export type GetApiV1FilesResponse = GetApiV1FilesResponses[keyof GetApiV1FilesResponses];
 
 export type PostApiV1FilesPresignData = {
-    body?: PresignRequest;
+    body?: FilesControllerPresignRequest;
     path?: never;
     query?: never;
     url: '/api/v1/files/presign';
@@ -1165,13 +1496,13 @@ export type PostApiV1FilesPresignResponses = {
     /**
      * OK
      */
-    200: PresignResponse;
+    200: FilesControllerPresignResponse;
 };
 
 export type PostApiV1FilesPresignResponse = PostApiV1FilesPresignResponses[keyof PostApiV1FilesPresignResponses];
 
 export type PostApiV1FilesConfirmData = {
-    body?: ConfirmRequest;
+    body?: FilesControllerConfirmRequest;
     path?: never;
     query?: never;
     url: '/api/v1/files/confirm';
@@ -1181,7 +1512,7 @@ export type PostApiV1FilesConfirmResponses = {
     /**
      * OK
      */
-    200: FileDto;
+    200: FilesControllerFileDto;
 };
 
 export type PostApiV1FilesConfirmResponse = PostApiV1FilesConfirmResponses[keyof PostApiV1FilesConfirmResponses];
@@ -1203,7 +1534,7 @@ export type DeleteApiV1FilesByIdResponses = {
 };
 
 export type PostApiV1FilesFoldersData = {
-    body?: CreateFolderRequest;
+    body?: FilesControllerCreateFolderRequest;
     path?: never;
     query?: never;
     url: '/api/v1/files/folders';
@@ -1213,7 +1544,7 @@ export type PostApiV1FilesFoldersResponses = {
     /**
      * OK
      */
-    200: FolderDto;
+    200: FilesControllerFolderDto;
 };
 
 export type PostApiV1FilesFoldersResponse = PostApiV1FilesFoldersResponses[keyof PostApiV1FilesFoldersResponses];
@@ -1235,7 +1566,7 @@ export type DeleteApiV1FilesFoldersByIdResponses = {
 };
 
 export type PatchApiV1FilesFoldersByIdData = {
-    body?: RenameFolderRequest;
+    body?: FilesControllerRenameFolderRequest;
     path: {
         id: string;
     };
@@ -1247,10 +1578,102 @@ export type PatchApiV1FilesFoldersByIdResponses = {
     /**
      * OK
      */
-    200: FolderDto;
+    200: FilesControllerFolderDto;
 };
 
 export type PatchApiV1FilesFoldersByIdResponse = PatchApiV1FilesFoldersByIdResponses[keyof PatchApiV1FilesFoldersByIdResponses];
+
+export type GetApiV1KontaktData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/kontakt';
+};
+
+export type GetApiV1KontaktResponses = {
+    /**
+     * OK
+     */
+    200: Array<KontaktControllerKontaktParentDto>;
+};
+
+export type GetApiV1KontaktResponse = GetApiV1KontaktResponses[keyof GetApiV1KontaktResponses];
+
+export type GetApiV1NotificationPreferencesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notification-preferences';
+};
+
+export type GetApiV1NotificationPreferencesResponses = {
+    /**
+     * OK
+     */
+    200: Array<NotificationPreferencesControllerNotificationPreferenceDto>;
+};
+
+export type GetApiV1NotificationPreferencesResponse = GetApiV1NotificationPreferencesResponses[keyof GetApiV1NotificationPreferencesResponses];
+
+export type PutApiV1NotificationPreferencesData = {
+    body?: Array<NotificationPreferencesControllerUpsertPreferenceItem>;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notification-preferences';
+};
+
+export type PutApiV1NotificationPreferencesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1NotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications';
+};
+
+export type GetApiV1NotificationsResponses = {
+    /**
+     * OK
+     */
+    200: Array<NotificationsControllerNotificationDto>;
+};
+
+export type GetApiV1NotificationsResponse = GetApiV1NotificationsResponses[keyof GetApiV1NotificationsResponses];
+
+export type PostApiV1NotificationsByIdReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type PostApiV1NotificationsByIdReadResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1NotificationsReadAllData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/read-all';
+};
+
+export type PostApiV1NotificationsReadAllResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ParentInvitationsPreviewData = {
     body?: never;
@@ -1311,10 +1734,54 @@ export type GetApiV1ParentsMeResponses = {
     /**
      * OK
      */
-    200: ParentMeDto;
+    200: ParentMeControllerParentMeDto;
 };
 
 export type GetApiV1ParentsMeResponse = GetApiV1ParentsMeResponses[keyof GetApiV1ParentsMeResponses];
+
+export type PostApiV1ParentsMeAvatarPresignData = {
+    body?: ParentMeControllerAvatarPresignRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/parents/me/avatar/presign';
+};
+
+export type PostApiV1ParentsMeAvatarPresignResponses = {
+    /**
+     * OK
+     */
+    200: ParentMeControllerAvatarPresignResponse;
+};
+
+export type PostApiV1ParentsMeAvatarPresignResponse = PostApiV1ParentsMeAvatarPresignResponses[keyof PostApiV1ParentsMeAvatarPresignResponses];
+
+export type PatchApiV1ParentsMeContactData = {
+    body?: ParentMeControllerUpdateContactRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/parents/me/contact';
+};
+
+export type PatchApiV1ParentsMeContactResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1ParentsMeAvatarConfirmData = {
+    body?: ParentMeControllerAvatarConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/parents/me/avatar/confirm';
+};
+
+export type PostApiV1ParentsMeAvatarConfirmResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ParentsData = {
     body?: never;
@@ -1327,7 +1794,7 @@ export type GetApiV1ParentsResponses = {
     /**
      * OK
      */
-    200: Array<ParentDto>;
+    200: Array<ParentsControllerParentDto>;
 };
 
 export type GetApiV1ParentsResponse = GetApiV1ParentsResponses[keyof GetApiV1ParentsResponses];
@@ -1361,13 +1828,13 @@ export type GetApiV1ParentsByIdResponses = {
     /**
      * OK
      */
-    200: ParentDto;
+    200: ParentsControllerParentDto;
 };
 
 export type GetApiV1ParentsByIdResponse = GetApiV1ParentsByIdResponses[keyof GetApiV1ParentsByIdResponses];
 
 export type PostApiV1ParentsInviteData = {
-    body?: InviteParentRequest;
+    body?: ParentsControllerInviteParentRequest;
     path?: never;
     query?: never;
     url: '/api/v1/parents/invite';
@@ -1377,7 +1844,7 @@ export type PostApiV1ParentsInviteResponses = {
     /**
      * OK
      */
-    200: ParentDto;
+    200: ParentsControllerParentDto;
 };
 
 export type PostApiV1ParentsInviteResponse = PostApiV1ParentsInviteResponses[keyof PostApiV1ParentsInviteResponses];
@@ -1469,13 +1936,13 @@ export type GetApiV1RoomsResponses = {
     /**
      * OK
      */
-    200: Array<RoomDto>;
+    200: Array<RoomsControllerRoomDto>;
 };
 
 export type GetApiV1RoomsResponse = GetApiV1RoomsResponses[keyof GetApiV1RoomsResponses];
 
 export type PostApiV1RoomsData = {
-    body?: UpsertRoomRequest;
+    body?: RoomsControllerUpsertRoomRequest;
     path?: never;
     query?: never;
     url: '/api/v1/rooms';
@@ -1485,7 +1952,7 @@ export type PostApiV1RoomsResponses = {
     /**
      * OK
      */
-    200: RoomDto;
+    200: RoomsControllerRoomDto;
 };
 
 export type PostApiV1RoomsResponse = PostApiV1RoomsResponses[keyof PostApiV1RoomsResponses];
@@ -1519,13 +1986,13 @@ export type GetApiV1RoomsByIdResponses = {
     /**
      * OK
      */
-    200: RoomDto;
+    200: RoomsControllerRoomDto;
 };
 
 export type GetApiV1RoomsByIdResponse = GetApiV1RoomsByIdResponses[keyof GetApiV1RoomsByIdResponses];
 
 export type PutApiV1RoomsByIdData = {
-    body?: UpsertRoomRequest;
+    body?: RoomsControllerUpsertRoomRequest;
     path: {
         id: string;
     };
@@ -1537,7 +2004,7 @@ export type PutApiV1RoomsByIdResponses = {
     /**
      * OK
      */
-    200: RoomDto;
+    200: RoomsControllerRoomDto;
 };
 
 export type PutApiV1RoomsByIdResponse = PutApiV1RoomsByIdResponses[keyof PutApiV1RoomsByIdResponses];
@@ -1555,7 +2022,7 @@ export type GetApiV1ClassesByClassIdScheduleResponses = {
     /**
      * OK
      */
-    200: Array<ScheduleSlotDto>;
+    200: Array<SchedulesControllerScheduleSlotDto>;
 };
 
 export type GetApiV1ClassesByClassIdScheduleResponse = GetApiV1ClassesByClassIdScheduleResponses[keyof GetApiV1ClassesByClassIdScheduleResponses];
@@ -1573,7 +2040,7 @@ export type GetApiV1StaffByStaffIdScheduleResponses = {
     /**
      * OK
      */
-    200: Array<ScheduleSlotDto>;
+    200: Array<SchedulesControllerScheduleSlotDto>;
 };
 
 export type GetApiV1StaffByStaffIdScheduleResponse = GetApiV1StaffByStaffIdScheduleResponses[keyof GetApiV1StaffByStaffIdScheduleResponses];
@@ -1591,7 +2058,7 @@ export type GetApiV1RoomsByRoomIdScheduleResponses = {
     /**
      * OK
      */
-    200: Array<ScheduleSlotDto>;
+    200: Array<SchedulesControllerScheduleSlotDto>;
 };
 
 export type GetApiV1RoomsByRoomIdScheduleResponse = GetApiV1RoomsByRoomIdScheduleResponses[keyof GetApiV1RoomsByRoomIdScheduleResponses];
@@ -1609,13 +2076,13 @@ export type GetApiV1ClassesByClassIdSchemasResponses = {
     /**
      * OK
      */
-    200: Array<SchemaDto>;
+    200: Array<SchemasControllerSchemaDto>;
 };
 
 export type GetApiV1ClassesByClassIdSchemasResponse = GetApiV1ClassesByClassIdSchemasResponses[keyof GetApiV1ClassesByClassIdSchemasResponses];
 
 export type PostApiV1ClassesByClassIdSchemasData = {
-    body?: CreateSchemaRequest;
+    body?: SchemasControllerCreateSchemaRequest;
     path: {
         classId: string;
     };
@@ -1627,7 +2094,7 @@ export type PostApiV1ClassesByClassIdSchemasResponses = {
     /**
      * OK
      */
-    200: SchemaDto;
+    200: SchemasControllerSchemaDto;
 };
 
 export type PostApiV1ClassesByClassIdSchemasResponse = PostApiV1ClassesByClassIdSchemasResponses[keyof PostApiV1ClassesByClassIdSchemasResponses];
@@ -1663,13 +2130,13 @@ export type GetApiV1ClassesByClassIdSchemasBySchemaIdResponses = {
     /**
      * OK
      */
-    200: SchemaDetailDto;
+    200: SchemasControllerSchemaDetailDto;
 };
 
 export type GetApiV1ClassesByClassIdSchemasBySchemaIdResponse = GetApiV1ClassesByClassIdSchemasBySchemaIdResponses[keyof GetApiV1ClassesByClassIdSchemasBySchemaIdResponses];
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeData = {
-    body?: SetDateRangeRequest;
+    body?: SchemasControllerSetDateRangeRequest;
     path: {
         classId: string;
         schemaId: string;
@@ -1682,13 +2149,13 @@ export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses = {
     /**
      * OK
      */
-    200: SchemaDto;
+    200: SchemasControllerSchemaDto;
 };
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdDaterangeResponses];
 
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyData = {
-    body?: CopySchemaRequest;
+    body?: SchemasControllerCopySchemaRequest;
     path: {
         classId: string;
         schemaId: string;
@@ -1701,13 +2168,13 @@ export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses = {
     /**
      * OK
      */
-    200: SchemaDto;
+    200: SchemasControllerSchemaDto;
 };
 
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponse = PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses[keyof PostApiV1ClassesByClassIdSchemasBySchemaIdCopyResponses];
 
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdData = {
-    body?: CopySchemaRequest;
+    body?: SchemasControllerCopySchemaRequest;
     path: {
         classId: string;
         schemaId: string;
@@ -1721,13 +2188,13 @@ export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdRespo
     /**
      * OK
      */
-    200: SchemaDto;
+    200: SchemasControllerSchemaDto;
 };
 
 export type PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponse = PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses[keyof PostApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdResponses];
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameData = {
-    body?: RenameSchemaRequest;
+    body?: SchemasControllerRenameSchemaRequest;
     path: {
         classId: string;
         schemaId: string;
@@ -1740,7 +2207,7 @@ export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses = {
     /**
      * OK
      */
-    200: SchemaDto;
+    200: SchemasControllerSchemaDto;
 };
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdRenameResponses];
@@ -1759,13 +2226,13 @@ export type GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses = {
     /**
      * OK
      */
-    200: Array<SlotDto>;
+    200: Array<SchemasControllerSlotDto>;
 };
 
 export type GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponse = GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses[keyof GetApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses];
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsData = {
-    body?: UpsertSlotRequest;
+    body?: SchemasControllerUpsertSlotRequest;
     path: {
         classId: string;
         schemaId: string;
@@ -1778,7 +2245,7 @@ export type PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses = {
     /**
      * OK
      */
-    200: SlotsAndConflictsDto;
+    200: SchemasControllerSlotsAndConflictsDto;
 };
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdSlotsResponses];
@@ -1799,7 +2266,7 @@ export type DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekd
     /**
      * OK
      */
-    200: SlotsAndConflictsDto;
+    200: SchemasControllerSlotsAndConflictsDto;
 };
 
 export type DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponse = DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponses[keyof DeleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayResponses];
@@ -1834,13 +2301,13 @@ export type GetApiV1SchoolsSettingsResponses = {
     /**
      * OK
      */
-    200: SchoolSettingsDto;
+    200: SchoolsControllerSchoolSettingsDto;
 };
 
 export type GetApiV1SchoolsSettingsResponse = GetApiV1SchoolsSettingsResponses[keyof GetApiV1SchoolsSettingsResponses];
 
 export type PutApiV1SchoolsSettingsData = {
-    body?: UpdateSchoolSettingsRequest;
+    body?: SchoolsControllerUpdateSchoolSettingsRequest;
     path?: never;
     query?: never;
     url: '/api/v1/schools/settings';
@@ -1850,7 +2317,7 @@ export type PutApiV1SchoolsSettingsResponses = {
     /**
      * OK
      */
-    200: SchoolSettingsDto;
+    200: SchoolsControllerSchoolSettingsDto;
 };
 
 export type PutApiV1SchoolsSettingsResponse = PutApiV1SchoolsSettingsResponses[keyof PutApiV1SchoolsSettingsResponses];
@@ -1866,7 +2333,7 @@ export type GetApiV1SchoolsOnboardingStatusResponses = {
     /**
      * OK
      */
-    200: OnboardingStatusDto;
+    200: SchoolsControllerOnboardingStatusDto;
 };
 
 export type GetApiV1SchoolsOnboardingStatusResponse = GetApiV1SchoolsOnboardingStatusResponses[keyof GetApiV1SchoolsOnboardingStatusResponses];
@@ -1884,7 +2351,7 @@ export type PostApiV1SchoolsLogoResponses = {
     /**
      * OK
      */
-    200: SchoolSettingsDto;
+    200: SchoolsControllerSchoolSettingsDto;
 };
 
 export type PostApiV1SchoolsLogoResponse = PostApiV1SchoolsLogoResponses[keyof PostApiV1SchoolsLogoResponses];
@@ -1900,13 +2367,13 @@ export type GetApiV1SfoShiftsResponses = {
     /**
      * OK
      */
-    200: Array<SfoShiftDto>;
+    200: Array<SfoControllerSfoShiftDto>;
 };
 
 export type GetApiV1SfoShiftsResponse = GetApiV1SfoShiftsResponses[keyof GetApiV1SfoShiftsResponses];
 
 export type PostApiV1SfoShiftsData = {
-    body?: UpsertSfoShiftRequest;
+    body?: SfoControllerUpsertSfoShiftRequest;
     path?: never;
     query?: never;
     url: '/api/v1/sfo/shifts';
@@ -1916,7 +2383,7 @@ export type PostApiV1SfoShiftsResponses = {
     /**
      * OK
      */
-    200: SfoShiftDto;
+    200: SfoControllerSfoShiftDto;
 };
 
 export type PostApiV1SfoShiftsResponse = PostApiV1SfoShiftsResponses[keyof PostApiV1SfoShiftsResponses];
@@ -1950,13 +2417,13 @@ export type GetApiV1SfoShiftsByIdResponses = {
     /**
      * OK
      */
-    200: SfoShiftDto;
+    200: SfoControllerSfoShiftDto;
 };
 
 export type GetApiV1SfoShiftsByIdResponse = GetApiV1SfoShiftsByIdResponses[keyof GetApiV1SfoShiftsByIdResponses];
 
 export type PutApiV1SfoShiftsByIdData = {
-    body?: UpsertSfoShiftRequest;
+    body?: SfoControllerUpsertSfoShiftRequest;
     path: {
         id: string;
     };
@@ -1968,7 +2435,7 @@ export type PutApiV1SfoShiftsByIdResponses = {
     /**
      * OK
      */
-    200: SfoShiftDto;
+    200: SfoControllerSfoShiftDto;
 };
 
 export type PutApiV1SfoShiftsByIdResponse = PutApiV1SfoShiftsByIdResponses[keyof PutApiV1SfoShiftsByIdResponses];
@@ -2021,13 +2488,13 @@ export type GetApiV1SfoUgeplanResponses = {
     /**
      * OK
      */
-    200: SfoWeekPlanDto;
+    200: SfoWeekPlanControllerSfoWeekPlanDto;
 };
 
 export type GetApiV1SfoUgeplanResponse = GetApiV1SfoUgeplanResponses[keyof GetApiV1SfoUgeplanResponses];
 
 export type PutApiV1SfoUgeplanShiftsData = {
-    body?: UpsertSfoWeekPlanShiftRequest;
+    body?: SfoWeekPlanControllerUpsertSfoWeekPlanShiftRequest;
     path?: never;
     query?: never;
     url: '/api/v1/sfo/ugeplan/shifts';
@@ -2037,7 +2504,7 @@ export type PutApiV1SfoUgeplanShiftsResponses = {
     /**
      * OK
      */
-    200: SfoWeekPlanShiftDto;
+    200: SfoWeekPlanControllerSfoWeekPlanShiftDto;
 };
 
 export type PutApiV1SfoUgeplanShiftsResponse = PutApiV1SfoUgeplanShiftsResponses[keyof PutApiV1SfoUgeplanShiftsResponses];
@@ -2053,13 +2520,13 @@ export type GetApiV1StaffResponses = {
     /**
      * OK
      */
-    200: Array<StaffDto>;
+    200: Array<StaffControllerStaffDto>;
 };
 
 export type GetApiV1StaffResponse = GetApiV1StaffResponses[keyof GetApiV1StaffResponses];
 
 export type PostApiV1StaffData = {
-    body?: UpsertStaffRequest;
+    body?: StaffControllerUpsertStaffRequest;
     path?: never;
     query?: never;
     url: '/api/v1/staff';
@@ -2069,7 +2536,7 @@ export type PostApiV1StaffResponses = {
     /**
      * OK
      */
-    200: StaffDto;
+    200: StaffControllerStaffDto;
 };
 
 export type PostApiV1StaffResponse = PostApiV1StaffResponses[keyof PostApiV1StaffResponses];
@@ -2085,7 +2552,7 @@ export type GetApiV1StaffMeResponses = {
     /**
      * OK
      */
-    200: StaffDto;
+    200: StaffControllerStaffDto;
 };
 
 export type GetApiV1StaffMeResponse = GetApiV1StaffMeResponses[keyof GetApiV1StaffMeResponses];
@@ -2119,13 +2586,13 @@ export type GetApiV1StaffByIdResponses = {
     /**
      * OK
      */
-    200: StaffDto;
+    200: StaffControllerStaffDto;
 };
 
 export type GetApiV1StaffByIdResponse = GetApiV1StaffByIdResponses[keyof GetApiV1StaffByIdResponses];
 
 export type PutApiV1StaffByIdData = {
-    body?: UpsertStaffRequest;
+    body?: StaffControllerUpsertStaffRequest;
     path: {
         id: string;
     };
@@ -2137,13 +2604,13 @@ export type PutApiV1StaffByIdResponses = {
     /**
      * OK
      */
-    200: StaffDto;
+    200: StaffControllerStaffDto;
 };
 
 export type PutApiV1StaffByIdResponse = PutApiV1StaffByIdResponses[keyof PutApiV1StaffByIdResponses];
 
 export type PatchApiV1StaffByIdAdminPermissionData = {
-    body?: PatchAdminPermissionRequest;
+    body?: StaffControllerPatchAdminPermissionRequest;
     path: {
         id: string;
     };
@@ -2155,7 +2622,7 @@ export type PatchApiV1StaffByIdAdminPermissionResponses = {
     /**
      * OK
      */
-    200: StaffDto;
+    200: StaffControllerStaffDto;
 };
 
 export type PatchApiV1StaffByIdAdminPermissionResponse = PatchApiV1StaffByIdAdminPermissionResponses[keyof PatchApiV1StaffByIdAdminPermissionResponses];
@@ -2171,7 +2638,7 @@ export type GetApiV1StaffInvitationsResponses = {
     /**
      * OK
      */
-    200: Array<InvitationDto>;
+    200: Array<StaffInvitationsControllerInvitationDto>;
 };
 
 export type GetApiV1StaffInvitationsResponse = GetApiV1StaffInvitationsResponses[keyof GetApiV1StaffInvitationsResponses];
@@ -2189,7 +2656,7 @@ export type GetApiV1StaffInvitationsByStaffByStaffIdResponses = {
     /**
      * OK
      */
-    200: Array<InvitationDto>;
+    200: Array<StaffInvitationsControllerInvitationDto>;
 };
 
 export type GetApiV1StaffInvitationsByStaffByStaffIdResponse = GetApiV1StaffInvitationsByStaffByStaffIdResponses[keyof GetApiV1StaffInvitationsByStaffByStaffIdResponses];
@@ -2207,13 +2674,13 @@ export type PostApiV1StaffInvitationsInviteByStaffIdResponses = {
     /**
      * OK
      */
-    200: InvitationDto;
+    200: StaffInvitationsControllerInvitationDto;
 };
 
 export type PostApiV1StaffInvitationsInviteByStaffIdResponse = PostApiV1StaffInvitationsInviteByStaffIdResponses[keyof PostApiV1StaffInvitationsInviteByStaffIdResponses];
 
 export type PostApiV1StaffInvitationsAcceptData = {
-    body?: AcceptInvitationRequest;
+    body?: StaffInvitationsControllerAcceptInvitationRequest;
     path?: never;
     query?: never;
     url: '/api/v1/staff-invitations/accept';
@@ -2242,6 +2709,36 @@ export type GetApiV1StaffInvitationsPreviewResponses = {
     200: unknown;
 };
 
+export type PostApiV1StaffMeAvatarPresignData = {
+    body?: StaffMeControllerAvatarPresignRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staff/me/avatar/presign';
+};
+
+export type PostApiV1StaffMeAvatarPresignResponses = {
+    /**
+     * OK
+     */
+    200: StaffMeControllerAvatarPresignResponse;
+};
+
+export type PostApiV1StaffMeAvatarPresignResponse = PostApiV1StaffMeAvatarPresignResponses[keyof PostApiV1StaffMeAvatarPresignResponses];
+
+export type PostApiV1StaffMeAvatarConfirmData = {
+    body?: StaffMeControllerAvatarConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staff/me/avatar/confirm';
+};
+
+export type PostApiV1StaffMeAvatarConfirmResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiV1StatsDashboardData = {
     body?: never;
     path?: never;
@@ -2253,7 +2750,7 @@ export type GetApiV1StatsDashboardResponses = {
     /**
      * OK
      */
-    200: DashboardStats;
+    200: StatsControllerDashboardStats;
 };
 
 export type GetApiV1StatsDashboardResponse = GetApiV1StatsDashboardResponses[keyof GetApiV1StatsDashboardResponses];
@@ -2285,13 +2782,13 @@ export type GetApiV1StudentsResponses = {
     /**
      * OK
      */
-    200: Array<StudentDto>;
+    200: Array<StudentsControllerStudentDto>;
 };
 
 export type GetApiV1StudentsResponse = GetApiV1StudentsResponses[keyof GetApiV1StudentsResponses];
 
 export type PostApiV1StudentsData = {
-    body?: UpsertStudentRequest;
+    body?: StudentsControllerUpsertStudentRequest;
     path?: never;
     query?: never;
     url: '/api/v1/students';
@@ -2301,7 +2798,7 @@ export type PostApiV1StudentsResponses = {
     /**
      * OK
      */
-    200: StudentDto;
+    200: StudentsControllerStudentDto;
 };
 
 export type PostApiV1StudentsResponse = PostApiV1StudentsResponses[keyof PostApiV1StudentsResponses];
@@ -2323,7 +2820,7 @@ export type DeleteApiV1StudentsByIdResponses = {
 };
 
 export type PutApiV1StudentsByIdData = {
-    body?: UpsertStudentRequest;
+    body?: StudentsControllerUpsertStudentRequest;
     path: {
         id: string;
     };
@@ -2335,10 +2832,44 @@ export type PutApiV1StudentsByIdResponses = {
     /**
      * OK
      */
-    200: StudentDto;
+    200: StudentsControllerStudentDto;
 };
 
 export type PutApiV1StudentsByIdResponse = PutApiV1StudentsByIdResponses[keyof PutApiV1StudentsByIdResponses];
+
+export type PostApiV1StudentsByIdAvatarPresignData = {
+    body?: StudentsControllerAvatarPresignRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/students/{id}/avatar/presign';
+};
+
+export type PostApiV1StudentsByIdAvatarPresignResponses = {
+    /**
+     * OK
+     */
+    200: StudentsControllerAvatarPresignResponse;
+};
+
+export type PostApiV1StudentsByIdAvatarPresignResponse = PostApiV1StudentsByIdAvatarPresignResponses[keyof PostApiV1StudentsByIdAvatarPresignResponses];
+
+export type PostApiV1StudentsByIdAvatarConfirmData = {
+    body?: StudentsControllerAvatarConfirmRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/students/{id}/avatar/confirm';
+};
+
+export type PostApiV1StudentsByIdAvatarConfirmResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ModulesData = {
     body?: never;
@@ -2391,7 +2922,7 @@ export type GetApiV1AdminTenantsBySchoolIdResponses = {
 export type GetApiV1AdminTenantsBySchoolIdResponse = GetApiV1AdminTenantsBySchoolIdResponses[keyof GetApiV1AdminTenantsBySchoolIdResponses];
 
 export type PostApiV1TenantsData = {
-    body?: CreateTenantRequest;
+    body?: TenantsControllerCreateTenantRequest;
     path?: never;
     query?: never;
     url: '/api/v1/tenants';
@@ -2401,7 +2932,7 @@ export type PostApiV1TenantsResponses = {
     /**
      * OK
      */
-    200: TenantCreatedDto;
+    200: TenantsControllerTenantCreatedDto;
 };
 
 export type PostApiV1TenantsResponse = PostApiV1TenantsResponses[keyof PostApiV1TenantsResponses];
@@ -2417,13 +2948,13 @@ export type GetApiV1TimeSlotTemplateResponses = {
     /**
      * OK
      */
-    200: TemplateDto;
+    200: TimeSlotsControllerTemplateDto;
 };
 
 export type GetApiV1TimeSlotTemplateResponse = GetApiV1TimeSlotTemplateResponses[keyof GetApiV1TimeSlotTemplateResponses];
 
 export type PutApiV1TimeSlotTemplateData = {
-    body?: UpsertTemplateRequest;
+    body?: TimeSlotsControllerUpsertTemplateRequest;
     path?: never;
     query?: never;
     url: '/api/v1/time-slot-template';
@@ -2433,7 +2964,7 @@ export type PutApiV1TimeSlotTemplateResponses = {
     /**
      * OK
      */
-    200: TemplateDto;
+    200: TimeSlotsControllerTemplateDto;
 };
 
 export type PutApiV1TimeSlotTemplateResponse = PutApiV1TimeSlotTemplateResponses[keyof PutApiV1TimeSlotTemplateResponses];
@@ -2465,13 +2996,13 @@ export type GetApiV1ClassesByClassIdTimeSlotsResponses = {
     /**
      * OK
      */
-    200: Array<TimeSlotDto>;
+    200: Array<TimeSlotsControllerTimeSlotDto>;
 };
 
 export type GetApiV1ClassesByClassIdTimeSlotsResponse = GetApiV1ClassesByClassIdTimeSlotsResponses[keyof GetApiV1ClassesByClassIdTimeSlotsResponses];
 
 export type PutApiV1ClassesByClassIdTimeSlotsData = {
-    body?: Array<UpsertTimeSlotRequest>;
+    body?: Array<TimeSlotsControllerUpsertTimeSlotRequest>;
     path: {
         classId: string;
     };
@@ -2483,7 +3014,7 @@ export type PutApiV1ClassesByClassIdTimeSlotsResponses = {
     /**
      * OK
      */
-    200: Array<TimeSlotDto>;
+    200: Array<TimeSlotsControllerTimeSlotDto>;
 };
 
 export type PutApiV1ClassesByClassIdTimeSlotsResponse = PutApiV1ClassesByClassIdTimeSlotsResponses[keyof PutApiV1ClassesByClassIdTimeSlotsResponses];
@@ -2502,13 +3033,13 @@ export type GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses = {
     /**
      * OK
      */
-    200: Array<TimeSlotDto>;
+    200: Array<TimeSlotsControllerTimeSlotDto>;
 };
 
 export type GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponse = GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses[keyof GetApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses];
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsData = {
-    body?: Array<UpsertTimeSlotRequest>;
+    body?: Array<TimeSlotsControllerUpsertTimeSlotRequest>;
     path: {
         classId: string;
         schemaId: string;
@@ -2521,7 +3052,7 @@ export type PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses = {
     /**
      * OK
      */
-    200: Array<TimeSlotDto>;
+    200: Array<TimeSlotsControllerTimeSlotDto>;
 };
 
 export type PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponse = PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses[keyof PutApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsResponses];
@@ -2537,7 +3068,7 @@ export type GetApiV1TimeSlotsResponses = {
     /**
      * OK
      */
-    200: Array<TimeSlotDto>;
+    200: Array<TimeSlotsControllerTimeSlotDto>;
 };
 
 export type GetApiV1TimeSlotsResponse = GetApiV1TimeSlotsResponses[keyof GetApiV1TimeSlotsResponses];
@@ -2559,13 +3090,13 @@ export type GetApiV1ClassesByClassIdUgeplanResponses = {
     /**
      * OK
      */
-    200: WeekPlanDto;
+    200: WeekPlanControllerWeekPlanDto;
 };
 
 export type GetApiV1ClassesByClassIdUgeplanResponse = GetApiV1ClassesByClassIdUgeplanResponses[keyof GetApiV1ClassesByClassIdUgeplanResponses];
 
 export type PutApiV1ClassesByClassIdUgeplanSlotsData = {
-    body?: UpsertWeekPlanSlotRequest;
+    body?: WeekPlanControllerUpsertWeekPlanSlotRequest;
     path: {
         classId: string;
     };
@@ -2581,13 +3112,13 @@ export type PutApiV1ClassesByClassIdUgeplanSlotsResponses = {
     /**
      * OK
      */
-    200: WeekPlanSlotDto;
+    200: WeekPlanControllerWeekPlanSlotDto;
 };
 
 export type PutApiV1ClassesByClassIdUgeplanSlotsResponse = PutApiV1ClassesByClassIdUgeplanSlotsResponses[keyof PutApiV1ClassesByClassIdUgeplanSlotsResponses];
 
 export type PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData = {
-    body?: AddFileToSlotRequest;
+    body?: WeekPlanControllerAddFileToSlotRequest;
     path: {
         classId: string;
         slotId: string;
@@ -2600,7 +3131,7 @@ export type PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses = {
     /**
      * OK
      */
-    200: WeekPlanSlotFileDto;
+    200: WeekPlanControllerWeekPlanSlotFileDto;
 };
 
 export type PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponse = PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses[keyof PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesResponses];
