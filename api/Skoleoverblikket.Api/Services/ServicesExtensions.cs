@@ -12,6 +12,7 @@ public static class ServicesExtensions
 		services.AddScoped<ParentInvitationService>();
 		services.AddScoped<ExcelReportBuilder>();
 		services.AddScoped<SubscriptionService>();
+		services.AddScoped<INotificationService, NotificationService>();
 
 		services.AddOptions<ApplicationOptions>()
 			.BindConfiguration(ApplicationOptions.SectionName)
