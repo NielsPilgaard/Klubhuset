@@ -34,7 +34,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<Parent> Parents => Set<Parent>();
 	public DbSet<Student> Students => Set<Student>();
 	public DbSet<ParentInvitation> ParentInvitations => Set<ParentInvitation>();
+	public DbSet<AbsenceReport> AbsenceReports => Set<AbsenceReport>();
 	public DbSet<SubscriptionModuleItem> SubscriptionModuleItems => Set<SubscriptionModuleItem>();
+	public DbSet<Notification> Notifications => Set<Notification>();
+	public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+	public DbSet<ContactThread> ContactThreads => Set<ContactThread>();
+	public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+	public DbSet<Message> Messages => Set<Message>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
