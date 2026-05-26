@@ -7,7 +7,7 @@ import {
   putApiV1CoursesByIdMutation,
   deleteApiV1CoursesByIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { CourseDto, SubjectCategory } from '../api/generated/types.gen'
+import type { CourseDto, SubjectCategory } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 import { SUBJECT_CATEGORY_LABELS, ALL_SUBJECT_CATEGORIES } from '../constants/subjects'

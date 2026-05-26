@@ -3,7 +3,7 @@ import {
   getApiV1ParentsMeOptions,
   getApiV1ClassesByClassIdScheduleOptions,
 } from '../../api/generated/@tanstack/react-query.gen'
-import type { ScheduleSlotDto, ParentMeDto } from '../../api/generated/types.gen'
+import type { ScheduleSlotDto, ParentMeDto } from '../../api/client'
 import { WEEKDAY_LABELS, WEEKDAY_NUM } from '../../lib/weekdays'
 import { usePageTitle } from '../../hooks/usePageTitle'
 

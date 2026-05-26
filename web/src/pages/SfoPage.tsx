@@ -14,7 +14,7 @@ import {
   getApiV1SfoUgeplanQueryKey,
   putApiV1SfoUgeplanShiftsMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { SfoShiftDto, SfoWeekPlanShiftDto } from '../api/generated/types.gen'
+import type { SfoShiftDto, SfoWeekPlanShiftDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 function getISOWeek(date: Date): number {

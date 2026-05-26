@@ -8,7 +8,7 @@ import {
   postApiV1ParentInvitationsByParentIdResendMutation,
   getApiV1StudentsOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ParentDto, StudentDto } from '../api/generated/types.gen'
+import type { ParentDto, StudentDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useSubscription } from '../hooks/useSubscription'
 

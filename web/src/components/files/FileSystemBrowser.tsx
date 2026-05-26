@@ -10,7 +10,7 @@ import {
   patchApiV1FilesFoldersByIdMutation,
 } from '../../api/generated/@tanstack/react-query.gen'
 import { postApiV1FilesPresign, postApiV1FilesConfirm } from '../../api/generated/sdk.gen'
-import type { CourseDto, FolderDto } from '../../api/generated/types.gen'
+import type { CourseDto, FolderDto } from '../../api/client'
 import keycloak from '../../auth/keycloak'
 import {
   FileIcon,

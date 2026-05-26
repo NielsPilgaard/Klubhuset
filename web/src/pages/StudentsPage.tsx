@@ -8,7 +8,7 @@ import {
   deleteApiV1StudentsByIdMutation,
   getApiV1ClassesOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { StudentDto, ClassDto } from '../api/generated/types.gen'
+import type { StudentDto, ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 interface StudentModalProps {

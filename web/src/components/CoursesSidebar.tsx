@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import type { CourseDto } from '../api/generated/types.gen'
+import type { CourseDto } from '../api/client'
 import { SUBJECT_CATEGORY_LABELS } from '../utils/subjectCategory'
 import { encodeSidebarDragId } from '../utils/sidebarDragId'
 

@@ -4,7 +4,7 @@ import {
   getApiV1StatsDashboardOptions,
   getApiV1SchoolsOnboardingStatusOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { StaffRole, OnboardingStatusDto } from '../api/generated/types.gen'
+import type { StaffRole, OnboardingStatusDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 function OnboardingCard({ status }: { status: OnboardingStatusDto }) {

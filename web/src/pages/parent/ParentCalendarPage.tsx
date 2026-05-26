@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getApiV1CalendarOptions } from '../../api/generated/@tanstack/react-query.gen'
-import type { CalendarEntryDto } from '../../api/generated/types.gen'
+import type { CalendarEntryDto } from '../../api/client'
 import { usePageTitle } from '../../hooks/usePageTitle'
 
 const TYPE_LABELS: Record<string, string> = {

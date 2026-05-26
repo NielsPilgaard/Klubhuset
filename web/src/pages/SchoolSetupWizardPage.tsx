@@ -9,7 +9,7 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
 import { getApiV1SchoolsOnboardingStatusOptions, getApiV1SchoolsOnboardingStatusQueryKey } from '../api/generated/@tanstack/react-query.gen'
-import type { OnboardingStatusDto } from '../api/generated/types.gen'
+import type { OnboardingStatusDto } from '../api/client'
 
 // ---------------------------------------------------------------------------
 // Types

@@ -13,7 +13,7 @@ import {
   getApiV1StaffInvitationsByStaffByStaffIdQueryKey,
   postApiV1StaffInvitationsInviteByStaffIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { StaffDto, StaffRole, InvitationDto } from '../api/generated/types.gen'
+import type { StaffDto, StaffRole, InvitationDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import keycloak from '../auth/keycloak'
 

@@ -21,7 +21,7 @@ import {
   deleteApiV1ClassesByClassIdPermissionsByStaffIdMutation,
   getApiV1StaffOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ClassDto, SchemaDto, StaffDto } from '../api/generated/types.gen'
+import type { ClassDto, SchemaDto, StaffDto, ClassPermissionDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { DatePicker } from '../components/DatePicker'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
@@ -524,7 +524,7 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
   const { data: rawPermissions, isLoading } = useQuery(
     getApiV1ClassesByClassIdPermissionsOptions({ path: { classId } })
   )
-  const permissions = (rawPermissions ?? []) as import('../api/generated/types.gen').ClassPermissionDto[]
+  const permissions = (rawPermissions ?? []) as ClassPermissionDto[]
 
   const { data: rawStaff } = useQuery({ ...getApiV1StaffOptions(), select: (d) => (d ?? []) as StaffDto[] })
   const staff = rawStaff ?? []
@@ -665,7 +665,7 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
   const { data: rawPermissions } = useQuery(
     getApiV1ClassesByClassIdPermissionsOptions({ path: { classId } })
   )
-  const permissions = (rawPermissions ?? []) as import('../api/generated/types.gen').ClassPermissionDto[]
+  const permissions = (rawPermissions ?? []) as ClassPermissionDto[]
   const canEditSchema = isAdmin
     || permissions.length === 0
     || permissions.some((p) => p.staffId === staffId)

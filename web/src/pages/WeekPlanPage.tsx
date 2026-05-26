@@ -10,7 +10,7 @@ import {
   getApiV1CoursesOptions,
   getApiV1ClassesOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ClassDto } from '../api/generated/types.gen'
+import type { ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { FilePicker } from '../components/files/FilePicker'
 

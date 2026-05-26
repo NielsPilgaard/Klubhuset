@@ -4,7 +4,7 @@ import {
   getApiV1StaffMeOptions,
   getApiV1StaffByStaffIdScheduleOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ScheduleSlotDto } from '../api/generated/types.gen'
+import type { ScheduleSlotDto } from '../api/client'
 import { WEEKDAYS, toWeekdayNum as toNum } from '../lib/weekdays'
 
 function hexToAlpha(color: string, alpha: string): string {

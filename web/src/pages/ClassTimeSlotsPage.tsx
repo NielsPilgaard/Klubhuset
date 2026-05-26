@@ -10,7 +10,7 @@ import {
   getApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsQueryKey,
   putApiV1ClassesByClassIdSchemasBySchemaIdTimeSlotsMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { TimeSlotDto, ClassDto } from '../api/generated/types.gen'
+import type { TimeSlotDto, ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { TimeInput } from '../components/TimeInput'
 import { LessonDurationSlider } from '../components/LessonDurationSlider'

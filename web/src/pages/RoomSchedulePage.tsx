@@ -4,7 +4,7 @@ import {
   getApiV1RoomsByIdOptions,
   getApiV1RoomsByRoomIdScheduleOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ScheduleSlotDto } from '../api/generated/types.gen'
+import type { ScheduleSlotDto } from '../api/client'
 import { WEEKDAYS, WEEKDAY_NUM } from '../lib/weekdays'
 
 function toNum(weekday: string | number): number {

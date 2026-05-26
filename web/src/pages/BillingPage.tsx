@@ -8,7 +8,7 @@ import {
   postApiV1BillingModulesMutation,
   deleteApiV1BillingModulesByModuleMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { SubscriptionDto } from '../api/generated/types.gen'
+import type { SubscriptionDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 const SELF_SERVE_ENABLED = true

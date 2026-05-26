@@ -7,7 +7,7 @@ import {
   getApiV1ClassesArchivedQueryKey,
   postApiV1ClassesYearRollMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ClassDto, YearRollRenameEntry, YearRollCreateEntry } from '../api/generated/types.gen'
+import type { ClassDto, YearRollRenameEntry, YearRollCreateEntry } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 function suggestNextName(name: string): string {

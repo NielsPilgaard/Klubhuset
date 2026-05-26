@@ -10,7 +10,7 @@ import {
   deleteApiV1CalendarByIdOccurrencesByDateMutation,
   deleteApiV1CalendarByIdFromByDateMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { CalendarEntryDto, DefaultHolidayDto } from '../api/generated/types.gen'
+import type { CalendarEntryDto, DefaultHolidayDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { DatePicker } from '../components/DatePicker'
 import keycloak from '../auth/keycloak'

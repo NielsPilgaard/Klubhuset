@@ -8,7 +8,7 @@ import {
   putApiV1RoomsByIdMutation,
   deleteApiV1RoomsByIdMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { RoomDto } from '../api/generated/types.gen'
+import type { RoomDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 

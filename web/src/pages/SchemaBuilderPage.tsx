@@ -37,7 +37,7 @@ import type {
   RoomDto,
   SlotDto,
   ConflictInfo,
-} from '../api/generated/types.gen'
+} from '../api/client'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const

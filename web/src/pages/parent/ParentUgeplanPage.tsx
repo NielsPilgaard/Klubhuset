@@ -4,7 +4,7 @@ import {
   getApiV1ParentsMeOptions,
   getApiV1ClassesByClassIdUgeplanOptions,
 } from '../../api/generated/@tanstack/react-query.gen'
-import type { ParentMeDto } from '../../api/generated/types.gen'
+import type { ParentMeDto } from '../../api/client'
 import { usePageTitle } from '../../hooks/usePageTitle'
 
 const WEEKDAYS_DA: Record<string, string> = {

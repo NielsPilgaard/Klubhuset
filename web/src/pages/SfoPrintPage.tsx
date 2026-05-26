@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { getApiV1SfoUgeplanOptions } from '../api/generated/@tanstack/react-query.gen'
-import type { SfoWeekPlanShiftDto } from '../api/generated/types.gen'
+import type { SfoWeekPlanShiftDto } from '../api/client'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 
