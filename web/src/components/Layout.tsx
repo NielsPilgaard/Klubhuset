@@ -3,6 +3,7 @@ import { Link, Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Logo from './Logo'
 import ErrorBoundary from './ErrorBoundary'
+import NotificationBell from './NotificationBell'
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -24,10 +25,11 @@ export default function Layout() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <Link to="/dashboard" className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3 flex-1">
             <Logo variant="light" size={24} />
             <span className="font-display text-lg font-semibold text-brand-800">Skoleoverblikket</span>
           </Link>
+          <NotificationBell />
         </header>
 
         {/* Page content */}

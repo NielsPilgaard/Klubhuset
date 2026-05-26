@@ -49,6 +49,13 @@ const ParentUgeplanPage = lazy(() => import('./pages/parent/ParentUgeplanPage'))
 const BackofficeLayout = lazy(() => import('./pages/backoffice/BackofficeLayout'))
 const BackofficeTenantsPage = lazy(() => import('./pages/backoffice/BackofficeTenantsPage'))
 const BackofficeTenantDetailPage = lazy(() => import('./pages/backoffice/BackofficeTenantDetailPage'))
+const ParentDirectoryPage = lazy(() => import('./pages/ParentDirectoryPage'))
+const ParentFravaerPage = lazy(() => import('./pages/parent/ParentFravaerPage'))
+const FravaerPage = lazy(() => import('./pages/FravaerPage'))
+const NotificationPreferencesPage = lazy(() => import('./pages/NotificationPreferencesPage'))
+const KontaktbogPage = lazy(() => import('./pages/KontaktbogPage'))
+const ParentKontaktbogPage = lazy(() => import('./pages/parent/ParentKontaktbogPage'))
+const BeskederPage = lazy(() => import('./pages/BeskederPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -144,6 +151,14 @@ export default function App() {
             <Route path="foraeldrevisning/skema" element={<ParentRoute><ParentSchemaPage /></ParentRoute>} />
             <Route path="foraeldrevisning/kalender" element={<ParentRoute><ParentCalendarPage /></ParentRoute>} />
             <Route path="foraeldrevisning/ugeplan" element={<ParentRoute><ParentUgeplanPage /></ParentRoute>} />
+            <Route path="foraeldrevisning/kontakt" element={<ParentRoute><ParentDirectoryPage /></ParentRoute>} />
+            <Route path="foraeldrevisning/fravaer" element={<ParentRoute><ParentFravaerPage /></ParentRoute>} />
+            <Route path="foraeldre/kontakt" element={<ParentDirectoryPage />} />
+            <Route path="fravaer" element={<FravaerPage />} />
+            <Route path="kontaktbog" element={<KontaktbogPage />} />
+            <Route path="foraeldrevisning/kontaktbog" element={<ParentRoute><ParentKontaktbogPage /></ParentRoute>} />
+            <Route path="indstillinger/notifikationer" element={<NotificationPreferencesPage />} />
+            <Route path="beskeder" element={<BeskederPage />} />
           </Route>
         </Routes>
           </Suspense>
