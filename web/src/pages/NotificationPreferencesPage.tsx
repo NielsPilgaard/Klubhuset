@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '../auth/useAuth'
+import { useCallback, useEffect, useState } from 'react'
+import { getApiV1NotificationPreferences, putApiV1NotificationPreferences } from '../api/generated/sdk.gen'
 import type { NotificationType } from '../api/client'
 
 interface PreferenceState {
@@ -37,7 +37,6 @@ function mergeWithDefaults(loaded: Array<{ type: NotificationType; inApp: boolea
 }
 
 export default function NotificationPreferencesPage() {
-  const { token } = useAuth()
   const [prefs, setPrefs] = useState<PreferenceState[]>(buildDefaultPreferences)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -45,42 +44,30 @@ export default function NotificationPreferencesPage() {
   const [saved, setSaved] = useState(false)
 
   const fetchPrefs = useCallback(async () => {
-    if (!token) return
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/v1/notification-preferences', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Kunne ikke hente præferencer')
-      const data: Array<{ type: NotificationType; inApp: boolean; email: boolean }> = await res.json()
-      setPrefs(mergeWithDefaults(data))
+      const { data } = await getApiV1NotificationPreferences({ throwOnError: true })
+      if (data) {
+        setPrefs(mergeWithDefaults(data as Array<{ type: NotificationType; inApp: boolean; email: boolean }>))
+      }
     } catch {
       setError('Kunne ikke indlæse notifikationspræferencer.')
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [])
 
   useEffect(() => {
     void fetchPrefs()
   }, [fetchPrefs])
 
   async function handleSave() {
-    if (!token) return
     setSaving(true)
     setError(null)
     setSaved(false)
     try {
-      const res = await fetch('/api/v1/notification-preferences', {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(prefs),
-      })
-      if (!res.ok) throw new Error('Kunne ikke gemme præferencer')
+      await putApiV1NotificationPreferences({ body: prefs, throwOnError: true })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch {

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  getApiV1ParentsMeOptions,
   getApiV1ClassesByClassIdUgeplanOptions,
 } from '../../api/generated/@tanstack/react-query.gen'
+import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
 import type { ParentMeDto } from '../../api/client'
 import { usePageTitle } from '../../hooks/usePageTitle'
 
@@ -124,7 +124,10 @@ export default function ParentUgeplanPage() {
   const [isoYear, setIsoYear] = useState(getISOWeekYear(now))
   const [isoWeek, setIsoWeek] = useState(getISOWeek(now))
 
-  const { data: me, isLoading, isError } = useQuery(getApiV1ParentsMeOptions())
+  const { data: meRes, isLoading, isError } = useQuery({
+    queryKey: ['parents', 'me'],
+    queryFn: () => getApiV1ParentsMe({ throwOnError: false }),
+  })
 
   function prevWeek() {
     if (isoWeek === 1) {
@@ -146,9 +149,11 @@ export default function ParentUgeplanPage() {
   }
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">Indlæser...</div>
-  if (isError || !me) return <div className="p-6 text-sm text-red-600">Kunne ikke hente dine oplysninger.</div>
+  if (isError) return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
 
-  const classes = (me as ParentMeDto).classes ?? []
+  const notFound = meRes?.response.status === 404
+  const me = meRes?.data as ParentMeDto | undefined
+  const classes = notFound ? [] : (me?.classes ?? [])
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -176,7 +181,9 @@ export default function ParentUgeplanPage() {
       </div>
 
       {classes.length === 0 ? (
-        <p className="text-sm text-gray-500">Ingen klasser tilknyttet endnu.</p>
+        <p className="text-sm text-gray-500">
+          Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er en fejl.
+        </p>
       ) : (
         <div className="space-y-8">
           {classes.map((c) => (

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { useAuth } from '../auth/useAuth'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { getApiV1Notifications, postApiV1NotificationsByIdRead, postApiV1NotificationsReadAll } from '../api/generated/sdk.gen'
 import type { NotificationType } from '../api/client'
 
 interface NotificationItem {
@@ -33,25 +33,20 @@ function relativeTime(dateStr: string): string {
 }
 
 export default function NotificationBell() {
-  const { token } = useAuth()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const fetchNotifications = useCallback(async () => {
-    if (!token) return
     try {
-      const res = await fetch('/api/v1/notifications', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data: NotificationItem[] = await res.json()
-        setNotifications(data)
+      const { data } = await getApiV1Notifications({ throwOnError: false })
+      if (data) {
+        setNotifications(data as NotificationItem[])
       }
     } catch {
       // silently ignore fetch errors — bell is non-critical
     }
-  }, [token])
+  }, [])
 
   useEffect(() => {
     void fetchNotifications()
@@ -76,12 +71,8 @@ export default function NotificationBell() {
   const displayed = notifications.slice(0, 10)
 
   async function markRead(id: string) {
-    if (!token) return
     try {
-      await fetch(`/api/v1/notifications/${id}/read`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      await postApiV1NotificationsByIdRead({ path: { id }, throwOnError: false })
       setNotifications(prev =>
         prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n)
       )
@@ -91,12 +82,8 @@ export default function NotificationBell() {
   }
 
   async function markAllRead() {
-    if (!token) return
     try {
-      await fetch('/api/v1/notifications/read-all', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      await postApiV1NotificationsReadAll({ throwOnError: false })
       const now = new Date().toISOString()
       setNotifications(prev => prev.map(n => ({ ...n, readAt: n.readAt ?? now })))
     } catch {

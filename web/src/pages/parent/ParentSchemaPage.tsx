@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-  getApiV1ParentsMeOptions,
   getApiV1ClassesByClassIdScheduleOptions,
 } from '../../api/generated/@tanstack/react-query.gen'
+import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
 import type { ScheduleSlotDto, ParentMeDto } from '../../api/client'
 import { WEEKDAY_LABELS, WEEKDAY_NUM } from '../../lib/weekdays'
 import { usePageTitle } from '../../hooks/usePageTitle'
@@ -94,18 +94,25 @@ function ClassScheduleGrid({ classId, className }: { classId: string; className:
 export default function ParentSchemaPage() {
   usePageTitle('Skema')
 
-  const { data: me, isLoading, isError } = useQuery(getApiV1ParentsMeOptions())
+  const { data: meRes, isLoading, isError } = useQuery({
+    queryKey: ['parents', 'me'],
+    queryFn: () => getApiV1ParentsMe({ throwOnError: false }),
+  })
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">Indlæser...</div>
-  if (isError || !me) return <div className="p-6 text-sm text-red-600">Kunne ikke hente dine oplysninger.</div>
+  if (isError) return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
 
-  const classes = (me as ParentMeDto).classes ?? []
+  const notFound = meRes?.response.status === 404
+  const me = meRes?.data as ParentMeDto | undefined
+  const classes = notFound ? [] : (me?.classes ?? [])
 
   return (
     <div className="p-4 md:p-6 space-y-8">
       <h1 className="text-xl font-semibold text-gray-900">Skema</h1>
       {classes.length === 0 ? (
-        <p className="text-sm text-gray-500">Ingen klasser tilknyttet endnu.</p>
+        <p className="text-sm text-gray-500">
+          Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er en fejl.
+        </p>
       ) : (
         classes.map((c) => (
           <ClassScheduleGrid key={c.classId} classId={c.classId ?? ''} className={c.className ?? ''} />

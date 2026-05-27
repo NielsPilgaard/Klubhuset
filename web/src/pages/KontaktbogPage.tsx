@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import keycloak from '../auth/keycloak'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { getApiV1ContactThreads, getApiV1ContactThreadsByThreadIdMessages, postApiV1ContactThreadsByThreadIdRead, postApiV1ContactThreadsByThreadIdMessages } from '../api/generated/sdk.gen'
 
 interface ContactThreadDto {
   id: string
@@ -46,17 +46,6 @@ function truncate(text: string, max: number): string {
   return text.slice(0, max) + '…'
 }
 
-async function authFetch(url: string, options?: RequestInit): Promise<Response> {
-  return fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${keycloak.token}`,
-      ...options?.headers,
-    },
-  })
-}
-
 export default function KontaktbogPage() {
   usePageTitle('Kontaktbog')
   const qc = useQueryClient()
@@ -65,25 +54,25 @@ export default function KontaktbogPage() {
   const [showMobileMessages, setShowMobileMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const { data: threads = [], isLoading: threadsLoading } = useQuery<ContactThreadDto[]>({
-    queryKey: ['contact-threads'],
+  const threadsQueryKey = [{ _id: 'getApiV1ContactThreads' }] as const
+
+  const { data: threads = [], isLoading: threadsLoading } = useQuery({
+    queryKey: threadsQueryKey,
     queryFn: async () => {
-      const res = await authFetch('/api/v1/contact-threads')
-      if (!res.ok) {
-        return []
-      }
-      return res.json()
+      const { data } = await getApiV1ContactThreads({ throwOnError: false })
+      return (data ?? []) as ContactThreadDto[]
     },
   })
 
-  const { data: messagesData } = useQuery<PagedResult<ContactMessageDto>>({
-    queryKey: ['contact-messages', selectedThreadId],
+  const { data: messagesData } = useQuery({
+    queryKey: [{ _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } }],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/contact-threads/${selectedThreadId}/messages?page=1&pageSize=50`)
-      if (!res.ok) {
-        return { items: [], total: 0, page: 1, pageSize: 50 }
-      }
-      return res.json()
+      const { data } = await getApiV1ContactThreadsByThreadIdMessages({
+        path: { threadId: selectedThreadId! },
+        query: { page: 1, pageSize: 50 },
+        throwOnError: false,
+      })
+      return (data ?? { items: [], total: 0, page: 1, pageSize: 50 }) as PagedResult<ContactMessageDto>
     },
     enabled: selectedThreadId !== null,
   })
@@ -92,26 +81,24 @@ export default function KontaktbogPage() {
 
   const readMutation = useMutation({
     mutationFn: async (threadId: string) => {
-      await authFetch(`/api/v1/contact-threads/${threadId}/read`, { method: 'POST' })
+      await postApiV1ContactThreadsByThreadIdRead({ path: { threadId }, throwOnError: false })
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['contact-threads'] })
+      qc.invalidateQueries({ queryKey: threadsQueryKey })
     },
   })
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ threadId, body }: { threadId: string; body: string }) => {
-      const res = await authFetch(`/api/v1/contact-threads/${threadId}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ body }),
+      await postApiV1ContactThreadsByThreadIdMessages({
+        path: { threadId },
+        body: { body },
+        throwOnError: true,
       })
-      if (!res.ok) {
-        throw new Error('Fejl ved afsendelse')
-      }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['contact-messages', selectedThreadId] })
-      qc.invalidateQueries({ queryKey: ['contact-threads'] })
+      qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } }] })
+      qc.invalidateQueries({ queryKey: threadsQueryKey })
       setMessageBody('')
     },
   })

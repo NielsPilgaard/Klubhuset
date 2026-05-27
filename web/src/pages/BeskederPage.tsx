@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import keycloak from '../auth/keycloak'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { getApiV1MessagesInbox, getApiV1MessagesSent, postApiV1MessagesByIdRead, postApiV1Messages, getApiV1MessagesRecipients } from '../api/generated/sdk.gen'
 
 type RecipientType = 'Parent' | 'Staff'
 
@@ -33,16 +33,6 @@ interface RecipientDto {
   avatarUrl?: string
 }
 
-async function authFetch(url: string, options?: RequestInit): Promise<Response> {
-  return fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${keycloak.token}`,
-      ...options?.headers,
-    },
-  })
-}
 
 function formatRelativeTime(iso: string): string {
   const now = new Date()
@@ -115,15 +105,11 @@ export default function BeskederPage() {
     setLoading(true)
     try {
       const [inboxRes, sentRes] = await Promise.all([
-        authFetch('/api/v1/messages/inbox'),
-        authFetch('/api/v1/messages/sent'),
+        getApiV1MessagesInbox({ throwOnError: false }),
+        getApiV1MessagesSent({ throwOnError: false }),
       ])
-      if (inboxRes.ok) {
-        setInbox(await inboxRes.json())
-      }
-      if (sentRes.ok) {
-        setSent(await sentRes.json())
-      }
+      if (inboxRes.data) setInbox(inboxRes.data as InboxMessageDto[])
+      if (sentRes.data) setSent(sentRes.data as SentMessageDto[])
     } finally {
       setLoading(false)
     }
@@ -137,7 +123,7 @@ export default function BeskederPage() {
     setSelectedId(id)
     const msg = inbox.find(m => m.id === id)
     if (msg && !msg.readAt) {
-      await authFetch(`/api/v1/messages/${id}/read`, { method: 'POST' })
+      await postApiV1MessagesByIdRead({ path: { id }, throwOnError: false })
       setInbox(prev => prev.map(m => m.id === id ? { ...m, readAt: new Date().toISOString() } : m))
     }
   }
@@ -153,11 +139,11 @@ export default function BeskederPage() {
       return
     }
     searchDebounceRef.current = setTimeout(async () => {
-      const res = await authFetch(`/api/v1/messages/recipients?q=${encodeURIComponent(value)}`)
-      if (res.ok) {
-        const data: RecipientDto[] = await res.json()
-        setRecipientResults(data)
-        setShowDropdown(data.length > 0)
+      const { data } = await getApiV1MessagesRecipients({ query: { q: value }, throwOnError: false })
+      if (data) {
+        const results = data as RecipientDto[]
+        setRecipientResults(results)
+        setShowDropdown(results.length > 0)
       }
     }, 300)
   }
@@ -187,19 +173,15 @@ export default function BeskederPage() {
     setSending(true)
     setSendError(null)
     try {
-      const res = await authFetch('/api/v1/messages', {
-        method: 'POST',
-        body: JSON.stringify({
+      await postApiV1Messages({
+        body: {
           recipientId: selectedRecipient.id,
           recipientType: selectedRecipient.type,
           subject: subject.trim(),
           body: body.trim(),
-        }),
+        },
+        throwOnError: true,
       })
-      if (!res.ok) {
-        setSendError('Der opstod en fejl. Prøv igen.')
-        return
-      }
       setComposeOpen(false)
       await fetchMessages()
     } catch {

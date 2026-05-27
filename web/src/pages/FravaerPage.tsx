@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
-import { useAuth } from '../auth/useAuth'
+import { getApiV1AbsenceOptions, postApiV1AbsenceByIdConfirmMutation, postApiV1AbsenceByIdDismissMutation } from '../api/generated/@tanstack/react-query.gen'
 import type { AbsenceControllerAbsenceReportDto as AbsenceReportDto } from '../api/generated/types.gen'
 
 function StatusBadge({ status }: { status: AbsenceReportDto['status'] }) {
@@ -20,7 +20,6 @@ function StatusBadge({ status }: { status: AbsenceReportDto['status'] }) {
 
 export default function FravaerPage() {
   usePageTitle('Fravær')
-  const { token } = useAuth()
   const qc = useQueryClient()
   const today = new Date().toISOString().slice(0, 10)
   const monthStart = today.slice(0, 8) + '01'
@@ -28,39 +27,21 @@ export default function FravaerPage() {
   const [to, setTo] = useState(today)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const { data: reports = [], isLoading } = useQuery<AbsenceReportDto[]>({
-    queryKey: ['absence', from, to],
-    queryFn: async () => {
-      const params = new URLSearchParams({ from, to })
-      const res = await fetch(`/api/v1/absence?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      return res.json()
-    },
+  const { data: reports = [], isLoading } = useQuery({
+    ...getApiV1AbsenceOptions({ query: { from, to } }),
+    select: (data) => data as AbsenceReportDto[],
   })
 
   const confirmMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/v1/absence/${id}/confirm`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Kunne ikke bekræfte fravær')
-    },
-    onSuccess: () => { setActionError(null); qc.invalidateQueries({ queryKey: ['absence'] }) },
-    onError: (err: Error) => setActionError(err.message),
+    ...postApiV1AbsenceByIdConfirmMutation(),
+    onSuccess: () => { setActionError(null); qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1Absence' }] }) },
+    onError: () => setActionError('Kunne ikke bekræfte fravær'),
   })
 
   const dismissMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/v1/absence/${id}/dismiss`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Kunne ikke afvise fravær')
-    },
-    onSuccess: () => { setActionError(null); qc.invalidateQueries({ queryKey: ['absence'] }) },
-    onError: (err: Error) => setActionError(err.message),
+    ...postApiV1AbsenceByIdDismissMutation(),
+    onSuccess: () => { setActionError(null); qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1Absence' }] }) },
+    onError: () => setActionError('Kunne ikke afvise fravær'),
   })
 
   const unconfirmed = reports.filter(r => r.status === 'Reported')
@@ -123,14 +104,14 @@ export default function FravaerPage() {
                 {r.status === 'Reported' && (
                   <>
                     <button
-                      onClick={() => confirmMutation.mutate(r.id!)}
+                      onClick={() => confirmMutation.mutate({ path: { id: r.id! } })}
                       disabled={confirmMutation.isPending}
                       className="px-2.5 py-1 text-xs font-medium bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
                     >
                       Bekræft
                     </button>
                     <button
-                      onClick={() => dismissMutation.mutate(r.id!)}
+                      onClick={() => dismissMutation.mutate({ path: { id: r.id! } })}
                       disabled={dismissMutation.isPending}
                       className="px-2.5 py-1 text-xs font-medium border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >

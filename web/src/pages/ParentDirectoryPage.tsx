@@ -1,22 +1,16 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
-import keycloak from '../auth/keycloak'
+import { getApiV1KontaktOptions } from '../api/generated/@tanstack/react-query.gen'
 import type { KontaktControllerKontaktParentDto as KontaktParentDto } from '../api/generated/types.gen'
 
 export default function ParentDirectoryPage() {
   usePageTitle('Kontakt')
   const [search, setSearch] = useState('')
 
-  const { data: parents = [], isLoading } = useQuery<KontaktParentDto[]>({
-    queryKey: ['kontakt'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/kontakt', {
-        headers: { 'Authorization': `Bearer ${keycloak.token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch')
-      return res.json()
-    },
+  const { data: parents = [], isLoading } = useQuery({
+    ...getApiV1KontaktOptions(),
+    select: (data) => data as KontaktParentDto[],
   })
 
   const filtered = parents.filter(p =>
@@ -26,7 +20,7 @@ export default function ParentDirectoryPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold text-gray-900 mb-4">Kontakt</h1>
+        <h1 className="font-display text-2xl font-semibold text-gray-900 mb-4">Kontakter</h1>
         <input
           type="search"
           value={search}

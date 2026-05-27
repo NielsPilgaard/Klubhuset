@@ -529,6 +529,7 @@ export default function CalendarPage() {
     setExportDone(false)
     try {
       await keycloak.updateToken(30)
+      // Raw fetch intentional: SDK client cannot return Blob responses (typed as unknown).
       const res = await fetch('/api/v1/calendar/export.ics', {
         headers: { Authorization: `Bearer ${keycloak.token}` },
       })

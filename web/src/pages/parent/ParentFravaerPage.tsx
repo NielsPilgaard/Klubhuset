@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle'
-import keycloak from '../../auth/keycloak'
+import { getApiV1ParentsMeOptions, getApiV1AbsenceMineOptions, postApiV1AbsenceMutation, deleteApiV1AbsenceByIdMutation } from '../../api/generated/@tanstack/react-query.gen'
 import type {
   AbsenceControllerAbsenceReportDto as AbsenceReportDto,
   ParentMeControllerParentStudentDto as ParentStudentDto,
@@ -32,42 +32,22 @@ export default function ParentFravaerPage() {
   const [endDate, setEndDate] = useState('')
   const [reason, setReason] = useState('')
 
-  const { data: meData } = useQuery<ParentMeResponse>({
-    queryKey: ['parents-me'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/parents/me', {
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-      return res.json()
-    },
+  const { data: meData } = useQuery({
+    ...getApiV1ParentsMeOptions(),
+    select: (data) => data as ParentMeResponse,
   })
 
-  const { data: reports = [] } = useQuery<AbsenceReportDto[]>({
-    queryKey: ['absence-mine'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/absence/mine', {
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-      return res.json()
-    },
+  const { data: reports = [] } = useQuery({
+    ...getApiV1AbsenceMineOptions(),
+    select: (data) => data as AbsenceReportDto[],
   })
+
+  const absenceMineQueryKey = [{ _id: 'getApiV1AbsenceMine' }] as const
 
   const reportMutation = useMutation({
-    mutationFn: async (body: object) => {
-      const res = await fetch('/api/v1/absence', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${keycloak.token}`,
-        },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) {
-        throw new Error('Fejl ved indmelding')
-      }
-    },
+    ...postApiV1AbsenceMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['absence-mine'] })
+      qc.invalidateQueries({ queryKey: absenceMineQueryKey })
       setShowForm(false)
       setStudentId('')
       setDate('')
@@ -77,13 +57,8 @@ export default function ParentFravaerPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await fetch(`/api/v1/absence/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['absence-mine'] }),
+    ...deleteApiV1AbsenceByIdMutation(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: absenceMineQueryKey }),
   })
 
   const children: ParentStudentDto[] = meData?.students ?? []
@@ -94,10 +69,12 @@ export default function ParentFravaerPage() {
       return
     }
     reportMutation.mutate({
-      studentId,
-      date,
-      endDate: endDate || null,
-      reason: reason || null,
+      body: {
+        studentId,
+        date,
+        endDate: endDate || null,
+        reason: reason || null,
+      },
     })
   }
 
@@ -202,7 +179,7 @@ export default function ParentFravaerPage() {
                 <StatusBadge status={r.status} />
                 {r.status === 'Reported' && (
                   <button
-                    onClick={() => r.id && deleteMutation.mutate(r.id)}
+                    onClick={() => r.id && deleteMutation.mutate({ path: { id: r.id } })}
                     className="text-xs text-gray-400 hover:text-red-600 transition-colors"
                   >
                     Annuller

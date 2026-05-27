@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import keycloak from '../auth/keycloak'
 import CookieBanner from '../components/CookieBanner'
+import { getApiV1StaffInvitationsPreview, getApiV1ParentInvitationsPreview, postApiV1StaffInvitationsAccept, postApiV1ParentInvitationsAccept, patchApiV1ParentsMeContact } from '../api/generated/sdk.gen'
 
 type InvitationType = 'staff' | 'parent'
 
@@ -40,24 +41,32 @@ export default function InvitationAcceptPage() {
 
     async function loadPreview() {
       // Try staff invitation first; fall back to parent invitation.
-      let res = await fetch(`/api/v1/staff-invitations/preview?token=${encodeURIComponent(token!)}`, {
+      let staffRes = await getApiV1StaffInvitationsPreview({
+        query: { token: token! },
         signal: controller.signal,
+        throwOnError: false,
       })
 
       let type: InvitationType = 'staff'
-      if (res.status === 404) {
-        res = await fetch(`/api/v1/parent-invitations/preview?token=${encodeURIComponent(token!)}`, {
-          signal: controller.signal,
-        })
-        type = 'parent'
-      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any = staffRes.data
 
-      if (!res.ok) {
+      if (staffRes.response.status === 404) {
+        const parentRes = await getApiV1ParentInvitationsPreview({
+          query: { token: token! },
+          signal: controller.signal,
+          throwOnError: false,
+        })
+        data = parentRes.data
+        type = 'parent'
+        if (!parentRes.response.ok) {
+          setState('invalid')
+          return
+        }
+      } else if (!staffRes.response.ok) {
         setState('invalid')
         return
       }
-
-      const data = await res.json()
       const normalized: InvitationPreview = {
         name: type === 'staff' ? data.staffName : data.parentName,
         email: data.email,
@@ -85,34 +94,23 @@ export default function InvitationAcceptPage() {
     return () => controller.abort()
   }, [token, returningFromLogin])
 
-  async function acceptInvitation(inviteToken: string, bearerToken: string, type: InvitationType) {
+  async function acceptInvitation(inviteToken: string, _bearerToken: string, type: InvitationType) {
     try {
-      const url = type === 'staff'
-        ? '/api/v1/staff-invitations/accept'
-        : `/api/v1/parent-invitations/accept?token=${encodeURIComponent(inviteToken)}`
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${bearerToken}`,
-        },
-        body: type === 'staff' ? JSON.stringify({ token: inviteToken, keycloakSubject: '' }) : undefined,
-      })
-
-      if (res.ok || res.status === 204) {
-        if (type === 'parent') {
-          setState('contact-info')
-        } else {
-          setState('success')
-        }
+      if (type === 'staff') {
+        await postApiV1StaffInvitationsAccept({
+          body: { token: inviteToken, keycloakSubject: '' },
+          throwOnError: true,
+        })
       } else {
-        const body = await res.json().catch(() => ({}))
-        setErrorMsg(body?.detail ?? 'Der opstod en fejl. Invitationen er muligvis allerede brugt eller udløbet.')
-        setState('error')
+        await postApiV1ParentInvitationsAccept({
+          query: { token: inviteToken },
+          throwOnError: true,
+        })
       }
-    } catch {
-      setErrorMsg('Kunne ikke oprette forbindelse til serveren.')
+      setState(type === 'parent' ? 'contact-info' : 'success')
+    } catch (err: unknown) {
+      const detail = (err as { detail?: string })?.detail
+      setErrorMsg(detail ?? 'Der opstod en fejl. Invitationen er muligvis allerede brugt eller udløbet.')
       setState('error')
     }
   }
@@ -131,28 +129,20 @@ export default function InvitationAcceptPage() {
     setSubmittingContact(true)
     setContactError('')
     try {
-      const res = await fetch('/api/v1/parents/me/contact', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${keycloak.token}`,
-        },
-        body: JSON.stringify({
+      await patchApiV1ParentsMeContact({
+        body: {
           phone: phone || null,
           address: address || null,
           postalCode: postalCode || null,
           city: city || null,
           shareContactInfo,
-        }),
+        },
+        throwOnError: true,
       })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        setContactError(body?.detail ?? 'Der opstod en fejl. Prøv igen.')
-        return
-      }
       window.location.href = '/foraeldrevisning/skema'
-    } catch {
-      setContactError('Kunne ikke oprette forbindelse til serveren.')
+    } catch (err: unknown) {
+      const detail = (err as { detail?: string })?.detail
+      setContactError(detail ?? 'Der opstod en fejl. Prøv igen.')
     } finally {
       setSubmittingContact(false)
     }
