@@ -260,6 +260,42 @@ export type KontaktControllerKontaktParentDto = {
     studentNames?: Array<string> | null;
 };
 
+export type MessagesControllerInboxMessageDto = {
+    id?: string;
+    senderId?: string;
+    senderType?: RecipientType;
+    senderName?: string | null;
+    subject?: string | null;
+    body?: string | null;
+    sentAt?: string;
+    readAt?: string | null;
+};
+
+export type MessagesControllerRecipientDto = {
+    id?: string;
+    name?: string | null;
+    type?: RecipientType;
+    avatarUrl?: string | null;
+};
+
+export type MessagesControllerSendMessageRequest = {
+    recipientId?: string;
+    recipientType?: RecipientType;
+    subject?: string | null;
+    body?: string | null;
+};
+
+export type MessagesControllerSentMessageDto = {
+    id?: string;
+    recipientId?: string;
+    recipientType?: RecipientType;
+    recipientName?: string | null;
+    subject?: string | null;
+    body?: string | null;
+    sentAt?: string;
+    readAt?: string | null;
+};
+
 export type ModuleItemDto = {
     module?: SubscriptionModule;
     isAdminOverride?: boolean;
@@ -352,6 +388,8 @@ export type ParentsControllerStudentRefDto = {
     classId?: string;
     className?: string | null;
 };
+
+export type RecipientType = 'Parent' | 'Staff' | 'Board';
 
 export type RoomsControllerRoomDto = {
     id?: string;
@@ -1598,6 +1636,86 @@ export type GetApiV1KontaktResponses = {
 };
 
 export type GetApiV1KontaktResponse = GetApiV1KontaktResponses[keyof GetApiV1KontaktResponses];
+
+export type GetApiV1MessagesInboxData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/messages/inbox';
+};
+
+export type GetApiV1MessagesInboxResponses = {
+    /**
+     * OK
+     */
+    200: Array<MessagesControllerInboxMessageDto>;
+};
+
+export type GetApiV1MessagesInboxResponse = GetApiV1MessagesInboxResponses[keyof GetApiV1MessagesInboxResponses];
+
+export type GetApiV1MessagesSentData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/messages/sent';
+};
+
+export type GetApiV1MessagesSentResponses = {
+    /**
+     * OK
+     */
+    200: Array<MessagesControllerSentMessageDto>;
+};
+
+export type GetApiV1MessagesSentResponse = GetApiV1MessagesSentResponses[keyof GetApiV1MessagesSentResponses];
+
+export type PostApiV1MessagesData = {
+    body?: MessagesControllerSendMessageRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/messages';
+};
+
+export type PostApiV1MessagesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1MessagesByIdReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/messages/{id}/read';
+};
+
+export type PostApiV1MessagesByIdReadResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1MessagesRecipientsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        q?: string;
+    };
+    url: '/api/v1/messages/recipients';
+};
+
+export type GetApiV1MessagesRecipientsResponses = {
+    /**
+     * OK
+     */
+    200: Array<MessagesControllerRecipientDto>;
+};
+
+export type GetApiV1MessagesRecipientsResponse = GetApiV1MessagesRecipientsResponses[keyof GetApiV1MessagesRecipientsResponses];
 
 export type GetApiV1NotificationPreferencesData = {
     body?: never;
@@ -2886,6 +3004,58 @@ export type GetApiV1ModulesResponses = {
 };
 
 export type GetApiV1ModulesResponse = GetApiV1ModulesResponses[keyof GetApiV1ModulesResponses];
+
+export type GetApiV1AdminEmailPreviewStaffInvitationData = {
+    body?: never;
+    path?: never;
+    query?: {
+        name?: string;
+        school?: string;
+        withPassword?: boolean;
+    };
+    url: '/api/v1/admin/email-preview/staff-invitation';
+};
+
+export type GetApiV1AdminEmailPreviewStaffInvitationResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1AdminEmailPreviewParentInvitationData = {
+    body?: never;
+    path?: never;
+    query?: {
+        name?: string;
+        school?: string;
+        withPassword?: boolean;
+    };
+    url: '/api/v1/admin/email-preview/parent-invitation';
+};
+
+export type GetApiV1AdminEmailPreviewParentInvitationResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1AdminEmailPreviewNotificationData = {
+    body?: never;
+    path?: never;
+    query?: {
+        body?: string;
+    };
+    url: '/api/v1/admin/email-preview/notification';
+};
+
+export type GetApiV1AdminEmailPreviewNotificationResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1AdminTenantsData = {
     body?: never;

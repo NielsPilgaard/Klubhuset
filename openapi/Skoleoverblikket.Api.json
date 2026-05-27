@@ -5101,6 +5101,104 @@
         }
       }
     },
+    "/api/v1/admin/email-preview/staff-invitation": {
+      "get": {
+        "tags": [
+          "SuperAdminEmailPreview"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "Mette Hansen"
+            }
+          },
+          {
+            "name": "school",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "Testskolen"
+            }
+          },
+          {
+            "name": "withPassword",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/email-preview/parent-invitation": {
+      "get": {
+        "tags": [
+          "SuperAdminEmailPreview"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "Lars Andersen"
+            }
+          },
+          {
+            "name": "school",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "Testskolen"
+            }
+          },
+          {
+            "name": "withPassword",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/email-preview/notification": {
+      "get": {
+        "tags": [
+          "SuperAdminEmailPreview"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "Dit barns skema er blevet opdateret for uge 22."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/admin/tenants": {
       "get": {
         "tags": [
@@ -8725,6 +8823,9 @@
     },
     {
       "name": "SubscriptionModules"
+    },
+    {
+      "name": "SuperAdminEmailPreview"
     },
     {
       "name": "SuperAdminTenants"
