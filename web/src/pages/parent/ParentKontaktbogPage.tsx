@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle'
-import { getApiV1ContactThreads, getApiV1ContactThreadsByThreadIdMessages, postApiV1ContactThreadsByThreadIdRead, postApiV1ContactThreadsByThreadIdMessages, postApiV1ContactThreads } from '../../api/generated/sdk.gen'
+import {
+  getApiV1ContactThreads,
+  getApiV1ContactThreadsByThreadIdMessages,
+  postApiV1ContactThreadsByThreadIdRead,
+  postApiV1ContactThreadsByThreadIdMessages,
+  postApiV1ContactThreads,
+  getApiV1MessagesRecipients,
+  getApiV1ParentsMe,
+} from '../../api/generated/sdk.gen'
 
 interface ContactThreadDto {
   id: string
@@ -30,6 +38,18 @@ interface PagedResult<T> {
   pageSize: number
 }
 
+interface RecipientDto {
+  id: string
+  name: string
+  type: 'Parent' | 'Staff'
+  avatarUrl?: string
+}
+
+interface ParentStudentDto {
+  studentId?: string
+  studentName?: string | null
+}
+
 function formatDateTime(iso: string): string {
   const d = new Date(iso)
   const hh = d.getHours().toString().padStart(2, '0')
@@ -46,14 +66,35 @@ function truncate(text: string, max: number): string {
   return text.slice(0, max) + '…'
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(n => n.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
 export default function ParentKontaktbogPage() {
   usePageTitle('Kontaktbog')
   const qc = useQueryClient()
+  const [sidebarTab, setSidebarTab] = useState<'beskeder' | 'kontakter'>('beskeder')
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
   const [messageBody, setMessageBody] = useState('')
   const [newMessageBody, setNewMessageBody] = useState('')
   const [showMobileMessages, setShowMobileMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Directory state
+  const [directorySearch, setDirectorySearch] = useState('')
+  const [allStaff, setAllStaff] = useState<RecipientDto[]>([])
+  const [filteredStaff, setFilteredStaff] = useState<RecipientDto[]>([])
+  const [directoryLoading, setDirectoryLoading] = useState(false)
+  const directoryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Student picker state
+  const [studentPickerOpen, setStudentPickerOpen] = useState(false)
+  const [pendingStaff, setPendingStaff] = useState<RecipientDto | null>(null)
 
   const threadsQueryKey = [{ _id: 'getApiV1ContactThreads' }] as const
 
@@ -64,6 +105,16 @@ export default function ParentKontaktbogPage() {
       return (data ?? []) as ContactThreadDto[]
     },
   })
+
+  const { data: parentMe } = useQuery({
+    queryKey: [{ _id: 'getApiV1ParentsMe' }],
+    queryFn: async () => {
+      const { data } = await getApiV1ParentsMe({ throwOnError: false })
+      return data
+    },
+  })
+
+  const students = (parentMe?.students ?? []) as ParentStudentDto[]
 
   const { data: messagesData } = useQuery({
     queryKey: [{ _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } }],
@@ -117,8 +168,91 @@ export default function ParentKontaktbogPage() {
       setSelectedThreadId(data.threadId)
       setNewMessageBody('')
       setShowMobileMessages(true)
+      setSidebarTab('beskeder')
     },
   })
+
+  useEffect(() => {
+    return () => {
+      if (directoryDebounceRef.current) {
+        clearTimeout(directoryDebounceRef.current)
+        directoryDebounceRef.current = null
+      }
+    }
+  }, [])
+
+  // Load all staff contacts on tab switch
+  useEffect(() => {
+    if (sidebarTab !== 'kontakter' || allStaff.length > 0) {
+      return
+    }
+    async function loadStaff() {
+      setDirectoryLoading(true)
+      try {
+        const { data } = await getApiV1MessagesRecipients({ query: { q: '' }, throwOnError: false })
+        const recipients = ((data ?? []) as RecipientDto[]).filter(r => r.type === 'Staff')
+        setAllStaff(recipients)
+        setFilteredStaff(recipients)
+      } finally {
+        setDirectoryLoading(false)
+      }
+    }
+    loadStaff()
+  }, [sidebarTab, allStaff.length])
+
+  function handleDirectorySearch(value: string) {
+    setDirectorySearch(value)
+    if (directoryDebounceRef.current) {
+      clearTimeout(directoryDebounceRef.current)
+    }
+    const searchAtCall = value
+    directoryDebounceRef.current = setTimeout(async () => {
+      if (searchAtCall.length === 0) {
+        setFilteredStaff(allStaff)
+        return
+      }
+      const { data } = await getApiV1MessagesRecipients({ query: { q: searchAtCall }, throwOnError: false })
+      setDirectorySearch(current => {
+        if (current === searchAtCall) {
+          setFilteredStaff(((data ?? []) as RecipientDto[]).filter(r => r.type === 'Staff'))
+        }
+        return current
+      })
+    }, 300)
+  }
+
+  function navigateToStudentThread(studentId: string) {
+    const existing = threads.find(t => t.studentId === studentId)
+    if (existing) {
+      handleSelectThread(existing.id)
+    } else {
+      setSelectedThreadId(null)
+      setShowMobileMessages(true)
+    }
+    setSidebarTab('beskeder')
+  }
+
+  function handleStaffClick(staff: RecipientDto) {
+    if (students.length === 0) {
+      return
+    }
+    if (students.length === 1) {
+      const sid = students[0].studentId
+      if (!sid) {
+        return
+      }
+      navigateToStudentThread(sid)
+    } else {
+      setPendingStaff(staff)
+      setStudentPickerOpen(true)
+    }
+  }
+
+  function handleStudentPick(studentId: string) {
+    setStudentPickerOpen(false)
+    setPendingStaff(null)
+    navigateToStudentThread(studentId)
+  }
 
   function handleSelectThread(threadId: string) {
     setSelectedThreadId(threadId)
@@ -149,48 +283,128 @@ export default function ParentKontaktbogPage() {
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
-      {/* Thread list — hidden on mobile when message panel is open */}
+      {/* Sidebar — hidden on mobile when message panel is open */}
       <div className={`w-full lg:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col ${showMobileMessages ? 'hidden lg:flex' : 'flex'}`}>
-        <div className="px-4 py-4 border-b border-gray-100">
-          <h1 className="font-display text-xl font-semibold text-gray-900">Kontaktbog</h1>
-        </div>
 
-        {threadsLoading && (
-          <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
-            Indlæser…
-          </div>
-        )}
-
-        {!threadsLoading && threads.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
-            <p className="text-sm text-gray-500">Ingen beskeder endnu</p>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-          {threads.map(thread => (
+        {/* Sidebar header with title + tabs */}
+        <div className="px-4 pt-4 pb-0 border-b border-gray-100">
+          <h1 className="font-display text-xl font-semibold text-gray-900 mb-3">Kontaktbog</h1>
+          <div className="flex">
             <button
-              key={thread.id}
-              onClick={() => handleSelectThread(thread.id)}
-              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedThreadId === thread.id ? 'bg-brand-50' : ''}`}
+              onClick={() => setSidebarTab('beskeder')}
+              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                sidebarTab === 'beskeder'
+                  ? 'border-brand-600 text-brand-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
             >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="font-medium text-sm text-gray-900">{thread.studentName}</span>
-                {thread.unreadCount > 0 && (
-                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold">
-                    {thread.unreadCount}
-                  </span>
-                )}
-              </div>
-              {thread.lastMessageBody && (
-                <p className="text-xs text-gray-500 truncate">{truncate(thread.lastMessageBody, 50)}</p>
-              )}
-              {thread.lastMessageSentAt && (
-                <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(thread.lastMessageSentAt)}</p>
-              )}
+              Beskeder
             </button>
-          ))}
+            <button
+              onClick={() => setSidebarTab('kontakter')}
+              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                sidebarTab === 'kontakter'
+                  ? 'border-brand-600 text-brand-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Kontakter
+            </button>
+          </div>
         </div>
+
+        {/* Beskeder tab */}
+        {sidebarTab === 'beskeder' && (
+          <>
+            {threadsLoading && (
+              <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
+                Indlæser…
+              </div>
+            )}
+
+            {!threadsLoading && threads.length === 0 && (
+              <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
+                <p className="text-sm text-gray-500">Ingen beskeder endnu</p>
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+              {threads.map(thread => (
+                <button
+                  key={thread.id}
+                  onClick={() => handleSelectThread(thread.id)}
+                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedThreadId === thread.id ? 'bg-brand-50' : ''}`}
+                >
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="font-medium text-sm text-gray-900">{thread.studentName}</span>
+                    {thread.unreadCount > 0 && (
+                      <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold">
+                        {thread.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  {thread.lastMessageBody && (
+                    <p className="text-xs text-gray-500 truncate">{truncate(thread.lastMessageBody, 50)}</p>
+                  )}
+                  {thread.lastMessageSentAt && (
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(thread.lastMessageSentAt)}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Kontakter tab */}
+        {sidebarTab === 'kontakter' && (
+          <>
+            <div className="px-3 py-3 border-b border-gray-50 shrink-0">
+              <div className="relative">
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  value={directorySearch}
+                  onChange={e => handleDirectorySearch(e.target.value)}
+                  placeholder="Søg efter medarbejder…"
+                  className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+              {directoryLoading && (
+                <div className="flex items-center justify-center py-8 text-sm text-gray-400">
+                  Indlæser…
+                </div>
+              )}
+              {!directoryLoading && filteredStaff.length === 0 && (
+                <div className="flex items-center justify-center py-8 text-sm text-gray-400">
+                  Ingen medarbejdere
+                </div>
+              )}
+              {filteredStaff.map(staff => (
+                <button
+                  key={staff.id}
+                  onClick={() => handleStaffClick(staff)}
+                  className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                >
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0 overflow-hidden">
+                    {staff.avatarUrl
+                      ? <img src={staff.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                      : getInitials(staff.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{staff.name}</p>
+                    <p className="text-xs text-gray-400">Medarbejder</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Message panel */}
@@ -293,6 +507,35 @@ export default function ParentKontaktbogPage() {
           </div>
         )}
       </div>
+
+      {/* Student picker modal */}
+      {studentPickerOpen && pendingStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-sm">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Vælg barn</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Hvilken besked gælder samtalen?
+            </p>
+            <div className="space-y-2">
+              {students.filter(s => s.studentId && s.studentName).map(s => (
+                <button
+                  key={s.studentId}
+                  onClick={() => handleStudentPick(s.studentId as string)}
+                  className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-brand-400 hover:bg-brand-50 transition-colors text-sm font-medium text-gray-900"
+                >
+                  {s.studentName}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => { setStudentPickerOpen(false); setPendingStaff(null) }}
+              className="mt-4 w-full text-sm text-gray-500 hover:text-gray-700"
+            >
+              Annuller
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

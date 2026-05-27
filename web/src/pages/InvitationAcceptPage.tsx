@@ -41,7 +41,7 @@ export default function InvitationAcceptPage() {
 
     async function loadPreview() {
       // Try staff invitation first; fall back to parent invitation.
-      let staffRes = await getApiV1StaffInvitationsPreview({
+      const staffRes = await getApiV1StaffInvitationsPreview({
         query: { token: token! },
         signal: controller.signal,
         throwOnError: false,
