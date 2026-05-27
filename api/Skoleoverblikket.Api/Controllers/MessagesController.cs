@@ -6,7 +6,6 @@ using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Tenancy;
-using System.Security.Claims;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -54,7 +53,7 @@ public sealed class MessagesController(
 
 	private async Task<(Guid Id, string Name, RecipientType Type)?> ResolveCallerAsync(CancellationToken ct)
 	{
-		var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var sub = User.GetKeycloakSubject();
 
 		if (User.IsInRole(Roles.Parent))
 		{
@@ -62,26 +61,18 @@ public sealed class MessagesController(
 				.AsNoTracking()
 				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, ct);
 
-			if (parent is null)
-			{
-				return null;
-			}
-
-			return (parent.Id, parent.Name, RecipientType.Parent);
+			return parent is null
+				? null
+				: (parent.Id, parent.Name, RecipientType.Parent);
 		}
-		else
-		{
-			var staff = await db.Staff
-				.AsNoTracking()
-				.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, ct);
 
-			if (staff is null)
-			{
-				return null;
-			}
+		var staff = await db.Staff
+			.AsNoTracking()
+			.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, ct);
 
-			return (staff.Id, staff.Name, RecipientType.Staff);
-		}
+		return staff is null
+			? null
+			: (staff.Id, staff.Name, RecipientType.Staff);
 	}
 
 	[HttpGet("inbox")]

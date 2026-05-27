@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
-using System.Security.Claims;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -25,8 +24,7 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 	[HttpGet]
 	public async Task<ActionResult<IReadOnlyList<KontaktParentDto>>> GetKontakt(CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier)
-			?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		if (string.IsNullOrEmpty(subject))
 		{

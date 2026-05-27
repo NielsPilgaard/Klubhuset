@@ -6,7 +6,6 @@ using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Tenancy;
-using System.Security.Claims;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -45,7 +44,7 @@ public sealed class ContactThreadsController(
 	[HttpGet]
 	public async Task<ActionResult<IReadOnlyList<ContactThreadDto>>> GetThreads(CancellationToken ct)
 	{
-		var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		IQueryable<ContactThread> query = db.ContactThreads
@@ -109,7 +108,7 @@ public sealed class ContactThreadsController(
 			return NotFound();
 		}
 
-		var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		if (isParent)
@@ -164,7 +163,7 @@ public sealed class ContactThreadsController(
 		[FromBody] FindOrCreateThreadRequest req,
 		CancellationToken ct)
 	{
-		var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		Guid senderId;
@@ -255,7 +254,7 @@ public sealed class ContactThreadsController(
 		[FromBody] AddMessageRequest req,
 		CancellationToken ct)
 	{
-		var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		var thread = await db.ContactThreads
@@ -336,7 +335,7 @@ public sealed class ContactThreadsController(
 	[HttpPost("{threadId:guid}/read")]
 	public async Task<IActionResult> MarkRead(Guid threadId, CancellationToken ct)
 	{
-		var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		var thread = await db.ContactThreads

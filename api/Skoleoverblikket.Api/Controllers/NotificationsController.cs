@@ -6,7 +6,6 @@ using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Tenancy;
-using System.Security.Claims;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -101,7 +100,7 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 
 	private async Task<(Guid? recipientId, RecipientType recipientType)> ResolveCallerAsync(CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 		if (subject is null)
 		{
 			return (null, default);
@@ -197,7 +196,7 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 
 	private async Task<(Guid? userId, RecipientType userType)> ResolveCallerAsync(CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 		if (subject is null)
 		{
 			return (null, default);

@@ -5,7 +5,6 @@ using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
-using System.Security.Claims;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -25,7 +24,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	public async Task<IActionResult> ReportAbsence(
 		[FromBody] ReportAbsenceRequest req, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
 			.AsNoTracking()
@@ -64,7 +63,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	[Authorize(Roles = Roles.Parent)]
 	public async Task<ActionResult<IReadOnlyList<AbsenceReportDto>>> GetMine(CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents.AsNoTracking()
 			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
@@ -126,7 +125,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	[HttpPost("{id:guid}/confirm")]
 	public async Task<IActionResult> ConfirmAbsence(Guid id, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		var staff = await db.Staff.AsNoTracking()
 			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
@@ -174,7 +173,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	[HttpPost("{id:guid}/dismiss")]
 	public async Task<IActionResult> DismissAbsence(Guid id, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		var staff = await db.Staff.AsNoTracking()
 			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
@@ -223,7 +222,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	[Authorize(Roles = Roles.Parent)]
 	public async Task<IActionResult> CancelAbsence(Guid id, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents.AsNoTracking()
 			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);

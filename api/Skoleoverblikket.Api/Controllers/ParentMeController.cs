@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Storage;
-using System.Security.Claims;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -20,8 +19,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 	[HttpGet]
 	public async Task<ActionResult<ParentMeDto>> GetMe(CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier)
-			?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		if (subject is null)
 		{
@@ -67,7 +65,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 			return BadRequest(new { detail = "File must be between 1 byte and 5 MB." });
 		}
 
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 		var parent = await db.Parents.AsNoTracking()
 			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
 
@@ -97,8 +95,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 	public async Task<IActionResult> UpdateContact(
 		[FromBody] UpdateContactRequest req, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier)
-			?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
 			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
@@ -124,7 +121,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 	public async Task<IActionResult> ConfirmAvatar(
 		[FromBody] AvatarConfirmRequest req, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 		var parent = await db.Parents
 			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
 

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Storage;
-using System.Security.Claims;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -29,7 +29,7 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 			return BadRequest(new { detail = "File must be between 1 byte and 5 MB." });
 		}
 
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 		var staff = await db.Staff.AsNoTracking()
 			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
 
@@ -54,7 +54,7 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 	public async Task<IActionResult> ConfirmAvatar(
 		[FromBody] AvatarConfirmRequest req, CancellationToken ct)
 	{
-		var subject = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+		var subject = User.GetKeycloakSubject();
 		var staff = await db.Staff
 			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
 
