@@ -21,6 +21,16 @@ export default function BackofficeLayout() {
             >
               Skoler
             </Link>
+            <Link
+              to="/backoffice/emails"
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                location.pathname.startsWith('/backoffice/emails')
+                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              E-mails
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-500">

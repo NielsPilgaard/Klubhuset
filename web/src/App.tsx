@@ -49,6 +49,7 @@ const ParentUgeplanPage = lazy(() => import('./pages/parent/ParentUgeplanPage'))
 const BackofficeLayout = lazy(() => import('./pages/backoffice/BackofficeLayout'))
 const BackofficeTenantsPage = lazy(() => import('./pages/backoffice/BackofficeTenantsPage'))
 const BackofficeTenantDetailPage = lazy(() => import('./pages/backoffice/BackofficeTenantDetailPage'))
+const BackofficeEmailPreviewPage = lazy(() => import('./pages/backoffice/BackofficeEmailPreviewPage'))
 const ParentDirectoryPage = lazy(() => import('./pages/ParentDirectoryPage'))
 const ParentFravaerPage = lazy(() => import('./pages/parent/ParentFravaerPage'))
 const FravaerPage = lazy(() => import('./pages/FravaerPage'))
@@ -123,6 +124,7 @@ export default function App() {
             <Route index element={<Navigate to="tenants" replace />} />
             <Route path="tenants" element={<BackofficeTenantsPage />} />
             <Route path="tenants/:schoolId" element={<BackofficeTenantDetailPage />} />
+            <Route path="emails" element={<BackofficeEmailPreviewPage />} />
           </Route>
 
           {/* Authenticated app */}
