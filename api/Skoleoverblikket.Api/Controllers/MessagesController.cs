@@ -7,6 +7,7 @@ using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Tenancy;
 using System.Security.Claims;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -16,7 +17,8 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class MessagesController(
 	AppDbContext db,
 	ITenantContext tenantContext,
-	INotificationService notificationService) : ControllerBase
+	INotificationService notificationService,
+	IFusionCache cache) : ControllerBase
 {
 	public record InboxMessageDto(
 		Guid Id,
@@ -256,11 +258,6 @@ public sealed class MessagesController(
 		[FromQuery] string q = "",
 		CancellationToken ct = default)
 	{
-		if (q.Length < 2)
-		{
-			return Ok(Array.Empty<RecipientDto>());
-		}
-
 		var caller = await ResolveCallerAsync(ct);
 		if (caller is null)
 		{
@@ -269,46 +266,46 @@ public sealed class MessagesController(
 
 		var (callerId, _, callerType) = caller.Value;
 
+		var cacheKey = $"recipients:{tenantContext.TenantId}:{callerId}";
+		var all = await cache.GetOrSetAsync(
+			cacheKey,
+			async token => await BuildAllRecipientsAsync(callerId, callerType, token),
+			options => options.SetDuration(TimeSpan.FromSeconds(30)),
+			ct);
+
+		var filtered = string.IsNullOrEmpty(q)
+			? all
+			: all.Where(r => r.Name.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+
+		return Ok(filtered.Take(50).ToList());
+	}
+
+	private async Task<List<RecipientDto>> BuildAllRecipientsAsync(
+		Guid callerId,
+		RecipientType callerType,
+		CancellationToken ct)
+	{
 		var results = new List<RecipientDto>();
 
 		if (callerType == RecipientType.Parent)
 		{
-			var matchingStaff = await db.Staff.AsNoTracking()
-				.ToListAsync(ct);
+			var staff = await db.Staff.AsNoTracking().ToListAsync(ct);
+			results.AddRange(staff.Select(s => new RecipientDto(s.Id, s.Name, RecipientType.Staff, s.AvatarUrl)));
 
-			results.AddRange(matchingStaff
-				.Where(s => s.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
-				.Take(10)
-				.Select(s => new RecipientDto(s.Id, s.Name, RecipientType.Staff, s.AvatarUrl)));
-
-			var matchingParents = await db.Parents.AsNoTracking()
+			var parents = await db.Parents.AsNoTracking()
 				.Where(p => p.ShareContactInfo && p.Id != callerId)
 				.ToListAsync(ct);
-
-			results.AddRange(matchingParents
-				.Where(p => p.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
-				.Take(10)
-				.Select(p => new RecipientDto(p.Id, p.Name, RecipientType.Parent, p.AvatarUrl)));
+			results.AddRange(parents.Select(p => new RecipientDto(p.Id, p.Name, RecipientType.Parent, p.AvatarUrl)));
 		}
 		else
 		{
-			var matchingParents = await db.Parents.AsNoTracking()
-				.ToListAsync(ct);
+			var parents = await db.Parents.AsNoTracking().ToListAsync(ct);
+			results.AddRange(parents.Select(p => new RecipientDto(p.Id, p.Name, RecipientType.Parent, p.AvatarUrl)));
 
-			results.AddRange(matchingParents
-				.Where(p => p.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
-				.Take(10)
-				.Select(p => new RecipientDto(p.Id, p.Name, RecipientType.Parent, p.AvatarUrl)));
-
-			var matchingStaff = await db.Staff.AsNoTracking()
-				.ToListAsync(ct);
-
-			results.AddRange(matchingStaff
-				.Where(s => s.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
-				.Take(10)
-				.Select(s => new RecipientDto(s.Id, s.Name, RecipientType.Staff, s.AvatarUrl)));
+			var staff = await db.Staff.AsNoTracking().ToListAsync(ct);
+			results.AddRange(staff.Select(s => new RecipientDto(s.Id, s.Name, RecipientType.Staff, s.AvatarUrl)));
 		}
 
-		return Ok(results.Take(20).ToList());
+		return results;
 	}
 }
