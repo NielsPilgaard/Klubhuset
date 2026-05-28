@@ -19,27 +19,28 @@ Generates a new EF Core migration and verifies the result.
 
 If the user did not provide a name, ask for one. Migration names must be PascalCase and describe the schema change — e.g. `Add_Course_Category`, `Remove_Staff_Slug`, `Add_SchemaDateRange`.
 
-### 2. Generate the migration
+### 2. Run the migration script
 
-Run from the repo root:
+Always use the repo script — it adds the migration AND regenerates `migration_script.sql` atomically:
 
-```bash
-dotnet ef migrations add <MigrationName> \
-  --project api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj \
-  --output-dir Data/Migrations
+```powershell
+.\scripts\add-migration.ps1 -MigrationName <MigrationName>
 ```
+
+Never call `dotnet ef` directly for this task. The script handles both steps and exits non-zero on failure.
 
 ### 3. Verify output
 
-After generation, check that:
+After the script succeeds, check that:
 
 - Two new files exist: `<timestamp>_<Name>.cs` and `<timestamp>_<Name>.Designer.cs`
 - `AppDbContextModelSnapshot.cs` was updated
+- `migration_script.sql` contains the new migration ID at the bottom
 - The migration `Up()` method contains the expected SQL operations — read it and confirm with the user if the changes look unexpected
 
 ### 4. Build to confirm no compile errors
 
-```bash
+```powershell
 dotnet build api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --configuration Release
 ```
 

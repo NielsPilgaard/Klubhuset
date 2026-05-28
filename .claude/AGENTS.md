@@ -28,6 +28,21 @@ Never bypass this filter. Never trust a slug string as an authorization signal �
 
 **Billing via Stripe Checkout**: all billing is self-serve. 14-day free trial, then monthly Stripe Checkout. No manual invoicing. No MobilePay.
 
+**Built features (beyond core schema planner)**:
+- SFO week plan (`SfoWeekPlanController`, `SfoController`) — weekly SFO schedule with print view
+- Parent module (`ParentsController`, `ParentMeController`, `ParentInvitationsController`) — parent portal with schema/calendar/ugeplan views
+- Absence reporting (`AbsenceController`) — parents report absence, staff confirm/dismiss
+- Kontakt directory (`KontaktController`) — role-filtered parent directory with `ShareContactInfo` consent
+- Kontaktbog (`ContactThreadsController`) — per-child parent↔teacher message threads
+- Beskeder (`MessagesController`) — flat inbox for all tenant users with consent rules
+- Notifications (`NotificationsController`) — in-app + email, per-type opt-out via `NotificationPreference`
+- Calendar with recurrence (`CalendarController`) — school calendar events with recurrence and excluded dates
+- Class permissions (`ClassPermissionsController`) — per-class edit grants (superadmin vs. restricted mode)
+- Module billing (`SubscriptionModulesController`) — parent module gated behind Stripe subscription
+- Backoffice (`SuperAdminTenantsController`, `SuperAdminEmailPreviewController`) — isSuperAdmin role, view-as mode
+- Avatar uploads — presign+confirm pattern for Parent, Staff, Student avatars stored in OVHCloud
+- Vacation registration / ferieindmelding (`VacationRegistrationController`) — admin creates registration windows with granularity (weeks/days) and deadlines; parents submit vacation requests via `ParentFerieindmeldingPage`; admin reviews all entries and manages windows via `FerieindmeldingPage` / `FerieindmeldingDetailPage`; full CRUD on windows with open/closed toggle and CSV export of responses
+
 ## Coding conventions
 
 ### API (ASP.NET Core / C#)
