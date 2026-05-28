@@ -314,7 +314,7 @@ export type NotificationPreferencesControllerUpsertPreferenceItem = {
     email?: boolean;
 };
 
-export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanChanged' | 'AbsenceConfirmed' | 'AbsenceDismissed';
+export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanChanged' | 'AbsenceConfirmed' | 'AbsenceDismissed' | 'VacationRegistrationOpened';
 
 export type NotificationsControllerNotificationDto = {
     id?: string;
@@ -765,6 +765,64 @@ export type TimeSlotsControllerUpsertTimeSlotRequest = {
     label?: string | null;
     isBreak?: boolean;
 };
+
+export type VacationRegistrationControllerCreateWindowRequest = {
+    title?: string | null;
+    registrationDeadline?: string;
+    careStartDate?: string;
+    careEndDate?: string;
+    granularity?: VacationRegistrationGranularity;
+    isOpen?: boolean;
+};
+
+export type VacationRegistrationControllerEntryDto = {
+    id?: string;
+    studentId?: string;
+    studentName?: string | null;
+    className?: string | null;
+    submittedByParentId?: string;
+    submittedByParentName?: string | null;
+    selectedDates?: Array<string> | null;
+    note?: string | null;
+    submittedAt?: string;
+    updatedAt?: string;
+};
+
+export type VacationRegistrationControllerMyEntryDto = {
+    studentId?: string;
+    studentName?: string | null;
+    selectedDates?: Array<string> | null;
+    note?: string | null;
+    submittedAt?: string | null;
+};
+
+export type VacationRegistrationControllerUpdateWindowRequest = {
+    title?: string | null;
+    registrationDeadline?: string;
+    careStartDate?: string;
+    careEndDate?: string;
+    granularity?: VacationRegistrationGranularity;
+    isOpen?: boolean;
+};
+
+export type VacationRegistrationControllerUpsertEntryRequest = {
+    selectedDates?: Array<string> | null;
+    note?: string | null;
+};
+
+export type VacationRegistrationControllerWindowDto = {
+    id?: string;
+    title?: string | null;
+    registrationDeadline?: string;
+    careStartDate?: string;
+    careEndDate?: string;
+    granularity?: VacationRegistrationGranularity;
+    isOpen?: boolean;
+    entryCount?: number;
+    createdAt?: string;
+};
+
+export type VacationRegistrationGranularity = 'Weeks' | 'Days';
 
 export type WeekPlanControllerAddFileToSlotRequest = {
     schoolFileId?: string;
@@ -3242,6 +3300,154 @@ export type GetApiV1TimeSlotsResponses = {
 };
 
 export type GetApiV1TimeSlotsResponse = GetApiV1TimeSlotsResponses[keyof GetApiV1TimeSlotsResponses];
+
+export type GetApiV1VacationRegistrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/vacation-registration';
+};
+
+export type GetApiV1VacationRegistrationResponses = {
+    /**
+     * OK
+     */
+    200: Array<VacationRegistrationControllerWindowDto>;
+};
+
+export type GetApiV1VacationRegistrationResponse = GetApiV1VacationRegistrationResponses[keyof GetApiV1VacationRegistrationResponses];
+
+export type PostApiV1VacationRegistrationData = {
+    body?: VacationRegistrationControllerCreateWindowRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/vacation-registration';
+};
+
+export type PostApiV1VacationRegistrationResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiV1VacationRegistrationByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/vacation-registration/{id}';
+};
+
+export type DeleteApiV1VacationRegistrationByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutApiV1VacationRegistrationByIdData = {
+    body?: VacationRegistrationControllerUpdateWindowRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/vacation-registration/{id}';
+};
+
+export type PutApiV1VacationRegistrationByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1VacationRegistrationByIdEntriesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/vacation-registration/{id}/entries';
+};
+
+export type GetApiV1VacationRegistrationByIdEntriesResponses = {
+    /**
+     * OK
+     */
+    200: Array<VacationRegistrationControllerEntryDto>;
+};
+
+export type GetApiV1VacationRegistrationByIdEntriesResponse = GetApiV1VacationRegistrationByIdEntriesResponses[keyof GetApiV1VacationRegistrationByIdEntriesResponses];
+
+export type GetApiV1VacationRegistrationOpenData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/vacation-registration/open';
+};
+
+export type GetApiV1VacationRegistrationOpenResponses = {
+    /**
+     * OK
+     */
+    200: Array<VacationRegistrationControllerWindowDto>;
+};
+
+export type GetApiV1VacationRegistrationOpenResponse = GetApiV1VacationRegistrationOpenResponses[keyof GetApiV1VacationRegistrationOpenResponses];
+
+export type GetApiV1VacationRegistrationByIdMyEntriesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/vacation-registration/{id}/my-entries';
+};
+
+export type GetApiV1VacationRegistrationByIdMyEntriesResponses = {
+    /**
+     * OK
+     */
+    200: Array<VacationRegistrationControllerMyEntryDto>;
+};
+
+export type GetApiV1VacationRegistrationByIdMyEntriesResponse = GetApiV1VacationRegistrationByIdMyEntriesResponses[keyof GetApiV1VacationRegistrationByIdMyEntriesResponses];
+
+export type DeleteApiV1VacationRegistrationByIdEntriesByStudentIdData = {
+    body?: never;
+    path: {
+        id: string;
+        studentId: string;
+    };
+    query?: never;
+    url: '/api/v1/vacation-registration/{id}/entries/{studentId}';
+};
+
+export type DeleteApiV1VacationRegistrationByIdEntriesByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutApiV1VacationRegistrationByIdEntriesByStudentIdData = {
+    body?: VacationRegistrationControllerUpsertEntryRequest;
+    path: {
+        id: string;
+        studentId: string;
+    };
+    query?: never;
+    url: '/api/v1/vacation-registration/{id}/entries/{studentId}';
+};
+
+export type PutApiV1VacationRegistrationByIdEntriesByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1ClassesByClassIdUgeplanData = {
     body?: never;

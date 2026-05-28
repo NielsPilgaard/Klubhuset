@@ -1142,3 +1142,371 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525194729_SfoWeekPlanShift_UpdatedAt_ValueGeneratedNever') THEN
+    ALTER TABLE "SfoWeekPlanShifts" ALTER COLUMN "UpdatedAt" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525194729_SfoWeekPlanShift_UpdatedAt_ValueGeneratedNever') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260525194729_SfoWeekPlanShift_UpdatedAt_ValueGeneratedNever', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526041548_AddAvatarUrls') THEN
+    ALTER TABLE "Students" ADD "AvatarUrl" character varying(2000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526041548_AddAvatarUrls') THEN
+    ALTER TABLE "Staff" ADD "AvatarUrl" character varying(2000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526041548_AddAvatarUrls') THEN
+    ALTER TABLE "Parents" ADD "AvatarUrl" character varying(2000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526041548_AddAvatarUrls') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260526041548_AddAvatarUrls', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526042355_AddAbsenceReport') THEN
+    CREATE TABLE "AbsenceReports" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "StudentId" uuid NOT NULL,
+        "ReportedByParentId" uuid NOT NULL,
+        "Date" date NOT NULL,
+        "EndDate" date,
+        "Reason" character varying(500),
+        "Status" integer NOT NULL,
+        "ConfirmedByStaffId" uuid,
+        "ConfirmedAt" timestamp with time zone,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_AbsenceReports" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_AbsenceReports_Parents_ReportedByParentId" FOREIGN KEY ("ReportedByParentId") REFERENCES "Parents" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_AbsenceReports_Staff_ConfirmedByStaffId" FOREIGN KEY ("ConfirmedByStaffId") REFERENCES "Staff" ("Id") ON DELETE SET NULL,
+        CONSTRAINT "FK_AbsenceReports_Students_StudentId" FOREIGN KEY ("StudentId") REFERENCES "Students" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526042355_AddAbsenceReport') THEN
+    CREATE INDEX "IX_AbsenceReports_ConfirmedByStaffId" ON "AbsenceReports" ("ConfirmedByStaffId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526042355_AddAbsenceReport') THEN
+    CREATE INDEX "IX_AbsenceReports_ReportedByParentId" ON "AbsenceReports" ("ReportedByParentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526042355_AddAbsenceReport') THEN
+    CREATE INDEX "IX_AbsenceReports_StudentId" ON "AbsenceReports" ("StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526042355_AddAbsenceReport') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260526042355_AddAbsenceReport', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526043140_AddNotifications') THEN
+    CREATE TABLE "NotificationPreferences" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "UserId" uuid NOT NULL,
+        "UserType" integer NOT NULL,
+        "Type" integer NOT NULL,
+        "InApp" boolean NOT NULL,
+        "Email" boolean NOT NULL,
+        CONSTRAINT "PK_NotificationPreferences" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526043140_AddNotifications') THEN
+    CREATE TABLE "Notifications" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "RecipientId" uuid NOT NULL,
+        "RecipientType" integer NOT NULL,
+        "Type" integer NOT NULL,
+        "ReferenceId" uuid,
+        "Body" character varying(300) NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "ReadAt" timestamp with time zone,
+        CONSTRAINT "PK_Notifications" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526043140_AddNotifications') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260526043140_AddNotifications', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526044856_AddContactBook') THEN
+    CREATE TABLE "ContactThreads" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "StudentId" uuid NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ContactThreads" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ContactThreads_Students_StudentId" FOREIGN KEY ("StudentId") REFERENCES "Students" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526044856_AddContactBook') THEN
+    CREATE TABLE "ContactMessages" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "ThreadId" uuid NOT NULL,
+        "SenderType" integer NOT NULL,
+        "SenderId" uuid NOT NULL,
+        "Body" character varying(4000) NOT NULL,
+        "SentAt" timestamp with time zone NOT NULL,
+        "ReadAt" timestamp with time zone,
+        CONSTRAINT "PK_ContactMessages" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ContactMessages_ContactThreads_ThreadId" FOREIGN KEY ("ThreadId") REFERENCES "ContactThreads" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526044856_AddContactBook') THEN
+    CREATE INDEX "IX_ContactMessages_ThreadId" ON "ContactMessages" ("ThreadId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526044856_AddContactBook') THEN
+    CREATE INDEX "IX_ContactThreads_StudentId" ON "ContactThreads" ("StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526044856_AddContactBook') THEN
+    CREATE UNIQUE INDEX "IX_ContactThreads_TenantId_StudentId" ON "ContactThreads" ("TenantId", "StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526044856_AddContactBook') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260526044856_AddContactBook', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526045737_AddIndexesForAbsenceAndNotifications') THEN
+    CREATE INDEX "IX_Notifications_TenantId_RecipientId_CreatedAt" ON "Notifications" ("TenantId", "RecipientId", "CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526045737_AddIndexesForAbsenceAndNotifications') THEN
+    CREATE INDEX "IX_Notifications_TenantId_RecipientId_ReadAt" ON "Notifications" ("TenantId", "RecipientId", "ReadAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526045737_AddIndexesForAbsenceAndNotifications') THEN
+    CREATE UNIQUE INDEX "IX_NotificationPreferences_TenantId_UserId_UserType_Type" ON "NotificationPreferences" ("TenantId", "UserId", "UserType", "Type");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526045737_AddIndexesForAbsenceAndNotifications') THEN
+    CREATE INDEX "IX_AbsenceReports_TenantId_Date" ON "AbsenceReports" ("TenantId", "Date");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526045737_AddIndexesForAbsenceAndNotifications') THEN
+    CREATE INDEX "IX_AbsenceReports_TenantId_Status" ON "AbsenceReports" ("TenantId", "Status");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526045737_AddIndexesForAbsenceAndNotifications') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260526045737_AddIndexesForAbsenceAndNotifications', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526050203_AddMessages') THEN
+    CREATE TABLE "Messages" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "SenderId" uuid NOT NULL,
+        "SenderType" integer NOT NULL,
+        "RecipientId" uuid NOT NULL,
+        "RecipientType" integer NOT NULL,
+        "Subject" character varying(200) NOT NULL,
+        "Body" character varying(10000) NOT NULL,
+        "SentAt" timestamp with time zone NOT NULL,
+        "ReadAt" timestamp with time zone,
+        CONSTRAINT "PK_Messages" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260526050203_AddMessages') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260526050203_AddMessages', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    CREATE TABLE "VacationRegistrationWindows" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Title" character varying(200) NOT NULL,
+        "RegistrationDeadline" date NOT NULL,
+        "CareStartDate" date NOT NULL,
+        "CareEndDate" date NOT NULL,
+        "Granularity" integer NOT NULL,
+        "IsOpen" boolean NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_VacationRegistrationWindows" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    CREATE TABLE "VacationRegistrationEntries" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "WindowId" uuid NOT NULL,
+        "StudentId" uuid NOT NULL,
+        "SubmittedByParentId" uuid NOT NULL,
+        "SelectedDates" character varying(4000) NOT NULL,
+        "Note" character varying(500),
+        "SubmittedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_VacationRegistrationEntries" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_VacationRegistrationEntries_Parents_SubmittedByParentId" FOREIGN KEY ("SubmittedByParentId") REFERENCES "Parents" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_VacationRegistrationEntries_Students_StudentId" FOREIGN KEY ("StudentId") REFERENCES "Students" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_VacationRegistrationEntries_VacationRegistrationWindows_Win~" FOREIGN KEY ("WindowId") REFERENCES "VacationRegistrationWindows" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    CREATE INDEX "IX_VacationRegistrationEntries_StudentId" ON "VacationRegistrationEntries" ("StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    CREATE INDEX "IX_VacationRegistrationEntries_SubmittedByParentId" ON "VacationRegistrationEntries" ("SubmittedByParentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    CREATE UNIQUE INDEX "IX_VacationRegistrationEntries_TenantId_WindowId_StudentId" ON "VacationRegistrationEntries" ("TenantId", "WindowId", "StudentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    CREATE INDEX "IX_VacationRegistrationEntries_WindowId" ON "VacationRegistrationEntries" ("WindowId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528073412_AddVacationRegistration') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260528073412_AddVacationRegistration', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -5716,6 +5716,353 @@
         }
       }
     },
+    "/api/v1/vacation-registration": {
+      "get": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_WindowDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_WindowDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_WindowDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_CreateWindowRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_CreateWindowRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_CreateWindowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/vacation-registration/{id}": {
+      "put": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_UpdateWindowRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_UpdateWindowRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_UpdateWindowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/vacation-registration/{id}/entries": {
+      "get": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_EntryDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_EntryDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_EntryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vacation-registration/open": {
+      "get": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_WindowDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_WindowDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_WindowDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vacation-registration/{id}/my-entries": {
+      "get": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_MyEntryDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_MyEntryDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacationRegistrationController_MyEntryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vacation-registration/{id}/entries/{studentId}": {
+      "put": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_UpsertEntryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_UpsertEntryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacationRegistrationController_UpsertEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "VacationRegistration"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/classes/{classId}/ugeplan": {
       "get": {
         "tags": [
@@ -6995,7 +7342,8 @@
           "NewContactMessage",
           "WeekPlanChanged",
           "AbsenceConfirmed",
-          "AbsenceDismissed"
+          "AbsenceDismissed",
+          "VacationRegistrationOpened"
         ],
         "type": "string"
       },
@@ -8506,6 +8854,205 @@
         },
         "additionalProperties": false
       },
+      "VacationRegistrationController_CreateWindowRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "registrationDeadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "careStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "careEndDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/VacationRegistrationGranularity"
+          },
+          "isOpen": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VacationRegistrationController_EntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedByParentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submittedByParentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "selectedDates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VacationRegistrationController_MyEntryDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "selectedDates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VacationRegistrationController_UpdateWindowRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "registrationDeadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "careStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "careEndDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/VacationRegistrationGranularity"
+          },
+          "isOpen": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VacationRegistrationController_UpsertEntryRequest": {
+        "type": "object",
+        "properties": {
+          "selectedDates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VacationRegistrationController_WindowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "registrationDeadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "careStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "careEndDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/VacationRegistrationGranularity"
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "entryCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VacationRegistrationGranularity": {
+        "enum": [
+          "Weeks",
+          "Days"
+        ],
+        "type": "string"
+      },
       "WeekPlanController_AddFileToSlotRequest": {
         "type": "object",
         "properties": {
@@ -8835,6 +9382,9 @@
     },
     {
       "name": "TimeSlots"
+    },
+    {
+      "name": "VacationRegistration"
     },
     {
       "name": "WeekPlan"

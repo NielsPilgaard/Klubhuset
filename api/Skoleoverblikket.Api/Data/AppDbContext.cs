@@ -41,6 +41,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<ContactThread> ContactThreads => Set<ContactThread>();
 	public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 	public DbSet<Message> Messages => Set<Message>();
+	public DbSet<VacationRegistrationWindow> VacationRegistrationWindows => Set<VacationRegistrationWindow>();
+	public DbSet<VacationRegistrationEntry> VacationRegistrationEntries => Set<VacationRegistrationEntry>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

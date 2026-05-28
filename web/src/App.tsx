@@ -57,6 +57,9 @@ const NotificationPreferencesPage = lazy(() => import('./pages/NotificationPrefe
 const KontaktbogPage = lazy(() => import('./pages/KontaktbogPage'))
 const ParentKontaktbogPage = lazy(() => import('./pages/parent/ParentKontaktbogPage'))
 const BeskederPage = lazy(() => import('./pages/BeskederPage'))
+const FerieindmeldingPage = lazy(() => import('./pages/FerieindmeldingPage'))
+const FerieindmeldingDetailPage = lazy(() => import('./pages/FerieindmeldingDetailPage'))
+const ParentFerieindmeldingPage = lazy(() => import('./pages/parent/ParentFerieindmeldingPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -161,6 +164,9 @@ export default function App() {
             <Route path="foraeldrevisning/kontaktbog" element={<ParentRoute><ParentKontaktbogPage /></ParentRoute>} />
             <Route path="indstillinger/notifikationer" element={<NotificationPreferencesPage />} />
             <Route path="beskeder" element={<BeskederPage />} />
+            <Route path="ferieindmelding" element={<AdminRoute><FerieindmeldingPage /></AdminRoute>} />
+            <Route path="ferieindmelding/:id" element={<AdminRoute><FerieindmeldingDetailPage /></AdminRoute>} />
+            <Route path="foraeldrevisning/ferieindmelding" element={<ParentRoute><ParentFerieindmeldingPage /></ParentRoute>} />
           </Route>
         </Routes>
           </Suspense>

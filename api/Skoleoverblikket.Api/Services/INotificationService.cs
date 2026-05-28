@@ -1,7 +1,7 @@
 namespace Skoleoverblikket.Api.Services;
 
 public enum RecipientType { Parent, Staff, Board }
-public enum NotificationType { NewMessage, NewContactMessage, WeekPlanChanged, AbsenceConfirmed, AbsenceDismissed }
+public enum NotificationType { NewMessage, NewContactMessage, WeekPlanChanged, AbsenceConfirmed, AbsenceDismissed, VacationRegistrationOpened }
 
 public interface INotificationService
 {

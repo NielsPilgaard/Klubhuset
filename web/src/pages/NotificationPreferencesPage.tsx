@@ -14,6 +14,7 @@ const ALL_TYPES: NotificationType[] = [
   'WeekPlanChanged',
   'AbsenceConfirmed',
   'AbsenceDismissed',
+  'VacationRegistrationOpened',
 ]
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -22,6 +23,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   WeekPlanChanged: 'Ugeplanen opdateret',
   AbsenceConfirmed: 'Fravær bekræftet',
   AbsenceDismissed: 'Fravær afvist',
+  VacationRegistrationOpened: 'Ferieindmelding åbnet',
 }
 
 function buildDefaultPreferences(): PreferenceState[] {
