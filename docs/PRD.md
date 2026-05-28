@@ -111,6 +111,29 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 - School overview: class count, staff count, schema status
 - Quick access to schema builder, staff list, course list
 
+### SFO week plan
+
+Weekly SFO schedule (separate from the academic schema). Used by SFO staff to plan their week.
+
+- Weekly grid with shifts per day
+- Print view for posting in the SFO
+- Separate from the class schema builder
+
+### Parent module
+
+Parents log in to view their children's schedule and communicate with school staff.
+
+- Parent invitation flow (email invite → Keycloak account)
+- Read-only views: class schema, school calendar, SFO week plan
+- **Kontaktbog**: per-child message thread between parents and class teacher
+- **Fraværsregistrering**: parent reports child absent; teacher/admin confirms or dismisses
+- **Kontakt directory**: role-filtered directory of parents (respects ShareContactInfo consent)
+- **Beskeder**: flat inbox — any tenant user can message any other (parent → staff always; parent → parent requires consent)
+- **Notifications**: in-app bell + email alerts for new messages, absence confirmations, contact book replies. Per-type opt-out in settings.
+- **Contact info onboarding**: parent provides phone, address, and consent during invite acceptance
+- **Avatar uploads**: optional profile photo for parents, staff, and students
+- **Ferieindmelding**: parents submit vacation requests for their children via `ParentFerieindmeldingPage`; admin creates registration windows (with week/day granularity and a deadline), views all submissions, and exports responses to CSV; windows can be opened/closed independently
+
 ### Payments and billing
 
 - **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly
@@ -194,16 +217,9 @@ However, if Skoleoverblikket ever expands to serve folkeskoler or mixed schools,
 
 **For now**: Aula integration is out of scope. The framing to use with customers is: "Skoleoverblikket is a timetable tool. Aula is a communication platform — they serve different purposes and can be used side by side."
 
-## Future features (not v1)
+## Future features (post-launch)
 
-- UVM reporting (course hour reporting to the ministry) — see [tasks/08-uvm-reporting.md](../tasks/08-uvm-reporting.md)
-- Parent/student logins
-- Homework upload (linked to courses)
-- UVM course hour integration (minimumstimetal tracking against official requirements)
-- Parent communication (v2 candidate)
-- CSV/Excel migration import wizard (guided onboarding from Skoleplan, Docendo, Skoleintra)
-- SFO week plan (staff rota + flexible weekly event grid) — see [tasks/01-SFO-schema.md](../tasks/01-SFO-schema.md)
-- UNI•Login SSO (federated login for folkeskole staff, paid add-on module) — see [tasks/07-uni-login.md](../tasks/07-uni-login.md)
+Open implementation tasks are tracked in [tasks/todo.md](../tasks/todo.md). Feature-specific task files live in [tasks/](../tasks/).
 
 ## Out of scope
 

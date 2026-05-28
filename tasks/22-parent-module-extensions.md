@@ -507,38 +507,118 @@ Key E2E paths:
 - Created FravaerPage.tsx (staff view: confirm/dismiss, date filter, pending badge)
 - Routes + sidebar added
 
-### 🔲 Feature 5: Notifications — PENDING
-Key note: `NotificationPreferencesPage` must be accessible by ALL authenticated users (not AdminRoute only) — parents need to opt out of notification types.
+### ✅ Feature 5: Notifications — DONE
+- Created `Notification` + `NotificationPreference` models
+- Created `NotificationService` (replaces `NullNotificationService` in DI)
+- Created `NotificationsController` (GET last 50, mark read, mark all read, preferences GET/PUT)
+- Migration `AddNotifications` + `AddIndexesForAbsenceAndNotifications` applied
+- `NotificationBell` component in app header with unread badge + dropdown
+- `NotificationPreferencesPage` at `/indstillinger/notifikationer` (all roles)
 
-Files to create:
-- `api/.../Models/Notification.cs`
-- `api/.../Models/NotificationPreference.cs`
-- `api/.../Services/NotificationService.cs` (replaces NullNotificationService in DI)
-- `api/.../Controllers/NotificationsController.cs` (GET last 50, POST /{id}/read, POST /read-all, GET /api/v1/notification-preferences, PUT /api/v1/notification-preferences)
-- Migration `AddNotifications`
-- `web/src/components/NotificationBell.tsx` (bell + unread badge + dropdown, polls every 60s)
-- `web/src/pages/NotificationPreferencesPage.tsx` (all roles, route `/indstillinger/notifikationer`)
-- Update ServicesExtensions.cs: swap NullNotificationService → NotificationService
-- Update App.tsx + Sidebar.tsx
+### ✅ Feature 6: Kontaktbog — DONE
+- Created `ContactThread` + `ContactMessage` models (unique index on TenantId+StudentId)
+- Created `ContactThreadsController` (GET threads, GET messages, POST create, POST reply, POST read)
+- Migration `AddContactBook` applied
+- `KontaktbogPage.tsx` (staff/admin view) + `ParentKontaktbogPage.tsx`
+- Staff directory tab added to parent contact book view
+- Routes + sidebar added
 
-### 🔲 Feature 6: Kontaktbog — PENDING
-Files to create:
-- `api/.../Models/ContactThread.cs` (unique index TenantId+StudentId)
-- `api/.../Models/ContactMessage.cs` (SenderType: Parent|Staff, Body max 4000)
-- `api/.../Controllers/ContactThreadsController.cs`
-- Migration `AddContactBook`
-- `web/src/pages/parent/ParentKontaktbogPage.tsx`
-- `web/src/pages/KontaktbogPage.tsx`
-- Routes: `/foraeldrevisning/kontaktbog` (ParentRoute), `/kontaktbog` (auth)
-- Sidebar + App.tsx
+### ✅ Feature 7: Beskeder — DONE
+- Created `Message` model (SenderId/SenderType, RecipientId/RecipientType, Subject max 200, Body max 10000)
+- Created `MessagesController` (inbox, sent, send with consent check, read, recipient search)
+- Migration `AddMessages` applied
+- `BeskederPage.tsx` with 3-panel layout (folder list / message list / detail), compose with recipient typeahead
+- Broadcast messaging and parent directory integrated
+- Routes + sidebar added
 
-### 🔲 Feature 7: Beskeder — PENDING
-Files to create:
-- `api/.../Models/Message.cs` (SenderId/SenderType, RecipientId/RecipientType, Subject max 200, Body max 10000)
-- `api/.../Controllers/MessagesController.cs` (GET inbox, GET sent, POST send with consent check, POST read, GET recipients?q=)
-- Migration `AddMessages`
-- `web/src/pages/BeskederPage.tsx` (folder tabs Indbakke/Sendt, compose modal with recipient typeahead)
-- Routes: `/beskeder` (all auth)
-- Sidebar + App.tsx
+### ✅ All features complete — /verify pending
 
-### 🔲 /verify — run after all features complete
+---
+
+## Feature 8: Email to Parents (Teacher/Admin Broadcast)
+
+Teachers can email all parents of a single class. Admins can email the whole school. BCC support. Must be GDPR-compliant (consent, unsubscribe, data handling).
+
+### Scope rules
+
+| Sender | Recipients |
+|---|---|
+| `staff` | All parents of students in a class the staff member teaches |
+| `admin` | All parents in tenant |
+
+Only parents with verified email addresses receive. Respect `ShareContactInfo` — but broadcast email is always permitted (it's school-initiated, not peer-to-peer).
+
+### Backend
+
+New endpoint in `MessagesController` or a new `BroadcastController`:
+
+- `POST /api/v1/broadcast-email` — `{ classId?, subject, body }` — `classId` null = whole school (admin only)
+  - Resolve recipient emails from `db.Parents` filtered by class membership
+  - Send via `IEmailSender` with BCC (one call per recipient, or batch with BCC list)
+  - Requires `admin` or `staff` role; staff must verify they teach the target class
+  - Store a record of the broadcast (audit log): sender, recipient count, subject, timestamp
+
+### Frontend
+
+- In `/fravaer` or a new `/udsend-email` page: compose form with class picker (staff) or all-school toggle (admin), subject, body
+- Confirm step showing recipient count before send
+
+### GDPR notes
+
+- Unsubscribe footer required: *"Du modtager denne e-mail fra [school name]. Log ind og gå til Indstillinger for at ændre dine e-mailpræferencer."*
+- No marketing or third-party use of email addresses
+- Broadcast records retained for compliance audit
+
+---
+
+## Feature 9: Multi-Child Support
+
+Parent with children in multiple classes gets a child switcher dropdown in the parent portal.
+
+### What changes
+
+- `ParentMeDto` already returns `IReadOnlyList<ParentStudentDto> Students` — data is there
+- Add child picker UI in the parent sidebar/header: dropdown showing child names + class, defaults to first child
+- All parent portal pages (schema, ugeplan, kontaktbog, fravær, ferieindmelding) must respect the selected child context
+- Store selected child in React state (not persisted — resets on reload is fine)
+
+### Files
+
+- `web/src/pages/parent/` — all parent pages need to read selected student from context
+- New `web/src/contexts/SelectedStudentContext.tsx` — provides `selectedStudentId`, setter, and list of children
+- `web/src/components/Sidebar.tsx` — child picker in parent sidebar
+
+No backend changes needed.
+
+---
+
+## Feature 10: Adressebeskyttelse (Address Protection)
+
+**Legal requirement** — not optional. Parents with navne- og adressebeskyttelse (CPR-lovens §28) must have their address, phone, and contact info hidden from other parents, the parent directory, and any exports. Only school admin can see the full record.
+
+### Data model
+
+Add `bool AdresseBeskyttet` flag to `Parent` model. Default `false`.
+
+Migration: `AddAdresseBeskyttelse`
+
+### Enforcement rules
+
+| Viewer | `AdresseBeskyttet = true` parent shows as |
+|---|---|
+| Other parents via `GET /api/v1/kontakt` | Name only (no phone, address, city) |
+| Staff via `GET /api/v1/kontakt` | Name only |
+| Admin | Full record (all fields visible) |
+| CSV exports (ferieindmelding, etc.) | Name only — never export address/phone |
+| Beskeder recipient search | Hidden from non-admin if `AdresseBeskyttet = true` |
+
+### Backend
+
+- `KontaktController` — filter out contact fields when `AdresseBeskyttet = true` and caller is not admin
+- Any CSV export endpoints — strip address/phone for protected parents
+- `ParentsController` — admin can set/unset `AdresseBeskyttet` flag via `PATCH /api/v1/parents/{id}/adresse-beskyttelse`
+
+### Frontend
+
+- Admin parent list: show a shield badge on protected parents
+- Admin edit parent form: toggle for adressebeskyttelse with warning label
