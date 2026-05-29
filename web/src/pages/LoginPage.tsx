@@ -9,7 +9,7 @@ export default function LoginPage() {
     if (keycloak.authenticated) {
       navigate('/', { replace: true })
     } else {
-      keycloak.login({ redirectUri: window.location.origin + '/' })
+      keycloak.login({ redirectUri: `${window.location.origin}/` })
     }
   }, [navigate])
 

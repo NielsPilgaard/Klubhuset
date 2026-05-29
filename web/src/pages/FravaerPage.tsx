@@ -28,7 +28,7 @@ export default function FravaerPage() {
   usePageTitle('Fravær')
   const qc = useQueryClient()
   const today = new Date().toISOString().slice(0, 10)
-  const monthStart = today.slice(0, 8) + '01'
+  const monthStart = `${today.slice(0, 8)}01`
   const [from, setFrom] = useState(monthStart)
   const [to, setTo] = useState(today)
   const [actionError, setActionError] = useState<string | null>(null)

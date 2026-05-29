@@ -160,7 +160,7 @@ export default function RoomSchedulePage() {
                             style={
                               slot.courseColor
                                 ? {
-                                    backgroundColor: slot.courseColor + '22',
+                                    backgroundColor: `${slot.courseColor}22`,
                                     borderLeft: `3px solid ${slot.courseColor}`,
                                   }
                                 : {

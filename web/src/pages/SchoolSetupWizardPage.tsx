@@ -103,11 +103,11 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
     try {
       await api.put('/time-slot-template', {
         lessonDurationMinutes: lessonDuration,
-        dayStartTime: dayStart + ':00',
-        dayEndTime: dayEnd + ':00',
+        dayStartTime: `${dayStart}:00`,
+        dayEndTime: `${dayEnd}:00`,
         activeDays: 'MTWTF',
         breaks: breaks.map((b) => ({
-          startTime: b.startTime + ':00',
+          startTime: `${b.startTime}:00`,
           durationMinutes: b.durationMinutes,
         })),
       })

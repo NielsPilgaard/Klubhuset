@@ -46,7 +46,7 @@ export default function SignupPage() {
         const body = await res.json()
         redirectingRef.current = true
         seedPostSignupToken(body.accessToken, body.refreshToken)
-        window.location.href = '/setup?schoolName=' + encodeURIComponent(name)
+        window.location.href = `/setup?schoolName=${encodeURIComponent(name)}`
         return
       }
 

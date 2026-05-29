@@ -566,7 +566,7 @@ export default function WeekPlanPage() {
 
   // Parse weekStartDate to compute column dates
   const weekStartDate = weekPlanData?.weekStartDate
-    ? new Date(weekPlanData.weekStartDate + 'T00:00:00')
+    ? new Date(`${weekPlanData.weekStartDate}T00:00:00`)
     : null
 
   const { data: classData } = useQuery({
@@ -730,10 +730,11 @@ export default function WeekPlanPage() {
                     const colorClass = getCourseColor(slot.courseId, allCourseIds)
 
                     return (
-                      <div
+                      <button
                         key={`slot-${slot.schemaSlotId}`}
+                        type="button"
                         onClick={() => setEditingSlot(slot)}
-                        className={`border-b border-r border-gray-200 p-2 min-h-[80px] cursor-pointer transition-colors ${isHolidayCol ? 'bg-amber-50 pointer-events-none' : 'bg-white hover:bg-gray-50'}`}
+                        className={`w-full text-left border-b border-r border-gray-200 p-2 min-h-[80px] cursor-pointer transition-colors ${isHolidayCol ? 'bg-amber-50 pointer-events-none' : 'bg-white hover:bg-gray-50'}`}
                       >
                         {/* Course badge */}
                         <span
@@ -798,7 +799,7 @@ export default function WeekPlanPage() {
                             <span className="text-xs text-gray-500">{slot.files.length}</span>
                           </div>
                         )}
-                      </div>
+                      </button>
                     )
                   })}
               </React.Fragment>

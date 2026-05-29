@@ -312,11 +312,11 @@ function SkoledagCard() {
     saveMutation.mutate({
       body: {
         lessonDurationMinutes: lessonDuration,
-        dayStartTime: dayStart + ':00',
-        dayEndTime: dayEnd + ':00',
+        dayStartTime: `${dayStart}:00`,
+        dayEndTime: `${dayEnd}:00`,
         activeDays: '1,2,3,4,5',
         breaks: breaks.map((b) => ({
-          startTime: b.startTime + ':00',
+          startTime: `${b.startTime}:00`,
           durationMinutes: b.durationMinutes,
         })),
       },

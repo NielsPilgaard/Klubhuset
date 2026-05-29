@@ -69,18 +69,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const parsed = keycloak.tokenParsed as Record<string, unknown> | undefined
-  const nameRaw = parsed?.['name']
-  const preferredRaw = parsed?.['preferred_username']
+  const nameRaw = parsed?.name
+  const preferredRaw = parsed?.preferred_username
   const userName =
     typeof nameRaw === 'string'
       ? nameRaw
       : typeof preferredRaw === 'string'
         ? preferredRaw
         : undefined
-  const realmAccess = parsed?.['realm_access']
+  const realmAccess = parsed?.realm_access
   const rawRoles =
     realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess)
-      ? (realmAccess as Record<string, unknown>)['roles']
+      ? (realmAccess as Record<string, unknown>).roles
       : undefined
   // UI-only: used for display/UI hints only. Server enforces actual authorization.
   const roles = Array.isArray(rawRoles)
