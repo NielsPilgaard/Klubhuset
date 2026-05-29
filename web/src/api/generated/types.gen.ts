@@ -47,6 +47,29 @@ export type BillingControllerSubscriptionDto = {
     activeModules?: Array<string> | null;
 };
 
+export type BroadcastControllerBroadcastLogDto = {
+    id?: string;
+    senderName?: string | null;
+    className?: string | null;
+    subject?: string | null;
+    recipientCount?: number;
+    sentAt?: string;
+};
+
+export type BroadcastControllerBroadcastPreviewDto = {
+    recipientCount?: number;
+};
+
+export type BroadcastControllerBroadcastPreviewRequest = {
+    classId?: string | null;
+};
+
+export type BroadcastControllerBroadcastRequest = {
+    classId?: string | null;
+    subject?: string | null;
+    body?: string | null;
+};
+
 export type CalendarControllerCalendarEntryDto = {
     id?: string;
     type?: CalendarEntryType;
@@ -1093,6 +1116,52 @@ export type PostApiV1BillingPortalResponses = {
 };
 
 export type PostApiV1BillingPortalResponse = PostApiV1BillingPortalResponses[keyof PostApiV1BillingPortalResponses];
+
+export type PostApiV1BroadcastEmailPreviewData = {
+    body?: BroadcastControllerBroadcastPreviewRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/broadcast-email/preview';
+};
+
+export type PostApiV1BroadcastEmailPreviewResponses = {
+    /**
+     * OK
+     */
+    200: BroadcastControllerBroadcastPreviewDto;
+};
+
+export type PostApiV1BroadcastEmailPreviewResponse = PostApiV1BroadcastEmailPreviewResponses[keyof PostApiV1BroadcastEmailPreviewResponses];
+
+export type PostApiV1BroadcastEmailData = {
+    body?: BroadcastControllerBroadcastRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/broadcast-email';
+};
+
+export type PostApiV1BroadcastEmailResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1BroadcastEmailLogData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/broadcast-email/log';
+};
+
+export type GetApiV1BroadcastEmailLogResponses = {
+    /**
+     * OK
+     */
+    200: Array<BroadcastControllerBroadcastLogDto>;
+};
+
+export type GetApiV1BroadcastEmailLogResponse = GetApiV1BroadcastEmailLogResponses[keyof GetApiV1BroadcastEmailLogResponses];
 
 export type GetApiV1CalendarData = {
     body?: never;
