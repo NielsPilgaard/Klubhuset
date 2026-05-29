@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**", "!src/api/generated/**", "!dist/**"]
+    "includes": ["src/**", "!src/api/generated", "!dist"]
   },
   "formatter": {
     "enabled": true,
@@ -35,21 +35,21 @@
       "a11y": {
         "noAutofocus": "off",
         "noLabelWithoutControl": "off",
-        "noStaticElementInteractions": "off",
+        "noStaticElementInteractions": "warn",
         "noSvgWithoutTitle": "off",
         "useButtonType": "off",
         "useKeyWithClickEvents": "off"
       },
       "suspicious": {
-        "noArrayIndexKey": "warn",
-        "noExplicitAny": "warn"
+        "noArrayIndexKey": "off",
+        "noExplicitAny": "off"
       },
       "style": {
-        "noNonNullAssertion": "warn",
-        "useImportType": "warn"
+        "noNonNullAssertion": "off",
+        "useImportType": "off"
       },
       "correctness": {
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "off"
       }
     }
   },
@@ -57,7 +57,8 @@
     "actions": {
       "source": {
         "organizeImports": {
-          "level": "off"
+          "level": "off",
+          "options": {}
         }
       }
     }

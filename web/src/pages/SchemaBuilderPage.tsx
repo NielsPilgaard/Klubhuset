@@ -5,14 +5,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
   DragOverlay,
-  DragOverEvent,
+  type DragOverEvent,
   PointerSensor,
   useSensor,
   useSensors,
   useDroppable,
   useDraggable,
-  DragStartEvent,
-  DragEndEvent,
+  type DragStartEvent,
+  type DragEndEvent,
   closestCenter,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -76,7 +76,7 @@ function getCourseColor(
     // Derive a readable text color: use a dark tint of the hex for text/border
     return {
       colorClass: 'border',
-      colorStyle: { backgroundColor: hex + '22', color: hex, borderColor: hex + '66' },
+      colorStyle: { backgroundColor: `${hex}22`, color: hex, borderColor: `${hex}66` },
     }
   }
   const idx = courseIds.indexOf(courseId)
@@ -346,8 +346,8 @@ function AssignmentPanel({
 function SidebarDragOverlayCard({ course }: { course: CourseDto }) {
   const style: React.CSSProperties = course.color
     ? {
-        backgroundColor: course.color + '22',
-        borderColor: course.color + '66',
+        backgroundColor: `${course.color}22`,
+        borderColor: `${course.color}66`,
         color: course.color,
       }
     : {}
@@ -470,18 +470,22 @@ function DraggableCell({
       {...listeners}
       {...attributes}
       className={`h-full w-full cursor-grab active:cursor-grabbing ${isBeingDragged ? 'opacity-30' : ''}`}
-      onClick={(e) => {
-        // Only open panel on click, not after a drag
-        if (!transform) onClick()
-        e.stopPropagation()
-      }}
     >
-      <SlotCard
-        slot={slot}
-        isConflict={isConflict}
-        colorClass={colorClass}
-        colorStyle={colorStyle}
-      />
+      <button
+        type="button"
+        className="w-full h-full text-left"
+        onClick={(e) => {
+          if (!transform) onClick()
+          e.stopPropagation()
+        }}
+      >
+        <SlotCard
+          slot={slot}
+          isConflict={isConflict}
+          colorClass={colorClass}
+          colorStyle={colorStyle}
+        />
+      </button>
     </div>
   )
 }
@@ -517,13 +521,14 @@ function DroppableCell({
           : ''
 
   return (
-    <div
+    <button
       ref={setNodeRef}
-      className={`h-full w-full transition-all rounded-lg ${highlight}`}
+      type="button"
+      className={`h-full w-full text-left transition-all rounded-lg ${highlight}`}
       onClick={onClick}
     >
       {children}
-    </div>
+    </button>
   )
 }
 
