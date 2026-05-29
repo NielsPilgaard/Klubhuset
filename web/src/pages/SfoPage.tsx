@@ -265,7 +265,7 @@ export default function SfoPage() {
               </button>
               {showYearPicker && (
                 <>
-                  <div className="fixed inset-0 z-20" onClick={() => setShowYearPicker(false)} />
+                  <button type="button" tabIndex={-1} aria-label="Luk årvælger" className="fixed inset-0 z-20" onClick={() => setShowYearPicker(false)} />
                   <div className="absolute left-1/2 -translate-x-1/2 top-9 z-30 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[90px]">
                     {[-2, -1, 0, 1, 2].map((offset) => {
                       const y = getISOWeekYear(new Date()) + offset
@@ -413,9 +413,10 @@ export default function SfoPage() {
                     const weekShift = weekPlan?.shifts?.find((ws) => ws.sfoShiftId === shift.id)
 
                     return (
-                      <div
+                      <button
                         key={`cell-${shift.id}`}
-                        className="border-b border-r border-gray-200 bg-white min-h-[160px] p-3 flex flex-col gap-2 cursor-pointer hover:bg-brand-50/30 transition-colors"
+                        type="button"
+                        className="text-left border-b border-r border-gray-200 bg-white min-h-[160px] p-3 flex flex-col gap-2 cursor-pointer hover:bg-brand-50/30 transition-colors"
                         onClick={() => setSelectedCell({ shift, weekShift })}
                       >
                         {(shift.staff ?? []).length > 0 ? (
@@ -454,7 +455,7 @@ export default function SfoPage() {
                             <p className="text-xs text-gray-300 italic">Aktivitet…</p>
                           )}
                         </div>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -684,192 +685,190 @@ function CellModal({
       onClose={onClose}
       contentClassName="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 flex flex-col max-h-[90dvh]"
     >
-      <>
-        {/* Header */}
-        <div className="px-5 pt-5 pb-3 border-b border-gray-100">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-gray-900">
-                {shift.startTime} – {shift.endTime}
-                {shift.label ? ` · ${shift.label}` : ''}
-              </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Uge {isoWeek}, {isoYear}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors shrink-0"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
-          {/* Staff */}
+      {/* Header */}
+      <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Medarbejdere
+            <h2 className="text-base font-semibold text-gray-900">
+              {shift.startTime} – {shift.endTime}
+              {shift.label ? ` · ${shift.label}` : ''}
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Uge {isoWeek}, {isoYear}
             </p>
-            {/* Assigned chips */}
-            {(shift.staff ?? []).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {(shift.staff ?? []).map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => onRemoveStaff(s.id!)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-brand-600 text-white hover:bg-brand-700 transition-colors"
-                  >
-                    {s.name}
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Combobox */}
-            {staff.length > 0 ? (
-              <div ref={comboboxRef} className="relative">
-                <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg">
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors shrink-0"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+        {/* Staff */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+            Medarbejdere
+          </p>
+          {/* Assigned chips */}
+          {(shift.staff ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {(shift.staff ?? []).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => onRemoveStaff(s.id!)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+                >
+                  {s.name}
                   <svg
-                    width="13"
-                    height="13"
+                    width="10"
+                    height="10"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2"
-                    className="text-gray-400 shrink-0"
+                    strokeWidth="3"
                   >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
-                  <input
-                    value={staffQuery}
-                    onChange={(e) => {
-                      setStaffQuery(e.target.value)
-                      setStaffOpen(true)
-                    }}
-                    onFocus={() => setStaffOpen(true)}
-                    placeholder="Tilføj medarbejder…"
-                    className="flex-1 text-sm outline-none placeholder-gray-400 bg-transparent"
-                  />
-                </div>
-                {staffOpen && filteredUnassigned.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {filteredUnassigned.map((s) => (
-                      <button
-                        key={s.id}
-                        onPointerDown={(e) => {
-                          e.preventDefault()
-                          onAssignStaff(s.id!)
-                          setStaffQuery('')
-                          setStaffOpen(false)
-                        }}
-                        className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        {s.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {staffOpen && staffQuery.length > 0 && filteredUnassigned.length === 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg">
-                    <p className="px-3 py-2 text-sm text-gray-400">Ingen resultater</p>
-                  </div>
-                )}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Combobox */}
+          {staff.length > 0 ? (
+            <div ref={comboboxRef} className="relative">
+              <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-gray-400 shrink-0"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  value={staffQuery}
+                  onChange={(e) => {
+                    setStaffQuery(e.target.value)
+                    setStaffOpen(true)
+                  }}
+                  onFocus={() => setStaffOpen(true)}
+                  placeholder="Tilføj medarbejder…"
+                  className="flex-1 text-sm outline-none placeholder-gray-400 bg-transparent"
+                />
               </div>
-            ) : (
-              <p className="text-sm text-gray-400">Ingen medarbejdere oprettet.</p>
-            )}
-          </div>
-
-          {/* Beskrivelse */}
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Aktivitet denne uge
-            </p>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Beskriv aktiviteter for denne vagt…"
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-            />
-            <p className="text-xs text-gray-400 mt-1">Ctrl+S for at gemme</p>
-          </div>
+              {staffOpen && filteredUnassigned.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {filteredUnassigned.map((s) => (
+                    <button
+                      key={s.id}
+                      onPointerDown={(e) => {
+                        e.preventDefault()
+                        onAssignStaff(s.id!)
+                        setStaffQuery('')
+                        setStaffOpen(false)
+                      }}
+                      className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {staffOpen && staffQuery.length > 0 && filteredUnassigned.length === 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <p className="px-3 py-2 text-sm text-gray-400">Ingen resultater</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">Ingen medarbejdere oprettet.</p>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Rediger vagt
-            </button>
-            <button
-              onClick={onDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6l-1 14H6L5 6" />
-                <path d="M10 11v6" />
-                <path d="M14 11v6" />
-                <path d="M9 6V4h6v2" />
-              </svg>
-              Slet
-            </button>
-          </div>
+        {/* Beskrivelse */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+            Aktivitet denne uge
+          </p>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Beskriv aktiviteter for denne vagt…"
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+          />
+          <p className="text-xs text-gray-400 mt-1">Ctrl+S for at gemme</p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => onSaveBeskrivelse(text || null)}
-            disabled={isSavingBeskrivelse}
-            className="px-4 py-1.5 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            onClick={onEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            {isSavingBeskrivelse ? 'Gemmer...' : 'Gem'}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Rediger vagt
+          </button>
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14H6L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4h6v2" />
+            </svg>
+            Slet
           </button>
         </div>
-      </>
+        <button
+          onClick={() => onSaveBeskrivelse(text || null)}
+          disabled={isSavingBeskrivelse}
+          className="px-4 py-1.5 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+        >
+          {isSavingBeskrivelse ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
     </Modal>
   )
 }
