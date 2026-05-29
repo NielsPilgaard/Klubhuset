@@ -593,7 +593,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <>
       {/* Mobile overlay */}
-      {open && <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={onClose} />}
+      {open && <button type="button" tabIndex={-1} aria-label="Luk menu" className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={onClose} />}
 
       {/* Sidebar */}
       <aside

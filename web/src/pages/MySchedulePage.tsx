@@ -154,20 +154,8 @@ export default function MySchedulePage() {
                                 backgroundColor: '#f3f4f6',
                                 borderLeft: '3px solid #d1d5db',
                               }
-                          return (
-                            <div
-                              key={i}
-                              className={`rounded-lg px-2 py-1.5 mb-1 last:mb-0 ${canNavigate ? 'cursor-pointer hover:brightness-95 transition-[filter]' : ''}`}
-                              style={slotStyle}
-                              onClick={
-                                canNavigate
-                                  ? () =>
-                                      navigate(
-                                        `/klasser/${slot.classId}/ugeplan?schemaId=${slot.schemaId}`
-                                      )
-                                  : undefined
-                              }
-                            >
+                          const slotContent = (
+                            <>
                               <p
                                 className="text-xs font-semibold leading-tight truncate"
                                 style={
@@ -182,6 +170,29 @@ export default function MySchedulePage() {
                               {slot.roomName && (
                                 <p className="text-xs text-gray-400 truncate">{slot.roomName}</p>
                               )}
+                            </>
+                          )
+                          return canNavigate ? (
+                            <button
+                              key={i}
+                              type="button"
+                              className="w-full text-left rounded-lg px-2 py-1.5 mb-1 last:mb-0 cursor-pointer hover:brightness-95 transition-[filter]"
+                              style={slotStyle}
+                              onClick={() =>
+                                navigate(
+                                  `/klasser/${slot.classId}/ugeplan?schemaId=${slot.schemaId}`
+                                )
+                              }
+                            >
+                              {slotContent}
+                            </button>
+                          ) : (
+                            <div
+                              key={i}
+                              className="rounded-lg px-2 py-1.5 mb-1 last:mb-0"
+                              style={slotStyle}
+                            >
+                              {slotContent}
                             </div>
                           )
                         })}

@@ -30,7 +30,10 @@ export function Modal({
   if (!isOpen) return null
 
   return (
-    <div
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label="Luk"
       className={
         backdropClassName ?? 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40'
       }
@@ -38,6 +41,8 @@ export function Modal({
       onKeyDown={onKeyDown}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className={contentClassName ?? `bg-white rounded-2xl shadow-xl w-full ${sizeClass[size]}`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -48,6 +53,6 @@ export function Modal({
         )}
         {children}
       </div>
-    </div>
+    </button>
   )
 }

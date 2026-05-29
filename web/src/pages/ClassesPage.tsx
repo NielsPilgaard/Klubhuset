@@ -870,10 +870,11 @@ function SchemaList({
           const active = isActiveNow(s.startDate, s.endDate)
           const dateRange = formatDateRange(s.startDate, s.endDate)
           return (
-            <div
+            <button
               key={s.id}
+              type="button"
               onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
-              className="flex flex-col gap-2 px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
+              className="w-full text-left flex flex-col gap-2 px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate flex-1">
@@ -887,10 +888,7 @@ function SchemaList({
                 )}
               </div>
               {dateRange && <span className="text-xs text-gray-400">{dateRange}</span>}
-              <div
-                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
                   data-testid={`class-ugeplan-${classId}-${s.id}`}
                   onClick={(e) => {
@@ -1030,7 +1028,7 @@ function SchemaList({
                   </>
                 )}
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
@@ -1180,15 +1178,11 @@ export default function ClassesPage() {
         {classes?.map((cls) => (
           <div key={cls.id}>
             <div
-              className="flex items-center justify-between px-5 py-4 cursor-pointer"
-              onClick={() => toggleExpand(cls.id!)}
+              className="flex items-center justify-between px-5 py-4"
               data-testid={`class-row-${cls.id}`}
             >
               <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toggleExpand(cls.id!)
-                }}
+                onClick={() => toggleExpand(cls.id!)}
                 className="flex items-center gap-3 min-w-0 text-left group"
               >
                 <svg
@@ -1210,10 +1204,10 @@ export default function ClassesPage() {
                 )}
               </button>
               {isAdmin && (
-                <div className="relative shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
+                <div className="relative shrink-0 ml-4">
                   <button
                     data-testid={`class-menu-${cls.id}`}
-                    onClick={() => setOpenMenuId(openMenuId === cls.id ? null : cls.id!)}
+                    onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === cls.id ? null : cls.id!) }}
                     className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                     title="Flere handlinger"
                   >

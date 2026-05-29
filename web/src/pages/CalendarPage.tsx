@@ -301,6 +301,9 @@ function DayPopover({
       className="absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 w-52 text-left"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
     >
       <div className="px-3 py-2 border-b border-gray-100">
         <p className="text-xs font-medium text-gray-700 capitalize">{formattedDate}</p>
@@ -762,7 +765,9 @@ export default function CalendarPage() {
 
                 return (
                   <div key={`${wi}-${di}`} className="relative">
-                    <div
+                    <button
+                      type="button"
+                      disabled={isWeekend}
                       onClick={() => handleDayClick(year, month, day, isWeekend)}
                       className={[
                         dayCellClass,
@@ -775,7 +780,7 @@ export default function CalendarPage() {
                       ].join(' ')}
                     >
                       {day}
-                    </div>
+                    </button>
                     {isOpen && (
                       <DayPopover
                         year={year}

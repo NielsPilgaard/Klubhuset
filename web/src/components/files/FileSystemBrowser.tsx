@@ -55,7 +55,7 @@ function UploadModal({
 
   const mutation = useMutation({
     mutationFn: async ({ file }: { file: File }) => {
-      const ext = file.name.includes('.') ? '.' + file.name.split('.').pop()! : ''
+      const ext = file.name.includes('.') ? `.${file.name.split('.').pop()!}` : ''
       const { data: presign } = await postApiV1FilesPresign({
         body: {
           fileName: editedName + ext,
@@ -103,133 +103,133 @@ function UploadModal({
 
   return (
     <Modal isOpen onClose={onClose} title="Upload fil">
-      <>
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fil *</label>
-            <div
-              onClick={() => !isPending && inputRef.current?.click()}
-              onDragEnter={(e) => {
-                e.preventDefault()
-                if (!dragRef.current) {
-                  dragRef.current = true
-                  setIsDragging(true)
-                }
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDragLeave={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  dragRef.current = false
-                  setIsDragging(false)
-                }
-              }}
-              onDrop={handleDrop}
-              className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-colors ${
-                isPending ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-              } ${isDragging ? 'border-brand-400 bg-brand-50' : 'border-gray-300 hover:border-brand-400'}`}
-            >
-              {selectedFile ? (
-                <div className="text-center w-full">
-                  <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
-                  <p className="text-xs text-gray-500 mt-1">{formatBytes(selectedFile.size)}</p>
-                  {progress !== null && (
-                    <div className="mt-3">
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-brand-500 rounded-full transition-all duration-300"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {progress < 100 ? `${progress}% uploadet…` : 'Fuldfører…'}
-                      </p>
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Fil *</label>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => inputRef.current?.click()}
+            onDragEnter={(e) => {
+              e.preventDefault()
+              if (!dragRef.current) {
+                dragRef.current = true
+                setIsDragging(true)
+              }
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                dragRef.current = false
+                setIsDragging(false)
+              }
+            }}
+            onDrop={handleDrop}
+            className={`w-full flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-colors ${
+              isPending ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+            } ${isDragging ? 'border-brand-400 bg-brand-50' : 'border-gray-300 hover:border-brand-400'}`}
+          >
+            {selectedFile ? (
+              <div className="text-center w-full">
+                <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500 mt-1">{formatBytes(selectedFile.size)}</p>
+                {progress !== null && (
+                  <div className="mt-3">
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-brand-500 rounded-full transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center">
-                  <UploadIcon size={24} />
-                  <p className="text-sm text-gray-500 mt-2">Klik eller træk fil hertil</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    PDF, Word, Excel, video, lyd, billeder m.m. · Maks. 500 MB
-                  </p>
-                </div>
-              )}
-            </div>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="*/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null
-                setError(null)
-                setProgress(null)
-                setSelectedFile(f)
-                if (f) setEditedName(f.name.replace(/\.[^.]+$/, ''))
-              }}
-            />
-          </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {progress < 100 ? `${progress}% uploadet…` : 'Fuldfører…'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center">
+                <UploadIcon size={24} />
+                <p className="text-sm text-gray-500 mt-2">Klik eller træk fil hertil</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  PDF, Word, Excel, video, lyd, billeder m.m. · Maks. 500 MB
+                </p>
+              </div>
+            )}
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="*/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null
+              setError(null)
+              setProgress(null)
+              setSelectedFile(f)
+              if (f) setEditedName(f.name.replace(/\.[^.]+$/, ''))
+            }}
+          />
+        </div>
 
-          {selectedFile && (
-            <div>
-              <label
-                htmlFor="upload-filename"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Filnavn
-              </label>
-              <input
-                id="upload-filename"
-                type="text"
-                value={editedName}
-                onChange={(e) => setEditedName(e.target.value)}
-                disabled={isPending}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
-              />
-            </div>
-          )}
-
+        {selectedFile && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tilknyt fag (valgfrit)
+            <label
+              htmlFor="upload-filename"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Filnavn
             </label>
-            <select
-              value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
+            <input
+              id="upload-filename"
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
               disabled={isPending}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
-            >
-              <option value="">Intet fag</option>
-              {courses?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
+        )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button
-            onClick={onClose}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tilknyt fag (valgfrit)
+          </label>
+          <select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
             disabled={isPending}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
           >
-            Annuller
-          </button>
-          <button
-            onClick={() => {
-              if (selectedFile) mutation.mutate({ file: selectedFile })
-            }}
-            disabled={!selectedFile || isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? `${progress}%…` : 'Upload'}
-          </button>
+            <option value="">Intet fag</option>
+            {courses?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
-      </>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+      </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          onClick={onClose}
+          disabled={isPending}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50"
+        >
+          Annuller
+        </button>
+        <button
+          onClick={() => {
+            if (selectedFile) mutation.mutate({ file: selectedFile })
+          }}
+          disabled={!selectedFile || isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isPending ? `${progress}%…` : 'Upload'}
+        </button>
+      </div>
     </Modal>
   )
 }
@@ -254,11 +254,16 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
   }
 
   return (
-    <div
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label="Luk"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="bg-white rounded-2xl shadow-xl w-[95vw] h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
@@ -297,7 +302,7 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
           )}
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -696,12 +701,9 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                 <td className="px-5 py-3 hidden lg:table-cell" />
                 <td className="px-5 py-3 text-right">
                   {isAdmin && (
-                    <div
-                      className="flex items-center justify-end gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex items-center justify-end gap-1">
                       <button
-                        onClick={() => setRenamingFolderId(folder.id!)}
+                        onClick={(e) => { e.stopPropagation(); setRenamingFolderId(folder.id!) }}
                         className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
                         title="Omdøb mappe"
                         data-testid={`rename-folder-${folder.id}`}
@@ -709,7 +711,7 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                         <PencilIcon />
                       </button>
                       <button
-                        onClick={() => handleDeleteFolder(folder)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder) }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         title="Slet mappe"
                         data-testid={`delete-folder-${folder.id}`}

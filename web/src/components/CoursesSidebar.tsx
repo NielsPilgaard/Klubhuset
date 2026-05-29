@@ -29,6 +29,7 @@ function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRow
     : null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit spreads role/tabIndex via {...attributes}
     <div
       ref={setNodeRef}
       style={style}
@@ -47,7 +48,7 @@ function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRow
         className="shrink-0 w-3 h-3 rounded-full border"
         style={
           course.color
-            ? { backgroundColor: course.color + '33', borderColor: course.color }
+            ? { backgroundColor: `${course.color}33`, borderColor: course.color }
             : { backgroundColor: '#e5e7eb', borderColor: '#d1d5db' }
         }
       />
@@ -120,7 +121,9 @@ export default function CoursesSidebar({
       </button>
 
       {/* Mobile backdrop */}
-      {isOpen && <div className="lg:hidden fixed inset-0 z-40 bg-black/30" onClick={onToggle} />}
+      {isOpen && (
+        <button type="button" tabIndex={-1} aria-label="Luk sidebar" className="lg:hidden fixed inset-0 z-40 bg-black/30" onClick={onToggle} />
+      )}
 
       {/* Sidebar panel */}
       <aside
