@@ -1510,3 +1510,32 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528185332_AddBroadcastEmail') THEN
+    CREATE TABLE "BroadcastEmails" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "SenderStaffId" uuid NOT NULL,
+        "SenderName" character varying(200) NOT NULL,
+        "ClassId" uuid,
+        "Subject" character varying(200) NOT NULL,
+        "Body" character varying(10000) NOT NULL,
+        "RecipientCount" integer NOT NULL,
+        "SentAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_BroadcastEmails" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260528185332_AddBroadcastEmail') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260528185332_AddBroadcastEmail', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
