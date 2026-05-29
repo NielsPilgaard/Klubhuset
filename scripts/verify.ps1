@@ -7,7 +7,7 @@
 .PARAMETER SkipTests
     Skip API integration tests (useful for quick compile checks).
 .PARAMETER SkipFrontend
-    Skip ESLint and TypeScript build steps.
+    Skip Biome and TypeScript build steps.
 .PARAMETER SkipDotnet
     Skip all dotnet steps (format, build, tests).
 #>
@@ -41,9 +41,9 @@ function Step([string]$name, [scriptblock]$body) {
 Push-Location $RepoRoot
 
 if (-not $SkipFrontend) {
-    Step "ESLint" {
+    Step "Biome" {
         Set-Location "$RepoRoot/web"
-        npm run lint
+        npx biome check src/
     }
 
     Step "TypeScript build" {
