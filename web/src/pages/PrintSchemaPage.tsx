@@ -96,38 +96,37 @@ function PrintGrid({
                 return (
                   <td key={day} className="print-td">
                     <div className="print-td-inner">
-                      {daySlots &&
-                        daySlots.map((slot, idx) => (
-                          <div
-                            key={idx}
-                            className={`print-cell${hasConflict ? ' print-cell-conflict' : ''}`}
-                            style={
-                              slot.courseColor
-                                ? {
-                                    backgroundColor: slot.courseColor + '22',
-                                    borderLeft: `3px solid ${slot.courseColor}`,
-                                    paddingLeft: '5px',
-                                    borderRadius: '4px',
-                                  }
-                                : undefined
-                            }
+                      {daySlots?.map((slot, idx) => (
+                        <div
+                          key={idx}
+                          className={`print-cell${hasConflict ? ' print-cell-conflict' : ''}`}
+                          style={
+                            slot.courseColor
+                              ? {
+                                  backgroundColor: `${slot.courseColor}22`,
+                                  borderLeft: `3px solid ${slot.courseColor}`,
+                                  paddingLeft: '5px',
+                                  borderRadius: '4px',
+                                }
+                              : undefined
+                          }
+                        >
+                          <span
+                            className="print-course"
+                            style={slot.courseColor ? { color: slot.courseColor } : undefined}
                           >
-                            <span
-                              className="print-course"
-                              style={slot.courseColor ? { color: slot.courseColor } : undefined}
-                            >
-                              {slot.courseName}
-                            </span>
-                            {slot.teacherName && (
-                              <span className="print-info">{slot.teacherName}</span>
-                            )}
-                            {slot.className && <span className="print-info">{slot.className}</span>}
-                            {slot.roomName && (
-                              <span className="print-info print-room">{slot.roomName}</span>
-                            )}
-                            {slot.aideName && <span className="print-info">{slot.aideName}</span>}
-                          </div>
-                        ))}
+                            {slot.courseName}
+                          </span>
+                          {slot.teacherName && (
+                            <span className="print-info">{slot.teacherName}</span>
+                          )}
+                          {slot.className && <span className="print-info">{slot.className}</span>}
+                          {slot.roomName && (
+                            <span className="print-info print-room">{slot.roomName}</span>
+                          )}
+                          {slot.aideName && <span className="print-info">{slot.aideName}</span>}
+                        </div>
+                      ))}
                     </div>
                   </td>
                 )
