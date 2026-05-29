@@ -418,6 +418,123 @@
         }
       }
     },
+    "/api/v1/broadcast-email/preview": {
+      "post": {
+        "tags": [
+          "Broadcast"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BroadcastController_BroadcastPreviewRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BroadcastController_BroadcastPreviewRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BroadcastController_BroadcastPreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastController_BroadcastPreviewDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastController_BroadcastPreviewDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastController_BroadcastPreviewDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/broadcast-email": {
+      "post": {
+        "tags": [
+          "Broadcast"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BroadcastController_BroadcastRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BroadcastController_BroadcastRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BroadcastController_BroadcastRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/broadcast-email/log": {
+      "get": {
+        "tags": [
+          "Broadcast"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BroadcastController_BroadcastLogDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BroadcastController_BroadcastLogDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BroadcastController_BroadcastLogDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/calendar": {
       "get": {
         "tags": [
@@ -6457,6 +6574,76 @@
         },
         "additionalProperties": false
       },
+      "BroadcastController_BroadcastLogDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipientCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BroadcastController_BroadcastPreviewDto": {
+        "type": "object",
+        "properties": {
+          "recipientCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BroadcastController_BroadcastPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BroadcastController_BroadcastRequest": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CalendarController_CalendarEntryDto": {
         "type": "object",
         "properties": {
@@ -9289,6 +9476,9 @@
     },
     {
       "name": "Billing"
+    },
+    {
+      "name": "Broadcast"
     },
     {
       "name": "Calendar"
