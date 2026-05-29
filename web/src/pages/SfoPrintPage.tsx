@@ -64,7 +64,7 @@ export default function SfoPrintPage() {
 
   return (
     <>
-    <style>{`
+      <style>{`
       @page { size: A4 landscape; margin: 10mm; }
       @media print {
         html, body { margin: 0; height: 100%; }
@@ -113,64 +113,70 @@ export default function SfoPrintPage() {
       .print-info { font-size: 10px; color: #6b7280; }
       .print-empty { text-align: center; color: #9ca3af; margin-top: 32px; font-size: 13px; }
     `}</style>
-    <div className="print-page">
-      <div className="print-header">
-        <div>
-          <h1 className="print-title">SFO Ugeplan</h1>
-          <p className="print-subtitle">Uge {isoWeek}, {isoYear}</p>
+      <div className="print-page">
+        <div className="print-header">
+          <div>
+            <h1 className="print-title">SFO Ugeplan</h1>
+            <p className="print-subtitle">
+              Uge {isoWeek}, {isoYear}
+            </p>
+          </div>
+          <p className="print-date">Udskrevet {new Date().toLocaleDateString('da-DK')}</p>
         </div>
-        <p className="print-date">Udskrevet {new Date().toLocaleDateString('da-DK')}</p>
-      </div>
 
-      <table className="print-table">
-        <thead>
-          <tr>
-            <th className="print-th print-th-time">Tid</th>
-            {WEEKDAYS.map((d) => (
-              <th key={d} className="print-th">{d}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {timeAxis.map((ts) => (
-            <tr key={`${ts.startTime}-${ts.endTime}`}>
-              <td className="print-td print-td-time">
-                <div className="print-td-inner">
-                  <span className="print-time">{ts.startTime}</span>
-                  <span className="print-time-end">{ts.endTime}</span>
-                </div>
-              </td>
-              {[1, 2, 3, 4, 5].map((day) => {
-                const dayShifts = shiftMap[`${ts.startTime}-${ts.endTime}`]?.[day]
-                return (
-                  <td key={day} className="print-td">
-                    <div className="print-td-inner">
-                      {dayShifts?.map((shift) => (
-                        <div key={shift.id ?? shift.sfoShiftId} className="print-cell">
-                          {shift.label && (
-                            <span className="print-course">{shift.label}</span>
-                          )}
-                          {shift.beskrivelse && (
-                            <span className="print-beskrivelse">{shift.beskrivelse}</span>
-                          )}
-                          {shift.staff?.map((s) => (
-                            <span key={s.id} className="print-info">{s.name}</span>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                )
-              })}
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th className="print-th print-th-time">Tid</th>
+              {WEEKDAYS.map((d) => (
+                <th key={d} className="print-th">
+                  {d}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {timeAxis.map((ts) => (
+              <tr key={`${ts.startTime}-${ts.endTime}`}>
+                <td className="print-td print-td-time">
+                  <div className="print-td-inner">
+                    <span className="print-time">{ts.startTime}</span>
+                    <span className="print-time-end">{ts.endTime}</span>
+                  </div>
+                </td>
+                {[1, 2, 3, 4, 5].map((day) => {
+                  const dayShifts = shiftMap[`${ts.startTime}-${ts.endTime}`]?.[day]
+                  return (
+                    <td key={day} className="print-td">
+                      <div className="print-td-inner">
+                        {dayShifts?.map((shift) => (
+                          <div key={shift.id ?? shift.sfoShiftId} className="print-cell">
+                            {shift.label && <span className="print-course">{shift.label}</span>}
+                            {shift.beskrivelse && (
+                              <span className="print-beskrivelse">{shift.beskrivelse}</span>
+                            )}
+                            {shift.staff?.map((s) => (
+                              <span key={s.id} className="print-info">
+                                {s.name}
+                              </span>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      {shifts.length === 0 && (
-        <p className="print-empty">Ingen vagtblokke for uge {isoWeek}, {isoYear}</p>
-      )}
-    </div>
+        {shifts.length === 0 && (
+          <p className="print-empty">
+            Ingen vagtblokke for uge {isoWeek}, {isoYear}
+          </p>
+        )}
+      </div>
     </>
   )
 }

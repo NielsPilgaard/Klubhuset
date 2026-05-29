@@ -22,7 +22,10 @@ client.setConfig({
 })
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string
+  ) {
     super(message)
   }
 }
@@ -63,10 +66,13 @@ async function requestForm<T>(path: string, body: FormData): Promise<T> {
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  post: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
   postForm: <T>(path: string, body: FormData) => requestForm<T>(path, body),
-  put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
 }
 

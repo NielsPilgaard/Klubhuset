@@ -4,7 +4,11 @@ interface LessonDurationSliderProps {
   'data-testid'?: string
 }
 
-export function LessonDurationSlider({ value, onChange, 'data-testid': testId }: LessonDurationSliderProps) {
+export function LessonDurationSlider({
+  value,
+  onChange,
+  'data-testid': testId,
+}: LessonDurationSliderProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">

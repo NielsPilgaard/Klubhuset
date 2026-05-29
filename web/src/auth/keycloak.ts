@@ -22,7 +22,7 @@ let initPromise: Promise<boolean> | null = null
 export function getInitPromise(): Promise<boolean> {
   if (!initPromise) {
     const raw = sessionStorage.getItem(SIGNUP_TOKEN_KEY)
-    const seeded = raw ? JSON.parse(raw) as { accessToken: string; refreshToken: string } : null
+    const seeded = raw ? (JSON.parse(raw) as { accessToken: string; refreshToken: string }) : null
     if (seeded) sessionStorage.removeItem(SIGNUP_TOKEN_KEY)
 
     const keycloakInit = keycloak.init({

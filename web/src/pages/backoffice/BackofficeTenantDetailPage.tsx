@@ -47,7 +47,11 @@ const statusColors: Record<SubscriptionStatus, string> = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('da-DK', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -64,7 +68,11 @@ export default function BackofficeTenantDetailPage() {
   const qc = useQueryClient()
   const queryKey = ['admin', 'tenants', schoolId]
 
-  const { data: tenant, isLoading, isError } = useQuery({
+  const {
+    data: tenant,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey,
     queryFn: () => api.get<TenantDetail>(`/admin/tenants/${schoolId}`),
     enabled: !!schoolId,
@@ -115,7 +123,9 @@ export default function BackofficeTenantDetailPage() {
           <div>
             <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</dt>
             <dd className="mt-0.5">
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[tenant.subscriptionStatus]}`}>
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[tenant.subscriptionStatus]}`}
+              >
                 {statusLabel[tenant.subscriptionStatus]}
               </span>
             </dd>
@@ -127,12 +137,20 @@ export default function BackofficeTenantDetailPage() {
           />
           <div />
           <div className="col-span-2">
-            <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Stripe kunde-ID</dt>
-            <dd className="mt-0.5 text-sm font-mono text-gray-700">{tenant.stripeCustomerId ?? '—'}</dd>
+            <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Stripe kunde-ID
+            </dt>
+            <dd className="mt-0.5 text-sm font-mono text-gray-700">
+              {tenant.stripeCustomerId ?? '—'}
+            </dd>
           </div>
           <div className="col-span-2">
-            <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Stripe abonnements-ID</dt>
-            <dd className="mt-0.5 text-sm font-mono text-gray-700">{tenant.stripeSubscriptionId ?? '—'}</dd>
+            <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Stripe abonnements-ID
+            </dt>
+            <dd className="mt-0.5 text-sm font-mono text-gray-700">
+              {tenant.stripeSubscriptionId ?? '—'}
+            </dd>
           </div>
         </dl>
       </div>
@@ -144,8 +162,7 @@ export default function BackofficeTenantDetailPage() {
           {ALL_MODULES.map((mod) => {
             const active = activeModules.has(mod)
             const item = tenant.modules.find((m) => m.module === mod)
-            const isPending =
-              grantMutation.isPending || revokeMutation.isPending
+            const isPending = grantMutation.isPending || revokeMutation.isPending
 
             return (
               <div

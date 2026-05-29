@@ -6,5 +6,9 @@ export function formatBytes(bytes: number): string {
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('da-DK', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('da-DK', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
 }

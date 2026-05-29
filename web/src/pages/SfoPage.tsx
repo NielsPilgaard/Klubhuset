@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Modal } from '../components/Modal'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -45,7 +46,12 @@ interface ShiftForm {
   label: string
 }
 
-const emptyForm = (): ShiftForm => ({ dayOfWeek: 1, startTime: '06:30', endTime: '08:00', label: '' })
+const emptyForm = (): ShiftForm => ({
+  dayOfWeek: 1,
+  startTime: '06:30',
+  endTime: '08:00',
+  label: '',
+})
 
 export default function SfoPage() {
   usePageTitle('SFO vagtplan')
@@ -63,26 +69,35 @@ export default function SfoPage() {
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
   const [showYearPicker, setShowYearPicker] = useState(false)
-  const [selectedCell, setSelectedCell] = useState<{ shift: SfoShiftDto; weekShift: SfoWeekPlanShiftDto | undefined } | null>(null)
+  const [selectedCell, setSelectedCell] = useState<{
+    shift: SfoShiftDto
+    weekShift: SfoWeekPlanShiftDto | undefined
+  } | null>(null)
 
   const { data: weekPlan } = useQuery(getApiV1SfoUgeplanOptions({ query: { isoYear, isoWeek } }))
 
   const upsertBeskrivelseMutation = useMutation({
     ...putApiV1SfoUgeplanShiftsMutation(),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: getApiV1SfoUgeplanQueryKey({ query: { isoYear, isoWeek } }) })
+      void qc.invalidateQueries({
+        queryKey: getApiV1SfoUgeplanQueryKey({ query: { isoYear, isoWeek } }),
+      })
       setSelectedCell(null)
     },
   })
 
   function prevWeek() {
-    if (isoWeek === 1) { setIsoYear(y => y - 1); setIsoWeek(getISOWeeksInYear(isoYear - 1)) }
-    else setIsoWeek(w => w - 1)
+    if (isoWeek === 1) {
+      setIsoYear((y) => y - 1)
+      setIsoWeek(getISOWeeksInYear(isoYear - 1))
+    } else setIsoWeek((w) => w - 1)
   }
   function nextWeek() {
     const weeksInYear = getISOWeeksInYear(isoYear)
-    if (isoWeek === weeksInYear) { setIsoYear(y => y + 1); setIsoWeek(1) }
-    else setIsoWeek(w => w + 1)
+    if (isoWeek === weeksInYear) {
+      setIsoYear((y) => y + 1)
+      setIsoWeek(1)
+    } else setIsoWeek((w) => w + 1)
   }
   function goToThisWeek() {
     setIsoYear(getISOWeekYear(new Date()))
@@ -93,13 +108,20 @@ export default function SfoPage() {
 
   const createMutation = useMutation({
     ...postApiV1SfoShiftsMutation(),
-    onSuccess: () => { invalidate(); setShowForm(false); setForm(emptyForm()) },
+    onSuccess: () => {
+      invalidate()
+      setShowForm(false)
+      setForm(emptyForm())
+    },
     onError: () => setFormError('Vagten kunne ikke oprettes.'),
   })
 
   const updateMutation = useMutation({
     ...putApiV1SfoShiftsByIdMutation(),
-    onSuccess: () => { invalidate(); setEditingShift(null) },
+    onSuccess: () => {
+      invalidate()
+      setEditingShift(null)
+    },
     onError: () => setFormError('Vagten kunne ikke opdateres.'),
   })
 
@@ -145,13 +167,18 @@ export default function SfoPage() {
       label: form.label || null,
     }
     if (editingShift?.id) {
-      updateMutation.mutate({ path: { id: editingShift.id }, body: { ...baseBody, dayOfWeek: form.dayOfWeek } })
+      updateMutation.mutate({
+        path: { id: editingShift.id },
+        body: { ...baseBody, dayOfWeek: form.dayOfWeek },
+      })
       return
     }
     if (allDays) {
       try {
         await Promise.all(
-          [1, 2, 3, 4, 5].map(day => createMutation.mutateAsync({ body: { ...baseBody, dayOfWeek: day } }))
+          [1, 2, 3, 4, 5].map((day) =>
+            createMutation.mutateAsync({ body: { ...baseBody, dayOfWeek: day } })
+          )
         )
         invalidate()
         setShowForm(false)
@@ -165,15 +192,23 @@ export default function SfoPage() {
   }
 
   // Collect unique time slots across all days, sorted by start time
-  const uniqueSlotKeys = new Map<string, { startTime: string; endTime: string; label: string | null | undefined }>()
+  const uniqueSlotKeys = new Map<
+    string,
+    { startTime: string; endTime: string; label: string | null | undefined }
+  >()
   for (const shift of shifts ?? []) {
     const key = `${shift.startTime}–${shift.endTime}`
     if (!uniqueSlotKeys.has(key)) {
-      uniqueSlotKeys.set(key, { startTime: shift.startTime ?? '', endTime: shift.endTime ?? '', label: shift.label })
+      uniqueSlotKeys.set(key, {
+        startTime: shift.startTime ?? '',
+        endTime: shift.endTime ?? '',
+        label: shift.label,
+      })
     }
   }
-  const sortedTimeSlots = Array.from(uniqueSlotKeys.entries())
-    .sort((a, b) => a[1].startTime.localeCompare(b[1].startTime))
+  const sortedTimeSlots = Array.from(uniqueSlotKeys.entries()).sort((a, b) =>
+    a[1].startTime.localeCompare(b[1].startTime)
+  )
 
   if (isLoading) {
     return (
@@ -201,7 +236,16 @@ export default function SfoPage() {
             className="p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
             title="Forrige uge"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
           <div className="flex items-center gap-1">
             <button
@@ -213,7 +257,7 @@ export default function SfoPage() {
             </button>
             <div className="relative">
               <button
-                onClick={() => setShowYearPicker(p => !p)}
+                onClick={() => setShowYearPicker((p) => !p)}
                 className="px-2 py-1.5 text-sm font-semibold text-brand-600 hover:bg-brand-50 rounded-md transition-colors tabular-nums"
                 title="Skift år"
               >
@@ -223,12 +267,15 @@ export default function SfoPage() {
                 <>
                   <div className="fixed inset-0 z-20" onClick={() => setShowYearPicker(false)} />
                   <div className="absolute left-1/2 -translate-x-1/2 top-9 z-30 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[90px]">
-                    {[-2, -1, 0, 1, 2].map(offset => {
+                    {[-2, -1, 0, 1, 2].map((offset) => {
                       const y = getISOWeekYear(new Date()) + offset
                       return (
                         <button
                           key={y}
-                          onClick={() => { setIsoYear(y); setShowYearPicker(false) }}
+                          onClick={() => {
+                            setIsoYear(y)
+                            setShowYearPicker(false)
+                          }}
                           className={`w-full px-4 py-2 text-sm text-center hover:bg-gray-50 transition-colors tabular-nums ${y === isoYear ? 'font-semibold text-brand-600' : 'text-gray-700'}`}
                         >
                           {y}
@@ -245,7 +292,16 @@ export default function SfoPage() {
             className="p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
             title="Næste uge"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         </div>
 
@@ -256,7 +312,16 @@ export default function SfoPage() {
             className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             title="Udskriv"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="6 9 6 2 18 2 18 9" />
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
@@ -267,8 +332,16 @@ export default function SfoPage() {
             onClick={openCreate}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             <span className="hidden sm:inline">Ny vagt</span>
             <span className="sm:hidden">Ny</span>
@@ -293,10 +366,17 @@ export default function SfoPage() {
             <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] min-w-[520px]">
               {/* Header row */}
               <div className="bg-gray-50 border-b border-r border-gray-200 p-3" />
-              {[1, 2, 3, 4, 5].map(day => (
-                <div key={day} className="bg-gray-50 border-b border-r border-gray-200 py-3 px-3 text-center">
-                  <div className="text-sm font-semibold text-gray-700 hidden sm:block">{DAY_NAMES[day]}</div>
-                  <div className="text-sm font-semibold text-gray-700 sm:hidden">{DAY_NAMES_SHORT[day]}</div>
+              {[1, 2, 3, 4, 5].map((day) => (
+                <div
+                  key={day}
+                  className="bg-gray-50 border-b border-r border-gray-200 py-3 px-3 text-center"
+                >
+                  <div className="text-sm font-semibold text-gray-700 hidden sm:block">
+                    {DAY_NAMES[day]}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-700 sm:hidden">
+                    {DAY_NAMES_SHORT[day]}
+                  </div>
                 </div>
               ))}
 
@@ -305,18 +385,21 @@ export default function SfoPage() {
                 <div key={slotKey} className="contents">
                   {/* Row label */}
                   <div className="bg-gray-50 border-b border-r border-gray-200 p-3 flex flex-col justify-center">
-                    <span className="text-xs text-gray-500 font-mono leading-tight whitespace-nowrap">{slotMeta.startTime}</span>
-                    <span className="text-xs text-gray-400 font-mono leading-tight whitespace-nowrap">– {slotMeta.endTime}</span>
+                    <span className="text-xs text-gray-500 font-mono leading-tight whitespace-nowrap">
+                      {slotMeta.startTime}
+                    </span>
+                    <span className="text-xs text-gray-400 font-mono leading-tight whitespace-nowrap">
+                      – {slotMeta.endTime}
+                    </span>
                     {slotMeta.label && (
                       <span className="text-xs text-gray-400 mt-1 truncate">{slotMeta.label}</span>
                     )}
                   </div>
 
                   {/* Day cells */}
-                  {[1, 2, 3, 4, 5].map(day => {
+                  {[1, 2, 3, 4, 5].map((day) => {
                     const shift = (shifts ?? []).find(
-                      s => s.dayOfWeek === day &&
-                        `${s.startTime}–${s.endTime}` === slotKey
+                      (s) => s.dayOfWeek === day && `${s.startTime}–${s.endTime}` === slotKey
                     )
                     if (!shift) {
                       return (
@@ -327,7 +410,7 @@ export default function SfoPage() {
                       )
                     }
 
-                    const weekShift = weekPlan?.shifts?.find(ws => ws.sfoShiftId === shift.id)
+                    const weekShift = weekPlan?.shifts?.find((ws) => ws.sfoShiftId === shift.id)
 
                     return (
                       <div
@@ -337,21 +420,36 @@ export default function SfoPage() {
                       >
                         {(shift.staff ?? []).length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {(shift.staff ?? []).map(s => (
-                              <span key={s.id} className="px-1.5 py-0.5 text-xs bg-brand-50 text-brand-700 rounded-full">{s.name}</span>
+                            {(shift.staff ?? []).map((s) => (
+                              <span
+                                key={s.id}
+                                className="px-1.5 py-0.5 text-xs bg-brand-50 text-brand-700 rounded-full"
+                              >
+                                {s.name}
+                              </span>
                             ))}
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 text-xs text-gray-300">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
                             </svg>
                             <span>Ingen</span>
                           </div>
                         )}
                         <div className="flex-1">
                           {weekShift?.beskrivelse ? (
-                            <p className="text-xs text-gray-600 line-clamp-4 whitespace-pre-wrap">{weekShift.beskrivelse}</p>
+                            <p className="text-xs text-gray-600 line-clamp-4 whitespace-pre-wrap">
+                              {weekShift.beskrivelse}
+                            </p>
                           ) : (
                             <p className="text-xs text-gray-300 italic">Aktivitet…</p>
                           )}
@@ -376,93 +474,112 @@ export default function SfoPage() {
           staff={staff ?? []}
           onClose={() => setSelectedCell(null)}
           onSaveBeskrivelse={(beskrivelse) =>
-            upsertBeskrivelseMutation.mutate({ body: { isoYear, isoWeek, sfoShiftId: selectedCell.shift.id!, beskrivelse } })
+            upsertBeskrivelseMutation.mutate({
+              body: { isoYear, isoWeek, sfoShiftId: selectedCell.shift.id!, beskrivelse },
+            })
           }
           isSavingBeskrivelse={upsertBeskrivelseMutation.isPending}
-          onAssignStaff={(staffId) => assignStaffMutation.mutate({ path: { id: selectedCell.shift.id!, staffId } })}
-          onRemoveStaff={(staffId) => removeStaffMutation.mutate({ path: { id: selectedCell.shift.id!, staffId } })}
-          onEdit={() => { setSelectedCell(null); openEdit(selectedCell.shift) }}
-          onDelete={() => { deleteMutation.mutate({ path: { id: selectedCell.shift.id! } }); setSelectedCell(null) }}
+          onAssignStaff={(staffId) =>
+            assignStaffMutation.mutate({ path: { id: selectedCell.shift.id!, staffId } })
+          }
+          onRemoveStaff={(staffId) =>
+            removeStaffMutation.mutate({ path: { id: selectedCell.shift.id!, staffId } })
+          }
+          onEdit={() => {
+            setSelectedCell(null)
+            openEdit(selectedCell.shift)
+          }}
+          onDelete={() => {
+            deleteMutation.mutate({ path: { id: selectedCell.shift.id! } })
+            setSelectedCell(null)
+          }}
         />
       )}
 
       {/* Shift form modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowForm(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-6 space-y-4">
-            <h2 className="text-base font-semibold text-gray-900">
-              {editingShift ? 'Rediger vagt' : 'Ny vagtblok'}
-            </h2>
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} size="sm">
+        <div className="p-6 space-y-4">
+          <h2 className="text-base font-semibold text-gray-900">
+            {editingShift ? 'Rediger vagt' : 'Ny vagtblok'}
+          </h2>
 
-            {!editingShift && (
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={allDays}
-                  onChange={e => setAllDays(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Alle 5 dage</span>
-              </label>
-            )}
-
-            {!allDays && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ugedag</label>
-                <select
-                  value={form.dayOfWeek}
-                  onChange={e => setForm(f => ({ ...f, dayOfWeek: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  {[1, 2, 3, 4, 5].map(d => (
-                    <option key={d} value={d}>{DAY_NAMES[d]}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start</label>
-                <TimeSelect value={form.startTime} onChange={v => setForm(f => ({ ...f, startTime: v }))} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Slut</label>
-                <TimeSelect value={form.endTime} onChange={v => setForm(f => ({ ...f, endTime: v }))} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Betegnelse (valgfri)</label>
+          {!editingShift && (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
-                value={form.label}
-                onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
-                placeholder="f.eks. Morgenvagt"
+                type="checkbox"
+                checked={allDays}
+                onChange={(e) => setAllDays(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Alle 5 dage</span>
+            </label>
+          )}
+
+          {!allDays && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ugedag</label>
+              <select
+                value={form.dayOfWeek}
+                onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: Number(e.target.value) }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                {[1, 2, 3, 4, 5].map((d) => (
+                  <option key={d} value={d}>
+                    {DAY_NAMES[d]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start</label>
+              <TimeSelect
+                value={form.startTime}
+                onChange={(v) => setForm((f) => ({ ...f, startTime: v }))}
               />
             </div>
-
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
-
-            <div className="flex justify-end gap-3 pt-1">
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Annuller
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
-              >
-                {createMutation.isPending || updateMutation.isPending ? 'Gemmer...' : 'Gem'}
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Slut</label>
+              <TimeSelect
+                value={form.endTime}
+                onChange={(v) => setForm((f) => ({ ...f, endTime: v }))}
+              />
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Betegnelse (valgfri)
+            </label>
+            <input
+              value={form.label}
+              onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+              placeholder="f.eks. Morgenvagt"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuller
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'Gemmer...' : 'Gem'}
+            </button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }
@@ -476,24 +593,45 @@ function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) 
     <div className="flex items-center gap-1">
       <select
         value={h}
-        onChange={e => onChange(`${e.target.value}:${m}`)}
+        onChange={(e) => onChange(`${e.target.value}:${m}`)}
         className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
       >
-        {HOURS.map(hour => <option key={hour} value={hour}>{hour}</option>)}
+        {HOURS.map((hour) => (
+          <option key={hour} value={hour}>
+            {hour}
+          </option>
+        ))}
       </select>
       <span className="text-gray-400 font-medium">:</span>
       <select
         value={m}
-        onChange={e => onChange(`${h}:${e.target.value}`)}
+        onChange={(e) => onChange(`${h}:${e.target.value}`)}
         className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
       >
-        {MINUTES.map(min => <option key={min} value={min}>{min}</option>)}
+        {MINUTES.map((min) => (
+          <option key={min} value={min}>
+            {min}
+          </option>
+        ))}
       </select>
     </div>
   )
 }
 
-function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveBeskrivelse, isSavingBeskrivelse, onAssignStaff, onRemoveStaff, onEdit, onDelete }: {
+function CellModal({
+  shift,
+  weekShift,
+  isoYear,
+  isoWeek,
+  staff,
+  onClose,
+  onSaveBeskrivelse,
+  isSavingBeskrivelse,
+  onAssignStaff,
+  onRemoveStaff,
+  onEdit,
+  onDelete,
+}: {
   shift: SfoShiftDto
   weekShift: SfoWeekPlanShiftDto | undefined
   isoYear: number
@@ -511,9 +649,9 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
   const [staffQuery, setStaffQuery] = useState('')
   const [staffOpen, setStaffOpen] = useState(false)
   const comboboxRef = useRef<HTMLDivElement>(null)
-  const assignedIds = new Set((shift.staff ?? []).map(s => s.id))
-  const filteredUnassigned = staff.filter(s =>
-    !assignedIds.has(s.id) && (s.name ?? '').toLowerCase().includes(staffQuery.toLowerCase())
+  const assignedIds = new Set((shift.staff ?? []).map((s) => s.id))
+  const filteredUnassigned = staff.filter(
+    (s) => !assignedIds.has(s.id) && (s.name ?? '').toLowerCase().includes(staffQuery.toLowerCase())
   )
 
   useEffect(() => {
@@ -528,26 +666,51 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
   }, [])
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Escape') { if (staffOpen) { setStaffOpen(false); setStaffQuery('') } else onClose() }
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); onSaveBeskrivelse(text || null) }
+    if (e.key === 'Escape') {
+      if (staffOpen) {
+        setStaffOpen(false)
+        setStaffQuery('')
+      } else onClose()
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault()
+      onSaveBeskrivelse(text || null)
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 flex flex-col" style={{ maxHeight: '90dvh' }}>
+    <Modal
+      isOpen
+      onClose={onClose}
+      contentClassName="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 flex flex-col max-h-[90dvh]"
+    >
+      <>
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-gray-900">
-                {shift.startTime} – {shift.endTime}{shift.label ? ` · ${shift.label}` : ''}
+                {shift.startTime} – {shift.endTime}
+                {shift.label ? ` · ${shift.label}` : ''}
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">Uge {isoWeek}, {isoYear}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Uge {isoWeek}, {isoYear}
+              </p>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <button
+              onClick={onClose}
+              className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors shrink-0"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
@@ -556,19 +719,29 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
           {/* Staff */}
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Medarbejdere</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              Medarbejdere
+            </p>
             {/* Assigned chips */}
             {(shift.staff ?? []).length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
-                {(shift.staff ?? []).map(s => (
+                {(shift.staff ?? []).map((s) => (
                   <button
                     key={s.id}
                     onClick={() => onRemoveStaff(s.id!)}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-brand-600 text-white hover:bg-brand-700 transition-colors"
                   >
                     {s.name}
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 ))}
@@ -578,12 +751,24 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
             {staff.length > 0 ? (
               <div ref={comboboxRef} className="relative">
                 <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 shrink-0">
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-gray-400 shrink-0"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
                   <input
                     value={staffQuery}
-                    onChange={e => { setStaffQuery(e.target.value); setStaffOpen(true) }}
+                    onChange={(e) => {
+                      setStaffQuery(e.target.value)
+                      setStaffOpen(true)
+                    }}
                     onFocus={() => setStaffOpen(true)}
                     placeholder="Tilføj medarbejder…"
                     className="flex-1 text-sm outline-none placeholder-gray-400 bg-transparent"
@@ -591,10 +776,15 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
                 </div>
                 {staffOpen && filteredUnassigned.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {filteredUnassigned.map(s => (
+                    {filteredUnassigned.map((s) => (
                       <button
                         key={s.id}
-                        onPointerDown={e => { e.preventDefault(); onAssignStaff(s.id!); setStaffQuery(''); setStaffOpen(false) }}
+                        onPointerDown={(e) => {
+                          e.preventDefault()
+                          onAssignStaff(s.id!)
+                          setStaffQuery('')
+                          setStaffOpen(false)
+                        }}
                         className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         {s.name}
@@ -615,10 +805,12 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
 
           {/* Beskrivelse */}
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Aktivitet denne uge</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              Aktivitet denne uge
+            </p>
             <textarea
               value={text}
-              onChange={e => setText(e.target.value)}
+              onChange={(e) => setText(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Beskriv aktiviteter for denne vagt…"
               rows={4}
@@ -635,7 +827,14 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
               onClick={onEdit}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -645,9 +844,19 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
               onClick={onDelete}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" />
-                <path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4h6v2" />
               </svg>
               Slet
             </button>
@@ -660,7 +869,7 @@ function CellModal({ shift, weekShift, isoYear, isoWeek, staff, onClose, onSaveB
             {isSavingBeskrivelse ? 'Gemmer...' : 'Gem'}
           </button>
         </div>
-      </div>
-    </div>
+      </>
+    </Modal>
   )
 }

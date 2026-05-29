@@ -35,10 +35,7 @@ export default function BackofficeLayout() {
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-500">
           <span>{userName}</span>
-          <button
-            onClick={logout}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <button onClick={logout} className="text-gray-400 hover:text-gray-600 transition-colors">
             Log ud
           </button>
         </div>

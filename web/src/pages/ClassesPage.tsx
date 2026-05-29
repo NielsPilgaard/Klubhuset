@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -35,7 +36,13 @@ interface CopySchemaModalProps {
   onSaved: () => void
 }
 
-function CopySchemaModal({ classId, schemaId, sourceName, onClose, onSaved }: CopySchemaModalProps) {
+function CopySchemaModal({
+  classId,
+  schemaId,
+  sourceName,
+  onClose,
+  onSaved,
+}: CopySchemaModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState(`Kopi af ${sourceName}`)
   const [targetClassId, setTargetClassId] = useState(classId)
@@ -51,12 +58,20 @@ function CopySchemaModal({ classId, schemaId, sourceName, onClose, onSaved }: Co
         const { mutationFn } = postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation()
         return mutationFn!({ path: { classId, schemaId }, body: { name } }, undefined as never)
       }
-      const { mutationFn } = postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation()
-      return mutationFn!({ path: { classId, schemaId, targetClassId }, body: { name } }, undefined as never)
+      const { mutationFn } =
+        postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation()
+      return mutationFn!(
+        { path: { classId, schemaId, targetClassId }, body: { name } },
+        undefined as never
+      )
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
-      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId: targetClassId } }) })
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
+      })
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId: targetClassId } }),
+      })
       onSaved()
     },
   })
@@ -67,53 +82,57 @@ function CopySchemaModal({ classId, schemaId, sourceName, onClose, onSaved }: Co
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Kopiér skema</h2>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kopiér til klasse</label>
-            <select
-              value={targetClassId}
-              onChange={(e) => setTargetClassId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
-            >
-              {allClasses?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}{c.id === classId ? ' (samme klasse)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Navn på kopi *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            />
-          </div>
-          {mutation.isError && (
-            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
-          )}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    <Modal isOpen onClose={onClose} title="Kopiér skema">
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Kopiér til klasse</label>
+          <select
+            value={targetClassId}
+            onChange={(e) => setTargetClassId(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
           >
-            {mutation.isPending ? 'Kopierer...' : 'Kopiér'}
-          </button>
+            {allClasses?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.id === classId ? ' (samme klasse)' : ''}
+              </option>
+            ))}
+          </select>
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Navn på kopi *</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSave()
+              }
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        {mutation.isError && <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>}
       </div>
-    </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!name.trim() || mutation.isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {mutation.isPending ? 'Kopierer...' : 'Kopiér'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -139,11 +158,17 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
 
   const createMutation = useMutation({
     ...postApiV1ClassesMutation(),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() }); onSaved() },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() })
+      onSaved()
+    },
   })
   const updateMutation = useMutation({
     ...putApiV1ClassesByIdMutation(),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() }); onSaved() },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ClassesQueryKey() })
+      onSaved()
+    },
   })
   const isPending = createMutation.isPending || updateMutation.isPending
   const isError = createMutation.isError || updateMutation.isError
@@ -159,68 +184,73 @@ function ClassModal({ initial, onClose, onSaved }: ClassModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">
-            {initial ? 'Rediger klasse' : 'Opret klasse'}
-          </h2>
+    <Modal isOpen onClose={onClose} title={initial ? 'Rediger klasse' : 'Opret klasse'}>
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+          <input
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSave()
+              }
+            }}
+            placeholder="fx 5.a"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
         </div>
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
-            <input
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-              placeholder="fx 5.a"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Klassetrin</label>
-            <select
-              value={gradeLevel ?? ''}
-              onChange={(e) => setGradeLevel(e.target.value === '' ? null : Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
-            >
-              <option value="">— ukendt —</option>
-              {Object.entries(GRADE_LEVEL_LABELS).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivelse</label>
-            <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-              placeholder="Valgfri beskrivelse"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            />
-          </div>
-          {isError && (
-            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
-          )}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Klassetrin</label>
+          <select
+            value={gradeLevel ?? ''}
+            onChange={(e) => setGradeLevel(e.target.value === '' ? null : Number(e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
           >
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim() || isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? 'Gemmer...' : 'Gem'}
-          </button>
+            <option value="">— ukendt —</option>
+            {Object.entries(GRADE_LEVEL_LABELS).map(([val, label]) => (
+              <option key={val} value={val}>
+                {label}
+              </option>
+            ))}
+          </select>
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivelse</label>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSave()
+              }
+            }}
+            placeholder="Valgfri beskrivelse"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        {isError && <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>}
       </div>
-    </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!name.trim() || isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isPending ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -287,14 +317,26 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   const mutation = useMutation({
     mutationFn: async () => {
       const { mutationFn: createSchema } = postApiV1ClassesByClassIdSchemasMutation()
-      const created: SchemaDto = await createSchema!({ path: { classId }, body: { name } }, undefined as never)
+      const created: SchemaDto = await createSchema!(
+        { path: { classId }, body: { name } },
+        undefined as never
+      )
       if ((startDate || endDate) && created.id) {
-        const { mutationFn: setDaterange } = putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation()
-        await setDaterange!({ path: { classId, schemaId: created.id }, body: { startDate: startDate || null, endDate: endDate || null } }, undefined as never)
+        const { mutationFn: setDaterange } =
+          putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation()
+        await setDaterange!(
+          {
+            path: { classId, schemaId: created.id },
+            body: { startDate: startDate || null, endDate: endDate || null },
+          },
+          undefined as never
+        )
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
+      })
       onSaved()
     },
   })
@@ -305,79 +347,102 @@ function SchemaModal({ classId, onClose, onSaved }: SchemaModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Opret skema</h2>
+    <Modal isOpen onClose={onClose} title="Opret skema">
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSave()
+              }
+            }}
+            placeholder="fx Efterår 2025"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
         </div>
-        <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
+          <div className="flex flex-wrap gap-1.5">
+            {presets.map((p) => {
+              const active = startDate === p.start && endDate === p.end
+              return (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => {
+                    setStartDate(p.start)
+                    setEndDate(p.end)
+                    if (!name.trim()) setName(p.label)
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${active ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400 hover:text-brand-700'}`}
+                >
+                  {p.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-              placeholder="fx Efterår 2025"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
+            <DatePicker value={startDate} onChange={setStartDate} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
+            <DatePicker
+              value={endDate}
+              onChange={setEndDate}
+              min={startDate || undefined}
+              align="right"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-            <div className="flex flex-wrap gap-1.5">
-              {presets.map((p) => {
-                const active = startDate === p.start && endDate === p.end
-                return (
-                  <button
-                    key={p.label}
-                    type="button"
-                    onClick={() => { setStartDate(p.start); setEndDate(p.end); if (!name.trim()) setName(p.label) }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${active ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400 hover:text-brand-700'}`}
-                  >
-                    {p.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-              <DatePicker value={startDate} onChange={setStartDate} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} align="right" />
-            </div>
-          </div>
-          {dateInvalid && (
-            <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>
-          )}
-          {mutation.isError && (
-            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
-          )}
         </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending || dateInvalid}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {mutation.isPending ? 'Opretter...' : 'Opret'}
-          </button>
-        </div>
+        {dateInvalid && <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>}
+        {mutation.isError && <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>}
       </div>
-    </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!name.trim() || mutation.isPending || dateInvalid}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {mutation.isPending ? 'Opretter...' : 'Opret'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
 function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
   if (!startDate && !endDate) return null
   const fmt = (d: string) => {
-    const [, m, ] = d.split('-')
-    const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+    const [, m] = d.split('-')
+    const months = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'maj',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'okt',
+      'nov',
+      'dec',
+    ]
     return `${months[parseInt(m, 10) - 1]} ${d.slice(0, 4)}`
   }
   if (startDate && endDate) return `${fmt(startDate)} – ${fmt(endDate)}`
@@ -404,7 +469,9 @@ function RenameSchemaModal({ classId, schema, onClose }: RenameSchemaModalProps)
   const mutation = useMutation({
     ...putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
+      })
       onClose()
     },
   })
@@ -415,38 +482,43 @@ function RenameSchemaModal({ classId, schema, onClose }: RenameSchemaModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Omdøb skema</h2>
-        </div>
-        <div className="px-6 py-5">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Navn</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-            autoFocus
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
-          {mutation.isError && (
-            <p className="text-sm text-red-600 mt-2">Der opstod en fejl. Prøv igen.</p>
-          )}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim() || mutation.isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
-          </button>
-        </div>
+    <Modal isOpen onClose={onClose} title="Omdøb skema" size="sm">
+      <div className="px-6 py-5">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Navn</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleSave()
+            }
+          }}
+          autoFocus
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        />
+        {mutation.isError && (
+          <p className="text-sm text-red-600 mt-2">Der opstod en fejl. Prøv igen.</p>
+        )}
       </div>
-    </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!name.trim() || mutation.isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {mutation.isPending ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -464,7 +536,9 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
   const mutation = useMutation({
     ...putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) })
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
+      })
       onClose()
     },
   })
@@ -472,48 +546,57 @@ function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
   function handleSave() {
     if (mutation.isPending) return
     if (startDate && endDate && startDate > endDate) return
-    mutation.mutate({ path: { classId, schemaId: schema.id! }, body: { startDate: startDate || null, endDate: endDate || null } })
+    mutation.mutate({
+      path: { classId, schemaId: schema.id! },
+      body: { startDate: startDate || null, endDate: endDate || null },
+    })
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Sæt datoperiode</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{schema.name}</p>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-              <DatePicker value={startDate} onChange={setStartDate} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-              <DatePicker value={endDate} onChange={setEndDate} min={startDate || undefined} align="right" />
-            </div>
-          </div>
-          {startDate && endDate && startDate > endDate && (
-            <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>
-          )}
-          {mutation.isError && (
-            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
-          )}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={mutation.isPending || (!!startDate && !!endDate && startDate > endDate)}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
-          </button>
-        </div>
+    <Modal isOpen onClose={onClose} size="sm">
+      <div className="px-6 py-5 border-b border-gray-100">
+        <h2 className="font-display text-lg font-semibold text-gray-900">Sæt datoperiode</h2>
+        <p className="text-sm text-gray-500 mt-0.5">{schema.name}</p>
       </div>
-    </div>
+      <div className="px-6 py-5 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
+            <DatePicker value={startDate} onChange={setStartDate} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
+            <DatePicker
+              value={endDate}
+              onChange={setEndDate}
+              min={startDate || undefined}
+              align="right"
+            />
+          </div>
+        </div>
+        {startDate && endDate && startDate > endDate && (
+          <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>
+        )}
+        {mutation.isError && <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>}
+      </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={mutation.isPending || (!!startDate && !!endDate && startDate > endDate)}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {mutation.isPending ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -526,7 +609,10 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
   )
   const permissions = (rawPermissions ?? []) as ClassPermissionDto[]
 
-  const { data: rawStaff } = useQuery({ ...getApiV1StaffOptions(), select: (d) => (d ?? []) as StaffDto[] })
+  const { data: rawStaff } = useQuery({
+    ...getApiV1StaffOptions(),
+    select: (d) => (d ?? []) as StaffDto[],
+  })
   const staff = rawStaff ?? []
 
   const grantedIds = new Set(permissions.map((p) => p.staffId))
@@ -537,20 +623,27 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
   const grantMutation = useMutation({
     ...postApiV1ClassesByClassIdPermissionsMutation(),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdPermissionsQueryKey({ path: { classId } }) })
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdPermissionsQueryKey({ path: { classId } }),
+      })
       setSelectedStaffId('')
     },
   })
 
   const revokeMutation = useMutation({
     ...deleteApiV1ClassesByClassIdPermissionsByStaffIdMutation(),
-    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdPermissionsQueryKey({ path: { classId } }) }),
+    onSuccess: () =>
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdPermissionsQueryKey({ path: { classId } }),
+      }),
   })
 
   if (isLoading) {
     return (
       <div className="px-6 py-4 animate-pulse space-y-2">
-        {[1, 2].map((i) => <div key={i} className="h-8 bg-gray-100 rounded-lg" />)}
+        {[1, 2].map((i) => (
+          <div key={i} className="h-8 bg-gray-100 rounded-lg" />
+        ))}
       </div>
     )
   }
@@ -559,8 +652,18 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
     <div className="border-t border-gray-100 bg-brand-50/40 px-6 py-4 space-y-4">
       {allSuperadmin && (
         <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="shrink-0 mt-0.5"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           Ingen adgangsbegrænsninger. Alle medarbejdere kan redigere denne klasse.
         </div>
@@ -568,9 +671,14 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
 
       {permissions.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tildelt adgang</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Tildelt adgang
+          </p>
           {permissions.map((p) => (
-            <div key={p.staffId} className="flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-lg">
+            <div
+              key={p.staffId}
+              className="flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-lg"
+            >
               <span className="text-sm text-gray-800">{p.staffName}</span>
               <button
                 data-testid={`revoke-permission-${p.staffId}`}
@@ -587,7 +695,9 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
 
       {ungrantedStaff.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tilføj medarbejder</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Tilføj medarbejder
+          </p>
           <div className="flex flex-wrap gap-2">
             <select
               value={selectedStaffId}
@@ -596,13 +706,17 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
             >
               <option value="">Vælg medarbejder…</option>
               {ungrantedStaff.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
             <button
               data-testid="grant-permission-btn"
               disabled={!selectedStaffId || grantMutation.isPending}
-              onClick={() => grantMutation.mutate({ path: { classId }, body: { staffId: selectedStaffId } })}
+              onClick={() =>
+                grantMutation.mutate({ path: { classId }, body: { staffId: selectedStaffId } })
+              }
               className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
             >
               Tilføj
@@ -624,7 +738,15 @@ function ClassPermissionsTab({ classId }: { classId: string }) {
   )
 }
 
-function ExpandedClassPanel({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
+function ExpandedClassPanel({
+  classId,
+  autoOpenCreate,
+  onAutoOpenHandled,
+}: {
+  classId: string
+  autoOpenCreate?: boolean
+  onAutoOpenHandled?: () => void
+}) {
   const { isAdmin } = useAuth()
   const [tab, setTab] = useState<'skemaer' | 'adgang'>('skemaer')
 
@@ -647,16 +769,26 @@ function ExpandedClassPanel({ classId, autoOpenCreate, onAutoOpenHandled }: { cl
         </div>
       )}
       {tab === 'skemaer' && (
-        <SchemaList classId={classId} autoOpenCreate={autoOpenCreate} onAutoOpenHandled={onAutoOpenHandled} />
+        <SchemaList
+          classId={classId}
+          autoOpenCreate={autoOpenCreate}
+          onAutoOpenHandled={onAutoOpenHandled}
+        />
       )}
-      {tab === 'adgang' && isAdmin && (
-        <ClassPermissionsTab classId={classId} />
-      )}
+      {tab === 'adgang' && isAdmin && <ClassPermissionsTab classId={classId} />}
     </div>
   )
 }
 
-function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: string; autoOpenCreate?: boolean; onAutoOpenHandled?: () => void }) {
+function SchemaList({
+  classId,
+  autoOpenCreate,
+  onAutoOpenHandled,
+}: {
+  classId: string
+  autoOpenCreate?: boolean
+  onAutoOpenHandled?: () => void
+}) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { isAdmin, staffId } = useAuth()
@@ -666,9 +798,8 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
     getApiV1ClassesByClassIdPermissionsOptions({ path: { classId } })
   )
   const permissions = (rawPermissions ?? []) as ClassPermissionDto[]
-  const canEditSchema = isAdmin
-    || permissions.length === 0
-    || permissions.some((p) => p.staffId === staffId)
+  const canEditSchema =
+    isAdmin || permissions.length === 0 || permissions.some((p) => p.staffId === staffId)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
   const [editingDateRange, setEditingDateRange] = useState<SchemaDto | null>(null)
   const [renamingSchema, setRenamingSchema] = useState<SchemaDto | null>(null)
@@ -687,7 +818,10 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
 
   const deleteSchemaMutation = useMutation({
     ...deleteApiV1ClassesByClassIdSchemasBySchemaIdMutation(),
-    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }) }),
+    onSuccess: () =>
+      qc.invalidateQueries({
+        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
+      }),
   })
 
   if (isLoading) {
@@ -711,7 +845,14 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -729,105 +870,167 @@ function SchemaList({ classId, autoOpenCreate, onAutoOpenHandled }: { classId: s
           const active = isActiveNow(s.startDate, s.endDate)
           const dateRange = formatDateRange(s.startDate, s.endDate)
           return (
-          <div
-            key={s.id}
-            onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
-            className="flex flex-col gap-2 px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate flex-1">
-                {s.name}
-              </span>
-              {active && (
-                <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-                  Aktiv nu
+            <div
+              key={s.id}
+              onClick={() => navigate(`/klasser/${classId}/skema/${s.id}`)}
+              className="flex flex-col gap-2 px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors group cursor-pointer"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-medium text-sm text-gray-800 group-hover:text-brand-700 transition-colors truncate flex-1">
+                  {s.name}
                 </span>
-              )}
-            </div>
-            {dateRange && (
-              <span className="text-xs text-gray-400">{dateRange}</span>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" onClick={(e) => e.stopPropagation()}>
-              <button
-                data-testid={`class-ugeplan-${classId}-${s.id}`}
-                onClick={(e) => { e.stopPropagation(); navigate(`/klasser/${classId}/ugeplan?schemaId=${s.id}`) }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors"
+                {active && (
+                  <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                    Aktiv nu
+                  </span>
+                )}
+              </div>
+              {dateRange && <span className="text-xs text-gray-400">{dateRange}</span>}
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                onClick={(e) => e.stopPropagation()}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                Ugeplan
-              </button>
-              {canEditSchema && (
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/klasser/${classId}/skema/${s.id}`) }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Rediger
-              </button>
-              )}
-              {canEditSchema && (
-                <>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditingDateRange(s) }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                <button
+                  data-testid={`class-ugeplan-${classId}-${s.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(`/klasser/${classId}/ugeplan?schemaId=${s.id}`)
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                    Datoer
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setRenamingSchema(s) }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                    </svg>
-                    Omdøb
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setCopyingSchema(s) }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                    Kopiér
-                  </button>
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  Ugeplan
+                </button>
+                {canEditSchema && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (confirm(`Slet skemaet "${s.name}"? Alle lektioner i skemaet slettes også.`)) {
-                        deleteSchemaMutation.mutate({ path: { classId, schemaId: s.id! } })
-                      }
+                      navigate(`/klasser/${classId}/skema/${s.id}`)
                     }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                      <path d="M10 11v6M14 11v6" />
-                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
-                    Slet
+                    Rediger
                   </button>
-                </>
-              )}
+                )}
+                {canEditSchema && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingDateRange(s)
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      Datoer
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setRenamingSchema(s)
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                      </svg>
+                      Omdøb
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setCopyingSchema(s)
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      Kopiér
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (
+                          confirm(
+                            `Slet skemaet "${s.name}"? Alle lektioner i skemaet slettes også.`
+                          )
+                        ) {
+                          deleteSchemaMutation.mutate({ path: { classId, schemaId: s.id! } })
+                        }
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                      Slet
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
           )
         })}
       </div>
@@ -929,7 +1132,14 @@ export default function ClassesPage() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -975,11 +1185,15 @@ export default function ClassesPage() {
               data-testid={`class-row-${cls.id}`}
             >
               <button
-                onClick={(e) => { e.stopPropagation(); toggleExpand(cls.id!) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleExpand(cls.id!)
+                }}
                 className="flex items-center gap-3 min-w-0 text-left group"
               >
                 <svg
-                  width="16" height="16"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1004,17 +1218,29 @@ export default function ClassesPage() {
                     title="Flere handlinger"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+                      <circle cx="5" cy="12" r="1.5" />
+                      <circle cx="12" cy="12" r="1.5" />
+                      <circle cx="19" cy="12" r="1.5" />
                     </svg>
                   </button>
                   {openMenuId === cls.id && (
                     <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
                       <button
                         data-testid={`class-edit-${cls.id}`}
-                        onClick={() => { setEditingClass(cls); setOpenMenuId(null) }}
+                        onClick={() => {
+                          setEditingClass(cls)
+                          setOpenMenuId(null)
+                        }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
@@ -1024,11 +1250,19 @@ export default function ClassesPage() {
                         data-testid={`class-delete-${cls.id}`}
                         onClick={() => {
                           setOpenMenuId(null)
-                          if (confirm(`Slet klassen "${cls.name}"?`)) deleteMutation.mutate({ path: { id: cls.id! } })
+                          if (confirm(`Slet klassen "${cls.name}"?`))
+                            deleteMutation.mutate({ path: { id: cls.id! } })
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <polyline points="3 6 5 6 21 6" />
                           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                           <path d="M10 11v6M14 11v6" />

@@ -36,7 +36,9 @@ export default function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <span>© {new Date().getFullYear()} Skoleoverblikket · Data opbevares i EU</span>
-          <a href="/login" className="hover:text-white transition-colors">Log ind</a>
+          <a href="/login" className="hover:text-white transition-colors">
+            Log ind
+          </a>
         </div>
       </div>
     </footer>

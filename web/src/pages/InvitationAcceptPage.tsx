@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import keycloak from '../auth/keycloak'
 import CookieBanner from '../components/CookieBanner'
-import { getApiV1StaffInvitationsPreview, getApiV1ParentInvitationsPreview, postApiV1StaffInvitationsAccept, postApiV1ParentInvitationsAccept, patchApiV1ParentsMeContact } from '../api/generated/sdk.gen'
+import {
+  getApiV1StaffInvitationsPreview,
+  getApiV1ParentInvitationsPreview,
+  postApiV1StaffInvitationsAccept,
+  postApiV1ParentInvitationsAccept,
+  patchApiV1ParentsMeContact,
+} from '../api/generated/sdk.gen'
 
 type InvitationType = 'staff' | 'parent'
 
@@ -14,7 +20,14 @@ interface InvitationPreview {
   type: InvitationType
 }
 
-type PageState = 'loading' | 'invalid' | 'ready' | 'accepting' | 'success' | 'contact-info' | 'error'
+type PageState =
+  | 'loading'
+  | 'invalid'
+  | 'ready'
+  | 'accepting'
+  | 'success'
+  | 'contact-info'
+  | 'error'
 
 export default function InvitationAcceptPage() {
   const { token } = useParams<{ token: string }>()
@@ -35,7 +48,10 @@ export default function InvitationAcceptPage() {
   const returningFromLogin = searchParams.get('accept') === '1'
 
   useEffect(() => {
-    if (!token) { setState('invalid'); return }
+    if (!token) {
+      setState('invalid')
+      return
+    }
 
     const controller = new AbortController()
 
@@ -110,7 +126,9 @@ export default function InvitationAcceptPage() {
       setState(type === 'parent' ? 'contact-info' : 'success')
     } catch (err: unknown) {
       const detail = (err as { detail?: string })?.detail
-      setErrorMsg(detail ?? 'Der opstod en fejl. Invitationen er muligvis allerede brugt eller udløbet.')
+      setErrorMsg(
+        detail ?? 'Der opstod en fejl. Invitationen er muligvis allerede brugt eller udløbet.'
+      )
       setState('error')
     }
   }
@@ -151,7 +169,12 @@ export default function InvitationAcceptPage() {
   if (state === 'loading' || state === 'accepting') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center" role="status" aria-live="polite" aria-busy="true">
+        <div
+          className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="mt-4 text-sm text-gray-500">
             {state === 'accepting' ? 'Bekræfter invitation…' : 'Indlæser invitation…'}
@@ -166,12 +189,26 @@ export default function InvitationAcceptPage() {
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-red-600">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="text-red-600"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </div>
-          <h1 className="font-display text-xl font-semibold text-gray-900">Invitation ugyldig eller udløbet</h1>
-          <p className="text-sm text-gray-500">Dette invitationslink er ugyldigt eller er udløbet. Bed din administrator om at sende en ny invitation.</p>
+          <h1 className="font-display text-xl font-semibold text-gray-900">
+            Invitation ugyldig eller udløbet
+          </h1>
+          <p className="text-sm text-gray-500">
+            Dette invitationslink er ugyldigt eller er udløbet. Bed din administrator om at sende en
+            ny invitation.
+          </p>
         </div>
       </div>
     )
@@ -180,23 +217,37 @@ export default function InvitationAcceptPage() {
   if (state === 'success') {
     const parsed = keycloak.tokenParsed as Record<string, unknown> | undefined
     const realmAccess = parsed?.['realm_access']
-    const rawRoles = (realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess))
-      ? (realmAccess as Record<string, unknown>)['roles']
-      : undefined
-    const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
+    const rawRoles =
+      realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess)
+        ? (realmAccess as Record<string, unknown>)['roles']
+        : undefined
+    const roles = Array.isArray(rawRoles)
+      ? rawRoles.filter((r): r is string => typeof r === 'string')
+      : []
     const destination = roles.includes('admin') ? '/dashboard' : '/mig/skema'
 
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="text-green-600"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h1 className="font-display text-xl font-semibold text-gray-900">Invitation accepteret!</h1>
+          <h1 className="font-display text-xl font-semibold text-gray-900">
+            Invitation accepteret!
+          </h1>
           <p className="text-sm text-gray-500">
-            Du er nu tilknyttet <strong>{preview?.schoolName}</strong>. Du kan gå til dit skema herunder.
+            Du er nu tilknyttet <strong>{preview?.schoolName}</strong>. Du kan gå til dit skema
+            herunder.
           </p>
           <a
             href={destination}
@@ -214,8 +265,17 @@ export default function InvitationAcceptPage() {
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-red-600">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="text-red-600"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </div>
           <h1 className="font-display text-xl font-semibold text-gray-900">Noget gik galt</h1>
@@ -231,12 +291,24 @@ export default function InvitationAcceptPage() {
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
           <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className="text-green-600"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h1 className="font-display text-xl font-semibold text-gray-900">Invitation accepteret!</h1>
-            <p className="mt-1 text-sm text-gray-500">Udfyld dine kontaktoplysninger — du kan altid ændre dem senere.</p>
+            <h1 className="font-display text-xl font-semibold text-gray-900">
+              Invitation accepteret!
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Udfyld dine kontaktoplysninger — du kan altid ændre dem senere.
+            </p>
           </div>
 
           <div className="px-8 py-6 space-y-4">
@@ -245,7 +317,7 @@ export default function InvitationAcceptPage() {
               <input
                 type="tel"
                 value={phone}
-                onChange={e => setPhone(e.target.value)}
+                onChange={(e) => setPhone(e.target.value)}
                 placeholder="Valgfrit"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
@@ -255,7 +327,7 @@ export default function InvitationAcceptPage() {
               <input
                 type="text"
                 value={address}
-                onChange={e => setAddress(e.target.value)}
+                onChange={(e) => setAddress(e.target.value)}
                 placeholder="Valgfrit"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
@@ -266,7 +338,7 @@ export default function InvitationAcceptPage() {
                 <input
                   type="text"
                   value={postalCode}
-                  onChange={e => setPostalCode(e.target.value)}
+                  onChange={(e) => setPostalCode(e.target.value)}
                   placeholder="Valgfrit"
                   maxLength={10}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -277,7 +349,7 @@ export default function InvitationAcceptPage() {
                 <input
                   type="text"
                   value={city}
-                  onChange={e => setCity(e.target.value)}
+                  onChange={(e) => setCity(e.target.value)}
                   placeholder="Valgfrit"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
@@ -287,15 +359,15 @@ export default function InvitationAcceptPage() {
               <input
                 type="checkbox"
                 checked={shareContactInfo}
-                onChange={e => setShareContactInfo(e.target.checked)}
+                onChange={(e) => setShareContactInfo(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
               />
-              <span className="text-sm text-gray-700">Tillad andre forældre at se mine kontaktoplysninger</span>
+              <span className="text-sm text-gray-700">
+                Tillad andre forældre at se mine kontaktoplysninger
+              </span>
             </label>
 
-            {contactError && (
-              <p className="text-sm text-red-600">{contactError}</p>
-            )}
+            {contactError && <p className="text-sm text-red-600">{contactError}</p>}
             <button
               onClick={submitContactInfo}
               disabled={submittingContact}
@@ -304,7 +376,9 @@ export default function InvitationAcceptPage() {
               {submittingContact ? 'Gemmer…' : 'Gem og fortsæt'}
             </button>
             <button
-              onClick={() => { window.location.href = '/foraeldrevisning/skema' }}
+              onClick={() => {
+                window.location.href = '/foraeldrevisning/skema'
+              }}
               className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               Spring over
@@ -318,46 +392,49 @@ export default function InvitationAcceptPage() {
   // state === 'ready' — show invitation details and login button
   return (
     <>
-    <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
-        <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
-          <span className="font-display text-2xl font-semibold text-brand-800">Skoleoverblikket</span>
-          <h1 className="mt-3 text-lg font-semibold text-gray-900">Du er inviteret!</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {preview?.schoolName} har inviteret dig til at oprette en konto
-          </p>
-        </div>
-
-        <div className="px-8 py-6 space-y-4">
-          <div className="bg-brand-50 rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500 w-20 shrink-0">Navn</span>
-              <span className="font-medium text-gray-900">{preview?.name}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500 w-20 shrink-0">E-mail</span>
-              <span className="font-medium text-gray-900">{preview?.email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500 w-20 shrink-0">Skole</span>
-              <span className="font-medium text-gray-900">{preview?.schoolName}</span>
-            </div>
+      <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
+          <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
+            <span className="font-display text-2xl font-semibold text-brand-800">
+              Skoleoverblikket
+            </span>
+            <h1 className="mt-3 text-lg font-semibold text-gray-900">Du er inviteret!</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {preview?.schoolName} har inviteret dig til at oprette en konto
+            </p>
           </div>
 
-          <p className="text-sm text-gray-500">
-            Klik på knappen herunder for at logge ind med din midlertidige adgangskode fra e-mailen. Du bliver bedt om at vælge en ny adgangskode ved første login.
-          </p>
+          <div className="px-8 py-6 space-y-4">
+            <div className="bg-brand-50 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500 w-20 shrink-0">Navn</span>
+                <span className="font-medium text-gray-900">{preview?.name}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500 w-20 shrink-0">E-mail</span>
+                <span className="font-medium text-gray-900">{preview?.email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500 w-20 shrink-0">Skole</span>
+                <span className="font-medium text-gray-900">{preview?.schoolName}</span>
+              </div>
+            </div>
 
-          <button
-            onClick={handleLogin}
-            className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-          >
-            Opret konto og acceptér
-          </button>
+            <p className="text-sm text-gray-500">
+              Klik på knappen herunder for at logge ind med din midlertidige adgangskode fra
+              e-mailen. Du bliver bedt om at vælge en ny adgangskode ved første login.
+            </p>
+
+            <button
+              onClick={handleLogin}
+              className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+            >
+              Opret konto og acceptér
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-    <CookieBanner />
+      <CookieBanner />
     </>
   )
 }

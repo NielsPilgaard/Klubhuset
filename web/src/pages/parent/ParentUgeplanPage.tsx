@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  getApiV1ClassesByClassIdUgeplanOptions,
-} from '../../api/generated/@tanstack/react-query.gen'
+import { getApiV1ClassesByClassIdUgeplanOptions } from '../../api/generated/@tanstack/react-query.gen'
 import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
 import type { ParentMeDto } from '../../api/client'
 import { usePageTitle } from '../../hooks/usePageTitle'
@@ -20,7 +18,7 @@ function getISOWeek(date: Date): number {
   const dayNum = d.getUTCDay() || 7
   d.setUTCDate(d.getUTCDate() + 4 - dayNum)
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
 function getISOWeekYear(date: Date): number {
@@ -46,7 +44,17 @@ interface Slot {
   lektier?: string | null
 }
 
-function ClassWeekPlan({ classId, className, isoYear, isoWeek }: { classId: string; className: string; isoYear: number; isoWeek: number }) {
+function ClassWeekPlan({
+  classId,
+  className,
+  isoYear,
+  isoWeek,
+}: {
+  classId: string
+  className: string
+  isoYear: number
+  isoWeek: number
+}) {
   const { data, isLoading, isError } = useQuery(
     getApiV1ClassesByClassIdUgeplanOptions({ path: { classId }, query: { isoYear, isoWeek } })
   )
@@ -54,14 +62,18 @@ function ClassWeekPlan({ classId, className, isoYear, isoWeek }: { classId: stri
   if (isLoading) return <div className="text-sm text-gray-400">Indlæser ugeplan...</div>
   if (isError) return <div className="text-sm text-red-500">Fejl ved hentning af ugeplan.</div>
 
-  const plan = data as { isHolidayWeek?: boolean; holidayTitle?: string | null; slots?: Slot[] } | undefined
+  const plan = data as
+    | { isHolidayWeek?: boolean; holidayTitle?: string | null; slots?: Slot[] }
+    | undefined
   if (!plan) return null
 
   if (plan.isHolidayWeek) {
     return (
       <div>
         <h2 className="text-base font-semibold text-gray-900 mb-2">{className}</h2>
-        <div className="p-3 bg-blue-50 text-blue-700 text-sm rounded-lg">{plan.holidayTitle ?? 'Ferie'}</div>
+        <div className="p-3 bg-blue-50 text-blue-700 text-sm rounded-lg">
+          {plan.holidayTitle ?? 'Ferie'}
+        </div>
       </div>
     )
   }
@@ -100,7 +112,8 @@ function ClassWeekPlan({ classId, className, isoYear, isoWeek }: { classId: stri
                     )}
                     {s.lektier && (
                       <p className="mt-1 text-xs text-amber-700 ml-18">
-                        <span className="font-medium">Lektier: </span>{s.lektier}
+                        <span className="font-medium">Lektier: </span>
+                        {s.lektier}
                       </p>
                     )}
                   </div>
@@ -109,9 +122,7 @@ function ClassWeekPlan({ classId, className, isoYear, isoWeek }: { classId: stri
             </div>
           )
         })}
-        {slots.length === 0 && (
-          <p className="text-sm text-gray-400">Ingen lektioner denne uge.</p>
-        )}
+        {slots.length === 0 && <p className="text-sm text-gray-400">Ingen lektioner denne uge.</p>}
       </div>
     </div>
   )
@@ -124,7 +135,11 @@ export default function ParentUgeplanPage() {
   const [isoYear, setIsoYear] = useState(getISOWeekYear(now))
   const [isoWeek, setIsoWeek] = useState(getISOWeek(now))
 
-  const { data: meRes, isLoading, isError } = useQuery({
+  const {
+    data: meRes,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['parents', 'me'],
     queryFn: () => getApiV1ParentsMe({ throwOnError: false }),
   })
@@ -135,21 +150,22 @@ export default function ParentUgeplanPage() {
       setIsoYear(prevYear)
       setIsoWeek(getISOWeeksInYear(prevYear))
     } else {
-      setIsoWeek(w => w - 1)
+      setIsoWeek((w) => w - 1)
     }
   }
 
   function nextWeek() {
     if (isoWeek >= getISOWeeksInYear(isoYear)) {
-      setIsoYear(y => y + 1)
+      setIsoYear((y) => y + 1)
       setIsoWeek(1)
     } else {
-      setIsoWeek(w => w + 1)
+      setIsoWeek((w) => w + 1)
     }
   }
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">Indlæser...</div>
-  if (isError) return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
+  if (isError)
+    return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
 
   const notFound = meRes?.response.status === 404
   const me = meRes?.data as ParentMeDto | undefined
@@ -160,20 +176,30 @@ export default function ParentUgeplanPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Ugeplan</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={prevWeek}
-            className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={prevWeek} className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <span className="text-sm font-medium text-gray-700">Uge {isoWeek}, {isoYear}</span>
-          <button
-            onClick={nextWeek}
-            className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <span className="text-sm font-medium text-gray-700">
+            Uge {isoWeek}, {isoYear}
+          </span>
+          <button onClick={nextWeek} className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -182,7 +208,8 @@ export default function ParentUgeplanPage() {
 
       {classes.length === 0 ? (
         <p className="text-sm text-gray-500">
-          Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er en fejl.
+          Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er
+          en fejl.
         </p>
       ) : (
         <div className="space-y-8">

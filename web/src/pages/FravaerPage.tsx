@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
-import { getApiV1AbsenceOptions, postApiV1AbsenceByIdConfirmMutation, postApiV1AbsenceByIdDismissMutation } from '../api/generated/@tanstack/react-query.gen'
+import {
+  getApiV1AbsenceOptions,
+  postApiV1AbsenceByIdConfirmMutation,
+  postApiV1AbsenceByIdDismissMutation,
+} from '../api/generated/@tanstack/react-query.gen'
 import type { AbsenceControllerAbsenceReportDto as AbsenceReportDto } from '../api/generated/types.gen'
 
 function StatusBadge({ status }: { status: AbsenceReportDto['status'] }) {
@@ -12,7 +16,9 @@ function StatusBadge({ status }: { status: AbsenceReportDto['status'] }) {
   }
   const { label, className } = map[status!]
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${className}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${className}`}
+    >
       {label}
     </span>
   )
@@ -34,17 +40,23 @@ export default function FravaerPage() {
 
   const confirmMutation = useMutation({
     ...postApiV1AbsenceByIdConfirmMutation(),
-    onSuccess: () => { setActionError(null); qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1Absence' }] }) },
+    onSuccess: () => {
+      setActionError(null)
+      qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1Absence' }] })
+    },
     onError: () => setActionError('Kunne ikke bekræfte fravær'),
   })
 
   const dismissMutation = useMutation({
     ...postApiV1AbsenceByIdDismissMutation(),
-    onSuccess: () => { setActionError(null); qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1Absence' }] }) },
+    onSuccess: () => {
+      setActionError(null)
+      qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1Absence' }] })
+    },
     onError: () => setActionError('Kunne ikke afvise fravær'),
   })
 
-  const unconfirmed = reports.filter(r => r.status === 'Reported')
+  const unconfirmed = reports.filter((r) => r.status === 'Reported')
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -61,22 +73,20 @@ export default function FravaerPage() {
           <input
             type="date"
             value={from}
-            onChange={e => setFrom(e.target.value)}
+            onChange={(e) => setFrom(e.target.value)}
             className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           <span className="text-gray-400 text-sm">–</span>
           <input
             type="date"
             value={to}
-            onChange={e => setTo(e.target.value)}
+            onChange={(e) => setTo(e.target.value)}
             className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
       </div>
 
-      {actionError && (
-        <p className="mb-4 text-sm text-red-600">{actionError}</p>
-      )}
+      {actionError && <p className="mb-4 text-sm text-red-600">{actionError}</p>}
 
       {isLoading && (
         <div className="flex justify-center py-16">
@@ -89,13 +99,14 @@ export default function FravaerPage() {
       )}
 
       <div className="space-y-3">
-        {reports.map(r => (
+        {reports.map((r) => (
           <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium text-gray-900 text-sm">{r.studentName}</p>
                 <p className="text-sm text-gray-600 mt-0.5">
-                  {r.date}{r.endDate ? ` – ${r.endDate}` : ''}
+                  {r.date}
+                  {r.endDate ? ` – ${r.endDate}` : ''}
                   {r.reason ? ` · ${r.reason}` : ''}
                 </p>
               </div>

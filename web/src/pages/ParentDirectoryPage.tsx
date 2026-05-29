@@ -13,7 +13,7 @@ export default function ParentDirectoryPage() {
     select: (data) => data as KontaktParentDto[],
   })
 
-  const filtered = parents.filter(p =>
+  const filtered = parents.filter((p) =>
     (p.name ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
@@ -24,7 +24,7 @@ export default function ParentDirectoryPage() {
         <input
           type="search"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Søg efter navn…"
           className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
@@ -43,8 +43,11 @@ export default function ParentDirectoryPage() {
       )}
 
       <div className="space-y-3">
-        {filtered.map(parent => (
-          <div key={parent.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-4">
+        {filtered.map((parent) => (
+          <div
+            key={parent.id}
+            className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-4"
+          >
             <div className="shrink-0">
               {parent.avatarUrl ? (
                 <img
@@ -63,15 +66,15 @@ export default function ParentDirectoryPage() {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 text-sm">{parent.name}</p>
               {(parent.studentNames?.length ?? 0) > 0 && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {parent.studentNames!.join(', ')}
-                </p>
+                <p className="text-xs text-gray-500 mt-0.5">{parent.studentNames!.join(', ')}</p>
               )}
               {(parent.phone || parent.address || parent.city) && (
                 <div className="mt-1.5 space-y-0.5">
                   {parent.phone && (
                     <p className="text-sm text-gray-700">
-                      <a href={`tel:${parent.phone}`} className="hover:text-brand-600">{parent.phone}</a>
+                      <a href={`tel:${parent.phone}`} className="hover:text-brand-600">
+                        {parent.phone}
+                      </a>
                     </p>
                   )}
                   {(parent.address || parent.city) && (

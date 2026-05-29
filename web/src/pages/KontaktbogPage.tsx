@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
-import { getApiV1ContactThreads, getApiV1ContactThreadsByThreadIdMessages, postApiV1ContactThreadsByThreadIdRead, postApiV1ContactThreadsByThreadIdMessages } from '../api/generated/sdk.gen'
+import {
+  getApiV1ContactThreads,
+  getApiV1ContactThreadsByThreadIdMessages,
+  postApiV1ContactThreadsByThreadIdRead,
+  postApiV1ContactThreadsByThreadIdMessages,
+} from '../api/generated/sdk.gen'
 
 interface ContactThreadDto {
   id: string
@@ -65,14 +70,21 @@ export default function KontaktbogPage() {
   })
 
   const { data: messagesData } = useQuery({
-    queryKey: [{ _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } }],
+    queryKey: [
+      { _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } },
+    ],
     queryFn: async () => {
       const { data } = await getApiV1ContactThreadsByThreadIdMessages({
         path: { threadId: selectedThreadId! },
         query: { page: 1, pageSize: 50 },
         throwOnError: false,
       })
-      return (data ?? { items: [], total: 0, page: 1, pageSize: 50 }) as PagedResult<ContactMessageDto>
+      return (data ?? {
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 50,
+      }) as PagedResult<ContactMessageDto>
     },
     enabled: selectedThreadId !== null,
   })
@@ -97,7 +109,11 @@ export default function KontaktbogPage() {
       })
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [{ _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } }] })
+      qc.invalidateQueries({
+        queryKey: [
+          { _id: 'getApiV1ContactThreadsByThreadIdMessages', path: { threadId: selectedThreadId } },
+        ],
+      })
       qc.invalidateQueries({ queryKey: threadsQueryKey })
       setMessageBody('')
     },
@@ -120,14 +136,18 @@ export default function KontaktbogPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
-  const selectedThread = threads.find(t => t.id === selectedThreadId)
+  const selectedThread = threads.find((t) => t.id === selectedThreadId)
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
       {/* Thread list — hidden on mobile when message panel is open */}
-      <div className={`w-full lg:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col ${showMobileMessages ? 'hidden lg:flex' : 'flex'}`}>
+      <div
+        className={`w-full lg:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col ${showMobileMessages ? 'hidden lg:flex' : 'flex'}`}
+      >
         <div className="px-4 py-4 border-b border-gray-100">
-          <h1 className="font-display text-xl font-semibold text-gray-900">Kontaktbog – alle klasser</h1>
+          <h1 className="font-display text-xl font-semibold text-gray-900">
+            Kontaktbog – alle klasser
+          </h1>
         </div>
 
         {threadsLoading && (
@@ -143,7 +163,7 @@ export default function KontaktbogPage() {
         )}
 
         <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-          {threads.map(thread => (
+          {threads.map((thread) => (
             <button
               key={thread.id}
               onClick={() => handleSelectThread(thread.id)}
@@ -158,10 +178,14 @@ export default function KontaktbogPage() {
                 )}
               </div>
               {thread.lastMessageBody && (
-                <p className="text-xs text-gray-500 truncate">{truncate(thread.lastMessageBody, 50)}</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {truncate(thread.lastMessageBody, 50)}
+                </p>
               )}
               {thread.lastMessageSentAt && (
-                <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(thread.lastMessageSentAt)}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {formatDateTime(thread.lastMessageSentAt)}
+                </p>
               )}
             </button>
           ))}
@@ -169,7 +193,9 @@ export default function KontaktbogPage() {
       </div>
 
       {/* Message panel */}
-      <div className={`flex-1 flex flex-col bg-gray-50 min-w-0 ${showMobileMessages ? 'flex' : 'hidden lg:flex'}`}>
+      <div
+        className={`flex-1 flex flex-col bg-gray-50 min-w-0 ${showMobileMessages ? 'flex' : 'hidden lg:flex'}`}
+      >
         {selectedThread ? (
           <>
             {/* Header */}
@@ -179,7 +205,16 @@ export default function KontaktbogPage() {
                 className="lg:hidden p-1 rounded text-gray-500 hover:text-gray-700"
                 aria-label="Tilbage"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
@@ -191,11 +226,16 @@ export default function KontaktbogPage() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-              {messages.map(msg => {
+              {messages.map((msg) => {
                 const isOwn = msg.senderType === 'Staff'
                 return (
-                  <div key={msg.id} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-sm px-3 py-2 rounded-xl text-sm ${isOwn ? 'bg-blue-100 text-gray-900' : 'bg-white border border-gray-200 text-gray-900'}`}>
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
+                  >
+                    <div
+                      className={`max-w-sm px-3 py-2 rounded-xl text-sm ${isOwn ? 'bg-blue-100 text-gray-900' : 'bg-white border border-gray-200 text-gray-900'}`}
+                    >
                       {!isOwn && (
                         <p className="text-xs font-medium text-gray-600 mb-1">{msg.senderName}</p>
                       )}
@@ -213,11 +253,11 @@ export default function KontaktbogPage() {
               <div className="flex gap-2 items-end">
                 <textarea
                   value={messageBody}
-                  onChange={e => setMessageBody(e.target.value)}
+                  onChange={(e) => setMessageBody(e.target.value)}
                   rows={3}
                   placeholder="Skriv en besked…"
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-                  onKeyDown={e => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                       e.preventDefault()
                       handleSend()

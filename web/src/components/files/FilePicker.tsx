@@ -25,9 +25,10 @@ export function FilePicker({ selectedFileIds, onToggle, disabled = false }: File
   const allFiles = data?.files ?? []
 
   const filtered = search.trim()
-    ? allFiles.filter((f) =>
-        f.fileName?.toLowerCase().includes(search.trim().toLowerCase()) ||
-        f.courseName?.toLowerCase().includes(search.trim().toLowerCase())
+    ? allFiles.filter(
+        (f) =>
+          f.fileName?.toLowerCase().includes(search.trim().toLowerCase()) ||
+          f.courseName?.toLowerCase().includes(search.trim().toLowerCase())
       )
     : allFiles
 
@@ -45,7 +46,12 @@ export function FilePicker({ selectedFileIds, onToggle, disabled = false }: File
     return (
       <p className="text-xs text-gray-400 py-2">
         Ingen filer tilgængelige — gå til{' '}
-        <a href="/filer" target="_blank" className="text-brand-600 hover:text-brand-800 underline">
+        <a
+          href="/filer"
+          target="_blank"
+          rel="noopener"
+          className="text-brand-600 hover:text-brand-800 underline"
+        >
           Filer
         </a>{' '}
         for at uploade.
@@ -86,7 +92,9 @@ export function FilePicker({ selectedFileIds, onToggle, disabled = false }: File
                 </span>
                 <span className="text-sm text-gray-800 truncate flex-1">{f.fileName}</span>
                 {f.courseName && (
-                  <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{f.courseName}</span>
+                  <span className="text-xs text-gray-400 shrink-0 hidden sm:block">
+                    {f.courseName}
+                  </span>
                 )}
                 <span className="text-xs text-gray-400 shrink-0">
                   {formatBytes(f.sizeBytes ?? 0)}

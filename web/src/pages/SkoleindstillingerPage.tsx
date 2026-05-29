@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1SchoolsSettingsOptions,
@@ -106,7 +107,15 @@ export default function SkoleindstillingerPage() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } }) } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (name.trim())
+                    saveMutation.mutate({
+                      body: { name, contactEmail: email || null, contactPhone: phone || null },
+                    })
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
@@ -116,7 +125,15 @@ export default function SkoleindstillingerPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } }) } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (name.trim())
+                    saveMutation.mutate({
+                      body: { name, contactEmail: email || null, contactPhone: phone || null },
+                    })
+                }
+              }}
               placeholder="kontakt@skolen.dk"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -127,7 +144,15 @@ export default function SkoleindstillingerPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (name.trim()) saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } }) } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (name.trim())
+                    saveMutation.mutate({
+                      body: { name, contactEmail: email || null, contactPhone: phone || null },
+                    })
+                }
+              }}
               placeholder="+45 12 34 56 78"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
@@ -137,7 +162,11 @@ export default function SkoleindstillingerPage() {
         </div>
         <div className="px-6 py-4 flex justify-end">
           <button
-            onClick={() => saveMutation.mutate({ body: { name, contactEmail: email || null, contactPhone: phone || null } })}
+            onClick={() =>
+              saveMutation.mutate({
+                body: { name, contactEmail: email || null, contactPhone: phone || null },
+              })
+            }
             disabled={!name.trim() || saveMutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -171,9 +200,7 @@ export default function SkoleindstillingerPage() {
             }}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
           />
-          {logoMutation.isPending && (
-            <p className="text-sm text-gray-500">Uploader...</p>
-          )}
+          {logoMutation.isPending && <p className="text-sm text-gray-500">Uploader...</p>}
           {logoError && <p className="text-sm text-red-600">{logoError}</p>}
         </div>
       </div>
@@ -198,8 +225,11 @@ function SkoledagCard() {
 
   const [lessonDuration, setLessonDuration] = useState(45)
   const [dayStart, setDayStart] = useState('08:00')
-  const [dayEnd, setDayEnd] = useState('15:00')
-  const [breaks, setBreaks] = useState<BreakEntry[]>([])
+  const [dayEnd, setDayEnd] = useState('14:00')
+  const [breaks, setBreaks] = useState<BreakEntry[]>([
+    { startTime: '09:30', durationMinutes: 15 },
+    { startTime: '12:00', durationMinutes: 30 },
+  ])
   const [initialized, setInitialized] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -213,10 +243,12 @@ function SkoledagCard() {
         setLessonDuration(template.lessonDurationMinutes)
         setDayStart(template.dayStartTime.slice(0, 5))
         setDayEnd(template.dayEndTime.slice(0, 5))
-        setBreaks(template.breaks.map(b => ({
-          startTime: b.startTime.slice(0, 5),
-          durationMinutes: b.durationMinutes,
-        })))
+        setBreaks(
+          template.breaks.map((b) => ({
+            startTime: b.startTime.slice(0, 5),
+            durationMinutes: b.durationMinutes,
+          }))
+        )
       }
       setInitialized(true)
     }
@@ -232,7 +264,10 @@ function SkoledagCard() {
       setTimeout(() => setSaveSuccess(false), 3000)
     },
     onError: (err) => {
-      const detail = err && typeof err === 'object' && 'detail' in err ? (err as { detail: string }).detail : 'Kunne ikke gemme skoledag. Prøv igen.'
+      const detail =
+        err && typeof err === 'object' && 'detail' in err
+          ? (err as { detail: string }).detail
+          : 'Kunne ikke gemme skoledag. Prøv igen.'
       setSaveError(detail)
       setSaveSuccess(false)
       setShowConfirmModal(false)
@@ -252,32 +287,40 @@ function SkoledagCard() {
       setTimeout(() => setRestoreSuccess(false), 4000)
     },
     onError: (err) => {
-      const detail = err && typeof err === 'object' && 'detail' in err
-        ? (err as { detail: string }).detail
-        : err instanceof Error ? err.message : 'Gendannelse mislykkedes. Prøv igen.'
+      const detail =
+        err && typeof err === 'object' && 'detail' in err
+          ? (err as { detail: string }).detail
+          : err instanceof Error
+            ? err.message
+            : 'Gendannelse mislykkedes. Prøv igen.'
       setRestoreError(detail)
       setRestoreSuccess(false)
     },
   })
 
   function addBreak() {
-    setBreaks(prev => [...prev, { startTime: '10:00', durationMinutes: 15 }])
+    setBreaks((prev) => [...prev, { startTime: '10:00', durationMinutes: 15 }])
   }
   function updateBreak(i: number, field: keyof BreakEntry, value: string | number) {
-    setBreaks(prev => prev.map((b, idx) => idx === i ? { ...b, [field]: value } : b))
+    setBreaks((prev) => prev.map((b, idx) => (idx === i ? { ...b, [field]: value } : b)))
   }
   function removeBreak(i: number) {
-    setBreaks(prev => prev.filter((_, idx) => idx !== i))
+    setBreaks((prev) => prev.filter((_, idx) => idx !== i))
   }
 
   function handleSaveConfirmed() {
-    saveMutation.mutate({ body: {
-      lessonDurationMinutes: lessonDuration,
-      dayStartTime: dayStart + ':00',
-      dayEndTime: dayEnd + ':00',
-      activeDays: '1,2,3,4,5',
-      breaks: breaks.map(b => ({ startTime: b.startTime + ':00', durationMinutes: b.durationMinutes })),
-    } })
+    saveMutation.mutate({
+      body: {
+        lessonDurationMinutes: lessonDuration,
+        dayStartTime: dayStart + ':00',
+        dayEndTime: dayEnd + ':00',
+        activeDays: '1,2,3,4,5',
+        breaks: breaks.map((b) => ({
+          startTime: b.startTime + ':00',
+          durationMinutes: b.durationMinutes,
+        })),
+      },
+    })
   }
 
   return (
@@ -285,16 +328,22 @@ function SkoledagCard() {
       <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
         <div className="px-6 py-5">
           <h2 className="text-sm font-semibold text-gray-700">Skoledag</h2>
-          <p className="mt-0.5 text-xs text-gray-400">Lektionslængde og pauser for en normal skoledag</p>
+          <p className="mt-0.5 text-xs text-gray-400">
+            Lektionslængde og pauser for en normal skoledag
+          </p>
         </div>
         <div className="px-6 py-5 space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag starter</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Skoledag starter
+              </label>
               <TimeInput value={dayStart} onChange={setDayStart} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Skoledag slutter</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Skoledag slutter
+              </label>
               <TimeInput value={dayEnd} onChange={setDayEnd} />
             </div>
           </div>
@@ -308,8 +357,16 @@ function SkoledagCard() {
                 onClick={addBreak}
                 className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
                 Tilføj pause
               </button>
@@ -323,7 +380,10 @@ function SkoledagCard() {
                   <div className="flex-1 grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-xs text-gray-500 mb-0.5">Starttidspunkt</label>
-                      <TimeInput value={b.startTime} onChange={(v) => updateBreak(i, 'startTime', v)} />
+                      <TimeInput
+                        value={b.startTime}
+                        onChange={(v) => updateBreak(i, 'startTime', v)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-0.5">Varighed (min)</label>
@@ -342,8 +402,16 @@ function SkoledagCard() {
                     onClick={() => removeBreak(i)}
                     className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors mb-0.5"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 </div>
@@ -356,13 +424,22 @@ function SkoledagCard() {
         </div>
         <div className="px-6 py-4 space-y-3">
           <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-            <svg className="mt-0.5 shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              className="mt-0.5 shrink-0 text-amber-500"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <p className="text-sm text-amber-800">
-              <span className="font-semibold">Advarsel:</span> Ændringer i skoledag-indstillingerne gør eksisterende skemaer ubrugelige. Du kan fortryde ændringen bagefter.
+              <span className="font-semibold">Advarsel:</span> Ændringer i skoledag-indstillingerne
+              gør eksisterende skemaer ubrugelige. Du kan fortryde ændringen bagefter.
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -386,35 +463,35 @@ function SkoledagCard() {
         </div>
       </div>
 
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowConfirmModal(false)}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Er du sikker?</h2>
-            <p className="text-sm text-gray-600">
-              Ændringer i skoledag-indstillingerne gør eksisterende skemaer ubrugelige. En sikkerhedskopi gemmes automatisk, og du kan fortryde ændringen bagefter fra denne side.
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Annuller
-              </button>
-              <button
-                onClick={handleSaveConfirmed}
-                disabled={saveMutation.isPending}
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {saveMutation.isPending ? 'Gemmer...' : 'Gem alligevel'}
-              </button>
-            </div>
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Er du sikker?"
+      >
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm text-gray-600">
+            Ændringer i skoledag-indstillingerne gør eksisterende skemaer ubrugelige. En
+            sikkerhedskopi gemmes automatisk, og du kan fortryde ændringen bagefter fra denne side.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowConfirmModal(false)}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuller
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveConfirmed}
+              disabled={saveMutation.isPending}
+              className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {saveMutation.isPending ? 'Gemmer...' : 'Gem alligevel'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </>
   )
 }

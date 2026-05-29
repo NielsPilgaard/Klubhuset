@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1ClassesOptions,
@@ -56,42 +57,47 @@ export default function AarsrulPage() {
       setNewClasses([])
     },
     onError: (err) => {
-      const detail = err && typeof err === 'object' && 'errors' in err
-        ? Object.values((err as { errors: Record<string, string[]> }).errors).flat().join(' ')
-        : err instanceof Error
-          ? err.message
-          : 'Der opstod en fejl.'
+      const detail =
+        err && typeof err === 'object' && 'errors' in err
+          ? Object.values((err as { errors: Record<string, string[]> }).errors)
+              .flat()
+              .join(' ')
+          : err instanceof Error
+            ? err.message
+            : 'Der opstod en fejl.'
       setError(detail)
       setShowConfirm(false)
     },
   })
 
   function initRows(classList: ClassDto[]) {
-    setRows(classList.map(c => ({
-      classId: c.id ?? '',
-      currentName: c.name ?? '',
-      newName: suggestNextName(c.name ?? ''),
-      archive: false,
-    })))
+    setRows(
+      classList.map((c) => ({
+        classId: c.id ?? '',
+        currentName: c.name ?? '',
+        newName: suggestNextName(c.name ?? ''),
+        archive: false,
+      }))
+    )
     setNewClasses([])
     setSuccess(false)
     setError(null)
   }
 
   function updateRow(classId: string, field: keyof RenameRow, value: string | boolean) {
-    setRows(prev => prev!.map(r => r.classId === classId ? { ...r, [field]: value } : r))
+    setRows((prev) => prev!.map((r) => (r.classId === classId ? { ...r, [field]: value } : r)))
   }
 
   function addNewClass() {
-    setNewClasses(prev => [...prev, { id: crypto.randomUUID(), name: '' }])
+    setNewClasses((prev) => [...prev, { id: crypto.randomUUID(), name: '' }])
   }
 
   function updateNewClass(id: string, name: string) {
-    setNewClasses(prev => prev.map(nc => nc.id === id ? { ...nc, name } : nc))
+    setNewClasses((prev) => prev.map((nc) => (nc.id === id ? { ...nc, name } : nc)))
   }
 
   function removeNewClass(id: string) {
-    setNewClasses(prev => prev.filter(nc => nc.id !== id))
+    setNewClasses((prev) => prev.filter((nc) => nc.id !== id))
   }
 
   function getNameConflicts(): Set<string> {
@@ -130,19 +136,20 @@ export default function AarsrulPage() {
   function handleSubmit() {
     if (!rows) return
     const renames: YearRollRenameEntry[] = rows
-      .filter(r => !r.archive && r.newName.trim() !== r.currentName)
-      .map(r => ({ classId: r.classId, newName: r.newName.trim() }))
-    const archive: string[] = rows.filter(r => r.archive).map(r => r.classId)
+      .filter((r) => !r.archive && r.newName.trim() !== r.currentName)
+      .map((r) => ({ classId: r.classId, newName: r.newName.trim() }))
+    const archive: string[] = rows.filter((r) => r.archive).map((r) => r.classId)
     const create: YearRollCreateEntry[] = newClasses
-      .filter(nc => nc.name.trim())
-      .map(nc => ({ name: nc.name.trim() }))
+      .filter((nc) => nc.name.trim())
+      .map((nc) => ({ name: nc.name.trim() }))
 
     rollMutation.mutate({ body: { renames, archive, create } })
   }
 
   const conflicts = getNameConflicts()
-  const archiveCount = rows?.filter(r => r.archive).length ?? 0
-  const renameCount = rows?.filter(r => !r.archive && r.newName.trim() !== r.currentName).length ?? 0
+  const archiveCount = rows?.filter((r) => r.archive).length ?? 0
+  const renameCount =
+    rows?.filter((r) => !r.archive && r.newName.trim() !== r.currentName).length ?? 0
 
   if (isLoading) {
     return (
@@ -191,22 +198,23 @@ export default function AarsrulPage() {
         </button>
       </div>
 
-      {activeTab === 'archived' && (
-        <ArchivedClassesTab classes={archivedClasses ?? []} />
-      )}
+      {activeTab === 'archived' && <ArchivedClassesTab classes={archivedClasses ?? []} />}
 
       {activeTab === 'roll' && (
         <>
           {success && (
             <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-              <p className="text-sm text-green-800 font-medium">Årsrul gennemført. Klasserne er omdøbt.</p>
+              <p className="text-sm text-green-800 font-medium">
+                Årsrul gennemført. Klasserne er omdøbt.
+              </p>
             </div>
           )}
 
           {rows === null ? (
             <div className="bg-white rounded-xl border border-gray-200 px-6 py-8 text-center space-y-4">
               <p className="text-sm text-gray-600">
-                Klik på knappen herunder for at starte årsrullet. Du kan redigere navnene inden du bekræfter.
+                Klik på knappen herunder for at starte årsrullet. Du kan redigere navnene inden du
+                bekræfter.
               </p>
               <button
                 onClick={() => initRows(classes ?? [])}
@@ -223,15 +231,20 @@ export default function AarsrulPage() {
                 <div className="col-span-3 text-center">Arkiver</div>
               </div>
 
-              {rows.map(row => {
+              {rows.map((row) => {
                 const isConflict = !row.archive && conflicts.has(row.newName.trim().toLowerCase())
                 return (
-                  <div key={row.classId} className={`px-4 py-2.5 grid grid-cols-12 gap-2 items-center ${row.archive ? 'opacity-50' : ''}`}>
-                    <div className="col-span-4 text-sm text-gray-700 font-medium">{row.currentName}</div>
+                  <div
+                    key={row.classId}
+                    className={`px-4 py-2.5 grid grid-cols-12 gap-2 items-center ${row.archive ? 'opacity-50' : ''}`}
+                  >
+                    <div className="col-span-4 text-sm text-gray-700 font-medium">
+                      {row.currentName}
+                    </div>
                     <div className="col-span-5">
                       <input
                         value={row.newName}
-                        onChange={e => updateRow(row.classId, 'newName', e.target.value)}
+                        onChange={(e) => updateRow(row.classId, 'newName', e.target.value)}
                         disabled={row.archive}
                         className={`w-full px-2.5 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 ${
                           isConflict ? 'border-red-400 bg-red-50' : 'border-gray-300'
@@ -246,7 +259,7 @@ export default function AarsrulPage() {
                       <input
                         type="checkbox"
                         checked={row.archive}
-                        onChange={e => updateRow(row.classId, 'archive', e.target.checked)}
+                        onChange={(e) => updateRow(row.classId, 'archive', e.target.checked)}
                         className="h-4 w-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500"
                         data-testid={`archive-checkbox-${row.currentName}`}
                       />
@@ -255,15 +268,18 @@ export default function AarsrulPage() {
                 )
               })}
 
-              {newClasses.map(nc => {
+              {newClasses.map((nc) => {
                 const isConflict = !!nc.name.trim() && conflicts.has(nc.name.trim().toLowerCase())
                 return (
-                  <div key={nc.id} className="px-4 py-2.5 grid grid-cols-12 gap-2 items-center bg-green-50/40">
+                  <div
+                    key={nc.id}
+                    className="px-4 py-2.5 grid grid-cols-12 gap-2 items-center bg-green-50/40"
+                  >
                     <div className="col-span-4 text-sm text-gray-400 italic">Ny klasse</div>
                     <div className="col-span-6">
                       <input
                         value={nc.name}
-                        onChange={e => updateNewClass(nc.id, e.target.value)}
+                        onChange={(e) => updateNewClass(nc.id, e.target.value)}
                         placeholder="f.eks. 0.a"
                         className={`w-full px-2.5 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
                           isConflict ? 'border-red-400 bg-red-50' : 'border-gray-300'
@@ -278,8 +294,16 @@ export default function AarsrulPage() {
                         onClick={() => removeNewClass(nc.id)}
                         className="p-1 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                       </button>
                     </div>
@@ -292,8 +316,16 @@ export default function AarsrulPage() {
                   onClick={addNewClass}
                   className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                   Opret ny klasse
                 </button>
@@ -301,14 +333,15 @@ export default function AarsrulPage() {
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           {rows !== null && (
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => { setRows(null); setError(null) }}
+                onClick={() => {
+                  setRows(null)
+                  setError(null)
+                }}
                 className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Annuller
@@ -326,45 +359,56 @@ export default function AarsrulPage() {
         </>
       )}
 
-      {showConfirm && rows && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowConfirm(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Bekræft årsrul</h2>
-            <p className="text-sm text-gray-600">
-              Dette omdøber{' '}
-              <span className="font-semibold">{renameCount} {renameCount === 1 ? 'klasse' : 'klasser'}</span>
-              {archiveCount > 0 && (
-                <>, arkiverer{' '}
-                  <span className="font-semibold">{archiveCount} {archiveCount === 1 ? 'klasse' : 'klasser'}</span>
-                </>
-              )}
-              {newClasses.filter(nc => nc.name.trim()).length > 0 && (
-                <> og opretter{' '}
-                  <span className="font-semibold">{newClasses.filter(nc => nc.name.trim()).length} ny klasse(r)</span>
-                </>
-              )}
-              . Arkiverede klasser skjules fra skemabyggeren.
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Annuller
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={rollMutation.isPending}
-                className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
-                data-testid="year-roll-confirm"
-              >
-                {rollMutation.isPending ? 'Udfører...' : 'Bekræft årsrul'}
-              </button>
-            </div>
+      <Modal
+        isOpen={showConfirm && !!rows}
+        onClose={() => setShowConfirm(false)}
+        title="Bekræft årsrul"
+      >
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm text-gray-600">
+            Dette omdøber{' '}
+            <span className="font-semibold">
+              {renameCount} {renameCount === 1 ? 'klasse' : 'klasser'}
+            </span>
+            {archiveCount > 0 && (
+              <>
+                , arkiverer{' '}
+                <span className="font-semibold">
+                  {archiveCount} {archiveCount === 1 ? 'klasse' : 'klasser'}
+                </span>
+              </>
+            )}
+            {newClasses.filter((nc) => nc.name.trim()).length > 0 && (
+              <>
+                {' '}
+                og opretter{' '}
+                <span className="font-semibold">
+                  {newClasses.filter((nc) => nc.name.trim()).length} ny klasse(r)
+                </span>
+              </>
+            )}
+            . Arkiverede klasser skjules fra skemabyggeren.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowConfirm(false)}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuller
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={rollMutation.isPending}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+              data-testid="year-roll-confirm"
+            >
+              {rollMutation.isPending ? 'Udfører...' : 'Bekræft årsrul'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }
@@ -382,9 +426,11 @@ function ArchivedClassesTab({ classes }: { classes: ClassDto[] }) {
     <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
       <div className="px-4 py-3">
         <h2 className="text-sm font-semibold text-gray-700">Arkiverede klasser</h2>
-        <p className="mt-0.5 text-xs text-gray-400">Skjult fra skemabyggeren. Opret en ny klasse for at gendanne.</p>
+        <p className="mt-0.5 text-xs text-gray-400">
+          Skjult fra skemabyggeren. Opret en ny klasse for at gendanne.
+        </p>
       </div>
-      {classes.map(c => (
+      {classes.map((c) => (
         <div key={c.id} className="px-4 py-3 flex items-center gap-3">
           <span className="text-sm text-gray-500">{c.name}</span>
           {c.description && <span className="text-xs text-gray-400">{c.description}</span>}

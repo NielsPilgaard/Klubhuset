@@ -71,18 +71,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const parsed = keycloak.tokenParsed as Record<string, unknown> | undefined
   const nameRaw = parsed?.['name']
   const preferredRaw = parsed?.['preferred_username']
-  const userName = typeof nameRaw === 'string' ? nameRaw : typeof preferredRaw === 'string' ? preferredRaw : undefined
+  const userName =
+    typeof nameRaw === 'string'
+      ? nameRaw
+      : typeof preferredRaw === 'string'
+        ? preferredRaw
+        : undefined
   const realmAccess = parsed?.['realm_access']
-  const rawRoles = (realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess))
-    ? (realmAccess as Record<string, unknown>)['roles']
-    : undefined
+  const rawRoles =
+    realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess)
+      ? (realmAccess as Record<string, unknown>)['roles']
+      : undefined
   // UI-only: used for display/UI hints only. Server enforces actual authorization.
-  const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
+  const roles = Array.isArray(rawRoles)
+    ? rawRoles.filter((r): r is string => typeof r === 'string')
+    : []
   const isSuperAdmin = roles.includes('superadmin')
 
   const effectiveViewAs = isSuperAdmin ? viewAs : 'default'
-  const isAdmin = effectiveViewAs === 'admin' || (effectiveViewAs === 'default' && roles.includes('admin'))
-  const isParent = effectiveViewAs === 'parent' || (effectiveViewAs === 'default' && roles.includes('parent'))
+  const isAdmin =
+    effectiveViewAs === 'admin' || (effectiveViewAs === 'default' && roles.includes('admin'))
+  const isParent =
+    effectiveViewAs === 'parent' || (effectiveViewAs === 'default' && roles.includes('parent'))
 
   return (
     <AuthContext.Provider

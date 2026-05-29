@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  getApiV1ClassesByClassIdScheduleOptions,
-} from '../../api/generated/@tanstack/react-query.gen'
+import { getApiV1ClassesByClassIdScheduleOptions } from '../../api/generated/@tanstack/react-query.gen'
 import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
 import type { ScheduleSlotDto, ParentMeDto } from '../../api/client'
 import { WEEKDAY_LABELS, WEEKDAY_NUM } from '../../lib/weekdays'
@@ -13,16 +11,22 @@ function buildTimeAxis(slots: ScheduleSlotDto[]) {
     if (!s.startTime || !s.endTime) continue
     const key = `${s.startTime}-${s.endTime}`
     if (!seen.has(key)) {
-      seen.set(key, { startTime: s.startTime, endTime: s.endTime, sort: parseInt(s.startTime.replace(':', ''), 10) })
+      seen.set(key, {
+        startTime: s.startTime,
+        endTime: s.endTime,
+        sort: parseInt(s.startTime.replace(':', ''), 10),
+      })
     }
   }
   return [...seen.values()].sort((a, b) => a.sort - b.sort)
 }
 
 function ClassScheduleGrid({ classId, className }: { classId: string; className: string }) {
-  const { data: rawSlots, isLoading, isError } = useQuery(
-    getApiV1ClassesByClassIdScheduleOptions({ path: { classId } })
-  )
+  const {
+    data: rawSlots,
+    isLoading,
+    isError,
+  } = useQuery(getApiV1ClassesByClassIdScheduleOptions({ path: { classId } }))
 
   const slots: ScheduleSlotDto[] = Array.isArray(rawSlots) ? (rawSlots as ScheduleSlotDto[]) : []
   const timeAxis = buildTimeAxis(slots)
@@ -39,7 +43,8 @@ function ClassScheduleGrid({ classId, className }: { classId: string; className:
 
   if (isLoading) return <div className="p-4 text-sm text-gray-500">Indlæser skema...</div>
   if (isError) return <div className="p-4 text-sm text-red-600">Kunne ikke hente skema.</div>
-  if (timeAxis.length === 0) return <div className="p-4 text-sm text-gray-500">Intet skema endnu.</div>
+  if (timeAxis.length === 0)
+    return <div className="p-4 text-sm text-gray-500">Intet skema endnu.</div>
 
   return (
     <div>
@@ -48,9 +53,16 @@ function ClassScheduleGrid({ classId, className }: { classId: string; className:
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 border-b border-gray-200 w-20">Tid</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 border-b border-gray-200 w-20">
+                Tid
+              </th>
               {WEEKDAY_LABELS.map((d) => (
-                <th key={d} className="px-3 py-2 text-left text-xs font-medium text-gray-500 border-b border-gray-200">{d}</th>
+                <th
+                  key={d}
+                  className="px-3 py-2 text-left text-xs font-medium text-gray-500 border-b border-gray-200"
+                >
+                  {d}
+                </th>
               ))}
             </tr>
           </thead>
@@ -94,13 +106,18 @@ function ClassScheduleGrid({ classId, className }: { classId: string; className:
 export default function ParentSchemaPage() {
   usePageTitle('Skema')
 
-  const { data: meRes, isLoading, isError } = useQuery({
+  const {
+    data: meRes,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['parents', 'me'],
     queryFn: () => getApiV1ParentsMe({ throwOnError: false }),
   })
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">Indlæser...</div>
-  if (isError) return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
+  if (isError)
+    return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
 
   const notFound = meRes?.response.status === 404
   const me = meRes?.data as ParentMeDto | undefined
@@ -111,11 +128,16 @@ export default function ParentSchemaPage() {
       <h1 className="text-xl font-semibold text-gray-900">Skema</h1>
       {classes.length === 0 ? (
         <p className="text-sm text-gray-500">
-          Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er en fejl.
+          Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er
+          en fejl.
         </p>
       ) : (
         classes.map((c) => (
-          <ClassScheduleGrid key={c.classId} classId={c.classId ?? ''} className={c.className ?? ''} />
+          <ClassScheduleGrid
+            key={c.classId}
+            classId={c.classId ?? ''}
+            className={c.className ?? ''}
+          />
         ))
       )}
     </div>

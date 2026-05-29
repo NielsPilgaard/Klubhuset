@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1BillingSubscriptionOptions,
@@ -59,7 +60,8 @@ export default function BillingPage() {
       if (result?.url) window.location.href = result.url
     },
     onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Kunne ikke oprette checkoutsession'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Kunne ikke oprette checkoutsession'
       console.error('Checkout error:', error)
       alert(errorMessage)
     },
@@ -71,7 +73,8 @@ export default function BillingPage() {
       if (result?.url) window.location.href = result.url
     },
     onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Kunne ikke åbne administrationsportal'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Kunne ikke åbne administrationsportal'
       console.error('Portal error:', error)
       alert(errorMessage)
     },
@@ -230,7 +233,9 @@ function StatusCard({
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold text-green-900">Aktivt abonnement — Basis (499 kr/md)</h2>
+            <h2 className="text-base font-semibold text-green-900">
+              Aktivt abonnement — Basis (499 kr/md)
+            </h2>
             {data.currentPeriodEnd && (
               <p className="mt-1 text-sm text-green-700">
                 Næste betaling den {formatDate(data.currentPeriodEnd)}
@@ -274,7 +279,8 @@ function StatusCard({
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-amber-900">Betaling mislykkedes</h2>
             <p className="mt-1 text-sm text-amber-700">
-              Vi kunne ikke gennemføre betalingen. Opdater dine betalingsoplysninger for at fortsætte.
+              Vi kunne ikke gennemføre betalingen. Opdater dine betalingsoplysninger for at
+              fortsætte.
             </p>
             <button
               onClick={onPortal}
@@ -342,12 +348,19 @@ function ActivateModuleModal({
   isPending: boolean
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
-      <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+    <Modal isOpen onClose={onCancel} size="sm">
+      <div className="p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-600">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-amber-600"
+            >
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -363,10 +376,14 @@ function ActivateModuleModal({
             <span className="text-sm font-medium text-gray-800">{name}</span>
             <span className="text-sm font-semibold text-gray-900 tabular-nums">+{price}</span>
           </div>
-          <p className="mt-1 text-xs text-gray-500">Beløbet lægges til din næste faktura og fortsætter månedligt, indtil du deaktiverer modulet.</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Beløbet lægges til din næste faktura og fortsætter månedligt, indtil du deaktiverer
+            modulet.
+          </p>
         </div>
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onCancel}
             disabled={isPending}
             className="flex-1 px-4 py-2.5 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -374,6 +391,7 @@ function ActivateModuleModal({
             Annuller
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={isPending}
             className="flex-1 px-4 py-2.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -382,7 +400,7 @@ function ActivateModuleModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -429,7 +447,9 @@ function ModuleCard({
           isPending={isPending}
         />
       )}
-      <div className={`bg-white rounded-xl border ${isActive ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}>
+      <div
+        className={`bg-white rounded-xl border ${isActive ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}
+      >
         <div className="px-6 py-5 flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -494,7 +514,9 @@ function PricingCard({
   ]
 
   return (
-    <div className={`bg-white rounded-xl border divide-y divide-gray-100 ${isActive || isTrialing ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}>
+    <div
+      className={`bg-white rounded-xl border divide-y divide-gray-100 ${isActive || isTrialing ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}
+    >
       <div className="px-6 py-5 flex items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -534,7 +556,11 @@ function PricingCard({
             disabled={isRedirecting}
             className="w-full px-4 py-2.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isRedirecting ? 'Vent...' : isTrialing && trialEnd ? `Abonner nu — første betaling den ${formatDate(trialEnd)}` : 'Køb abonnement'}
+            {isRedirecting
+              ? 'Vent...'
+              : isTrialing && trialEnd
+                ? `Abonner nu — første betaling den ${formatDate(trialEnd)}`
+                : 'Køb abonnement'}
           </button>
         </div>
       )}

@@ -18,13 +18,19 @@ function toWeekdayNumber(weekday: number | string): number {
 }
 
 // Collects unique time labels across all active slots, sorted by start time
-function buildTimeAxis(slots: ScheduleSlotDto[]): { startTime: string; endTime: string; sortOrder: number }[] {
+function buildTimeAxis(
+  slots: ScheduleSlotDto[]
+): { startTime: string; endTime: string; sortOrder: number }[] {
   const seen = new Map<string, { startTime: string; endTime: string; sortOrder: number }>()
   for (const s of slots) {
     if (!s.startTime || !s.endTime) continue
     const key = `${s.startTime}-${s.endTime}`
     if (!seen.has(key)) {
-      seen.set(key, { startTime: s.startTime, endTime: s.endTime, sortOrder: parseInt(s.startTime.replace(':', ''), 10) })
+      seen.set(key, {
+        startTime: s.startTime,
+        endTime: s.endTime,
+        sortOrder: parseInt(s.startTime.replace(':', ''), 10),
+      })
     }
   }
   return [...seen.values()].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -32,7 +38,11 @@ function buildTimeAxis(slots: ScheduleSlotDto[]): { startTime: string; endTime: 
 
 type PrintMode = 'class' | 'staff' | 'room'
 
-function PrintGrid({ title, subtitle, slots }: {
+function PrintGrid({
+  title,
+  subtitle,
+  slots,
+}: {
   title: string
   subtitle: string
   slots: ScheduleSlotDto[]
@@ -65,7 +75,9 @@ function PrintGrid({ title, subtitle, slots }: {
           <tr>
             <th className="print-th print-th-time">Tid</th>
             {WEEKDAYS.map((d) => (
-              <th key={d} className="print-th">{d}</th>
+              <th key={d} className="print-th">
+                {d}
+              </th>
             ))}
           </tr>
         </thead>
@@ -84,32 +96,38 @@ function PrintGrid({ title, subtitle, slots }: {
                 return (
                   <td key={day} className="print-td">
                     <div className="print-td-inner">
-                    {daySlots && daySlots.map((slot, idx) => (
-                      <div
-                        key={idx}
-                        className={`print-cell${hasConflict ? ' print-cell-conflict' : ''}`}
-                        style={slot.courseColor ? {
-                          backgroundColor: slot.courseColor + '22',
-                          borderLeft: `3px solid ${slot.courseColor}`,
-                          paddingLeft: '5px',
-                          borderRadius: '4px',
-                        } : undefined}
-                      >
-                        <span className="print-course" style={slot.courseColor ? { color: slot.courseColor } : undefined}>{slot.courseName}</span>
-                        {slot.teacherName && (
-                          <span className="print-info">{slot.teacherName}</span>
-                        )}
-                        {slot.className && (
-                          <span className="print-info">{slot.className}</span>
-                        )}
-                        {slot.roomName && (
-                          <span className="print-info print-room">{slot.roomName}</span>
-                        )}
-                        {slot.aideName && (
-                          <span className="print-info">{slot.aideName}</span>
-                        )}
-                      </div>
-                    ))}
+                      {daySlots &&
+                        daySlots.map((slot, idx) => (
+                          <div
+                            key={idx}
+                            className={`print-cell${hasConflict ? ' print-cell-conflict' : ''}`}
+                            style={
+                              slot.courseColor
+                                ? {
+                                    backgroundColor: slot.courseColor + '22',
+                                    borderLeft: `3px solid ${slot.courseColor}`,
+                                    paddingLeft: '5px',
+                                    borderRadius: '4px',
+                                  }
+                                : undefined
+                            }
+                          >
+                            <span
+                              className="print-course"
+                              style={slot.courseColor ? { color: slot.courseColor } : undefined}
+                            >
+                              {slot.courseName}
+                            </span>
+                            {slot.teacherName && (
+                              <span className="print-info">{slot.teacherName}</span>
+                            )}
+                            {slot.className && <span className="print-info">{slot.className}</span>}
+                            {slot.roomName && (
+                              <span className="print-info print-room">{slot.roomName}</span>
+                            )}
+                            {slot.aideName && <span className="print-info">{slot.aideName}</span>}
+                          </div>
+                        ))}
                     </div>
                   </td>
                 )
@@ -119,9 +137,7 @@ function PrintGrid({ title, subtitle, slots }: {
         </tbody>
       </table>
 
-      {slots.length === 0 && (
-        <p className="print-empty">Ingen lektioner at vise</p>
-      )}
+      {slots.length === 0 && <p className="print-empty">Ingen lektioner at vise</p>}
     </div>
   )
 }
@@ -137,13 +153,7 @@ function ClassPrintPage({ classId }: { classId: string }) {
   if (isLoading) return <div className="p-8 text-gray-400">Henter skema…</div>
   if (slots.length === 0) return <div className="p-8 text-gray-400">Ingen aktivt skema fundet</div>
 
-  return (
-    <PrintGrid
-      title={klass?.name ?? 'Klasse'}
-      subtitle="Ugeskema"
-      slots={slots}
-    />
-  )
+  return <PrintGrid title={klass?.name ?? 'Klasse'} subtitle="Ugeskema" slots={slots} />
 }
 
 function StaffPrintPage({ staffId }: { staffId: string }) {
@@ -175,28 +185,30 @@ function RoomPrintPage({ roomId }: { roomId: string }) {
 
   if (isLoading) return <div className="p-8 text-gray-400">Henter lokaleplan…</div>
 
-  return (
-    <PrintGrid
-      title={room?.name ?? 'Lokale'}
-      subtitle="Ugentlig belægning"
-      slots={slots}
-    />
-  )
+  return <PrintGrid title={room?.name ?? 'Lokale'} subtitle="Ugentlig belægning" slots={slots} />
 }
 
 export default function PrintSchemaPage() {
-  const { classId, staffId, roomId } = useParams<{ classId?: string; staffId?: string; roomId?: string }>()
+  const { classId, staffId, roomId } = useParams<{
+    classId?: string
+    staffId?: string
+    roomId?: string
+  }>()
   const [searchParams] = useSearchParams()
-  
+
   // Safely validate PrintMode from query param
   const typeParam = searchParams.get('type')
   const isValidPrintMode = (value: string | null): value is PrintMode => {
     return value === 'class' || value === 'staff' || value === 'room'
   }
-  
-  const mode: PrintMode = isValidPrintMode(typeParam) 
-    ? typeParam 
-    : (classId ? 'class' : staffId ? 'staff' : 'room')
+
+  const mode: PrintMode = isValidPrintMode(typeParam)
+    ? typeParam
+    : classId
+      ? 'class'
+      : staffId
+        ? 'staff'
+        : 'room'
 
   return (
     <>
@@ -326,7 +338,14 @@ export default function PrintSchemaPage() {
           onClick={() => window.print()}
           className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 shadow transition-colors"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="6 9 6 2 18 2 18 9" />
             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
             <rect x="6" y="14" width="12" height="8" />

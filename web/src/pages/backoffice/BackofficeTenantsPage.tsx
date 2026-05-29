@@ -31,11 +31,19 @@ const statusColors: Record<SubscriptionStatus, string> = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('da-DK', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 export default function BackofficeTenantsPage() {
-  const { data: tenants, isLoading, isError } = useQuery({
+  const {
+    data: tenants,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['admin', 'tenants'],
     queryFn: () => api.get<TenantListItem[]>('/admin/tenants'),
   })
@@ -75,7 +83,9 @@ export default function BackofficeTenantsPage() {
                 <td className="px-4 py-3 text-gray-500">{t.contactEmail ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-500">{formatDate(t.createdAt)}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[t.subscriptionStatus]}`}>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[t.subscriptionStatus]}`}
+                  >
                     {statusLabel[t.subscriptionStatus]}
                   </span>
                 </td>

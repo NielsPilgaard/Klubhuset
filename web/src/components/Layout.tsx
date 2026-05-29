@@ -19,7 +19,14 @@ export default function Layout() {
             onClick={() => setSidebarOpen(true)}
             className="p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -27,7 +34,9 @@ export default function Layout() {
           </button>
           <Link to="/dashboard" className="flex items-center gap-3 flex-1">
             <Logo variant="light" size={24} />
-            <span className="font-display text-lg font-semibold text-brand-800">Skoleoverblikket</span>
+            <span className="font-display text-lg font-semibold text-brand-800">
+              Skoleoverblikket
+            </span>
           </Link>
           <NotificationBell />
         </header>

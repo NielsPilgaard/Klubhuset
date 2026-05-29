@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getApiV1Notifications, postApiV1NotificationsByIdRead, postApiV1NotificationsReadAll } from '../api/generated/sdk.gen'
+import {
+  getApiV1Notifications,
+  postApiV1NotificationsByIdRead,
+  postApiV1NotificationsReadAll,
+} from '../api/generated/sdk.gen'
 import type { NotificationType } from '../api/client'
 
 interface NotificationItem {
@@ -13,12 +17,18 @@ interface NotificationItem {
 
 function typeIcon(type: NotificationType): string {
   switch (type) {
-    case 'AbsenceConfirmed': return '✅'
-    case 'AbsenceDismissed': return '❌'
-    case 'NewMessage': return '💬'
-    case 'NewContactMessage': return '📖'
-    case 'WeekPlanChanged': return '📅'
-    default: return '🔔'
+    case 'AbsenceConfirmed':
+      return '✅'
+    case 'AbsenceDismissed':
+      return '❌'
+    case 'NewMessage':
+      return '💬'
+    case 'NewContactMessage':
+      return '📖'
+    case 'WeekPlanChanged':
+      return '📅'
+    default:
+      return '🔔'
   }
 }
 
@@ -67,14 +77,14 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
-  const unreadCount = notifications.filter(n => n.readAt === null).length
+  const unreadCount = notifications.filter((n) => n.readAt === null).length
   const displayed = notifications.slice(0, 10)
 
   async function markRead(id: string) {
     try {
       await postApiV1NotificationsByIdRead({ path: { id }, throwOnError: false })
-      setNotifications(prev =>
-        prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n)
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n))
       )
     } catch {
       // ignore
@@ -85,7 +95,7 @@ export default function NotificationBell() {
     try {
       await postApiV1NotificationsReadAll({ throwOnError: false })
       const now = new Date().toISOString()
-      setNotifications(prev => prev.map(n => ({ ...n, readAt: n.readAt ?? now })))
+      setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? now })))
     } catch {
       // ignore
     }
@@ -94,12 +104,21 @@ export default function NotificationBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className="relative p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
         aria-label="Notifikationer"
         data-testid="notification-bell"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
@@ -131,7 +150,7 @@ export default function NotificationBell() {
             {displayed.length === 0 ? (
               <p className="px-4 py-6 text-sm text-gray-500 text-center">Ingen notifikationer</p>
             ) : (
-              displayed.map(n => (
+              displayed.map((n) => (
                 <button
                   key={n.id}
                   onClick={() => void markRead(n.id)}
@@ -142,7 +161,9 @@ export default function NotificationBell() {
                 >
                   <span className="text-lg shrink-0 mt-0.5">{typeIcon(n.type)}</span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm leading-snug break-words ${n.readAt === null ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+                    <p
+                      className={`text-sm leading-snug break-words ${n.readAt === null ? 'font-medium text-gray-900' : 'text-gray-700'}`}
+                    >
                       {n.body}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">{relativeTime(n.createdAt)}</p>

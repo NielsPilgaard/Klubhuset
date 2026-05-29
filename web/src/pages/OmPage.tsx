@@ -19,15 +19,15 @@ export default function OmPage() {
 
           <div className="prose-like space-y-6 text-gray-700 leading-relaxed">
             <p className="text-lg">
-              Skoleoverblikket er bygget af mig, Niels — IT-udvikler med forståelse
-              for, hvad der skal til for at hverdagen hænger sammen på en lille skole.
+              Skoleoverblikket er bygget af mig, Niels — IT-udvikler med forståelse for, hvad der
+              skal til for at hverdagen hænger sammen på en lille skole.
             </p>
 
             <p>
-              Mange skemaværktøjer er bygget til store institutioner med budgetter og
-              IT-ressourcer der matcher. Skoleoverblikket er anderledes: det er bygget til skoler der
-              vil have noget enkelt — folkeskoler, friskoler, privatskoler og efterskoler — steder
-              hvor den samme person både tager telefonen, booker vikar og hænger skemaet op mandag morgen.
+              Mange skemaværktøjer er bygget til store institutioner med budgetter og IT-ressourcer
+              der matcher. Skoleoverblikket er anderledes: det er bygget til skoler der vil have
+              noget enkelt — folkeskoler, friskoler, privatskoler og efterskoler — steder hvor den
+              samme person både tager telefonen, booker vikar og hænger skemaet op mandag morgen.
             </p>
 
             <p>
@@ -36,8 +36,8 @@ export default function OmPage() {
             </p>
 
             <p>
-              Jeg står for udvikling, drift og support. Det betyder hurtige svar, direkte
-              kontakt og et produkt der udvikler sig i takt med de behov skoler har.
+              Jeg står for udvikling, drift og support. Det betyder hurtige svar, direkte kontakt og
+              et produkt der udvikler sig i takt med de behov skoler har.
             </p>
 
             <p className="text-brand-700 font-medium">
@@ -63,7 +63,10 @@ export default function OmPage() {
               </a>
             </p>
             <p>
-              <a href="mailto:kontakt@skoleoverblikket.dk" className="hover:text-brand-700 transition-colors">
+              <a
+                href="mailto:kontakt@skoleoverblikket.dk"
+                className="hover:text-brand-700 transition-colors"
+              >
                 kontakt@skoleoverblikket.dk
               </a>
             </p>
@@ -82,7 +85,9 @@ function PublicNav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">
           <Logo variant="light" size={28} />
-          <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
+          <span className="font-display text-xl font-semibold text-brand-800">
+            Skoleoverblikket
+          </span>
         </a>
         <div className="flex items-center gap-4">
           <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">

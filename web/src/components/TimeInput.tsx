@@ -17,7 +17,7 @@ export function TimeInput({ value, onChange, className = '' }: TimeInputProps) {
         max={23}
         value={parseInt(h, 10)}
         onFocus={(e) => e.target.select()}
-        onChange={e => {
+        onChange={(e) => {
           const hh = String(Math.max(0, Math.min(23, Number(e.target.value)))).padStart(2, '0')
           onChange(`${hh}:${m}`)
         }}
@@ -31,7 +31,7 @@ export function TimeInput({ value, onChange, className = '' }: TimeInputProps) {
         step={5}
         value={parseInt(m, 10)}
         onFocus={(e) => e.target.select()}
-        onChange={e => {
+        onChange={(e) => {
           const mm = String(Math.max(0, Math.min(59, Number(e.target.value)))).padStart(2, '0')
           onChange(`${h}:${mm}`)
         }}

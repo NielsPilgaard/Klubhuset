@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getApiV1NotificationPreferences, putApiV1NotificationPreferences } from '../api/generated/sdk.gen'
+import {
+  getApiV1NotificationPreferences,
+  putApiV1NotificationPreferences,
+} from '../api/generated/sdk.gen'
 import type { NotificationType } from '../api/client'
 
 interface PreferenceState {
@@ -23,16 +26,18 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   WeekPlanChanged: 'Ugeplanen opdateret',
   AbsenceConfirmed: 'Fravær bekræftet',
   AbsenceDismissed: 'Fravær afvist',
-  VacationRegistrationOpened: 'Ferieindmelding åbnet',
+  VacationRegistrationOpened: 'Ferietilmelding åbnet',
 }
 
 function buildDefaultPreferences(): PreferenceState[] {
-  return ALL_TYPES.map(type => ({ type, inApp: true, email: true }))
+  return ALL_TYPES.map((type) => ({ type, inApp: true, email: true }))
 }
 
-function mergeWithDefaults(loaded: Array<{ type: NotificationType; inApp: boolean; email: boolean }>): PreferenceState[] {
-  const map = new Map(loaded.map(p => [p.type, p]))
-  return ALL_TYPES.map(type => {
+function mergeWithDefaults(
+  loaded: Array<{ type: NotificationType; inApp: boolean; email: boolean }>
+): PreferenceState[] {
+  const map = new Map(loaded.map((p) => [p.type, p]))
+  return ALL_TYPES.map((type) => {
     const p = map.get(type)
     return p ? { type, inApp: p.inApp, email: p.email } : { type, inApp: true, email: true }
   })
@@ -51,7 +56,11 @@ export default function NotificationPreferencesPage() {
     try {
       const { data } = await getApiV1NotificationPreferences({ throwOnError: true })
       if (data) {
-        setPrefs(mergeWithDefaults(data as Array<{ type: NotificationType; inApp: boolean; email: boolean }>))
+        setPrefs(
+          mergeWithDefaults(
+            data as Array<{ type: NotificationType; inApp: boolean; email: boolean }>
+          )
+        )
       }
     } catch {
       setError('Kunne ikke indlæse notifikationspræferencer.')
@@ -80,9 +89,7 @@ export default function NotificationPreferencesPage() {
   }
 
   function toggle(type: NotificationType, field: 'inApp' | 'email') {
-    setPrefs(prev =>
-      prev.map(p => p.type === type ? { ...p, [field]: !p[field] } : p)
-    )
+    setPrefs((prev) => prev.map((p) => (p.type === type ? { ...p, [field]: !p[field] } : p)))
     setSaved(false)
   }
 
@@ -107,9 +114,15 @@ export default function NotificationPreferencesPage() {
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Table header */}
           <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 bg-gray-50 border-b border-gray-200">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Hændelse</span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 w-16 text-center">I appen</span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 w-16 text-center">E-mail</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Hændelse
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 w-16 text-center">
+              I appen
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 w-16 text-center">
+              E-mail
+            </span>
           </div>
 
           {/* Rows */}
@@ -149,9 +162,7 @@ export default function NotificationPreferencesPage() {
         >
           {saving ? 'Gemmer...' : 'Gem præferencer'}
         </button>
-        {saved && (
-          <span className="text-sm text-green-600 font-medium">Gemt!</span>
-        )}
+        {saved && <span className="text-sm text-green-600 font-medium">Gemt!</span>}
       </div>
     </div>
   )

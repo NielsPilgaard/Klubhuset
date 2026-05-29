@@ -204,6 +204,7 @@ public sealed class BroadcastController(
 			sb.Append(HtmlEncoder.Default.Encode(line));
 			sb.Append("</p>");
 		}
+
 		sb.Append(footer);
 		sb.Append("</div>");
 		return sb.ToString();

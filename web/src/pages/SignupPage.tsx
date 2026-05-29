@@ -76,14 +76,18 @@ export default function SignupPage() {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md text-center px-8 py-12">
-          <span className="font-display text-2xl font-semibold text-brand-800">Skoleoverblikket</span>
+          <span className="font-display text-2xl font-semibold text-brand-800">
+            Skoleoverblikket
+          </span>
           <h1 className="mt-4 text-lg font-semibold text-gray-900">Kommer snart</h1>
           <p className="mt-2 text-sm text-gray-500">
             Tilmelding er ikke åben endnu. Følg med for opdateringer.
           </p>
           <p className="mt-6 text-xs text-gray-400">
             Har du allerede en konto?{' '}
-            <a href="/login" className="text-brand-600 hover:underline">Log ind</a>
+            <a href="/login" className="text-brand-600 hover:underline">
+              Log ind
+            </a>
           </p>
         </div>
       </div>
@@ -95,17 +99,19 @@ export default function SignupPage() {
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
         {/* Header */}
         <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
-          <span className="font-display text-2xl font-semibold text-brand-800">Skoleoverblikket</span>
+          <span className="font-display text-2xl font-semibold text-brand-800">
+            Skoleoverblikket
+          </span>
           <h1 className="mt-3 text-lg font-semibold text-gray-900">Opret din skole</h1>
-          <p className="mt-1 text-sm text-gray-500">14 dages gratis prøveperiode · Intet kreditkort</p>
+          <p className="mt-1 text-sm text-gray-500">
+            14 dages gratis prøveperiode · Intet kreditkort
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="px-8 py-6 space-y-5">
           {/* School name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Skolens navn *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Skolens navn *</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -130,7 +136,9 @@ export default function SignupPage() {
                 data-testid="signup-first-name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
-              {errors.adminFirstName && <p className="mt-1 text-xs text-red-600">{errors.adminFirstName}</p>}
+              {errors.adminFirstName && (
+                <p className="mt-1 text-xs text-red-600">{errors.adminFirstName}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Efternavn *</label>
@@ -142,15 +150,15 @@ export default function SignupPage() {
                 data-testid="signup-last-name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
-              {errors.adminLastName && <p className="mt-1 text-xs text-red-600">{errors.adminLastName}</p>}
+              {errors.adminLastName && (
+                <p className="mt-1 text-xs text-red-600">{errors.adminLastName}</p>
+              )}
             </div>
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              E-mail *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
             <input
               type="email"
               value={adminEmail}
@@ -165,9 +173,7 @@ export default function SignupPage() {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Adgangskode *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Adgangskode *</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -186,20 +192,36 @@ export default function SignupPage() {
                 aria-label={showPassword ? 'Skjul adgangskode' : 'Vis adgangskode'}
               >
                 {showPassword ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
                     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
                     <line x1="1" y1="1" x2="23" y2="23" />
                   </svg>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                     <circle cx="12" cy="12" r="3" />
                   </svg>
                 )}
               </button>
             </div>
-            {errors.adminPassword && <p className="mt-1 text-xs text-red-600">{errors.adminPassword}</p>}
+            {errors.adminPassword && (
+              <p className="mt-1 text-xs text-red-600">{errors.adminPassword}</p>
+            )}
           </div>
 
           {errors.general && (
@@ -208,7 +230,14 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={!name.trim() || !adminEmail.trim() || !adminFirstName.trim() || !adminLastName.trim() || !adminPassword || pending}
+            disabled={
+              !name.trim() ||
+              !adminEmail.trim() ||
+              !adminFirstName.trim() ||
+              !adminLastName.trim() ||
+              !adminPassword ||
+              pending
+            }
             className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {pending ? 'Opretter skole…' : 'Opret skole'}
@@ -218,7 +247,9 @@ export default function SignupPage() {
         <div className="px-8 pb-6 text-center">
           <p className="text-xs text-gray-400">
             Har du allerede en konto?{' '}
-            <a href="/login" className="text-brand-600 hover:underline">Log ind</a>
+            <a href="/login" className="text-brand-600 hover:underline">
+              Log ind
+            </a>
           </p>
         </div>
       </div>

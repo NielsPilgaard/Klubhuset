@@ -10,7 +10,9 @@ const EMAIL_TYPES: { value: EmailType; label: string }[] = [
 ]
 
 async function fetchEmailPreview(type: EmailType, params: Record<string, string>): Promise<string> {
-  await keycloak.updateToken(30).catch(() => { keycloak.login() })
+  await keycloak.updateToken(30).catch(() => {
+    keycloak.login()
+  })
   const qs = new URLSearchParams(params).toString()
   const res = await fetch(`/api/v1/admin/email-preview/${type}?${qs}`, {
     headers: { Authorization: `Bearer ${keycloak.token}` },
@@ -24,7 +26,9 @@ export default function BackofficeEmailPreviewPage() {
   const [name, setName] = useState('Mette Hansen')
   const [school, setSchool] = useState('Testskolen')
   const [withPassword, setWithPassword] = useState(true)
-  const [notificationBody, setNotificationBody] = useState('Dit barns skema er blevet opdateret for uge 22.')
+  const [notificationBody, setNotificationBody] = useState(
+    'Dit barns skema er blevet opdateret for uge 22.'
+  )
   const [html, setHtml] = useState('')
   const [error, setError] = useState<string | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -40,8 +44,11 @@ export default function BackofficeEmailPreviewPage() {
     }
 
     fetchEmailPreview(type, params)
-      .then(h => { setHtml(h); setError(null) })
-      .catch(e => setError(String(e)))
+      .then((h) => {
+        setHtml(h)
+        setError(null)
+      })
+      .catch((e) => setError(String(e)))
   }, [type, name, school, withPassword, notificationBody])
 
   useEffect(() => {
@@ -63,11 +70,13 @@ export default function BackofficeEmailPreviewPage() {
             <label className="block text-xs font-medium text-gray-700 mb-1">E-mailtype</label>
             <select
               value={type}
-              onChange={e => setType(e.target.value as EmailType)}
+              onChange={(e) => setType(e.target.value as EmailType)}
               className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {EMAIL_TYPES.map(t => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+              {EMAIL_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </select>
           </div>
@@ -79,7 +88,7 @@ export default function BackofficeEmailPreviewPage() {
                 <input
                   type="text"
                   value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -88,7 +97,7 @@ export default function BackofficeEmailPreviewPage() {
                 <input
                   type="text"
                   value={school}
-                  onChange={e => setSchool(e.target.value)}
+                  onChange={(e) => setSchool(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -96,7 +105,7 @@ export default function BackofficeEmailPreviewPage() {
                 <input
                   type="checkbox"
                   checked={withPassword}
-                  onChange={e => setWithPassword(e.target.checked)}
+                  onChange={(e) => setWithPassword(e.target.checked)}
                   className="rounded"
                 />
                 Med midlertidig adgangskode
@@ -110,7 +119,7 @@ export default function BackofficeEmailPreviewPage() {
               <input
                 type="text"
                 value={notificationBody}
-                onChange={e => setNotificationBody(e.target.value)}
+                onChange={(e) => setNotificationBody(e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
