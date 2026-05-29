@@ -295,7 +295,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		{
 			return Problem(
 				title: "Vinduet er lukket",
-				detail: "Ferieindmeldingen er ikke åben for registreringer.",
+				detail: "Ferietilmeldingen er ikke åben for registreringer.",
 				statusCode: StatusCodes.Status409Conflict);
 		}
 
@@ -365,7 +365,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		{
 			return Problem(
 				title: "Vinduet er lukket",
-				detail: "Ferieindmeldingen er ikke åben for ændringer.",
+				detail: "Ferietilmeldingen er ikke åben for ændringer.",
 				statusCode: StatusCodes.Status409Conflict);
 		}
 
@@ -396,7 +396,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 				RecipientType.Parent,
 				NotificationType.VacationRegistrationOpened,
 				window.Id,
-				$"Ferieindmelding åben: {window.Title}. Frist: {window.RegistrationDeadline:d. MMMM}.",
+				$"Ferietilmelding åben: {window.Title}. Frist: {window.RegistrationDeadline:d. MMMM}.",
 				ct);
 		}
 	}
