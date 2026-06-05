@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Modal } from '../Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -233,11 +233,33 @@ interface FilePreviewModalProps {
 function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewModalProps) {
   const isImage = contentType.startsWith('image/')
   const isPdf = contentType.includes('pdf')
+  const isText = contentType.startsWith('text/') || /\.(txt|csv|log|md|json|xml|yaml|yml)$/i.test(fileName)
+  const [textContent, setTextContent] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isText) return
+    fetch(url)
+      .then((r) => r.text())
+      .then(setTextContent)
+      .catch(() => setTextContent('Kunne ikke indlæse fil.'))
+  }, [url, isText])
 
   if (isPdf) {
     window.open(url, '_blank', 'noopener,noreferrer')
     onClose()
     return null
+  }
+
+  function handleDownload() {
+    fetch(url)
+      .then((r) => r.blob())
+      .then((blob) => {
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = fileName
+        a.click()
+        URL.revokeObjectURL(a.href)
+      })
   }
 
   return (
@@ -274,17 +296,25 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
               />
             </div>
           )}
-          {!isImage && (
+          {isText && (
+            <div className="flex-1 overflow-auto p-6 min-h-0">
+              {textContent === null ? (
+                <p className="text-sm text-gray-400">Indlæser…</p>
+              ) : (
+                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">{textContent}</pre>
+              )}
+            </div>
+          )}
+          {!isImage && !isText && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
               <p className="text-gray-700 font-medium">{fileName}</p>
               <p className="text-sm text-gray-400">{contentType || 'Ukendt filtype'}</p>
-              <a
-                href={url}
-                download={fileName}
+              <button
+                onClick={handleDownload}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
               >
                 Hent fil
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -769,17 +799,27 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                     >
                       <EyeIcon />
                     </button>
-                    <a
-                      href={f.url || undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={f.fileName}
+                    <button
                       data-testid={`download-${f.id}`}
+                      onClick={() => {
+                        if (!f.url || !f.fileName) return
+                        const url = f.url
+                        const name = f.fileName
+                        fetch(url)
+                          .then((r) => r.blob())
+                          .then((blob) => {
+                            const a = document.createElement('a')
+                            a.href = URL.createObjectURL(blob)
+                            a.download = name
+                            a.click()
+                            URL.revokeObjectURL(a.href)
+                          })
+                      }}
                       className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                       title="Hent fil"
                     >
                       <DownloadIcon />
-                    </a>
+                    </button>
                     {isAdmin && (
                       <button
                         data-testid={`delete-${f.id}`}
