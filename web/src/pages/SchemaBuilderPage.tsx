@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { usePageTitle } from '../hooks/usePageTitle'
 import CoursesSidebar from '../components/CoursesSidebar'
-import DatePicker from '../components/DatePicker'
+import { DatePicker } from '../components/DatePicker'
 import { decodeSidebarDragId } from '../utils/sidebarDragId'
 import {
   getApiV1ClassesByClassIdSchemasBySchemaIdOptions,
