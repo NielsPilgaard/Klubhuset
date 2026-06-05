@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Tenancy;
@@ -26,6 +27,23 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<WeekPlanSlot> WeekPlanSlots => Set<WeekPlanSlot>();
 	public DbSet<WeekPlanSlotFile> WeekPlanSlotFiles => Set<WeekPlanSlotFile>();
 	public DbSet<ClassPermission> ClassPermissions => Set<ClassPermission>();
+	public DbSet<SfoShift> SfoShifts => Set<SfoShift>();
+	public DbSet<SfoShiftStaff> SfoShiftStaff => Set<SfoShiftStaff>();
+	public DbSet<SfoWeekPlan> SfoWeekPlans => Set<SfoWeekPlan>();
+	public DbSet<SfoWeekPlanShift> SfoWeekPlanShifts => Set<SfoWeekPlanShift>();
+	public DbSet<Parent> Parents => Set<Parent>();
+	public DbSet<Student> Students => Set<Student>();
+	public DbSet<ParentInvitation> ParentInvitations => Set<ParentInvitation>();
+	public DbSet<AbsenceReport> AbsenceReports => Set<AbsenceReport>();
+	public DbSet<SubscriptionModuleItem> SubscriptionModuleItems => Set<SubscriptionModuleItem>();
+	public DbSet<Notification> Notifications => Set<Notification>();
+	public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+	public DbSet<ContactThread> ContactThreads => Set<ContactThread>();
+	public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+	public DbSet<Message> Messages => Set<Message>();
+	public DbSet<VacationRegistrationWindow> VacationRegistrationWindows => Set<VacationRegistrationWindow>();
+	public DbSet<VacationRegistrationEntry> VacationRegistrationEntries => Set<VacationRegistrationEntry>();
+	public DbSet<BroadcastEmail> BroadcastEmails => Set<BroadcastEmail>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -38,16 +56,27 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 		// filtered to the current tenant — never bypass this.
 		foreach (var entityType in modelBuilder.Model.GetEntityTypes())
 		{
-			if (!typeof(ITenantScoped).IsAssignableFrom(entityType.ClrType))
+			var clrType = entityType.ClrType;
+			var isTenantScoped = typeof(ITenantScoped).IsAssignableFrom(clrType);
+			var isArchivable = typeof(IArchivable).IsAssignableFrom(clrType);
+
+			if (!isTenantScoped && !isArchivable)
 			{
 				continue;
 			}
 
-			var method = typeof(AppDbContext)
-						 .GetMethod(nameof(SetTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-						 .MakeGenericMethod(entityType.ClrType);
+			string methodName = (isTenantScoped, isArchivable) switch
+			{
+				(true, true) => nameof(SetTenantAndArchivableFilter),
+				(true, false) => nameof(SetTenantFilter),
+				(false, true) => nameof(SetArchivableFilter),
+				_ => throw new UnreachableException(),
+			};
 
-			method.Invoke(this, [modelBuilder]);
+			typeof(AppDbContext)
+				.GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static)!
+				.MakeGenericMethod(clrType)
+				.Invoke(this, [modelBuilder]);
 		}
 	}
 
@@ -56,5 +85,19 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	{
 		modelBuilder.Entity<TEntity>()
 			.HasQueryFilter(e => e.TenantId == tenantContext.TenantId);
+	}
+
+	private static void SetArchivableFilter<TEntity>(ModelBuilder modelBuilder)
+		where TEntity : class, IArchivable
+	{
+		modelBuilder.Entity<TEntity>()
+			.HasQueryFilter(e => e.ArchivedAt == null);
+	}
+
+	private void SetTenantAndArchivableFilter<TEntity>(ModelBuilder modelBuilder)
+		where TEntity : class, ITenantScoped, IArchivable
+	{
+		modelBuilder.Entity<TEntity>()
+			.HasQueryFilter(e => e.TenantId == tenantContext.TenantId && e.ArchivedAt == null);
 	}
 }

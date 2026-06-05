@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.ComponentModel.DataAnnotations;
 
 namespace Skoleoverblikket.Api;
@@ -8,4 +9,6 @@ public sealed class ApplicationOptions
 
 	[Required(AllowEmptyStrings = false)]
 	public string BaseUrl { get; init; } = "http://localhost:5173";
+
+	public string SanitizedBaseUrl => BaseUrl.TrimEnd('/');
 }

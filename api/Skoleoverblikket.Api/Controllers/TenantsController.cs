@@ -38,7 +38,7 @@ public sealed class TenantsController(AppDbContext context, KeycloakAdminService
 	/// </summary>
 	[HttpPost]
 	[AllowAnonymous]
-	public async Task<ActionResult<TenantCreatedDto>> Create([FromBody] CreateTenantRequest req, CancellationToken ct)
+	public async Task<ActionResult<TenantCreatedDto>> Create([FromBody] CreateTenantRequest req, CancellationToken cancellationToken)
 	{
 		var school = new School
 		{
@@ -58,7 +58,7 @@ public sealed class TenantsController(AppDbContext context, KeycloakAdminService
 				lastName: req.AdminLastName,
 				password: req.AdminPassword,
 				tenantId: school.Id,
-				ct);
+				cancellationToken);
 		}
 		catch (KeycloakException ex)
 		{
@@ -82,11 +82,11 @@ public sealed class TenantsController(AppDbContext context, KeycloakAdminService
 
 		try
 		{
-			await context.SaveChangesAsync(ct);
+			await context.SaveChangesAsync(cancellationToken);
 		}
 		catch (Exception ex)
 		{
-			await keycloakAdmin.DeleteStaffUserAsync(keycloakSubject, ct);
+			await keycloakAdmin.DeleteStaffUserAsync(keycloakSubject, cancellationToken);
 			return Problem(
 				title: "Kunne ikke oprette skole",
 				detail: ex.Message,
@@ -96,7 +96,7 @@ public sealed class TenantsController(AppDbContext context, KeycloakAdminService
 		TokenResponse token;
 		try
 		{
-			token = await keycloakAdmin.GetTokenForUserAsync(req.AdminEmail, req.AdminPassword, ct);
+			token = await keycloakAdmin.GetTokenForUserAsync(req.AdminEmail, req.AdminPassword, cancellationToken);
 		}
 		catch (Exception ex)
 		{

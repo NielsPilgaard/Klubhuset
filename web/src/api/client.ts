@@ -22,7 +22,10 @@ client.setConfig({
 })
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string
+  ) {
     super(message)
   }
 }
@@ -63,40 +66,60 @@ async function requestForm<T>(path: string, body: FormData): Promise<T> {
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  post: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
   postForm: <T>(path: string, body: FormData) => requestForm<T>(path, body),
-  put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
 }
 
-// Re-export all generated types
+// Re-export all generated types — stable (non-prefixed) names kept as aliases
 export type {
-  BreakDto,
-  CalendarEntryDto,
   CalendarEntryType,
-  ClassDto,
   ConflictInfo,
   ConflictType,
-  CourseDto,
-  DashboardStats,
-  FileDto,
-  RoomDto,
-  SchemaDetailDto,
-  SchemaDto,
-  SlotDto,
-  SlotsAndConflictsDto,
-  StaffDto,
+  DayOfWeek,
   StaffRole,
-  TemplateDto,
-  TimeSlotDto,
-  WeekPlanDto,
-  WeekPlanSlotDto,
-  WeekPlanSlotFileDto,
-  ScheduleSlotDto,
-  OnboardingStatusDto,
-  SchoolSettingsDto,
-  SubscriptionDto,
+  AbsenceStatus,
   SubscriptionStatus,
-  InvitationDto,
+  NotificationType,
+  SubjectCategory,
+} from './generated/types.gen'
+
+export type {
+  TimeSlotsControllerBreakDto as BreakDto,
+  CalendarControllerCalendarEntryDto as CalendarEntryDto,
+  CalendarControllerDefaultHolidayDto as DefaultHolidayDto,
+  ClassesControllerClassDto as ClassDto,
+  ClassesControllerYearRollCreateEntry as YearRollCreateEntry,
+  ClassesControllerYearRollRenameEntry as YearRollRenameEntry,
+  ClassPermissionsControllerClassPermissionDto as ClassPermissionDto,
+  CoursesControllerCourseDto as CourseDto,
+  FilesControllerFileDto as FileDto,
+  FilesControllerFolderDto as FolderDto,
+  RoomsControllerRoomDto as RoomDto,
+  SchemasControllerSchemaDetailDto as SchemaDetailDto,
+  SchemasControllerSchemaDto as SchemaDto,
+  SchemasControllerSlotDto as SlotDto,
+  SchemasControllerSlotsAndConflictsDto as SlotsAndConflictsDto,
+  SchedulesControllerScheduleSlotDto as ScheduleSlotDto,
+  SchoolsControllerOnboardingStatusDto as OnboardingStatusDto,
+  SchoolsControllerSchoolSettingsDto as SchoolSettingsDto,
+  SfoControllerSfoShiftDto as SfoShiftDto,
+  SfoWeekPlanControllerSfoWeekPlanShiftDto as SfoWeekPlanShiftDto,
+  StaffControllerStaffDto as StaffDto,
+  StaffInvitationsControllerInvitationDto as InvitationDto,
+  StatsControllerDashboardStats as DashboardStats,
+  StudentsControllerStudentDto as StudentDto,
+  ParentsControllerParentDto as ParentDto,
+  ParentMeControllerParentMeDto as ParentMeDto,
+  TimeSlotsControllerTemplateDto as TemplateDto,
+  TimeSlotsControllerTimeSlotDto as TimeSlotDto,
+  WeekPlanControllerWeekPlanDto as WeekPlanDto,
+  WeekPlanControllerWeekPlanSlotDto as WeekPlanSlotDto,
+  WeekPlanControllerWeekPlanSlotFileDto as WeekPlanSlotFileDto,
+  BillingControllerSubscriptionDto as SubscriptionDto,
 } from './generated/types.gen'

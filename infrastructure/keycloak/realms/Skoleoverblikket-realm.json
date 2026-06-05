@@ -56,6 +56,14 @@
       {
         "name": "aide",
         "description": "Pædagog / aide — read-only access"
+      },
+      {
+        "name": "parent",
+        "description": "Forælder — læseadgang til barnets klasse"
+      },
+      {
+        "name": "superadmin",
+        "description": "Platform superadmin — modul-override og administrationsadgang"
       }
     ]
   },
@@ -172,7 +180,7 @@
         }
       ],
 
-      "realmRoles": ["admin"],
+      "realmRoles": ["admin", "superadmin"],
 
       "attributes": {
         "tenant_id": ["11111111-1111-1111-1111-111111111111"]

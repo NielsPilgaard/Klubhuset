@@ -8,6 +8,7 @@ public static class DbSeeder
 	// Well-known IDs — stable across environments so seeding is idempotent.
 	public static readonly Guid SeedSchoolId = new("11111111-1111-1111-1111-111111111111");
 	public static readonly Guid SeedStaffId = new("22222222-2222-2222-2222-222222222222");
+	public static readonly Guid SeedSubscriptionId = new("33333333-3333-3333-3333-333333333333");
 
 	/// <summary>Keycloak subject for the seed admin user (matches the fixed id in Skoleoverblikket-realm.json).</summary>
 	private const string SeedAdminKeycloakSubject = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
@@ -18,6 +19,7 @@ public static class DbSeeder
 		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
 		await SeedSchoolAsync(db);
+		await SeedSubscriptionAsync(db);
 		await SeedStaffAsync(db);
 		await SeedCoursesAsync(db);
 	}
@@ -36,6 +38,27 @@ public static class DbSeeder
 			Name = "Debugskolen",
 			ContactEmail = "admin@debugskolen.dk",
 			CreatedAt = DateTimeOffset.UtcNow,
+		});
+
+		await db.SaveChangesAsync();
+	}
+
+	private static async Task SeedSubscriptionAsync(AppDbContext db)
+	{
+		var exists = await db.Subscriptions.AnyAsync(s => s.SchoolId == SeedSchoolId);
+		if (exists)
+		{
+			return;
+		}
+
+		db.Subscriptions.Add(new Subscription
+		{
+			Id = SeedSubscriptionId,
+			SchoolId = SeedSchoolId,
+			Status = SubscriptionStatus.Trialing,
+			TrialEnd = DateTimeOffset.UtcNow.AddDays(14),
+			CreatedAt = DateTimeOffset.UtcNow,
+			UpdatedAt = DateTimeOffset.UtcNow,
 		});
 
 		await db.SaveChangesAsync();

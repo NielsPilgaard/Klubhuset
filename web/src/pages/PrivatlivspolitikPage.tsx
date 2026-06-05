@@ -16,15 +16,16 @@ export default function PrivatlivspolitikPage() {
           <p className="text-sm text-gray-400 mb-10">Senest opdateret: april 2026</p>
 
           <div className="space-y-10 text-gray-700 leading-relaxed">
-
             <Section title="1. Dataansvarlig">
-              <p>
-                Den dataansvarlige for behandlingen af dine personoplysninger er:
-              </p>
+              <p>Den dataansvarlige for behandlingen af dine personoplysninger er:</p>
               <address className="not-italic mt-3 text-sm bg-brand-50 rounded-xl p-4 border border-brand-100">
-                <strong className="text-gray-900">Skoleoverblikket</strong><br />
+                <strong className="text-gray-900">Skoleoverblikket</strong>
+                <br />
                 E-mail:{' '}
-                <a href="mailto:kontakt@skoleoverblikket.dk" className="text-brand-700 hover:underline">
+                <a
+                  href="mailto:kontakt@skoleoverblikket.dk"
+                  className="text-brand-700 hover:underline"
+                >
                   kontakt@skoleoverblikket.dk
                 </a>
               </address>
@@ -34,29 +35,34 @@ export default function PrivatlivspolitikPage() {
               <p>Vi behandler følgende personoplysninger:</p>
               <ul className="mt-3 space-y-2 text-sm list-none">
                 <Li>
-                  <strong>Kontooplysninger:</strong> navn og e-mailadresse på skolens administratorer og medarbejdere.
+                  <strong>Kontooplysninger:</strong> navn og e-mailadresse på skolens
+                  administratorer og medarbejdere.
                 </Li>
                 <Li>
-                  <strong>Skoledata:</strong> klassenavne, medarbejdernavne, fagnavne, lokalenavne og skemaer.
+                  <strong>Skoledata:</strong> klassenavne, medarbejdernavne, fagnavne, lokalenavne
+                  og skemaer.
                 </Li>
                 <Li>
-                  <strong>Uploadede filer:</strong> filer der uploades pr. skole, og som kun er tilgængelige for den pågældende skoles brugere.
+                  <strong>Uploadede filer:</strong> filer der uploades pr. skole, og som kun er
+                  tilgængelige for den pågældende skoles brugere.
                 </Li>
                 <Li>
-                  <strong>Betalingsdata:</strong> håndteres udelukkende af Stripe. Vi opbevarer ikke kortoplysninger eller andre betalingsdata.
+                  <strong>Betalingsdata:</strong> håndteres udelukkende af Stripe. Vi opbevarer ikke
+                  kortoplysninger eller andre betalingsdata.
                 </Li>
                 <Li>
-                  <strong>Session-cookie:</strong> en enkelt cookie der bruges til login-godkendelse. Ingen sporings- eller reklamecookies.
+                  <strong>Session-cookie:</strong> en enkelt cookie der bruges til
+                  login-godkendelse. Ingen sporings- eller reklamecookies.
                 </Li>
               </ul>
             </Section>
 
             <Section title="3. Formål og retsgrundlag">
               <p>
-                Vi behandler dine oplysninger for at kunne levere og drifte Skoleoverblikket-tjenesten.
-                Retsgrundlaget er opfyldelse af aftale (GDPR artikel 6, stk. 1, litra b) og i
-                relevant omfang vores legitime interesse i at drive og forbedre tjenesten
-                (artikel 6, stk. 1, litra f).
+                Vi behandler dine oplysninger for at kunne levere og drifte
+                Skoleoverblikket-tjenesten. Retsgrundlaget er opfyldelse af aftale (GDPR artikel 6,
+                stk. 1, litra b) og i relevant omfang vores legitime interesse i at drive og
+                forbedre tjenesten (artikel 6, stk. 1, litra f).
               </p>
             </Section>
 
@@ -85,13 +91,13 @@ export default function PrivatlivspolitikPage() {
 
             <Section title="6. Opbevaring og sletning">
               <p>
-                Dine oplysninger opbevares i abonnementsperioden. Ved opsigelse opbevares data i
-                90 dage for at give mulighed for genaktivering eller eksport — herefter slettes de
+                Dine oplysninger opbevares i abonnementsperioden. Ved opsigelse opbevares data i 90
+                dage for at give mulighed for genaktivering eller eksport — herefter slettes de
                 permanent.
               </p>
               <p className="mt-3 text-sm text-gray-500">
-                Bemærk: automatisk sletning er endnu ikke implementeret. Indtil videre håndteres
-                det manuelt. Kontakt os, hvis du ønsker øjeblikkelig sletning.
+                Bemærk: automatisk sletning er endnu ikke implementeret. Indtil videre håndteres det
+                manuelt. Kontakt os, hvis du ønsker øjeblikkelig sletning.
               </p>
             </Section>
 
@@ -99,7 +105,10 @@ export default function PrivatlivspolitikPage() {
               <p>
                 Du har ret til at anmode om indsigt i, berigtigelse eller sletning af de
                 personoplysninger vi behandler om dig. Du kan rette henvendelse til{' '}
-                <a href="mailto:kontakt@skoleoverblikket.dk" className="text-brand-700 hover:underline">
+                <a
+                  href="mailto:kontakt@skoleoverblikket.dk"
+                  className="text-brand-700 hover:underline"
+                >
                   kontakt@skoleoverblikket.dk
                 </a>
                 . Vi besvarer din henvendelse inden for 30 dage.
@@ -108,18 +117,19 @@ export default function PrivatlivspolitikPage() {
 
             <Section title="8. Cookies">
               <p>
-                Vi anvender én session-cookie udelukkende til at opretholde din login-session.
-                Vi benytter ingen analyse-, sporings- eller reklamecookies.
+                Vi anvender én session-cookie udelukkende til at opretholde din login-session. Vi
+                benytter ingen analyse-, sporings- eller reklamecookies.
               </p>
             </Section>
 
             <Section title="9. Lovvalg og tilsynsmyndighed">
               <p>
-                Behandlingen af personoplysninger er underlagt dansk ret. Hvis du mener, at vi
-                ikke behandler dine oplysninger korrekt, kan du klage til:
+                Behandlingen af personoplysninger er underlagt dansk ret. Hvis du mener, at vi ikke
+                behandler dine oplysninger korrekt, kan du klage til:
               </p>
               <address className="not-italic mt-3 text-sm bg-brand-50 rounded-xl p-4 border border-brand-100">
-                <strong className="text-gray-900">Datatilsynet</strong><br />
+                <strong className="text-gray-900">Datatilsynet</strong>
+                <br />
                 <a
                   href="https://www.datatilsynet.dk"
                   target="_blank"
@@ -130,7 +140,6 @@ export default function PrivatlivspolitikPage() {
                 </a>
               </address>
             </Section>
-
           </div>
         </div>
       </main>
@@ -164,7 +173,9 @@ function PublicNav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">
           <Logo variant="light" size={28} />
-          <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
+          <span className="font-display text-xl font-semibold text-brand-800">
+            Skoleoverblikket
+          </span>
         </a>
         <div className="flex items-center gap-4">
           <a href="/login" className="text-sm text-gray-600 hover:text-brand-700 transition-colors">

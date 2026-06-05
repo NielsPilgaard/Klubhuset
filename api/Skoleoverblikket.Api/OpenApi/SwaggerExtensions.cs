@@ -12,6 +12,15 @@ public static class SwaggerExtensions
 		services.AddSwaggerGen(options =>
 		{
 			options.SwaggerDoc("v1", new OpenApiInfo { Title = "Skoleoverblikket API", Version = "v1" });
+			options.CustomSchemaIds(type =>
+			{
+				if (type.IsNested && type.DeclaringType is not null)
+				{
+					return $"{type.DeclaringType.Name}_{type.Name}";
+				}
+
+				return type.Name;
+			});
 			options.AddSecurityDefinition(schemeId,
 										  new OpenApiSecurityScheme
 										  {

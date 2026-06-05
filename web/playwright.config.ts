@@ -29,7 +29,7 @@ export default defineConfig({
     ? undefined
     : [
         {
-          command: `aspire start`,
+          command: `aspire run --non-interactive`,
           url: WEB_URL,
           timeout: 180_000,
           reuseExistingServer: true,

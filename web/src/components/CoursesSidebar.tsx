@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import type { CourseDto } from '../api/generated/types.gen'
+import type { CourseDto } from '../api/client'
 import { SUBJECT_CATEGORY_LABELS } from '../utils/subjectCategory'
 import { encodeSidebarDragId } from '../utils/sidebarDragId'
 
@@ -16,12 +16,20 @@ function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRow
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: dragId })
 
   const style = transform
-    ? { transform: CSS.Translate.toString(transform), zIndex: 20, position: 'relative' as const, opacity: isDragging ? 0.5 : 1 }
+    ? {
+        transform: CSS.Translate.toString(transform),
+        zIndex: 20,
+        position: 'relative' as const,
+        opacity: isDragging ? 0.5 : 1,
+      }
     : undefined
 
-  const categoryLabel = course.category ? SUBJECT_CATEGORY_LABELS[course.category] ?? course.category : null
+  const categoryLabel = course.category
+    ? (SUBJECT_CATEGORY_LABELS[course.category] ?? course.category)
+    : null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit spreads role/tabIndex via {...attributes}
     <div
       ref={setNodeRef}
       style={style}
@@ -40,7 +48,7 @@ function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRow
         className="shrink-0 w-3 h-3 rounded-full border"
         style={
           course.color
-            ? { backgroundColor: course.color + '33', borderColor: course.color }
+            ? { backgroundColor: `${course.color}33`, borderColor: course.color }
             : { backgroundColor: '#e5e7eb', borderColor: '#d1d5db' }
         }
       />
@@ -51,7 +59,15 @@ function DraggableCourseRow({ course, isSelected, onSelect }: DraggableCourseRow
         )}
       </span>
       {isSelected && (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-brand-500">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className="shrink-0 text-brand-500"
+        >
           <polyline points="20 6 9 17 4 12" />
         </svg>
       )}
@@ -76,14 +92,10 @@ export default function CoursesSidebar({
 }: CoursesSidebarProps) {
   const [search, setSearch] = useState('')
 
-  const sorted = [...courses].sort((a, b) =>
-    (a.name ?? '').localeCompare(b.name ?? '', 'da')
-  )
+  const sorted = [...courses].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'da'))
 
   const filtered = search.trim()
-    ? sorted.filter((c) =>
-        (c.name ?? '').toLowerCase().includes(search.trim().toLowerCase())
-      )
+    ? sorted.filter((c) => (c.name ?? '').toLowerCase().includes(search.trim().toLowerCase()))
     : sorted
 
   return (
@@ -95,7 +107,14 @@ export default function CoursesSidebar({
         className="lg:hidden fixed bottom-4 left-4 z-40 flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-full shadow-lg hover:bg-brand-700 transition-colors"
         aria-label="Vis fag"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M4 6h16M4 12h16M4 18h7" />
         </svg>
         Fag
@@ -103,7 +122,10 @@ export default function CoursesSidebar({
 
       {/* Mobile backdrop */}
       {isOpen && (
-        <div
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="Luk sidebar"
           className="lg:hidden fixed inset-0 z-40 bg-black/30"
           onClick={onToggle}
         />
@@ -116,9 +138,7 @@ export default function CoursesSidebar({
           // Desktop: always visible, inline
           'lg:relative lg:flex lg:w-64 lg:shrink-0',
           // Mobile: fixed overlay, toggled
-          isOpen
-            ? 'fixed inset-y-0 left-0 z-50 w-72 flex flex-col'
-            : 'hidden lg:flex',
+          isOpen ? 'fixed inset-y-0 left-0 z-50 w-72 flex flex-col' : 'hidden lg:flex',
         ].join(' ')}
       >
         <div className="shrink-0 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
@@ -128,8 +148,16 @@ export default function CoursesSidebar({
             onClick={onToggle}
             className="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -137,11 +165,16 @@ export default function CoursesSidebar({
         <div className="shrink-0 px-3 py-2 border-b border-gray-100">
           <div className="relative">
             <svg
-              width="13" height="13"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             >
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               type="search"

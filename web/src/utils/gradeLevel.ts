@@ -7,9 +7,7 @@
  */
 export function detectGradeLevel(name: string): number | null {
   const trimmed = name.trim()
-  const m =
-    trimmed.match(/^(\d+)[.\-_\s]/i) ??
-    trimmed.match(/^(\d+)(?=[A-Za-z])/i)
+  const m = trimmed.match(/^(\d+)[.\-_\s]/i) ?? trimmed.match(/^(\d+)(?=[A-Za-z])/i)
   if (!m) return null
   const n = parseInt(m[1], 10)
   return n >= 0 && n <= 9 ? n : null

@@ -4,7 +4,7 @@ import {
   getApiV1StatsDashboardOptions,
   getApiV1SchoolsOnboardingStatusOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { StaffRole, OnboardingStatusDto } from '../api/generated/types.gen'
+import type { StaffRole, OnboardingStatusDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 function OnboardingCard({ status }: { status: OnboardingStatusDto }) {
@@ -15,7 +15,7 @@ function OnboardingCard({ status }: { status: OnboardingStatusDto }) {
     { label: 'Lokaler oprettet', done: (status.roomCount ?? 0) > 0 },
   ]
 
-  const stepsCompleted = steps.filter(s => s.done).length
+  const stepsCompleted = steps.filter((s) => s.done).length
   const stepsTotal = steps.length
   const progressPercent = stepsTotal > 0 ? Math.round((stepsCompleted / stepsTotal) * 100) : 0
 
@@ -37,11 +37,34 @@ function OnboardingCard({ status }: { status: OnboardingStatusDto }) {
           <ul className="mt-3 space-y-1.5">
             {steps.map((s) => (
               <li key={s.label} className="flex items-center gap-2 text-sm">
-                {s.done
-                  ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-500 shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
-                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 shrink-0"><circle cx="12" cy="12" r="9" /></svg>
-                }
-                <span className={s.done ? 'text-gray-400 line-through' : 'text-gray-700'}>{s.label}</span>
+                {s.done ? (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-green-500 shrink-0"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-gray-300 shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                  </svg>
+                )}
+                <span className={s.done ? 'text-gray-400 line-through' : 'text-gray-700'}>
+                  {s.label}
+                </span>
               </li>
             ))}
           </ul>
@@ -152,13 +175,19 @@ export default function DashboardPage() {
             <StatCard label="Lokaler" value={data!.roomCount ?? 0} />
             <StatCard
               label="Skemaer"
-              value={data!.schemasTotal === 0 ? '–' : `${data!.schemasComplete} / ${data!.schemasTotal}`}
+              value={
+                data!.schemasTotal === 0 ? '–' : `${data!.schemasComplete} / ${data!.schemasTotal}`
+              }
               sub={data!.schemasTotal === 0 ? 'Ingen skemaer oprettet' : 'færdige'}
             />
             <StatCard
               label="Klasser u. skema"
-              value={data!.unassignedClasses?.filter(c => !c.hasSchema).length ?? 0}
-              sub={(data!.unassignedClasses?.filter(c => !c.hasSchema).length ?? 0) === 0 ? 'Alle klasser har et skema' : 'mangler skema'}
+              value={data!.unassignedClasses?.filter((c) => !c.hasSchema).length ?? 0}
+              sub={
+                (data!.unassignedClasses?.filter((c) => !c.hasSchema).length ?? 0) === 0
+                  ? 'Alle klasser har et skema'
+                  : 'mangler skema'
+              }
             />
           </>
         )}
@@ -180,21 +209,36 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Navn</th>
-                    <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Rolle</th>
-                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">Timer</th>
+                    <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Navn
+                    </th>
+                    <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Rolle
+                    </th>
+                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Timer
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {[...(data?.hoursPerStaff ?? [])].sort((a, b) =>
-                    new Intl.Collator('da', { numeric: true, sensitivity: 'base' }).compare(a.staffName ?? '', b.staffName ?? '')
-                  ).map((s) => (
-                    <tr key={s.staffId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-2.5 font-medium text-gray-800">{s.staffName}</td>
-                      <td className="px-5 py-2.5 text-gray-500">{s.role ? roleLabel(s.role) : '–'}</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums text-gray-700">{s.hours}</td>
-                    </tr>
-                  ))}
+                  {[...(data?.hoursPerStaff ?? [])]
+                    .sort((a, b) =>
+                      new Intl.Collator('da', { numeric: true, sensitivity: 'base' }).compare(
+                        a.staffName ?? '',
+                        b.staffName ?? ''
+                      )
+                    )
+                    .map((s) => (
+                      <tr key={s.staffId} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-2.5 font-medium text-gray-800">{s.staffName}</td>
+                        <td className="px-5 py-2.5 text-gray-500">
+                          {s.role ? roleLabel(s.role) : '–'}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums text-gray-700">
+                          {s.hours}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             )}
@@ -212,32 +256,63 @@ export default function DashboardPage() {
             {(data!.unassignedClasses?.length ?? 0) === 0 && (data?.classCount ?? 0) > 0 ? (
               <div className="px-5 py-8 text-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-brand-50 mb-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-500"><polyline points="20 6 9 17 4 12" /></svg>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-brand-500"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </div>
                 <p className="text-sm text-gray-500">Alle klasser har et færdigt skema</p>
               </div>
             ) : (data!.unassignedClasses?.length ?? 0) === 0 ? (
-              <p className="px-5 py-6 text-sm text-gray-400 text-center">Ingen klasser oprettet endnu</p>
+              <p className="px-5 py-6 text-sm text-gray-400 text-center">
+                Ingen klasser oprettet endnu
+              </p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Klasse</th>
-                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">Status</th>
+                    <th className="px-5 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Klasse
+                    </th>
+                    <th className="px-5 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data!.unassignedClasses?.map((c) => (
-                    <tr key={c.classId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-2.5 font-medium text-gray-800">{c.className}</td>
-                      <td className="px-5 py-2.5 text-right">
-                        {c.hasSchema
-                          ? <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">{c.emptySlots}</span>
-                          : <Link to={`/klasser?classId=${c.classId}&action=new-schema`} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium hover:bg-brand-200 transition-colors">Opret skema →</Link>
-                        }
-                      </td>
-                    </tr>
-                  ))}
+                  {[...(data?.unassignedClasses ?? [])]
+                    .sort((a, b) =>
+                      new Intl.Collator('da', { numeric: true, sensitivity: 'base' }).compare(
+                        a.className ?? '',
+                        b.className ?? ''
+                      )
+                    )
+                    .map((c) => (
+                      <tr key={c.classId} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-2.5 font-medium text-gray-800">{c.className}</td>
+                        <td className="px-5 py-2.5 text-right">
+                          {c.hasSchema ? (
+                            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold tabular-nums">
+                              {c.emptySlots}
+                            </span>
+                          ) : (
+                            <Link
+                              to={`/klasser?classId=${c.classId}&action=new-schema`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium hover:bg-brand-200 transition-colors"
+                            >
+                              Opret skema →
+                            </Link>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             )}

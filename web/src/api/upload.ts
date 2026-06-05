@@ -3,6 +3,7 @@ import { API_BASE, ApiError } from './client'
 
 export interface UploadOptions {
   file: File
+  fileName?: string
   courseId?: string
   folderId?: string
   onProgress?: (pct: number) => void
@@ -23,7 +24,13 @@ export interface UploadedFile {
  * 2. PUT directly to S3   → progress events fire here
  * 3. POST /files/confirm  → register the file in the DB
  */
-export async function uploadFile({ file, courseId, folderId, onProgress }: UploadOptions): Promise<UploadedFile> {
+export async function uploadFile({
+  file,
+  fileName,
+  courseId,
+  folderId,
+  onProgress,
+}: UploadOptions): Promise<UploadedFile> {
   await keycloak.updateToken(30).catch(() => keycloak.login())
 
   // Step 1: get presigned URL
@@ -34,7 +41,7 @@ export async function uploadFile({ file, courseId, folderId, onProgress }: Uploa
       ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
     },
     body: JSON.stringify({
-      fileName: file.name,
+      fileName: fileName ?? file.name,
       fileSizeBytes: file.size,
       courseId: courseId || null,
       folderId: folderId || null,
@@ -46,7 +53,7 @@ export async function uploadFile({ file, courseId, folderId, onProgress }: Uploa
     throw new ApiError(presignRes.status, text)
   }
 
-  const { uploadUrl, confirmToken } = await presignRes.json() as {
+  const { uploadUrl, confirmToken } = (await presignRes.json()) as {
     fileId: string
     uploadUrl: string
     confirmToken: string

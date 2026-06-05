@@ -7,25 +7,25 @@ namespace Skoleoverblikket.Api.Auth;
 public interface IKeycloakAdminApi
 {
 	[Post("/users")]
-	Task<HttpResponseMessage> CreateUserAsync([Body] CreateUserRequest request, CancellationToken ct);
+	Task<HttpResponseMessage> CreateUserAsync([Body] CreateUserRequest request, CancellationToken cancellationToken);
 
 	[Get("/roles/{roleName}")]
-	Task<RoleRepresentation> GetRoleAsync(string roleName, CancellationToken ct);
+	Task<RoleRepresentation> GetRoleAsync(string roleName, CancellationToken cancellationToken);
 
 	[Post("/users/{userId}/role-mappings/realm")]
-	Task AssignRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
+	Task AssignRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken cancellationToken);
 
 	[Delete("/users/{userId}/role-mappings/realm")]
-	Task RemoveRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken ct);
+	Task RemoveRoleMappingsAsync(string userId, [Body] IReadOnlyList<RoleRepresentation> roles, CancellationToken cancellationToken);
 
 	[Put("/users/{userId}")]
-	Task<HttpResponseMessage> UpdateUserAsync(string userId, [Body] UpdateUserRequest request, CancellationToken ct);
+	Task<HttpResponseMessage> UpdateUserAsync(string userId, [Body] UpdateUserRequest request, CancellationToken cancellationToken);
 
 	[Get("/users")]
-	Task<IReadOnlyList<UserRepresentation>> GetUsersByEmailAsync([AliasAs("email")] string email, [AliasAs("exact")] bool exact, CancellationToken ct);
+	Task<IReadOnlyList<UserRepresentation>> GetUsersByEmailAsync([AliasAs("email")] string email, [AliasAs("exact")] bool exact, CancellationToken cancellationToken);
 
 	[Delete("/users/{userId}")]
-	Task<HttpResponseMessage> DeleteUserAsync(string userId, CancellationToken ct);
+	Task<HttpResponseMessage> DeleteUserAsync(string userId, CancellationToken cancellationToken);
 }
 
 public record RoleRepresentation(

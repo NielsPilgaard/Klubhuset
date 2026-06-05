@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpLogging;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Cache;
 using Skoleoverblikket.Api.Data;
@@ -11,6 +12,15 @@ using Skoleoverblikket.ServiceDefaults;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.Services.AddHttpLogging(options =>
+{
+	options.LoggingFields = HttpLoggingFields.RequestMethod
+		| HttpLoggingFields.RequestPath
+		| HttpLoggingFields.RequestQuery
+		| HttpLoggingFields.ResponseStatusCode
+		| HttpLoggingFields.Duration;
+});
 
 builder.Services.AddTenancy();
 builder.Services.AddFusionCacheDefaults();
@@ -26,6 +36,7 @@ builder.Services.AddDomainServices();
 var app = builder.Build();
 
 app.UseSwaggerInDevelopment();
+app.UseHttpLogging();
 app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -34,14 +34,14 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 		[Phone] string? ContactPhone);
 
 	[HttpGet("settings")]
-	public async Task<ActionResult<SchoolSettingsDto>> GetSettings(CancellationToken ct)
+	public async Task<ActionResult<SchoolSettingsDto>> GetSettings(CancellationToken cancellationToken)
 	{
 		var school = await db.Schools
 							 .AsNoTracking()
 							 .IgnoreQueryFilters()
 							 .Where(s => s.Id == tenant.TenantId)
 							 .Select(s => new SchoolSettingsDto(s.Name, s.ContactEmail, s.ContactPhone, s.LogoUrl))
-							 .FirstOrDefaultAsync(ct);
+							 .FirstOrDefaultAsync(cancellationToken);
 
 		return school is null
 				   ? NotFound()
@@ -51,11 +51,11 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 	[HttpPut("settings")]
 	public async Task<ActionResult<SchoolSettingsDto>> UpdateSettings(
 		[FromBody] UpdateSchoolSettingsRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var school = await db.Schools
 							 .IgnoreQueryFilters()
-							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, cancellationToken);
 
 		if (school is null)
 		{
@@ -66,14 +66,14 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 		school.ContactEmail = req.ContactEmail;
 		school.ContactPhone = req.ContactPhone;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
 	}
 
 	internal static string OnboardingCacheKey(Guid tenantId) => $"onboarding:{tenantId}";
 
 	[HttpGet("onboarding-status")]
-	public async Task<ActionResult<OnboardingStatusDto>> GetOnboardingStatus(CancellationToken ct)
+	public async Task<ActionResult<OnboardingStatusDto>> GetOnboardingStatus(CancellationToken cancellationToken)
 	{
 		var result = await cache.GetOrSetAsync(
 			OnboardingCacheKey(tenant.TenantId),
@@ -84,7 +84,10 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 									 .IgnoreQueryFilters()
 									 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, token);
 
-				if (school is null) return null;
+				if (school is null)
+				{
+					return null;
+				}
 
 				var staffCount = await db.Staff.CountAsync(token);
 				var classCount = await db.Classes.CountAsync(token);
@@ -101,14 +104,14 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 				return new OnboardingStatusDto(hasLogo, staffCount, classCount, courseCount, roomCount, stepsCompleted, StepsTotal: 5);
 			},
-			token: ct);
+			token: cancellationToken);
 
 		return result is null ? NotFound() : Ok(result);
 	}
 
 	[HttpPost("logo")]
 	[Consumes("multipart/form-data")]
-	public async Task<ActionResult<SchoolSettingsDto>> UploadLogo(IFormFile file, CancellationToken ct)
+	public async Task<ActionResult<SchoolSettingsDto>> UploadLogo(IFormFile file, CancellationToken cancellationToken)
 	{
 		const long maxBytes = 2 * 1024 * 1024; // 2 MB
 		if (file.Length > maxBytes)
@@ -140,7 +143,7 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 
 		var school = await db.Schools
 							 .IgnoreQueryFilters()
-							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, ct);
+							 .FirstOrDefaultAsync(s => s.Id == tenant.TenantId, cancellationToken);
 
 		if (school is null)
 		{
@@ -152,18 +155,18 @@ public sealed class SchoolsController(AppDbContext db, ITenantContext tenant, IO
 			var oldKey = storage.GetKeyFromPublicUrl(school.LogoUrl);
 			if (oldKey is not null)
 			{
-				try { await storage.DeleteAsync(oldKey, ct); }
+				try { await storage.DeleteAsync(oldKey, cancellationToken); }
 				catch { /* swallow — old file missing or inaccessible should not block upload */ }
 			}
 		}
 
 		await using var stream = file.OpenReadStream();
 		var key = $"logos/{tenant.TenantId}{ext}";
-		var url = await storage.UploadPublicAsync(key, mimeType, stream, ct);
+		var url = await storage.UploadPublicAsync(key, mimeType, stream, cancellationToken);
 
 		school.LogoUrl = url;
-		await db.SaveChangesAsync(ct);
-		await cache.RemoveAsync(OnboardingCacheKey(tenant.TenantId), token: ct);
+		await db.SaveChangesAsync(cancellationToken);
+		await cache.RemoveAsync(OnboardingCacheKey(tenant.TenantId), token: cancellationToken);
 
 		return Ok(new SchoolSettingsDto(school.Name, school.ContactEmail, school.ContactPhone, school.LogoUrl));
 	}

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Skoleoverblikket.Api.Models;
 
 /// <summary>Klasse — a group of students (e.g. 2.b, 9.a).</summary>
-public sealed class Class : ITenantScoped
+public sealed class Class : ITenantScoped, IArchivable
 {
 	public Guid Id { get; set; }
 	public Guid TenantId { get; set; }
@@ -20,4 +20,6 @@ public sealed class Class : ITenantScoped
 	public int? GradeLevel { get; set; }
 
 	public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+	public DateTimeOffset? ArchivedAt { get; set; }
 }

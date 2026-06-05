@@ -30,7 +30,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		string? OriginalCourseName,
 		string? Beskrivelse,
 		string? Lektier,
-		IReadOnlyList<WeekPlanSlotFileDto> Files);
+		IReadOnlyList<WeekPlanSlotFileDto> Files,
+		Guid? SubstituteTeacherId,
+		string? SubstituteTeacherName,
+		Guid? SubstituteAideId,
+		string? SubstituteAideName,
+		Guid WeekPlanId);
 
 	public record HolidayDayDto(DayOfWeek Weekday, string Title);
 
@@ -63,19 +68,19 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		[FromQuery] int? isoYear,
 		[FromQuery] int? isoWeek,
 		[FromQuery] Guid? schemaId,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (isoYear is null || isoWeek is null)
 		{
 			return Problem("isoYear og isoWeek er påkrævet", statusCode: 400);
 		}
 
-		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
+		if (!IsoWeekValidation.IsValid(isoYear.Value, isoWeek.Value))
 		{
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
 		}
 
-		var klass = await db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == classId, ct);
+		var klass = await db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
 		if (klass is null)
 		{
 			return NotFound();
@@ -90,7 +95,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 				(e.Type == CalendarEntryType.Ferie || e.Type == CalendarEntryType.Lukkedag) &&
 				e.StartDate <= weekEnd && e.EndDate >= weekStart)
 			.OrderBy(e => e.StartDate)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		// Only treat the entire week as a holiday if the full Mon–Fri span is covered.
 		var isHolidayWeek = holidays.Count > 0 && IsFullWeekCovered(holidays, weekStart, weekEnd);
@@ -109,8 +114,8 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var activeSchema = schemaId.HasValue
-			? await db.Schemas.AsNoTracking().FirstOrDefaultAsync(s => s.ClassId == classId && s.Id == schemaId.Value, ct)
-			: await db.Schemas.AsNoTracking().FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today && s.EndDate >= today, ct);
+			? await db.Schemas.AsNoTracking().FirstOrDefaultAsync(s => s.ClassId == classId && s.Id == schemaId.Value, cancellationToken)
+			: await db.Schemas.AsNoTracking().FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today && s.EndDate >= today, cancellationToken);
 
 		if (activeSchema is null)
 		{
@@ -124,7 +129,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			.Include(s => s.TimeSlot)
 			.Include(s => s.Course)
 			.Where(s => s.SchemaId == activeSchema.Id)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var weekPlan = await db.WeekPlans
 			.Include(w => w.Slots)
@@ -132,7 +137,11 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 					.ThenInclude(f => f.SchoolFile)
 			.Include(w => w.Slots)
 				.ThenInclude(s => s.FagSwapCourse)
-			.FirstOrDefaultAsync(w => w.ClassId == classId && w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, ct);
+			.Include(w => w.Slots)
+				.ThenInclude(s => s.SubstituteTeacher)
+			.Include(w => w.Slots)
+				.ThenInclude(s => s.SubstituteAide)
+			.FirstOrDefaultAsync(w => w.ClassId == classId && w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, cancellationToken);
 
 		var breakSlots = schemaSlots
 			.Where(ss => ss.TimeSlot.IsBreak)
@@ -171,7 +180,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 				Lektier: wps?.Lektier,
 				Files: (wps?.Files ?? [])
 					.Select(f => new WeekPlanSlotFileDto(f.Id, f.SchoolFileId, f.SchoolFile.FileName, f.SchoolFile.Url))
-					.ToList()
+					.ToList(),
+				SubstituteTeacherId: wps?.SubstituteTeacherId,
+				SubstituteTeacherName: wps?.SubstituteTeacher?.Name,
+				SubstituteAideId: wps?.SubstituteAideId,
+				SubstituteAideName: wps?.SubstituteAide?.Name,
+				WeekPlanId: weekPlan?.Id ?? Guid.Empty
 			);
 		}).ToList();
 
@@ -196,19 +210,19 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		[FromQuery] int? isoWeek,
 		[FromQuery] Guid? schemaId,
 		[FromBody] UpsertWeekPlanSlotRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (isoYear is null || isoWeek is null)
 		{
 			return Problem("isoYear og isoWeek er påkrævet", statusCode: 400);
 		}
 
-		if (isoYear < 2020 || isoYear > 2100 || isoWeek < 1 || isoWeek > 53)
+		if (!IsoWeekValidation.IsValid(isoYear.Value, isoWeek.Value))
 		{
 			return Problem("Ugyldigt årstal eller ugenummer", statusCode: 400);
 		}
 
-		var klass = await db.Classes.FirstOrDefaultAsync(c => c.Id == classId, ct);
+		var klass = await db.Classes.FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
 		if (klass is null)
 		{
 			return NotFound();
@@ -216,16 +230,16 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 
 		var today2 = DateOnly.FromDateTime(DateTime.UtcNow);
 		var activeSchema = schemaId.HasValue
-			? await db.Schemas.FirstOrDefaultAsync(s => s.ClassId == classId && s.Id == schemaId.Value, ct)
+			? await db.Schemas.FirstOrDefaultAsync(s => s.ClassId == classId && s.Id == schemaId.Value, cancellationToken)
 			: await db.Schemas
-				.FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today2 && s.EndDate >= today2, ct);
+				.FirstOrDefaultAsync(s => s.ClassId == classId && s.StartDate <= today2 && s.EndDate >= today2, cancellationToken);
 
 		var schemaSlot = activeSchema is null
 			? null
 			: await db.SchemaSlots
 				.Include(s => s.TimeSlot)
 				.Include(s => s.Course)
-				.FirstOrDefaultAsync(s => s.SchemaId == activeSchema.Id && s.Id == req.SchemaSlotId, ct);
+				.FirstOrDefaultAsync(s => s.SchemaId == activeSchema.Id && s.Id == req.SchemaSlotId, cancellationToken);
 
 		if (schemaSlot is null)
 		{
@@ -240,7 +254,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 
 		if (req.FagSwapCourseId.HasValue)
 		{
-			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.FagSwapCourseId.Value, ct);
+			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.FagSwapCourseId.Value, cancellationToken);
 			if (!courseExists)
 			{
 				return Problem("FagSwapCourseId findes ikke under denne lejer", statusCode: 400);
@@ -248,7 +262,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		}
 
 		var weekPlan = await db.WeekPlans
-			.FirstOrDefaultAsync(w => w.ClassId == classId && w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, ct);
+			.FirstOrDefaultAsync(w => w.ClassId == classId && w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, cancellationToken);
 
 		if (weekPlan is null)
 		{
@@ -261,13 +275,13 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 				IsoWeek = isoWeek.Value,
 			};
 			db.WeekPlans.Add(weekPlan);
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		var slot = await db.WeekPlanSlots
 			.Include(s => s.Files).ThenInclude(f => f.SchoolFile)
 			.Include(s => s.FagSwapCourse)
-			.FirstOrDefaultAsync(s => s.WeekPlanId == weekPlan.Id && s.SchemaSlotId == req.SchemaSlotId, ct);
+			.FirstOrDefaultAsync(s => s.WeekPlanId == weekPlan.Id && s.SchemaSlotId == req.SchemaSlotId, cancellationToken);
 
 		if (slot is null)
 		{
@@ -286,10 +300,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		slot.FagSwapCourseId = req.FagSwapCourseId;
 		slot.UpdatedAt = DateTimeOffset.UtcNow;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		// Reload to get navigation props
-		await db.Entry(slot).Reference(s => s.FagSwapCourse).LoadAsync(ct);
+		await db.Entry(slot).Reference(s => s.FagSwapCourse).LoadAsync(cancellationToken);
+		await db.Entry(slot).Reference(s => s.SubstituteTeacher).LoadAsync(cancellationToken);
+		await db.Entry(slot).Reference(s => s.SubstituteAide).LoadAsync(cancellationToken);
 
 		var effectiveCourse = slot.FagSwapCourse ?? schemaSlot.Course;
 		var timeSlotLabel = schemaSlot.TimeSlot.Label ?? schemaSlot.TimeSlot.SortOrder.ToString();
@@ -310,7 +326,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			Lektier: slot.Lektier,
 			Files: slot.Files
 				.Select(f => new WeekPlanSlotFileDto(f.Id, f.SchoolFileId, f.SchoolFile.FileName, f.SchoolFile.Url))
-				.ToList()
+				.ToList(),
+			SubstituteTeacherId: slot.SubstituteTeacherId,
+			SubstituteTeacherName: slot.SubstituteTeacher?.Name,
+			SubstituteAideId: slot.SubstituteAideId,
+			SubstituteAideName: slot.SubstituteAide?.Name,
+			WeekPlanId: weekPlan.Id
 		));
 	}
 
@@ -319,11 +340,11 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		Guid classId,
 		Guid slotId,
 		[FromBody] AddFileToSlotRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var slot = await db.WeekPlanSlots
 			.Include(s => s.WeekPlan)
-			.FirstOrDefaultAsync(s => s.Id == slotId && s.WeekPlan.ClassId == classId, ct);
+			.FirstOrDefaultAsync(s => s.Id == slotId && s.WeekPlan.ClassId == classId, cancellationToken);
 
 		if (slot is null)
 		{
@@ -336,7 +357,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			return Forbid();
 		}
 
-		var fileExists = await db.SchoolFiles.AnyAsync(f => f.Id == req.SchoolFileId, ct);
+		var fileExists = await db.SchoolFiles.AnyAsync(f => f.Id == req.SchoolFileId, cancellationToken);
 		if (!fileExists)
 		{
 			return Problem("SchoolFileId findes ikke under denne lejer", statusCode: 400);
@@ -353,7 +374,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 
 		try
 		{
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 		catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("unique") == true ||
 											ex.InnerException?.Message.Contains("duplicate") == true)
@@ -361,7 +382,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			return Problem("Filen er allerede tilknyttet denne lektion", statusCode: 409);
 		}
 
-		var schoolFile = await db.SchoolFiles.AsNoTracking().FirstAsync(f => f.Id == req.SchoolFileId, ct);
+		var schoolFile = await db.SchoolFiles.AsNoTracking().FirstAsync(f => f.Id == req.SchoolFileId, cancellationToken);
 		return CreatedAtAction(nameof(AddFile), new { classId, slotId },
 			new WeekPlanSlotFileDto(link.Id, link.SchoolFileId, schoolFile.FileName, schoolFile.Url));
 	}
@@ -393,11 +414,11 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 	}
 
 	[HttpDelete("slots/{slotId:guid}/files/{fileId:guid}")]
-	public async Task<ActionResult> RemoveFile(Guid classId, Guid slotId, Guid fileId, CancellationToken ct)
+	public async Task<ActionResult> RemoveFile(Guid classId, Guid slotId, Guid fileId, CancellationToken cancellationToken)
 	{
 		var link = await db.WeekPlanSlotFiles
 			.Include(f => f.WeekPlanSlot).ThenInclude(s => s.WeekPlan)
-			.FirstOrDefaultAsync(f => f.Id == fileId && f.WeekPlanSlotId == slotId && f.WeekPlanSlot.WeekPlan.ClassId == classId, ct);
+			.FirstOrDefaultAsync(f => f.Id == fileId && f.WeekPlanSlotId == slotId && f.WeekPlanSlot.WeekPlan.ClassId == classId, cancellationToken);
 
 		if (link is null)
 		{
@@ -411,7 +432,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		}
 
 		db.WeekPlanSlotFiles.Remove(link);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 }

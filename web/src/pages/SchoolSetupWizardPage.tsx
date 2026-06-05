@@ -8,8 +8,11 @@ import { LessonDurationSlider } from '../components/LessonDurationSlider'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
-import { getApiV1SchoolsOnboardingStatusOptions, getApiV1SchoolsOnboardingStatusQueryKey } from '../api/generated/@tanstack/react-query.gen'
-import type { OnboardingStatusDto } from '../api/generated/types.gen'
+import {
+  getApiV1SchoolsOnboardingStatusOptions,
+  getApiV1SchoolsOnboardingStatusQueryKey,
+} from '../api/generated/@tanstack/react-query.gen'
+import type { OnboardingStatusDto } from '../api/client'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,13 +25,12 @@ interface WizardStep {
 }
 
 const STEPS: WizardStep[] = [
-  { id: 1, title: 'Skoledag',     description: 'Definér varighed og pauser for en normal skoledag' },
-  { id: 2, title: 'Klasser',      description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
-  { id: 3, title: 'Lokaler',      description: 'Tilføj lokaler, f.eks. Lokale 1' },
+  { id: 1, title: 'Skoledag', description: 'Definér varighed og pauser for en normal skoledag' },
+  { id: 2, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
+  { id: 3, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
   { id: 4, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
-  { id: 5, title: 'Færdig',       description: 'Din skole er klar til brug' },
+  { id: 5, title: 'Færdig', description: 'Din skole er klar til brug' },
 ]
-
 
 // ---------------------------------------------------------------------------
 // Step components
@@ -49,12 +51,23 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
   const [savedBefore, setSavedBefore] = useState(false)
 
   useEffect(() => {
-    api.get<{ lessonDurationMinutes: number; dayStartTime: string; dayEndTime: string; breaks: { startTime: string; durationMinutes: number }[] }>('/time-slot-template')
+    api
+      .get<{
+        lessonDurationMinutes: number
+        dayStartTime: string
+        dayEndTime: string
+        breaks: { startTime: string; durationMinutes: number }[]
+      }>('/time-slot-template')
       .then((t) => {
         setLessonDuration(t.lessonDurationMinutes)
         setDayStart(t.dayStartTime.slice(0, 5))
         setDayEnd(t.dayEndTime.slice(0, 5))
-        setBreaks(t.breaks.map((b) => ({ startTime: b.startTime.slice(0, 5), durationMinutes: b.durationMinutes })))
+        setBreaks(
+          t.breaks.map((b) => ({
+            startTime: b.startTime.slice(0, 5),
+            durationMinutes: b.durationMinutes,
+          }))
+        )
         setSavedBefore(true)
       })
       .catch((err) => {
@@ -77,7 +90,7 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
   }
 
   function updateBreak(i: number, field: keyof BreakEntry, value: string | number) {
-    setBreaks((prev) => prev.map((b, idx) => idx === i ? { ...b, [field]: value } : b))
+    setBreaks((prev) => prev.map((b, idx) => (idx === i ? { ...b, [field]: value } : b)))
   }
 
   function removeBreak(i: number) {
@@ -90,11 +103,11 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
     try {
       await api.put('/time-slot-template', {
         lessonDurationMinutes: lessonDuration,
-        dayStartTime: dayStart + ':00',
-        dayEndTime: dayEnd + ':00',
+        dayStartTime: `${dayStart}:00`,
+        dayEndTime: `${dayEnd}:00`,
         activeDays: 'MTWTF',
         breaks: breaks.map((b) => ({
-          startTime: b.startTime + ':00',
+          startTime: `${b.startTime}:00`,
           durationMinutes: b.durationMinutes,
         })),
       })
@@ -141,8 +154,16 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
             onClick={addBreak}
             className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Tilføj pause
           </button>
@@ -175,8 +196,16 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
                 onClick={() => removeBreak(i)}
                 className="mt-4 p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -198,7 +227,16 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
         </button>
         {savedBefore && (
           <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             Gemt
           </span>
         )}
@@ -229,7 +267,8 @@ function StepCreateItems({
   const [savedBefore, setSavedBefore] = useState(false)
 
   useEffect(() => {
-    api.get<{ name: string }[]>(apiPath)
+    api
+      .get<{ name: string }[]>(apiPath)
       .then((existing) => {
         if (existing.length > 0) {
           const names = existing.map((e) => e.name)
@@ -241,7 +280,9 @@ function StepCreateItems({
       .catch(() => {})
   }, [apiPath])
 
-  function addRow() { setItems((prev) => [...prev, '']) }
+  function addRow() {
+    setItems((prev) => [...prev, ''])
+  }
   function updateRow(i: number, val: string) {
     setItems((prev) => prev.map((v, idx) => (idx === i ? val : v)))
   }
@@ -252,7 +293,10 @@ function StepCreateItems({
   async function save() {
     const names = items.map((n) => n.trim()).filter(Boolean)
     const newNames = names.filter((n) => !existingNames.has(n))
-    if (names.length === 0) { onNext(); return }
+    if (names.length === 0) {
+      onNext()
+      return
+    }
     setSaving(true)
     setError('')
     try {
@@ -278,15 +322,28 @@ function StepCreateItems({
               onChange={(e) => updateRow(i, e.target.value)}
               placeholder={placeholder}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addRow() } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addRow()
+                }
+              }}
             />
             {items.length > 1 && (
               <button
                 onClick={() => removeRow(i)}
                 className="p-2 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             )}
@@ -296,8 +353,16 @@ function StepCreateItems({
           onClick={addRow}
           className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 mt-1"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Tilføj {noun.toLowerCase()}
         </button>
@@ -316,7 +381,16 @@ function StepCreateItems({
         </button>
         {savedBefore && (
           <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             Gemt
           </span>
         )}
@@ -339,7 +413,8 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
   const userHasEditedRef = useRef(false)
 
   useEffect(() => {
-    api.get<{ name: string; gradeLevel?: number | null }[]>('/classes')
+    api
+      .get<{ name: string; gradeLevel?: number | null }[]>('/classes')
       .then((existing) => {
         if (userHasEditedRef.current) return
         if (existing.length > 0) {
@@ -358,16 +433,18 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
 
   function updateName(i: number, val: string) {
     userHasEditedRef.current = true
-    setItems((prev) => prev.map((item, idx) => {
-      if (idx !== i) return item
-      const detected = detectGradeLevel(val)
-      return { name: val, gradeLevel: detected !== null ? detected : item.gradeLevel }
-    }))
+    setItems((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== i) return item
+        const detected = detectGradeLevel(val)
+        return { name: val, gradeLevel: detected !== null ? detected : item.gradeLevel }
+      })
+    )
   }
 
   function updateGradeLevel(i: number, val: number | null) {
     userHasEditedRef.current = true
-    setItems((prev) => prev.map((item, idx) => idx === i ? { ...item, gradeLevel: val } : item))
+    setItems((prev) => prev.map((item, idx) => (idx === i ? { ...item, gradeLevel: val } : item)))
   }
 
   function removeRow(i: number) {
@@ -378,11 +455,18 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
   async function save() {
     const valid = items.filter((item) => item.name.trim())
     const newItems = valid.filter((item) => !existingNames.has(item.name.trim()))
-    if (valid.length === 0) { onNext(); return }
+    if (valid.length === 0) {
+      onNext()
+      return
+    }
     setSaving(true)
     setError('')
     try {
-      await Promise.all(newItems.map((item) => api.post('/classes', { name: item.name.trim(), gradeLevel: item.gradeLevel })))
+      await Promise.all(
+        newItems.map((item) =>
+          api.post('/classes', { name: item.name.trim(), gradeLevel: item.gradeLevel })
+        )
+      )
       onNext()
     } catch {
       setError('Kunne ikke oprette klasser. Prøv igen.')
@@ -394,7 +478,8 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
   return (
     <div className="space-y-5">
       <p className="text-sm text-gray-600">
-        Tilføj dine klasser. Klassetrin registreres automatisk fra navnet — du kan justere det manuelt.
+        Tilføj dine klasser. Klassetrin registreres automatisk fra navnet — du kan justere det
+        manuelt.
       </p>
       <div className="space-y-3">
         {items.map((item, i) => (
@@ -405,16 +490,25 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
                 onChange={(e) => updateName(i, e.target.value)}
                 placeholder="fx 1.a"
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addRow() } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addRow()
+                  }
+                }}
               />
               <select
                 value={item.gradeLevel ?? ''}
-                onChange={(e) => updateGradeLevel(i, e.target.value === '' ? null : Number(e.target.value))}
+                onChange={(e) =>
+                  updateGradeLevel(i, e.target.value === '' ? null : Number(e.target.value))
+                }
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
               >
                 <option value="">— klassetrin —</option>
                 {Object.entries(GRADE_LEVEL_LABELS).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
+                  <option key={val} value={val}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -423,8 +517,16 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
                 onClick={() => removeRow(i)}
                 className="mt-1 p-2 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             )}
@@ -434,8 +536,16 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
           onClick={addRow}
           className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 mt-1"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Tilføj klasse
         </button>
@@ -454,7 +564,16 @@ function StepCreateClasses({ onNext, onSkip }: { onNext: () => void; onSkip: () 
         </button>
         {savedBefore && (
           <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             Gemt
           </span>
         )}
@@ -486,7 +605,7 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
   }
 
   function updateEntry(i: number, field: keyof StaffEntry, value: string) {
-    setEntries((prev) => prev.map((e, idx) => idx === i ? { ...e, [field]: value } : e))
+    setEntries((prev) => prev.map((e, idx) => (idx === i ? { ...e, [field]: value } : e)))
   }
 
   function removeRow(i: number) {
@@ -495,7 +614,10 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
 
   async function invite() {
     const valid = entries.filter((e) => e.name.trim() && e.email.trim().includes('@'))
-    if (valid.length === 0) { onNext(); return }
+    if (valid.length === 0) {
+      onNext()
+      return
+    }
     setSaving(true)
     setError('')
     try {
@@ -530,11 +652,35 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
           <ul className="mt-2 space-y-1">
             {results.map((r) => (
               <li key={r.email} className="flex items-center gap-2 text-sm">
-                {r.ok
-                  ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600 shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
-                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-red-500 shrink-0"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                }
-                <span className={r.ok ? 'text-gray-700' : 'text-red-600'}>{r.name} — {r.email}</span>
+                {r.ok ? (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-green-600 shrink-0"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-red-500 shrink-0"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                )}
+                <span className={r.ok ? 'text-gray-700' : 'text-red-600'}>
+                  {r.name} — {r.email}
+                </span>
               </li>
             ))}
           </ul>
@@ -565,8 +711,16 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
                   onClick={() => removeRow(i)}
                   className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 transition-colors"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               )}
@@ -617,8 +771,16 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
           onClick={addRow}
           className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Tilføj medarbejder
         </button>
@@ -645,14 +807,23 @@ function StepDone({ onFinish }: { onFinish: () => void }) {
   return (
     <div className="space-y-5 text-center py-4">
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600">
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className="text-green-600"
+        >
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
       <div>
         <h3 className="text-lg font-semibold text-gray-900">Din skole er sat op!</h3>
         <p className="mt-1 text-sm text-gray-500">
-          Du er klar til at begynde at bygge skemaer. Du kan altid ændre indstillingerne under Indstillinger.
+          Du er klar til at begynde at bygge skemaer. Du kan altid ændre indstillingerne under
+          Indstillinger.
         </p>
       </div>
       <button
@@ -674,7 +845,9 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-gray-500">
-        <span>Trin {current} af {total}</span>
+        <span>
+          Trin {current} af {total}
+        </span>
         <span>{pct}% færdig</span>
       </div>
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -726,8 +899,14 @@ export default function SchoolSetupWizardPage() {
 
   if (!authenticated) return null
 
-  const advance = () => { userNavigated.current = true; setStep((s) => Math.min(s + 1, STEPS.length)) }
-  const skip = () => { userNavigated.current = true; setStep((s) => Math.min(s + 1, STEPS.length)) }
+  const advance = () => {
+    userNavigated.current = true
+    setStep((s) => Math.min(s + 1, STEPS.length))
+  }
+  const skip = () => {
+    userNavigated.current = true
+    setStep((s) => Math.min(s + 1, STEPS.length))
+  }
 
   function finish() {
     qc.invalidateQueries({ queryKey: getApiV1SchoolsOnboardingStatusQueryKey() })
@@ -742,11 +921,10 @@ export default function SchoolSetupWizardPage() {
         {/* Header */}
         <div className="px-8 pt-8 pb-5 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <span className="font-display text-xl font-semibold text-brand-800">Skoleoverblikket</span>
-            <button
-              onClick={finish}
-              className="text-xs text-gray-400 hover:text-gray-600"
-            >
+            <span className="font-display text-xl font-semibold text-brand-800">
+              Skoleoverblikket
+            </span>
+            <button onClick={finish} className="text-xs text-gray-400 hover:text-gray-600">
               Gem og afslut
             </button>
           </div>

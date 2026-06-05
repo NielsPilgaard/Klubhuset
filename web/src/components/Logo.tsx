@@ -26,15 +26,7 @@ export default function Logo({ variant = 'light', size = 32 }: LogoProps) {
         strokeLinejoin="round"
       />
       {/* House body */}
-      <rect
-        x="5"
-        y="14"
-        width="22"
-        height="16"
-        rx="1.5"
-        stroke={color}
-        strokeWidth="2"
-      />
+      <rect x="5" y="14" width="22" height="16" rx="1.5" stroke={color} strokeWidth="2" />
       {/* Grid — vertical lines */}
       <line x1="12" y1="14" x2="12" y2="30" stroke={gridColor} strokeWidth="1.2" />
       <line x1="20" y1="14" x2="20" y2="30" stroke={gridColor} strokeWidth="1.2" />

@@ -9,8 +9,10 @@ public static class ServicesExtensions
 	{
 		services.AddScoped<ConflictDetectionService>();
 		services.AddScoped<StaffInvitationService>();
+		services.AddScoped<ParentInvitationService>();
 		services.AddScoped<ExcelReportBuilder>();
 		services.AddScoped<SubscriptionService>();
+		services.AddScoped<INotificationService, NotificationService>();
 
 		services.AddOptions<ApplicationOptions>()
 			.BindConfiguration(ApplicationOptions.SectionName)

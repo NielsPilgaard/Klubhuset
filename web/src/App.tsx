@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/useAuth'
 import Layout from './components/Layout'
+import ViewModeToolbar from './components/ViewModeToolbar'
 
 // Keep critical public pages as regular imports
 import LandingPage from './pages/LandingPage'
@@ -29,6 +30,7 @@ const CoursesPage = lazy(() => import('./pages/CoursesPage'))
 const RoomsPage = lazy(() => import('./pages/RoomsPage'))
 const RoomSchedulePage = lazy(() => import('./pages/RoomSchedulePage'))
 const PrintSchemaPage = lazy(() => import('./pages/PrintSchemaPage'))
+const SfoPrintPage = lazy(() => import('./pages/SfoPrintPage'))
 const SkoleindstillingerPage = lazy(() => import('./pages/SkoleindstillingerPage'))
 const SchoolSetupWizardPage = lazy(() => import('./pages/SchoolSetupWizardPage'))
 const FilesPage = lazy(() => import('./pages/FilesPage'))
@@ -37,6 +39,32 @@ const ExportsPage = lazy(() => import('./pages/ExportsPage'))
 const ClassTimeSlotsPage = lazy(() => import('./pages/ClassTimeSlotsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const WeekPlanPage = lazy(() => import('./pages/WeekPlanPage'))
+const SfoPage = lazy(() => import('./pages/SfoPage'))
+const StudentsPage = lazy(() => import('./pages/StudentsPage'))
+const ParentsPage = lazy(() => import('./pages/ParentsPage'))
+const YearRollPage = lazy(() => import('./pages/AarsrulPage'))
+const ParentSchemaPage = lazy(() => import('./pages/parent/ParentSchemaPage'))
+const ParentCalendarPage = lazy(() => import('./pages/parent/ParentCalendarPage'))
+const ParentUgeplanPage = lazy(() => import('./pages/parent/ParentUgeplanPage'))
+const BackofficeLayout = lazy(() => import('./pages/backoffice/BackofficeLayout'))
+const BackofficeTenantsPage = lazy(() => import('./pages/backoffice/BackofficeTenantsPage'))
+const BackofficeTenantDetailPage = lazy(
+  () => import('./pages/backoffice/BackofficeTenantDetailPage')
+)
+const BackofficeEmailPreviewPage = lazy(
+  () => import('./pages/backoffice/BackofficeEmailPreviewPage')
+)
+const ParentDirectoryPage = lazy(() => import('./pages/ParentDirectoryPage'))
+const ParentFravaerPage = lazy(() => import('./pages/parent/ParentFravaerPage'))
+const FravaerPage = lazy(() => import('./pages/FravaerPage'))
+const NotificationPreferencesPage = lazy(() => import('./pages/NotificationPreferencesPage'))
+const KontaktbogPage = lazy(() => import('./pages/KontaktbogPage'))
+const ParentKontaktbogPage = lazy(() => import('./pages/parent/ParentKontaktbogPage'))
+const BeskederPage = lazy(() => import('./pages/BeskederPage'))
+const FerieindmeldingPage = lazy(() => import('./pages/FerieindmeldingPage'))
+const FerieindmeldingDetailPage = lazy(() => import('./pages/FerieindmeldingDetailPage'))
+const ParentFerieindmeldingPage = lazy(() => import('./pages/parent/ParentFerieindmeldingPage'))
+const BroadcastPage = lazy(() => import('./pages/BroadcastPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,8 +76,10 @@ const queryClient = new QueryClient({
 })
 
 function HomeRedirect() {
-  const { authenticated, isAdmin } = useAuth()
+  const { authenticated, isAdmin, isParent, isSuperAdmin, viewAs } = useAuth()
   if (authenticated) {
+    if (isSuperAdmin && viewAs === 'default') return <Navigate to="/backoffice" replace />
+    if (isParent) return <Navigate to="/foraeldrevisning/skema" replace />
     return <Navigate to={isAdmin ? '/dashboard' : '/mig/skema'} replace />
   }
   return <LandingPage />
@@ -61,53 +91,250 @@ function AdminRoute({ children }: { children: JSX.Element }) {
   return <>{children}</>
 }
 
+function ParentRoute({ children }: { children: JSX.Element }) {
+  const { isParent } = useAuth()
+  if (!isParent) return <Navigate to="/mig/skema" replace />
+  return <>{children}</>
+}
+
+function SuperAdminRoute({ children }: { children: JSX.Element }) {
+  const { isSuperAdmin } = useAuth()
+  if (!isSuperAdmin) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <ScrollToTop />
-          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Indlæser...</div>}>
+          <ViewModeToolbar />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-screen">Indlæser...</div>
+            }
+          >
             <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<HomeRedirect />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="signup" element={<SignupPage />} />
-          <Route path="invitation/:token" element={<InvitationAcceptPage />} />
-          <Route path="om" element={<OmPage />} />
-          <Route path="privatlivspolitik" element={<PrivatlivspolitikPage />} />
-          <Route path="kontakt" element={<KontaktPage />} />
-          <Route path="udskriv/klasse/:classId" element={<PrintSchemaPage />} />
-          <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
-          <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />
+              {/* Public routes */}
+              <Route path="/" element={<HomeRedirect />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route path="signup" element={<SignupPage />} />
+              <Route path="invitation/:token" element={<InvitationAcceptPage />} />
+              <Route path="parent-invitation/:token" element={<InvitationAcceptPage />} />
+              <Route path="om" element={<OmPage />} />
+              <Route path="privatlivspolitik" element={<PrivatlivspolitikPage />} />
+              <Route path="kontakt" element={<KontaktPage />} />
+              <Route path="udskriv/klasse/:classId" element={<PrintSchemaPage />} />
+              <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
+              <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />
+              <Route path="udskriv/sfo" element={<SfoPrintPage />} />
 
-          {/* Pages outside Layout (no sidebar) */}
-          <Route path="setup" element={<SchoolSetupWizardPage />} />
+              {/* Pages outside Layout (no sidebar) */}
+              <Route path="setup" element={<SchoolSetupWizardPage />} />
+              <Route
+                path="backoffice"
+                element={
+                  <SuperAdminRoute>
+                    <BackofficeLayout />
+                  </SuperAdminRoute>
+                }
+              >
+                <Route index element={<Navigate to="tenants" replace />} />
+                <Route path="tenants" element={<BackofficeTenantsPage />} />
+                <Route path="tenants/:schoolId" element={<BackofficeTenantDetailPage />} />
+                <Route path="emails" element={<BackofficeEmailPreviewPage />} />
+              </Route>
 
-          {/* Authenticated app */}
-          <Route path="/" element={<Layout />}>
-            <Route path="dashboard" element={<AdminRoute><DashboardPage /></AdminRoute>} />
-            <Route path="mig/skema" element={<MySchedulePage />} />
-            <Route path="klasser" element={<ClassesPage />} />
-            <Route path="klasser/:classId/skema/:schemaId" element={<SchemaBuilderPage />} />
-            <Route path="klasser/:classId/lektioner" element={<AdminRoute><ClassTimeSlotsPage /></AdminRoute>} />
-            <Route path="klasser/:classId/schemas/:schemaId/lektioner" element={<ClassTimeSlotsPage />} />
-            <Route path="medarbejdere" element={<AdminRoute><StaffPage /></AdminRoute>} />
-            <Route path="medarbejdere/:staffId/skema" element={<AdminRoute><StaffSchedulePage /></AdminRoute>} />
-            <Route path="fag" element={<CoursesPage />} />
-            <Route path="lokaler" element={<RoomsPage />} />
-            <Route path="lokaler/:roomId/skema" element={<RoomSchedulePage />} />
-            <Route path="filer" element={<FilesPage />} />
-            <Route path="eksporter" element={<AdminRoute><ExportsPage /></AdminRoute>} />
-            <Route path="abonnement" element={<AdminRoute><BillingPage /></AdminRoute>} />
-            <Route path="kalender" element={<CalendarPage />} />
-            <Route path="klasser/:classId/ugeplan" element={<WeekPlanPage />} />
-            <Route path="indstillinger" element={<AdminRoute><SkoleindstillingerPage /></AdminRoute>} />
-          </Route>
-        </Routes>
+              {/* Authenticated app */}
+              <Route path="/" element={<Layout />}>
+                <Route
+                  path="dashboard"
+                  element={
+                    <AdminRoute>
+                      <DashboardPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route path="mig/skema" element={<MySchedulePage />} />
+                <Route path="klasser" element={<ClassesPage />} />
+                <Route path="klasser/:classId/skema/:schemaId" element={<SchemaBuilderPage />} />
+                <Route
+                  path="klasser/:classId/lektioner"
+                  element={
+                    <AdminRoute>
+                      <ClassTimeSlotsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="klasser/:classId/schemas/:schemaId/lektioner"
+                  element={<ClassTimeSlotsPage />}
+                />
+                <Route
+                  path="medarbejdere"
+                  element={
+                    <AdminRoute>
+                      <StaffPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="medarbejdere/:staffId/skema"
+                  element={
+                    <AdminRoute>
+                      <StaffSchedulePage />
+                    </AdminRoute>
+                  }
+                />
+                <Route path="fag" element={<CoursesPage />} />
+                <Route path="lokaler" element={<RoomsPage />} />
+                <Route path="lokaler/:roomId/skema" element={<RoomSchedulePage />} />
+                <Route path="filer" element={<FilesPage />} />
+                <Route
+                  path="eksporter"
+                  element={
+                    <AdminRoute>
+                      <ExportsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="abonnement"
+                  element={
+                    <AdminRoute>
+                      <BillingPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route path="kalender" element={<CalendarPage />} />
+                <Route path="klasser/:classId/ugeplan" element={<WeekPlanPage />} />
+                <Route
+                  path="indstillinger"
+                  element={
+                    <AdminRoute>
+                      <SkoleindstillingerPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="sfo"
+                  element={
+                    <AdminRoute>
+                      <SfoPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="elever"
+                  element={
+                    <AdminRoute>
+                      <StudentsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="foraeldre"
+                  element={
+                    <AdminRoute>
+                      <ParentsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="aarsrul"
+                  element={
+                    <AdminRoute>
+                      <YearRollPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="foraeldrevisning/skema"
+                  element={
+                    <ParentRoute>
+                      <ParentSchemaPage />
+                    </ParentRoute>
+                  }
+                />
+                <Route
+                  path="foraeldrevisning/kalender"
+                  element={
+                    <ParentRoute>
+                      <ParentCalendarPage />
+                    </ParentRoute>
+                  }
+                />
+                <Route
+                  path="foraeldrevisning/ugeplan"
+                  element={
+                    <ParentRoute>
+                      <ParentUgeplanPage />
+                    </ParentRoute>
+                  }
+                />
+                <Route
+                  path="foraeldrevisning/kontakt"
+                  element={
+                    <ParentRoute>
+                      <ParentDirectoryPage />
+                    </ParentRoute>
+                  }
+                />
+                <Route
+                  path="foraeldrevisning/fravaer"
+                  element={
+                    <ParentRoute>
+                      <ParentFravaerPage />
+                    </ParentRoute>
+                  }
+                />
+                <Route path="foraeldre/kontakt" element={<ParentDirectoryPage />} />
+                <Route path="udsend-email" element={<BroadcastPage />} />
+                <Route path="fravaer" element={<FravaerPage />} />
+                <Route path="kontaktbog" element={<KontaktbogPage />} />
+                <Route
+                  path="foraeldrevisning/kontaktbog"
+                  element={
+                    <ParentRoute>
+                      <ParentKontaktbogPage />
+                    </ParentRoute>
+                  }
+                />
+                <Route
+                  path="indstillinger/notifikationer"
+                  element={<NotificationPreferencesPage />}
+                />
+                <Route path="beskeder" element={<BeskederPage />} />
+                <Route
+                  path="ferieindmelding"
+                  element={
+                    <AdminRoute>
+                      <FerieindmeldingPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="ferieindmelding/:id"
+                  element={
+                    <AdminRoute>
+                      <FerieindmeldingDetailPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="foraeldrevisning/ferieindmelding"
+                  element={
+                    <ParentRoute>
+                      <ParentFerieindmeldingPage />
+                    </ParentRoute>
+                  }
+                />
+              </Route>
+            </Routes>
           </Suspense>
-      </BrowserRouter>
-    </QueryClientProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
     </AuthProvider>
   )
 }

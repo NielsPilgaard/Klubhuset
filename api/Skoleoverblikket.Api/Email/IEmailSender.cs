@@ -9,4 +9,5 @@ public sealed record EmailMessage(
 	string To,
 	string Subject,
 	string HtmlBody,
-	string? PlainTextBody = null);
+	string? PlainTextBody = null,
+	IReadOnlyList<string>? Bcc = null);

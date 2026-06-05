@@ -17,6 +17,14 @@ public sealed class MailKitEmailSender(IOptionsMonitor<SmtpOptions> options) : I
 		mime.To.Add(MailboxAddress.Parse(message.To));
 		mime.Subject = message.Subject;
 
+		if (message.Bcc is { Count: > 0 })
+		{
+			foreach (var bcc in message.Bcc)
+			{
+				mime.Bcc.Add(MailboxAddress.Parse(bcc));
+			}
+		}
+
 		var bodyBuilder = new BodyBuilder
 		{
 			HtmlBody = message.HtmlBody,

@@ -7,10 +7,10 @@ namespace Skoleoverblikket.Api.Auth;
 public interface IKeycloakTokenApi
 {
 	[Post("/token")]
-	Task<TokenResponse> GetTokenAsync([Body(BodySerializationMethod.UrlEncoded)] TokenRequest request, CancellationToken ct);
+	Task<TokenResponse> GetTokenAsync([Body(BodySerializationMethod.UrlEncoded)] TokenRequest request, CancellationToken cancellationToken);
 
 	[Post("/token")]
-	Task<TokenResponse> GetPasswordTokenAsync([Body(BodySerializationMethod.UrlEncoded)] PasswordTokenRequest request, CancellationToken ct);
+	Task<TokenResponse> GetPasswordTokenAsync([Body(BodySerializationMethod.UrlEncoded)] PasswordTokenRequest request, CancellationToken cancellationToken);
 }
 
 public record TokenRequest(

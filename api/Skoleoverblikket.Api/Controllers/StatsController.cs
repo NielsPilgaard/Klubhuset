@@ -30,16 +30,16 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 
 	[HttpGet("dashboard")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<DashboardStats>> GetDashboard(CancellationToken ct)
+	public async Task<ActionResult<DashboardStats>> GetDashboard(CancellationToken cancellationToken)
 	{
-		var classCount = await db.Classes.CountAsync(ct);
-		var staffCount = await db.Staff.CountAsync(ct);
-		var courseCount = await db.Courses.CountAsync(ct);
-		var roomCount = await db.Rooms.CountAsync(ct);
+		var classCount = await db.Classes.CountAsync(cancellationToken);
+		var staffCount = await db.Staff.CountAsync(cancellationToken);
+		var courseCount = await db.Courses.CountAsync(cancellationToken);
+		var roomCount = await db.Rooms.CountAsync(cancellationToken);
 
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		// TODO: Fetching all schemas is overkill, visualize something else
-		var allSchemas = await db.Schemas.AsNoTracking().ToListAsync(ct);
+		var allSchemas = await db.Schemas.AsNoTracking().ToListAsync(cancellationToken);
 		var schemasTotal = allSchemas.Count;
 		var schemasComplete = allSchemas.Count(s => s.StartDate.HasValue && s.EndDate.HasValue);
 
@@ -53,7 +53,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 			.Include(s => s.TimeSlot)
 			.Include(s => s.Teacher)
 			.Include(s => s.Aide)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var hoursPerCourse = activeSlots
 			.GroupBy(s => (s.CourseId, CourseName: s.Course.Name, s.Schema.ClassId, ClassName: s.Schema.Class.Name))
@@ -88,13 +88,13 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 			.Where(s => s.StartDate <= today && s.EndDate >= today)
 			.Include(s => s.Class)
 			.Include(s => s.Slots)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
-		var classTimeSlots = await db.TimeSlots.AsNoTracking().ToListAsync(ct);
+		var classTimeSlots = await db.TimeSlots.AsNoTracking().ToListAsync(cancellationToken);
 
 		var activeSchemaClassIds = activeSchemas.Select(s => s.ClassId).ToHashSet();
 
-		var allClasses = await db.Classes.AsNoTracking().ToListAsync(ct);
+		var allClasses = await db.Classes.AsNoTracking().ToListAsync(cancellationToken);
 
 		// Classes with no active schema at all
 		var classesWithoutSchema = allClasses

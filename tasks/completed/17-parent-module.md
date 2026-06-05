@@ -95,7 +95,7 @@ public async Task<string> CreateUserAsync(
     Guid? tenantId,          // null = no tenant_id attribute; parents need it set
     string? realmRole,       // null = no role; "admin", "parent", "board" etc.
     bool forcePasswordReset, // true = UPDATE_PASSWORD required action
-    CancellationToken ct)
+    CancellationToken cancellationToken)
 ```
 
 `CreateAdminUserAsync` and `CreateStaffUserAsync` become thin wrappers with no change to call sites.
@@ -123,6 +123,7 @@ public async Task<string> CreateUserAsync(
 ### Extend existing read endpoints
 
 Allow `parent` role on:
+
 - `GET /api/v1/classes/{classId}/schemas` — add `[Authorize(Roles = "admin,parent")]`
 - `GET /api/v1/calendar` — add `parent` to allowed roles
 - `GET /api/v1/classes/{classId}/ugeplan` — add `parent` to allowed roles
@@ -194,4 +195,4 @@ Extend `InvitationAcceptPage.tsx`. Add contact-info consent step: address, phone
 - Parent directory / Kontakt feature (future — data model is ready)
 - Adressebeskyttelse (§28 CPR-loven) — future; `ShareContactInfo=false` default provides basic protection now
 - Fraværsregistrering
-- Multi-child switcher UI (parent with 2+ students sees all classes; no switcher needed for read-only views)
+- Multi-child switcher UI (do we need a switcher, or simply access to more with multiple children?) (parent with 2+ students sees all classes; no switcher needed for read-only views)

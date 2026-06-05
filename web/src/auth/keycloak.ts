@@ -22,13 +22,15 @@ let initPromise: Promise<boolean> | null = null
 export function getInitPromise(): Promise<boolean> {
   if (!initPromise) {
     const raw = sessionStorage.getItem(SIGNUP_TOKEN_KEY)
-    const seeded = raw ? JSON.parse(raw) as { accessToken: string; refreshToken: string } : null
+    const seeded = raw ? (JSON.parse(raw) as { accessToken: string; refreshToken: string }) : null
     if (seeded) sessionStorage.removeItem(SIGNUP_TOKEN_KEY)
 
     const keycloakInit = keycloak.init({
       onLoad: seeded ? undefined : 'check-sso',
       pkceMethod: 'S256',
       checkLoginIframe: false,
+      // tokenStore is a valid runtime option not yet reflected in the @types/keycloak-js typings
+      ...({ tokenStore: 'localStorage' } as object),
       ...(seeded ? { token: seeded.accessToken, refreshToken: seeded.refreshToken } : {}),
     })
 

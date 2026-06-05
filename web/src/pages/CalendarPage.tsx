@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1CalendarOptions,
@@ -10,7 +11,7 @@ import {
   deleteApiV1CalendarByIdOccurrencesByDateMutation,
   deleteApiV1CalendarByIdFromByDateMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { CalendarEntryDto, DefaultHolidayDto } from '../api/generated/types.gen'
+import type { CalendarEntryDto, DefaultHolidayDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { DatePicker } from '../components/DatePicker'
 import keycloak from '../auth/keycloak'
@@ -37,8 +38,18 @@ const TYPE_BADGE_COLORS: Record<string, string> = {
 }
 
 const MONTH_NAMES = [
-  'Januar', 'Februar', 'Marts', 'April', 'Maj', 'Juni',
-  'Juli', 'August', 'September', 'Oktober', 'November', 'December',
+  'Januar',
+  'Februar',
+  'Marts',
+  'April',
+  'Maj',
+  'Juni',
+  'Juli',
+  'August',
+  'September',
+  'Oktober',
+  'November',
+  'December',
 ]
 
 const WEEKDAY_HEADERS = ['Ma', 'Ti', 'On', 'To', 'Fr', 'Lø', 'Sø']
@@ -92,7 +103,7 @@ function getDayEntries(
   year: number,
   month: number,
   day: number,
-  entries: CalendarEntryDto[],
+  entries: CalendarEntryDto[]
 ): CalendarEntryDto[] {
   const pad = (n: number) => n.toString().padStart(2, '0')
   const dateStr = `${year}-${pad(month)}-${pad(day)}`
@@ -125,12 +136,19 @@ interface DeleteOccurrenceDialogProps {
   onDeleted: () => void
 }
 
-function DeleteOccurrenceDialog({ entry, occurrenceDate, onClose, onDeleted }: DeleteOccurrenceDialogProps) {
+function DeleteOccurrenceDialog({
+  entry,
+  occurrenceDate,
+  onClose,
+  onDeleted,
+}: DeleteOccurrenceDialogProps) {
   const qc = useQueryClient()
   const [mode, setMode] = useState<DeleteMode>('single')
 
   useEffect(() => {
-    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
@@ -139,18 +157,28 @@ function DeleteOccurrenceDialog({ entry, occurrenceDate, onClose, onDeleted }: D
 
   const deleteSingleMutation = useMutation({
     ...deleteApiV1CalendarByIdOccurrencesByDateMutation(),
-    onSuccess: () => { invalidate(); onDeleted() },
+    onSuccess: () => {
+      invalidate()
+      onDeleted()
+    },
   })
   const deleteFromMutation = useMutation({
     ...deleteApiV1CalendarByIdFromByDateMutation(),
-    onSuccess: () => { invalidate(); onDeleted() },
+    onSuccess: () => {
+      invalidate()
+      onDeleted()
+    },
   })
   const deleteAllMutation = useMutation({
     ...deleteApiV1CalendarByIdMutation(),
-    onSuccess: () => { invalidate(); onDeleted() },
+    onSuccess: () => {
+      invalidate()
+      onDeleted()
+    },
   })
 
-  const isPending = deleteSingleMutation.isPending || deleteFromMutation.isPending || deleteAllMutation.isPending
+  const isPending =
+    deleteSingleMutation.isPending || deleteFromMutation.isPending || deleteAllMutation.isPending
 
   function handleConfirm() {
     if (isPending) return
@@ -164,45 +192,50 @@ function DeleteOccurrenceDialog({ entry, occurrenceDate, onClose, onDeleted }: D
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">Slet begivenhed</h2>
-          <p className="text-sm text-gray-500 mt-1">"{entry.title}" gentages. Hvad vil du slette?</p>
-        </div>
-        <div className="px-6 py-5 space-y-3">
-          {([
+    <Modal isOpen onClose={onClose} size="sm">
+      <div className="px-6 py-5 border-b border-gray-100">
+        <h2 className="font-display text-lg font-semibold text-gray-900">Slet begivenhed</h2>
+        <p className="text-sm text-gray-500 mt-1">"{entry.title}" gentages. Hvad vil du slette?</p>
+      </div>
+      <div className="px-6 py-5 space-y-3">
+        {(
+          [
             ['single', 'Kun denne begivenhed'],
             ['from', 'Denne og alle efterfølgende'],
             ['all', 'Alle begivenheder i serien'],
-          ] as [DeleteMode, string][]).map(([val, label]) => (
-            <label key={val} className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="radio"
-                name="deleteMode"
-                value={val}
-                checked={mode === val}
-                onChange={() => setMode(val)}
-                className="accent-brand-600 w-4 h-4"
-              />
-              <span className="text-sm text-gray-800 group-hover:text-gray-900">{label}</span>
-            </label>
-          ))}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Annuller
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={isPending}
-            className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? 'Sletter...' : 'Slet'}
-          </button>
-        </div>
+          ] as [DeleteMode, string][]
+        ).map(([val, label]) => (
+          <label key={val} className="flex items-center gap-3 cursor-pointer group">
+            <input
+              type="radio"
+              name="deleteMode"
+              value={val}
+              checked={mode === val}
+              onChange={() => setMode(val)}
+              className="accent-brand-600 w-4 h-4"
+            />
+            <span className="text-sm text-gray-800 group-hover:text-gray-900">{label}</span>
+          </label>
+        ))}
       </div>
-    </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirm}
+          disabled={isPending}
+          className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isPending ? 'Sletter...' : 'Slet'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -220,13 +253,25 @@ interface DayPopoverProps {
   onClose: () => void
 }
 
-function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdit, onDelete, onClose }: DayPopoverProps) {
+function DayPopover({
+  year,
+  month,
+  day,
+  entries,
+  isAdmin,
+  onCreateForDate,
+  onEdit,
+  onDelete,
+  onClose,
+}: DayPopoverProps) {
   const ref = useRef<HTMLDivElement>(null)
   const dateStr = toDateString(year, month, day)
   const dayEntries = getDayEntries(year, month, day, entries)
 
   useEffect(() => {
-    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
@@ -256,6 +301,9 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
       className="absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 w-52 text-left"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
     >
       <div className="px-3 py-2 border-b border-gray-100">
         <p className="text-xs font-medium text-gray-700 capitalize">{formattedDate}</p>
@@ -266,28 +314,50 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
         )}
         {dayEntries.map((entry) => (
           <div key={`${entry.id}-${entry.startDate}`} className="flex items-center gap-1.5">
-            <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
+            <span
+              className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}
+            >
               {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
             </span>
             <span className="text-xs text-gray-800 flex-1 truncate">{entry.title}</span>
             {isAdmin && (
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
-                  onClick={() => { onEdit(entry); onClose() }}
+                  onClick={() => {
+                    onEdit(entry)
+                    onClose()
+                  }}
                   className="text-gray-400 hover:text-gray-700"
                   title="Rediger"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
                 </button>
                 <button
-                  onClick={() => { onDelete(entry); onClose() }}
+                  onClick={() => {
+                    onDelete(entry)
+                    onClose()
+                  }}
                   className="text-gray-400 hover:text-red-600"
                   title="Slet"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                     <path d="M10 11v6M14 11v6" />
@@ -302,7 +372,10 @@ function DayPopover({ year, month, day, entries, isAdmin, onCreateForDate, onEdi
       {isAdmin && (
         <div className="px-3 py-2 border-t border-gray-100">
           <button
-            onClick={() => { onCreateForDate(dateStr); onClose() }}
+            onClick={() => {
+              onCreateForDate(dateStr)
+              onClose()
+            }}
             className="w-full text-left text-xs text-brand-600 hover:text-brand-800 font-medium"
           >
             + Tilføj begivenhed
@@ -326,7 +399,9 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
   const qc = useQueryClient()
 
   useEffect(() => {
-    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
@@ -347,11 +422,17 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
 
   const createMutation = useMutation({
     ...postApiV1CalendarMutation(),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() }); onSaved() },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() })
+      onSaved()
+    },
   })
   const updateMutation = useMutation({
     ...putApiV1CalendarByIdMutation(),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() }); onSaved() },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1CalendarQueryKey() })
+      onSaved()
+    },
   })
   const mutation = initial ? updateMutation : createMutation
 
@@ -376,95 +457,85 @@ function EntryModal({ initial, defaultDate, onClose, onSaved }: EntryModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div role="dialog" aria-modal="true" className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-display text-lg font-semibold text-gray-900">
-            {initial ? 'Rediger begivenhed' : 'Tilføj begivenhed'}
-          </h2>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as EntryType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            >
-              {Object.keys(TYPE_LABELS).map((t) => (
-                <option key={t} value={t}>{TYPE_LABELS[t]}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Titel *</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="fx Efterårsferie"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-            <DatePicker
-              value={startDate}
-              onChange={(v) => {
-                setStartDate(v)
-                if (endDate < v) setEndDate(v)
-              }}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-            <DatePicker
-              value={endDate}
-              onChange={setEndDate}
-              min={startDate}
-            />
-            {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gentagelse</label>
-            <select
-              value={recurrenceRule}
-              onChange={(e) => setRecurrenceRule(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            >
-              <option value="">Ingen gentagelse</option>
-              <option value="FREQ=WEEKLY">Ugentlig</option>
-              <option value="FREQ=WEEKLY;INTERVAL=2">Hver 2. uge</option>
-              <option value="FREQ=MONTHLY">Månedlig</option>
-            </select>
-          </div>
-          {recurrenceRule && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gentag indtil</label>
-              <DatePicker
-                value={recurrenceEnd}
-                onChange={setRecurrenceEnd}
-                min={endDate}
-              />
-            </div>
-          )}
-          {isError && (
-            <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
-          )}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Annuller
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!title.trim() || !!dateError || mutation.isPending}
-            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    <Modal isOpen onClose={onClose} title={initial ? 'Rediger begivenhed' : 'Tilføj begivenhed'}>
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as EntryType)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           >
-            {mutation.isPending ? 'Gemmer...' : 'Gem'}
-          </button>
+            {Object.keys(TYPE_LABELS).map((t) => (
+              <option key={t} value={t}>
+                {TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Titel *</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="fx Efterårsferie"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
+          <DatePicker
+            value={startDate}
+            onChange={(v) => {
+              setStartDate(v)
+              if (endDate < v) setEndDate(v)
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
+          <DatePicker value={endDate} onChange={setEndDate} min={startDate} />
+          {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Gentagelse</label>
+          <select
+            value={recurrenceRule}
+            onChange={(e) => setRecurrenceRule(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          >
+            <option value="">Ingen gentagelse</option>
+            <option value="FREQ=WEEKLY">Ugentlig</option>
+            <option value="FREQ=WEEKLY;INTERVAL=2">Hver 2. uge</option>
+            <option value="FREQ=MONTHLY">Månedlig</option>
+          </select>
+        </div>
+        {recurrenceRule && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Gentag indtil</label>
+            <DatePicker value={recurrenceEnd} onChange={setRecurrenceEnd} min={endDate} />
+          </div>
+        )}
+        {isError && <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>}
       </div>
-    </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!title.trim() || !!dateError || mutation.isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {mutation.isPending ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -476,7 +547,8 @@ export default function CalendarPage() {
   const isAdmin = keycloak.hasRealmRole('admin')
 
   const today = new Date()
-  const currentSchoolStartYear = today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1
+  const currentSchoolStartYear =
+    today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1
   const [schoolStartYear, setSchoolStartYear] = useState(currentSchoolStartYear)
   const { startYear, endYear } = getSchoolYears(schoolStartYear)
   const schoolYearMonths = getSchoolYearMonths(schoolStartYear)
@@ -485,7 +557,7 @@ export default function CalendarPage() {
 
   function findCurrentMonthIndex(months: Array<{ year: number; month: number }>) {
     const idx = months.findIndex(
-      ({ year, month }) => `${year}-${String(month).padStart(2, '0')}` >= nowMonthStr,
+      ({ year, month }) => `${year}-${String(month).padStart(2, '0')}` >= nowMonthStr
     )
     return idx >= 0 ? idx : 0
   }
@@ -494,7 +566,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     setCarouselIndex(findCurrentMonthIndex(getSchoolYearMonths(schoolStartYear)))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolStartYear])
 
   const [highlightedDate, setHighlightedDate] = useState<string | null>(null)
@@ -529,6 +601,7 @@ export default function CalendarPage() {
     setExportDone(false)
     try {
       await keycloak.updateToken(30)
+      // Raw fetch intentional: SDK client cannot return Blob responses (typed as unknown).
       const res = await fetch('/api/v1/calendar/export.ics', {
         headers: { Authorization: `Bearer ${keycloak.token}` },
       })
@@ -545,7 +618,10 @@ export default function CalendarPage() {
       URL.revokeObjectURL(url)
       setExportDone(true)
       if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
-      exportTimeoutRef.current = setTimeout(() => { setExportDone(false); exportTimeoutRef.current = null }, 8000)
+      exportTimeoutRef.current = setTimeout(() => {
+        setExportDone(false)
+        exportTimeoutRef.current = null
+      }, 8000)
     } finally {
       setExportPending(false)
     }
@@ -555,7 +631,10 @@ export default function CalendarPage() {
   const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
   const [openPopover, setOpenPopover] = useState<string | null>(null)
 
-  const [deleteTarget, setDeleteTarget] = useState<{ entry: CalendarEntryDto; occurrenceDate: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    entry: CalendarEntryDto
+    occurrenceDate: string
+  } | null>(null)
 
   const { data: entriesStartYear = [] } = useQuery({
     ...getApiV1CalendarOptions({ query: { year: startYear } }),
@@ -568,7 +647,9 @@ export default function CalendarPage() {
 
   const allEntries: CalendarEntryDto[] = [
     ...entriesStartYear,
-    ...entriesEndYear.filter((e) => !entriesStartYear.some((s) => s.id === e.id && s.startDate === e.startDate)),
+    ...entriesEndYear.filter(
+      (e) => !entriesStartYear.some((s) => s.id === e.id && s.startDate === e.startDate)
+    ),
   ]
 
   const hasEntries = allEntries.some((e) => isEntryInSchoolYear(e, schoolStartYear))
@@ -625,8 +706,8 @@ export default function CalendarPage() {
   function renderMonthCard(year: number, month: number, large = false) {
     const weeks = buildMonthGrid(year, month)
     const dayCellClass = large
-      ? 'text-base text-center py-2.5 h-11 rounded-lg select-none font-medium'
-      : 'text-sm text-center py-1 h-8 rounded select-none'
+      ? 'w-full text-base text-center py-2.5 h-11 rounded-lg select-none font-medium'
+      : 'w-full text-sm text-center py-1 h-8 rounded select-none'
     const headerClass = large ? 'text-sm text-center pb-2' : 'text-xs text-center pb-1'
     const weekNumClass = large
       ? 'text-xs text-gray-400 text-right pr-2 leading-none flex items-center justify-end'
@@ -634,14 +715,28 @@ export default function CalendarPage() {
     const weekNumCol = large ? '2.5rem' : '2rem'
 
     return (
-      <div key={`${year}-${month}`} ref={(el) => { if (el) monthRefs.current.set(`${year}-${month}`, el); else monthRefs.current.delete(`${year}-${month}`) }} className={`bg-white rounded-xl border border-gray-200 ${large ? 'p-6' : 'p-5'}`}>
-        <p className={`font-display font-semibold text-gray-700 mb-3 ${large ? 'text-xl' : 'text-base'}`}>
+      <div
+        key={`${year}-${month}`}
+        ref={(el) => {
+          if (el) monthRefs.current.set(`${year}-${month}`, el)
+          else monthRefs.current.delete(`${year}-${month}`)
+        }}
+        className={`bg-white rounded-xl border border-gray-200 ${large ? 'p-6' : 'p-5'}`}
+      >
+        <p
+          className={`font-display font-semibold text-gray-700 mb-3 ${large ? 'text-xl' : 'text-base'}`}
+        >
           {MONTH_NAMES[month - 1]} {year}
         </p>
         <div className="grid gap-0" style={{ gridTemplateColumns: `${weekNumCol} repeat(7, 1fr)` }}>
           <div />
           {WEEKDAY_HEADERS.map((h, hi) => (
-            <div key={h} className={`${headerClass} ${hi >= 5 ? 'text-gray-400' : 'text-gray-600'}`}>{h}</div>
+            <div
+              key={h}
+              className={`${headerClass} ${hi >= 5 ? 'text-gray-400' : 'text-gray-600'}`}
+            >
+              {h}
+            </div>
           ))}
           {weeks.map((week, wi) => {
             const firstDay = week.find((d) => d !== null)
@@ -652,20 +747,27 @@ export default function CalendarPage() {
               </div>,
               ...week.map((day, di) => {
                 if (day === null) {
-                  return <div key={`${wi}-${di}`} className={`${large ? 'h-11' : 'h-8'} ${di >= 5 ? 'bg-gray-100 rounded' : ''}`} />
+                  return (
+                    <div
+                      key={`${wi}-${di}`}
+                      className={`${large ? 'h-11' : 'h-8'} ${di >= 5 ? 'bg-gray-100 rounded' : ''}`}
+                    />
+                  )
                 }
                 const isWeekend = di >= 5
                 const cellDateStr = toDateString(year, month, day)
                 const isHighlighted = highlightedDate === cellDateStr
                 const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
                 const firstEntry = dayEntries[0]
-                const colorClass = firstEntry ? TYPE_COLORS[firstEntry.type ?? ''] ?? '' : ''
+                const colorClass = firstEntry ? (TYPE_COLORS[firstEntry.type ?? ''] ?? '') : ''
                 const popoverKey = `${year}-${month}-${day}`
                 const isOpen = openPopover === popoverKey
 
                 return (
                   <div key={`${wi}-${di}`} className="relative">
-                    <div
+                    <button
+                      type="button"
+                      disabled={isWeekend}
                       onClick={() => handleDayClick(year, month, day, isWeekend)}
                       className={[
                         dayCellClass,
@@ -678,7 +780,7 @@ export default function CalendarPage() {
                       ].join(' ')}
                     >
                       {day}
-                    </div>
+                    </button>
                     {isOpen && (
                       <DayPopover
                         year={year}
@@ -712,10 +814,20 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2 flex-wrap">
           {isAdmin && (
             <button
-              onClick={() => { const d = new Date(); setCreateDate(toDateString(d.getFullYear(), d.getMonth() + 1, d.getDate())) }}
+              onClick={() => {
+                const d = new Date()
+                setCreateDate(toDateString(d.getFullYear(), d.getMonth() + 1, d.getDate()))
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -728,7 +840,9 @@ export default function CalendarPage() {
             className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}/{y + 1}</option>
+              <option key={y} value={y}>
+                {y}/{y + 1}
+              </option>
             ))}
           </select>
           <button
@@ -754,7 +868,8 @@ export default function CalendarPage() {
       {/* Export confirmation */}
       {exportDone && (
         <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-3 text-sm text-green-800">
-          Filen er hentet. Dobbeltklik på den for at importere – eller åbn din kalender og importer derfra.
+          Filen er hentet. Dobbeltklik på den for at importere – eller åbn din kalender og importer
+          derfra.
         </div>
       )}
 
@@ -763,17 +878,16 @@ export default function CalendarPage() {
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-5">
           <p className="text-sm text-brand-800 font-medium mb-1">Ingen begivenheder endnu</p>
           <p className="text-sm text-brand-700">
-            Tilføj ferier, lukkedage og begivenheder for skoleåret {startYear}/{endYear}. Du kan bruge &quot;Tilføj standardferier&quot; knappen øverst for at komme hurtigt i gang med danske skoleferier.
+            Tilføj ferier, lukkedage og begivenheder for skoleåret {startYear}/{endYear}. Du kan
+            bruge &quot;Tilføj standardferier&quot; knappen øverst for at komme hurtigt i gang med
+            danske skoleferier.
           </p>
         </div>
       )}
 
       {/* Mobile carousel — visible below lg */}
       <div className="lg:hidden">
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {renderMonthCard(currentCarouselMonth.year, currentCarouselMonth.month, true)}
         </div>
         {/* Pagination: arrow ← dots → arrow */}
@@ -784,7 +898,14 @@ export default function CalendarPage() {
             className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Forrige måned"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
@@ -804,7 +925,14 @@ export default function CalendarPage() {
             className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Næste måned"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -812,7 +940,10 @@ export default function CalendarPage() {
       </div>
 
       {/* Desktop grid — visible from lg */}
-      <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-6" data-testid="desktop-month-grid">
+      <div
+        className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-6"
+        data-testid="desktop-month-grid"
+      >
         {schoolYearMonths.map(({ year, month }) => renderMonthCard(year, month))}
       </div>
 
@@ -820,61 +951,95 @@ export default function CalendarPage() {
       {allEntries.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[480px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Titel</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Dato</th>
-                {isAdmin && (
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Handlinger</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {allEntries.map((entry) => (
-                <tr key={`${entry.id}-${entry.startDate}`} onClick={() => handleEntryClick(entry)} className="hover:bg-gray-50 transition-colors cursor-pointer">
-                  <td className="px-5 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 font-medium text-gray-900">{entry.title}</td>
-                  <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
-                    {formatDateRange(entry.startDate ?? '', entry.endDate ?? '')}
-                  </td>
+            <table className="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Type
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Titel
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">
+                    Dato
+                  </th>
                   {isAdmin && (
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingEntry(entry) }}
-                          className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-                          title="Rediger"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteEntry(entry) }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                          title="Slet"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6M14 11v6" />
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Handlinger
+                    </th>
                   )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {allEntries.map((entry) => (
+                  <tr
+                    key={`${entry.id}-${entry.startDate}`}
+                    onClick={() => handleEntryClick(entry)}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <td className="px-5 py-3">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_COLORS[entry.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}
+                      >
+                        {TYPE_LABELS[entry.type ?? ''] ?? entry.type}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 font-medium text-gray-900">{entry.title}</td>
+                    <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
+                      {formatDateRange(entry.startDate ?? '', entry.endDate ?? '')}
+                    </td>
+                    {isAdmin && (
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingEntry(entry)
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                            title="Rediger"
+                          >
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteEntry(entry)
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                            title="Slet"
+                          >
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

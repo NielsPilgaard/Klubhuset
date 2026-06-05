@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import keycloak, { getInitPromise } from './keycloak'
-import { AuthContext } from './AuthContext'
+import { AuthContext, type ViewAs } from './AuthContext'
 import type { StaffRole } from '../api/generated/types.gen'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -8,6 +8,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false)
   const [staffRole, setStaffRole] = useState<StaffRole | null>(null)
   const [staffId, setStaffId] = useState<string | null>(null)
+  const [viewAs, setViewAs] = useState<ViewAs>('default')
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -17,6 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
+    let intervalId: ReturnType<typeof setInterval> | undefined
+
     getInitPromise()
       .then((auth) => {
         setAuthenticated(auth)
@@ -25,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!auth) return
 
         // Proactively refresh token before it expires (30s before expiry)
-        setInterval(() => {
+        intervalId = setInterval(() => {
           keycloak.updateToken(30).catch(() => {
             if (document.visibilityState === 'visible') {
               keycloak.login()
@@ -37,7 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setInitialized(true)
       })
 
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(intervalId)
+    }
   }, [])
 
   useEffect(() => {
@@ -63,27 +69,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const parsed = keycloak.tokenParsed as Record<string, unknown> | undefined
-  const nameRaw = parsed?.['name']
-  const preferredRaw = parsed?.['preferred_username']
-  const userName = typeof nameRaw === 'string' ? nameRaw : typeof preferredRaw === 'string' ? preferredRaw : undefined
-  const realmAccess = parsed?.['realm_access']
-  const rawRoles = (realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess))
-    ? (realmAccess as Record<string, unknown>)['roles']
-    : undefined
+  const nameRaw = parsed?.name
+  const preferredRaw = parsed?.preferred_username
+  const userName =
+    typeof nameRaw === 'string'
+      ? nameRaw
+      : typeof preferredRaw === 'string'
+        ? preferredRaw
+        : undefined
+  const realmAccess = parsed?.realm_access
+  const rawRoles =
+    realmAccess !== null && typeof realmAccess === 'object' && !Array.isArray(realmAccess)
+      ? (realmAccess as Record<string, unknown>).roles
+      : undefined
   // UI-only: used for display/UI hints only. Server enforces actual authorization.
-  const roles = Array.isArray(rawRoles) ? rawRoles.filter((r): r is string => typeof r === 'string') : []
-  const isAdmin = roles.includes('admin')
+  const roles = Array.isArray(rawRoles)
+    ? rawRoles.filter((r): r is string => typeof r === 'string')
+    : []
+  const isSuperAdmin = roles.includes('superadmin')
+
+  const effectiveViewAs = isSuperAdmin ? viewAs : 'default'
+  const isAdmin =
+    effectiveViewAs === 'admin' || (effectiveViewAs === 'default' && roles.includes('admin'))
+  const isParent =
+    effectiveViewAs === 'parent' || (effectiveViewAs === 'default' && roles.includes('parent'))
 
   return (
     <AuthContext.Provider
       value={{
         authenticated,
         isAdmin,
+        isParent,
+        isSuperAdmin,
         staffRole,
         staffId,
         token: keycloak.token,
         userName,
         logout: () => keycloak.logout({ redirectUri: 'https://skoleoverblikket.dk' }),
+        viewAs: effectiveViewAs,
+        setViewAs,
       }}
     >
       {children}

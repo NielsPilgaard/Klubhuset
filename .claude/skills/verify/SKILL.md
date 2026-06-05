@@ -5,68 +5,38 @@ description: "Run all local validation checks for Skoleoverblikket before declar
 
 # Verify Skill
 
-Runs all checks matching CI. Use this after every code change to confirm nothing is broken before committing or declaring done.
+Runs all checks matching CI via `verify.ps1` at the repo root.
 
-## Steps — run in order
+## Run
 
-### 1. ESLint
+```powershell
+# Check everything
+pwsh scripts/verify.ps1
 
-```bash
-cd web && npm run lint
+# Auto-fix dotnet formatting, then check
+pwsh scripts/verify.ps1 -Fix
+
+# Skip integration tests (quick compile check)
+pwsh scripts/verify.ps1 -SkipTests
 ```
 
-Catches unused vars, import errors, and lint violations. CI runs this. If this fails, fix before proceeding.
+The script runs all steps and **collects all errors before exiting** — you see every failure at once, not just the first one.
 
-### 2. TypeScript build
+## Steps
 
-```bash
-cd web && npm run build
-```
+1. **ESLint** — `cd web && npm run lint`
+2. **TypeScript build** — `cd web && npm run build`
+3. **dotnet format** — `--verify-no-changes` (or auto-fix with `-Fix`)
+4. **dotnet build** — Release, `-p:CI=true`
+5. **API integration tests** — tUnit + Testcontainers (skipped with `-SkipTests`; needs Docker)
 
-Catches type errors and API shape mismatches. If this fails, fix before proceeding — do not move on.
+## Playwright e2e
 
-### 3. dotnet format check
-
-```bash
-dotnet format api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --verify-no-changes
-```
-
-CI enforces this. If it reports violations, run without `--verify-no-changes` to auto-fix, then re-check.
-
-### 4. dotnet build
-
-```bash
-dotnet build api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --configuration Release -p:CI=true
-```
-
-Catches C# compile errors, missing references, OpenAPI spec drift.
-
-### 5. API integration tests
-
-```bash
-dotnet test --configuration Release
-```
-
-Runs all tUnit integration tests. Uses Testcontainers — needs Docker running. If Docker is not running, say so explicitly rather than claiming failure is a code bug.
-
-### 6. Playwright e2e
-
-```bash
-cd web && SKIP_ASPIRE=1 npx playwright test --reporter=line
-```
-
-`SKIP_ASPIRE=1` assumes Aspire stack is already running. Omit it if it's not running.
-
-## What to report
-
-After all steps complete, report:
-
-- Pass/fail per step
-- For failures: exact error message and file:line
-- Whether failure is code, environment (Docker not running, Node not installed), or config
+Playwright is not part of `verify.ps1` — use the `/test` skill for that.
 
 ## Rules
 
-- Never skip a step because a previous step passed
-- If step 1 or 2 fails, fix it before running step 3 — compiler errors make dotnet format output noisy
-- Do not report work as done until all six steps pass
+- Run `verify.ps1` after every code change, before committing or declaring done
+- Use `-Fix` when dotnet format is the only failure — it auto-fixes and reruns clean
+- If Docker is not running, integration tests fail with a container error — say so explicitly rather than treating it as a code bug
+- Do not report work as done until the script exits 0

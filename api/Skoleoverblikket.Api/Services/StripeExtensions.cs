@@ -15,6 +15,7 @@ public static class StripeExtensions
 		services.AddSingleton<CustomerService>();
 		services.AddSingleton<Stripe.Checkout.SessionService>();
 		services.AddSingleton<Stripe.BillingPortal.SessionService>();
+		services.AddSingleton<SubscriptionItemService>();
 
 		// Configure Stripe global API key from strongly-typed options
 		var stripeOptions = configuration.GetSection(StripeOptions.SectionName).Get<StripeOptions>();

@@ -6,7 +6,7 @@ namespace Skoleoverblikket.Api.Tenancy;
 
 public sealed class MissingTenantClaimExceptionHandler(ILogger<MissingTenantClaimExceptionHandler> logger) : IExceptionHandler
 {
-	public async ValueTask<bool> TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken ct)
+	public async ValueTask<bool> TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken cancellationToken)
 	{
 		if (ex is not MissingTenantClaimException && ex?.InnerException is not MissingTenantClaimException)
 		{
@@ -24,7 +24,7 @@ public sealed class MissingTenantClaimExceptionHandler(ILogger<MissingTenantClai
 		};
 
 		ctx.Response.StatusCode = 401;
-		await ctx.Response.WriteAsJsonAsync(problem, ct);
+		await ctx.Response.WriteAsJsonAsync(problem, cancellationToken);
 		return true;
 	}
 }

@@ -22,6 +22,120 @@ namespace Skoleoverblikket.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ParentStudents", b =>
+                {
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ParentId", "StudentId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TenantId", "ParentId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("ParentStudents");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.AbsenceReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConfirmedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("ReportedByParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmedByStaffId");
+
+                    b.HasIndex("ReportedByParentId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TenantId", "Date");
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("AbsenceReports");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.BroadcastEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<Guid?>("ClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RecipientCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("SenderStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BroadcastEmails");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.CalendarEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -71,6 +185,9 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -125,6 +242,67 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.ToTable("ClassPermissions");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ContactMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SenderType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ThreadId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ThreadId");
+
+                    b.ToTable("ContactMessages");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ContactThread", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TenantId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("ContactThreads");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Course", b =>
                 {
                     b.Property<Guid>("Id")
@@ -158,6 +336,224 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Message", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RecipientType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SenderType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RecipientType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "RecipientId", "CreatedAt");
+
+                    b.HasIndex("TenantId", "RecipientId", "ReadAt");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Email")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("InApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "UserId", "UserType", "Type")
+                        .IsUnique();
+
+                    b.ToTable("NotificationPreferences");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Parent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("AdresseBeskyttet")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("KeycloakSubject")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("ShareContactInfo")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Parents");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ParentInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("ParentInvitations");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Room", b =>
@@ -393,11 +789,129 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.ToTable("SchoolFileFolders");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoShift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SfoShifts");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoShiftStaff", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ShiftId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("StaffId");
+
+                    b.ToTable("SfoShiftStaff");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoWeekPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("IsoWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsoYear")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "IsoYear", "IsoWeek")
+                        .IsUnique();
+
+                    b.ToTable("SfoWeekPlans");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoWeekPlanShift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Beskrivelse")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("SfoShiftId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SfoWeekPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SfoShiftId");
+
+                    b.HasIndex("SfoWeekPlanId", "SfoShiftId")
+                        .IsUnique();
+
+                    b.ToTable("SfoWeekPlanShifts");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Staff", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -479,6 +993,37 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.ToTable("StaffInvitations");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Student", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("ClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassId");
+
+                    b.ToTable("Students");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Subscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -523,6 +1068,37 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.HasIndex("StripeSubscriptionId");
 
                     b.ToTable("Subscriptions");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SubscriptionModuleItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<bool>("IsAdminOverride")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Module")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StripeSubscriptionItemId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubscriptionId", "Module")
+                        .IsUnique();
+
+                    b.ToTable("SubscriptionModuleItems");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlot", b =>
@@ -620,6 +1196,94 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.ToTable("TimeSlotTemplateBreaks");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.VacationRegistrationEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SelectedDates")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("SubmittedByParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WindowId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubmittedByParentId");
+
+                    b.HasIndex("WindowId");
+
+                    b.HasIndex("TenantId", "WindowId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("VacationRegistrationEntries");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.VacationRegistrationWindow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("CareEndDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("CareStartDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("Granularity")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("RegistrationDeadline")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VacationRegistrationWindows");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -673,6 +1337,12 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Property<Guid>("SchemaSlotId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("SubstituteAideId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SubstituteTeacherId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -689,6 +1359,10 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.HasIndex("FagSwapCourseId");
 
                     b.HasIndex("SchemaSlotId");
+
+                    b.HasIndex("SubstituteAideId");
+
+                    b.HasIndex("SubstituteTeacherId");
 
                     b.HasIndex("WeekPlanId", "SchemaSlotId")
                         .IsUnique();
@@ -721,6 +1395,47 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.ToTable("WeekPlanSlotFiles");
                 });
 
+            modelBuilder.Entity("ParentStudents", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Parent", null)
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.AbsenceReport", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "ConfirmedByStaff")
+                        .WithMany()
+                        .HasForeignKey("ConfirmedByStaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Parent", "ReportedByParent")
+                        .WithMany()
+                        .HasForeignKey("ReportedByParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConfirmedByStaff");
+
+                    b.Navigation("ReportedByParent");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.ClassPermission", b =>
                 {
                     b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
@@ -738,6 +1453,39 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Navigation("Class");
 
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ContactMessage", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.ContactThread", "Thread")
+                        .WithMany("Messages")
+                        .HasForeignKey("ThreadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Thread");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ContactThread", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ParentInvitation", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Parent", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Schema", b =>
@@ -833,6 +1581,44 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoShiftStaff", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.SfoShift", "Shift")
+                        .WithMany("StaffAssignments")
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shift");
+
+                    b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoWeekPlanShift", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.SfoShift", "SfoShift")
+                        .WithMany()
+                        .HasForeignKey("SfoShiftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.SfoWeekPlan", "SfoWeekPlan")
+                        .WithMany("Shifts")
+                        .HasForeignKey("SfoWeekPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SfoShift");
+
+                    b.Navigation("SfoWeekPlan");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.StaffInvitation", b =>
                 {
                     b.HasOne("Skoleoverblikket.Api.Models.Staff", "Staff")
@@ -842,6 +1628,28 @@ namespace Skoleoverblikket.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Student", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Class");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SubscriptionModuleItem", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Subscription", "Subscription")
+                        .WithMany("ActiveModules")
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subscription");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlot", b =>
@@ -870,6 +1678,33 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Navigation("TimeSlotTemplate");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.VacationRegistrationEntry", b =>
+                {
+                    b.HasOne("Skoleoverblikket.Api.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Parent", "SubmittedByParent")
+                        .WithMany()
+                        .HasForeignKey("SubmittedByParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Skoleoverblikket.Api.Models.VacationRegistrationWindow", "Window")
+                        .WithMany("Entries")
+                        .HasForeignKey("WindowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("SubmittedByParent");
+
+                    b.Navigation("Window");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlan", b =>
                 {
                     b.HasOne("Skoleoverblikket.Api.Models.Class", "Class")
@@ -894,6 +1729,16 @@ namespace Skoleoverblikket.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "SubstituteAide")
+                        .WithMany()
+                        .HasForeignKey("SubstituteAideId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Skoleoverblikket.Api.Models.Staff", "SubstituteTeacher")
+                        .WithMany()
+                        .HasForeignKey("SubstituteTeacherId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Skoleoverblikket.Api.Models.WeekPlan", "WeekPlan")
                         .WithMany("Slots")
                         .HasForeignKey("WeekPlanId")
@@ -903,6 +1748,10 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Navigation("FagSwapCourse");
 
                     b.Navigation("SchemaSlot");
+
+                    b.Navigation("SubstituteAide");
+
+                    b.Navigation("SubstituteTeacher");
 
                     b.Navigation("WeekPlan");
                 });
@@ -926,6 +1775,11 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Navigation("WeekPlanSlot");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.ContactThread", b =>
+                {
+                    b.Navigation("Messages");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Schema", b =>
                 {
                     b.Navigation("Slots");
@@ -940,9 +1794,29 @@ namespace Skoleoverblikket.Api.Data.Migrations
                     b.Navigation("Files");
                 });
 
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoShift", b =>
+                {
+                    b.Navigation("StaffAssignments");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.SfoWeekPlan", b =>
+                {
+                    b.Navigation("Shifts");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.Subscription", b =>
+                {
+                    b.Navigation("ActiveModules");
+                });
+
             modelBuilder.Entity("Skoleoverblikket.Api.Models.TimeSlotTemplate", b =>
                 {
                     b.Navigation("Breaks");
+                });
+
+            modelBuilder.Entity("Skoleoverblikket.Api.Models.VacationRegistrationWindow", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.WeekPlan", b =>

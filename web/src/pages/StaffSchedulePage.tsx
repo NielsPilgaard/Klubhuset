@@ -4,7 +4,7 @@ import {
   getApiV1StaffByIdOptions,
   getApiV1StaffByStaffIdScheduleOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ScheduleSlotDto } from '../api/generated/types.gen'
+import type { ScheduleSlotDto } from '../api/client'
 import { WEEKDAYS, WEEKDAY_NUM } from '../lib/weekdays'
 
 function toNum(weekday: string | number): number {
@@ -17,7 +17,11 @@ function buildTimeAxis(slots: ScheduleSlotDto[]) {
     if (!s.startTime || !s.endTime) continue
     const key = `${s.startTime}-${s.endTime}`
     if (!seen.has(key)) {
-      seen.set(key, { startTime: s.startTime, endTime: s.endTime, sort: parseInt(s.startTime.replace(':', ''), 10) })
+      seen.set(key, {
+        startTime: s.startTime,
+        endTime: s.endTime,
+        sort: parseInt(s.startTime.replace(':', ''), 10),
+      })
     }
   }
   return [...seen.values()].sort((a, b) => a.sort - b.sort)
@@ -31,7 +35,11 @@ export default function StaffSchedulePage() {
     enabled: !!staffId,
   })
 
-  const { data: rawSlots, isLoading, isError } = useQuery({
+  const {
+    data: rawSlots,
+    isLoading,
+    isError,
+  } = useQuery({
     ...getApiV1StaffByStaffIdScheduleOptions({ path: { staffId: staffId! } }),
     enabled: !!staffId,
   })
@@ -53,7 +61,14 @@ export default function StaffSchedulePage() {
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Link to="/medarbejdere" className="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </Link>
@@ -75,7 +90,14 @@ export default function StaffSchedulePage() {
             rel="noopener noreferrer"
             className="ml-auto flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <polyline points="6 9 6 2 18 2 18 9" />
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
@@ -115,7 +137,10 @@ export default function StaffSchedulePage() {
                   Tid
                 </th>
                 {WEEKDAYS.map((d) => (
-                  <th key={d.key} className="px-3 py-2.5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  <th
+                    key={d.key}
+                    className="px-3 py-2.5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide"
+                  >
                     {d.label}
                   </th>
                 ))}
@@ -125,7 +150,9 @@ export default function StaffSchedulePage() {
               {timeAxis.map((ts) => (
                 <tr key={ts.startTime} className="hover:bg-gray-50/50">
                   <td className="px-3 py-2 text-right align-top border-r border-gray-200 bg-gray-50/50 whitespace-nowrap">
-                    <span className="block text-xs font-semibold text-gray-600">{ts.startTime}</span>
+                    <span className="block text-xs font-semibold text-gray-600">
+                      {ts.startTime}
+                    </span>
                     <span className="block text-xs text-gray-400">{ts.endTime}</span>
                   </td>
                   {WEEKDAYS.map((d) => {
@@ -136,17 +163,25 @@ export default function StaffSchedulePage() {
                           <div
                             key={i}
                             className="rounded-lg px-2 py-1.5 mb-1 last:mb-0"
-                            style={slot.courseColor ? {
-                              backgroundColor: slot.courseColor + '22',
-                              borderLeft: `3px solid ${slot.courseColor}`,
-                            } : {
-                              backgroundColor: '#f3f4f6',
-                              borderLeft: '3px solid #d1d5db',
-                            }}
+                            style={
+                              slot.courseColor
+                                ? {
+                                    backgroundColor: `${slot.courseColor}22`,
+                                    borderLeft: `3px solid ${slot.courseColor}`,
+                                  }
+                                : {
+                                    backgroundColor: '#f3f4f6',
+                                    borderLeft: '3px solid #d1d5db',
+                                  }
+                            }
                           >
                             <p
                               className="text-xs font-semibold leading-tight truncate"
-                              style={slot.courseColor ? { color: slot.courseColor } : { color: '#111827' }}
+                              style={
+                                slot.courseColor
+                                  ? { color: slot.courseColor }
+                                  : { color: '#111827' }
+                              }
                             >
                               {slot.courseName}
                             </p>

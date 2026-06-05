@@ -85,7 +85,9 @@ export function DatePicker({
       </button>
 
       {open && (
-        <div className={`absolute z-50 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-w-[calc(100vw-2rem)] ${align === 'right' ? 'right-0' : 'left-0'}`}>
+        <div
+          className={`absolute z-50 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-w-[calc(100vw-2rem)] ${align === 'right' ? 'right-0' : 'left-0'}`}
+        >
           <div className="relative p-3">
             <style>{`
               .rdp-dropdown select {
@@ -140,9 +142,12 @@ export function DatePicker({
                 day: 'flex items-center justify-center',
                 day_button:
                   'h-8 w-8 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-400',
-                today: '[&>button]:border [&>button]:border-brand-400 [&>button]:text-brand-700 [&>button]:hover:bg-brand-50',
-                selected: '[&>button]:bg-brand-600 [&>button]:text-white [&>button]:hover:bg-brand-700',
-                disabled: '[&>button]:opacity-30 [&>button]:cursor-not-allowed [&>button]:hover:bg-transparent',
+                today:
+                  '[&>button]:border [&>button]:border-brand-400 [&>button]:text-brand-700 [&>button]:hover:bg-brand-50',
+                selected:
+                  '[&>button]:bg-brand-600 [&>button]:text-white [&>button]:hover:bg-brand-700',
+                disabled:
+                  '[&>button]:opacity-30 [&>button]:cursor-not-allowed [&>button]:hover:bg-transparent',
                 outside: '[&>button]:opacity-30',
                 week_number:
                   'text-xs text-gray-300 font-normal flex items-center justify-end pr-1 select-none',

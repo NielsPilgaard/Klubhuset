@@ -1,0 +1,1 @@
+easy form where parents can say which weeks their kids need to be taken care of in sfo/kindergarten (kindergarten can just be created as classes)

@@ -33,5 +33,8 @@ public sealed class Staff : ITenantScoped
 	/// <summary>Whether this staff member holds the Keycloak 'admin' realm role.</summary>
 	public bool IsAdmin { get; set; }
 
+	[StringLength(2000)]
+	public string? AvatarUrl { get; set; }
+
 	public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

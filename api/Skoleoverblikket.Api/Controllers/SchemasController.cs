@@ -55,29 +55,43 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		Guid? AideId);
 
 	[HttpGet]
-	public async Task<ActionResult<List<SchemaDto>>> GetAll(Guid classId, CancellationToken ct)
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	public async Task<ActionResult<List<SchemaDto>>> GetAll(Guid classId, CancellationToken cancellationToken)
 	{
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
 		var schemas = await db.Schemas
 							  .AsNoTracking()
 							  .Where(s => s.ClassId == classId)
 							  .OrderByDescending(s => s.CreatedAt)
 							  .Select(s => new SchemaDto(s.Id, s.ClassId, s.Name, s.StartDate, s.EndDate))
-							  .ToListAsync(ct);
+							  .ToListAsync(cancellationToken);
 
 		return Ok(schemas);
 	}
 
 	[HttpGet("{schemaId:guid}")]
-	public async Task<ActionResult<SchemaDetailDto>> GetById(Guid classId, Guid schemaId, CancellationToken ct)
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	public async Task<ActionResult<SchemaDetailDto>> GetById(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
-		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
+		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (schema is null)
 		{
 			return NotFound();
 		}
 
-		var slots = await GetSlotDtos(schemaId, ct);
-		var conflictList = await conflicts.DetectAsync(schemaId, ct);
+		var slots = await GetSlotDtos(schemaId, cancellationToken);
+		var conflictList = await conflicts.DetectAsync(schemaId, cancellationToken);
 
 		return Ok(new SchemaDetailDto(
 					  new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate),
@@ -87,7 +101,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	[HttpPost]
 	public async Task<ActionResult<SchemaDto>> Create(Guid classId, [FromBody] CreateSchemaRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!authResult.Succeeded)
@@ -95,7 +109,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
+		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, cancellationToken);
 		if (!classExists)
 		{
 			return NotFound();
@@ -117,7 +131,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			var sourceSlots = await db.TimeSlots
 				.AsNoTracking()
 				.Where(s => s.SchemaId == req.CopyTimeSlotsFromSchemaId.Value)
-				.ToListAsync(ct);
+				.ToListAsync(cancellationToken);
 
 			foreach (var slot in sourceSlots)
 			{
@@ -136,7 +150,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			}
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId, schemaId = schema.Id },
 							   new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
@@ -144,7 +158,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	[HttpPut("{schemaId:guid}/daterange")]
 	public async Task<ActionResult<SchemaDto>> SetDateRange(Guid classId, Guid schemaId,
-		[FromBody] SetDateRangeRequest req, CancellationToken ct)
+		[FromBody] SetDateRangeRequest req, CancellationToken cancellationToken)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!authResult.Succeeded)
@@ -152,7 +166,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (schema is null)
 		{
 			return NotFound();
@@ -169,13 +183,13 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		schema.StartDate = req.StartDate;
 		schema.EndDate = req.EndDate;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
 	}
 
 	[HttpPost("{schemaId:guid}/copy")]
 	public async Task<ActionResult<SchemaDto>> Copy(Guid classId, Guid schemaId,
-		[FromBody] CopySchemaRequest req, CancellationToken ct)
+		[FromBody] CopySchemaRequest req, CancellationToken cancellationToken)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!authResult.Succeeded)
@@ -185,7 +199,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
-							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 
 		if (source is null)
 		{
@@ -220,7 +234,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 		// Copy schema-level time slots
 		var sourceTimeSlots = await db.TimeSlots.AsNoTracking()
-			.Where(s => s.SchemaId == schemaId).ToListAsync(ct);
+			.Where(s => s.SchemaId == schemaId).ToListAsync(cancellationToken);
 		foreach (var ts in sourceTimeSlots)
 		{
 			db.TimeSlots.Add(new TimeSlot
@@ -237,7 +251,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			});
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId, schemaId = copy.Id },
 							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.StartDate, copy.EndDate));
@@ -245,7 +259,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	[HttpPost("{schemaId:guid}/copy-to/{targetClassId:guid}")]
 	public async Task<ActionResult<SchemaDto>> CopyToClass(Guid classId, Guid schemaId, Guid targetClassId,
-		[FromBody] CopySchemaRequest req, CancellationToken ct)
+		[FromBody] CopySchemaRequest req, CancellationToken cancellationToken)
 	{
 		var sourceAuthResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!sourceAuthResult.Succeeded)
@@ -261,13 +275,13 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 		var source = await db.Schemas
 							 .Include(s => s.Slots)
-							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+							 .FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (source is null)
 		{
 			return NotFound();
 		}
 
-		var targetExists = await db.Classes.AnyAsync(c => c.Id == targetClassId, ct);
+		var targetExists = await db.Classes.AnyAsync(c => c.Id == targetClassId, cancellationToken);
 		if (!targetExists)
 		{
 			return NotFound();
@@ -300,7 +314,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 		// Copy schema-level time slots
 		var sourceTimeSlotsForClass = await db.TimeSlots.AsNoTracking()
-			.Where(s => s.SchemaId == schemaId).ToListAsync(ct);
+			.Where(s => s.SchemaId == schemaId).ToListAsync(cancellationToken);
 		foreach (var ts in sourceTimeSlotsForClass)
 		{
 			db.TimeSlots.Add(new TimeSlot
@@ -317,7 +331,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			});
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return CreatedAtAction(nameof(GetById),
 							   new { classId = targetClassId, schemaId = copy.Id },
 							   new SchemaDto(copy.Id, copy.ClassId, copy.Name, copy.StartDate, copy.EndDate));
@@ -325,7 +339,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 	[HttpPut("{schemaId:guid}/rename")]
 	public async Task<ActionResult<SchemaDto>> Rename(Guid classId, Guid schemaId,
-		[FromBody] RenameSchemaRequest req, CancellationToken ct)
+		[FromBody] RenameSchemaRequest req, CancellationToken cancellationToken)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!authResult.Succeeded)
@@ -333,19 +347,19 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (schema is null)
 		{
 			return NotFound();
 		}
 
 		schema.Name = req.Name;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return Ok(new SchemaDto(schema.Id, schema.ClassId, schema.Name, schema.StartDate, schema.EndDate));
 	}
 
 	[HttpDelete("{schemaId:guid}")]
-	public async Task<ActionResult> Delete(Guid classId, Guid schemaId, CancellationToken ct)
+	public async Task<ActionResult> Delete(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!authResult.Succeeded)
@@ -353,30 +367,37 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (schema is null)
 		{
 			return NotFound();
 		}
 
 		db.Schemas.Remove(schema);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
 	[HttpGet("{schemaId:guid}/slots")]
-	public async Task<ActionResult<List<SlotDto>>> GetSlots(Guid classId, Guid schemaId, CancellationToken ct)
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	public async Task<ActionResult<List<SlotDto>>> GetSlots(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
-		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
+		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 
 		return schemaExists
-				   ? Ok(await GetSlotDtos(schemaId, ct))
+				   ? Ok(await GetSlotDtos(schemaId, cancellationToken))
 				   : NotFound();
 	}
 
 	[HttpPut("{schemaId:guid}/slots")]
 	public async Task<ActionResult<SlotsAndConflictsDto>> UpsertSlot(Guid classId, Guid schemaId,
-		[FromBody] UpsertSlotRequest req, CancellationToken ct)
+		[FromBody] UpsertSlotRequest req, CancellationToken cancellationToken)
 	{
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.EditClass);
 		if (!authResult.Succeeded)
@@ -384,7 +405,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schema = await db.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (schema is null)
 		{
 			return NotFound();
@@ -392,7 +413,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 		var slot = await db.SchemaSlots.FirstOrDefaultAsync(
 					   s => s.SchemaId == schemaId && s.TimeSlotId == req.TimeSlotId && s.Weekday == req.Weekday,
-					   ct);
+					   cancellationToken);
 
 		if (slot is null)
 		{
@@ -419,17 +440,17 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			slot.AideId = req.AideId;
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		// Return updated slot list + conflicts
-		var slots = await GetSlotDtos(schemaId, ct);
-		var conflictList = await conflicts.DetectAsync(schemaId, ct);
+		var slots = await GetSlotDtos(schemaId, cancellationToken);
+		var conflictList = await conflicts.DetectAsync(schemaId, cancellationToken);
 		return Ok(new SlotsAndConflictsDto(slots, conflictList));
 	}
 
 	[HttpDelete("{schemaId:guid}/slots/{timeSlotId:guid}/{weekday:int}")]
 	public async Task<ActionResult<SlotsAndConflictsDto>> DeleteSlot(Guid classId, Guid schemaId, Guid timeSlotId,
-		int weekday, CancellationToken ct)
+		int weekday, CancellationToken cancellationToken)
 	{
 		// Validate weekday is in valid range (0-6 for DayOfWeek enum)
 		if (weekday is < 0 or > 6)
@@ -448,7 +469,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 			return Forbid();
 		}
 
-		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (!schemaExists)
 		{
 			return NotFound();
@@ -456,7 +477,7 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 
 		var slot = await db.SchemaSlots.FirstOrDefaultAsync(
 					   s => s.SchemaId == schemaId && s.TimeSlotId == timeSlotId && s.Weekday == (DayOfWeek)weekday,
-					   ct);
+					   cancellationToken);
 
 		if (slot is null)
 		{
@@ -464,24 +485,31 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		}
 
 		db.SchemaSlots.Remove(slot);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
-		var slots = await GetSlotDtos(schemaId, ct);
-		var conflictList = await conflicts.DetectAsync(schemaId, ct);
+		var slots = await GetSlotDtos(schemaId, cancellationToken);
+		var conflictList = await conflicts.DetectAsync(schemaId, cancellationToken);
 		return Ok(new SlotsAndConflictsDto(slots, conflictList));
 	}
 
 	[HttpGet("{schemaId:guid}/conflicts")]
-	public async Task<ActionResult<List<ConflictInfo>>> GetConflicts(Guid classId, Guid schemaId, CancellationToken ct)
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	public async Task<ActionResult<List<ConflictInfo>>> GetConflicts(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
-		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
+		if (!authResult.Succeeded)
+		{
+			return Forbid();
+		}
+
+		var schemaExists = await db.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 
 		return schemaExists
-				   ? Ok(await conflicts.DetectAsync(schemaId, ct))
+				   ? Ok(await conflicts.DetectAsync(schemaId, cancellationToken))
 				   : NotFound();
 	}
 
-	private async Task<IReadOnlyList<SlotDto>> GetSlotDtos(Guid schemaId, CancellationToken ct) =>
+	private async Task<IReadOnlyList<SlotDto>> GetSlotDtos(Guid schemaId, CancellationToken cancellationToken) =>
 		await db.SchemaSlots
 				.AsNoTrackingWithIdentityResolution()
 				.Where(s => s.SchemaId == schemaId)
@@ -501,5 +529,5 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 							s.Room != null ? s.Room.Name : null,
 							s.AideId,
 							s.Aide != null ? s.Aide.Name : null))
-				.ToListAsync(ct);
+				.ToListAsync(cancellationToken);
 }

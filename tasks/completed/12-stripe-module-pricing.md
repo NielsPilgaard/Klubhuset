@@ -106,9 +106,9 @@ Inject `SubscriptionItemService` via constructor.
 **Add `AddModuleAsync`:**
 
 ```csharp
-public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 {
-    var sub = await GetOrCreateAsync(schoolId, ct);
+    var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 
     if (sub.StripeSubscriptionId is null)
         throw new InvalidOperationException("School does not have an active Stripe subscription.");
@@ -117,7 +117,7 @@ public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, Cance
         throw new InvalidOperationException($"No Stripe price configured for module {module}.");
 
     var alreadyActive = await db.SubscriptionModuleItems
-        .AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, ct);
+        .AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, cancellationToken);
     if (alreadyActive) return;
 
     var item = await subscriptionItemService.CreateAsync(new SubscriptionItemCreateOptions
@@ -125,7 +125,7 @@ public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, Cance
         Subscription = sub.StripeSubscriptionId,
         Price = priceId,
         Quantity = 1,
-    }, cancellationToken: ct);
+    }, cancellationToken: cancellationToken);
 
     db.SubscriptionModuleItems.Add(new SubscriptionModuleItem
     {
@@ -135,26 +135,26 @@ public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, Cance
         StripeSubscriptionItemId = item.Id,
         CreatedAt = DateTimeOffset.UtcNow,
     });
-    await db.SaveChangesAsync(ct);
+    await db.SaveChangesAsync(cancellationToken);
 }
 ```
 
 **Add `RemoveModuleAsync`:**
 
 ```csharp
-public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 {
-    var sub = await GetOrCreateAsync(schoolId, ct);
+    var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 
     var moduleItem = await db.SubscriptionModuleItems
-        .FirstOrDefaultAsync(m => m.SubscriptionId == sub.Id && m.Module == module, ct);
+        .FirstOrDefaultAsync(m => m.SubscriptionId == sub.Id && m.Module == module, cancellationToken);
     if (moduleItem is null) return;
 
     await subscriptionItemService.DeleteAsync(moduleItem.StripeSubscriptionItemId,
-        new SubscriptionItemDeleteOptions(), cancellationToken: ct);
+        new SubscriptionItemDeleteOptions(), cancellationToken: cancellationToken);
 
     db.SubscriptionModuleItems.Remove(moduleItem);
-    await db.SaveChangesAsync(ct);
+    await db.SaveChangesAsync(cancellationToken);
 }
 ```
 
@@ -168,13 +168,13 @@ Add three endpoints, all behind `[Authorize(Roles = "admin")]`:
 
 ```csharp
 [HttpGet("modules")]
-public async Task<ActionResult<IEnumerable<SubscriptionModule>>> GetActiveModules(CancellationToken ct)
+public async Task<ActionResult<IEnumerable<SubscriptionModule>>> GetActiveModules(CancellationToken cancellationToken)
 
 [HttpPost("modules")]
-public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken ct)
+public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken cancellationToken)
 
 [HttpDelete("modules/{module}")]
-public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken ct)
+public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken cancellationToken)
 ```
 
 - `InvalidOperationException` → 400 ProblemDetails
@@ -204,3 +204,17 @@ public async Task<IActionResult> RemoveModule(SubscriptionModule module, Cancell
 3. `dotnet test` — API integration tests pass
 4. Manual: add a module via `POST /api/v1/billing/modules` against a test school with an active Stripe subscription; verify line item appears in Stripe dashboard and row appears in DB
 5. Manual: remove the module; verify line item removed from Stripe and row deleted
+
+---
+
+## Status: Done
+
+Implemented 2026-05-24 as part of todo.md items 3 & 4 (parent module + Stripe gating).
+
+**Deviations from spec:**
+
+- `StripeSubscriptionItemId` is nullable (`string?`) — allows `null` for admin-override rows that bypass Stripe entirely
+- Added `IsAdminOverride` bool property — when `true`, the module was granted by a superadmin without a Stripe subscription item
+- Added `GrantModuleOverrideAsync` method to `SubscriptionService` — inserts a row with `IsAdminOverride = true`, no Stripe call (for beta testers, developer's own school, etc.)
+- `GET /api/v1/modules` (active module list) moved to a separate `SubscriptionModulesController` with only `[Authorize]` — the `BillingController` class-level `[Authorize(Roles = admin)]` would AND with method-level attributes, blocking parent users. All authenticated users (admin, teacher, parent) can call this endpoint.
+- Added `superadmin` Keycloak realm role — gates `POST/DELETE /api/v1/admin/tenants/{schoolId}/modules` override endpoints in new `AdminController`. Assign only to developer's Keycloak user. Must be added manually in production Keycloak Admin UI.

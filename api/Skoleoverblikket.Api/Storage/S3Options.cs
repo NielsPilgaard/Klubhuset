@@ -23,4 +23,6 @@ public sealed class S3Options
 
 	[Required(AllowEmptyStrings = false)]
 	public required string PresignedUploadSigningKey { get; init; }
+
+	public string SanitizedPublicEndpoint => PublicEndpoint.TrimEnd('/');
 }
