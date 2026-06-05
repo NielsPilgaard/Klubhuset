@@ -244,7 +244,7 @@ $templateBody = @{
     dayEndTime            = "14:45:00"
     activeDays            = "Monday,Tuesday,Wednesday,Thursday,Friday"
     breaks                = @(
-        @{ startTime = "10:00:00"; durationMinutes = 15 }
+        @{ startTime = "10:15:00"; durationMinutes = 15 }
         @{ startTime = "12:00:00"; durationMinutes = 30 }
     )
 }
