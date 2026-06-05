@@ -30,22 +30,23 @@ export function Modal({
   if (!isOpen) return null
 
   return (
-    <button
-      type="button"
-      tabIndex={-1}
-      aria-label="Luk"
+    <div
+      role="none"
       className={
         backdropClassName ??
         'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 text-left'
       }
       onClick={onClose}
-      onKeyDown={onKeyDown}
     >
       <div
         role="dialog"
         aria-modal="true"
         className={contentClassName ?? `bg-white rounded-2xl shadow-xl w-full ${sizeClass[size]}`}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation()
+          onKeyDown?.(e)
+        }}
       >
         {title && (
           <div className="px-6 py-5 border-b border-gray-100">
@@ -54,6 +55,6 @@ export function Modal({
         )}
         {children}
       </div>
-    </button>
+    </div>
   )
 }

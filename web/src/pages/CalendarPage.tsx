@@ -61,7 +61,7 @@ function getSchoolYears(schoolStartYear: number): { startYear: number; endYear: 
 function getSchoolYearMonths(schoolStartYear: number): Array<{ year: number; month: number }> {
   const months: Array<{ year: number; month: number }> = []
   for (let m = 8; m <= 12; m++) months.push({ year: schoolStartYear, month: m })
-  for (let m = 1; m <= 6; m++) months.push({ year: schoolStartYear + 1, month: m })
+  for (let m = 1; m <= 7; m++) months.push({ year: schoolStartYear + 1, month: m })
   return months
 }
 
@@ -78,7 +78,8 @@ function isEntryInSchoolYear(entry: CalendarEntryDto, startYear: number): boolea
   const schoolStart = new Date(startYear, 7, 1)
   const schoolEnd = new Date(startYear + 1, 6, 31)
   const entryStart = new Date(`${entry.startDate}T00:00:00`)
-  return entryStart >= schoolStart && entryStart <= schoolEnd
+  const entryEnd = new Date(`${entry.endDate ?? entry.startDate}T00:00:00`)
+  return entryStart <= schoolEnd && entryEnd >= schoolStart
 }
 
 function buildMonthGrid(year: number, month: number): (number | null)[][] {
@@ -569,7 +570,9 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolStartYear])
 
-  const [highlightedDate, setHighlightedDate] = useState<string | null>(null)
+  const [highlightedRange, setHighlightedRange] = useState<{ start: string; end: string } | null>(
+    null
+  )
   const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const touchStartX = useRef<number | null>(null)
@@ -652,7 +655,8 @@ export default function CalendarPage() {
     ),
   ]
 
-  const hasEntries = allEntries.some((e) => isEntryInSchoolYear(e, schoolStartYear))
+  const schoolYearEntries = allEntries.filter((e) => isEntryInSchoolYear(e, schoolStartYear))
+  const hasEntries = schoolYearEntries.length > 0
 
   const { data: defaults = [] } = useQuery({
     ...getApiV1CalendarDefaultsOptions({ query: { year: schoolStartYear } }),
@@ -695,12 +699,15 @@ export default function CalendarPage() {
     const dateStr = entry.startDate!
     const [y, m] = dateStr.split('-').map(Number)
     const key = `${y}-${m}`
-    setHighlightedDate(dateStr)
+    setHighlightedRange({ start: entry.startDate!, end: entry.endDate ?? entry.startDate! })
     const idx = schoolYearMonths.findIndex(({ year, month }) => year === y && month === m)
     if (idx >= 0) setCarouselIndex(idx)
-    const el = monthRefs.current.get(key)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    setTimeout(() => setHighlightedDate(null), 3000)
+    // Defer scroll so the carousel re-render (which swaps the visible month card) completes first
+    setTimeout(() => {
+      const el = monthRefs.current.get(key)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 0)
+    setTimeout(() => setHighlightedRange(null), 8000)
   }
 
   function renderMonthCard(year: number, month: number, large = false) {
@@ -756,7 +763,10 @@ export default function CalendarPage() {
                 }
                 const isWeekend = di >= 5
                 const cellDateStr = toDateString(year, month, day)
-                const isHighlighted = highlightedDate === cellDateStr
+                const isHighlighted =
+                  highlightedRange !== null &&
+                  cellDateStr >= highlightedRange.start &&
+                  cellDateStr <= highlightedRange.end
                 const dayEntries = isWeekend ? [] : getDayEntries(year, month, day, allEntries)
                 const firstEntry = dayEntries[0]
                 const colorClass = firstEntry ? (TYPE_COLORS[firstEntry.type ?? ''] ?? '') : ''
@@ -948,7 +958,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Entry list */}
-      {allEntries.length > 0 && (
+      {schoolYearEntries.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[480px]">
@@ -971,7 +981,7 @@ export default function CalendarPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {allEntries.map((entry) => (
+                {schoolYearEntries.map((entry) => (
                   <tr
                     key={`${entry.id}-${entry.startDate}`}
                     onClick={() => handleEntryClick(entry)}

@@ -13,7 +13,6 @@ import {
   postApiV1ClassesByClassIdSchemasMutation,
   deleteApiV1ClassesByClassIdSchemasBySchemaIdMutation,
   putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation,
-  putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation,
   postApiV1ClassesByClassIdSchemasBySchemaIdCopyMutation,
   postApiV1ClassesByClassIdSchemasBySchemaIdCopyToByTargetClassIdMutation,
   getApiV1ClassesByClassIdPermissionsOptions,
@@ -456,150 +455,6 @@ function isActiveNow(startDate?: string | null, endDate?: string | null): boolea
   return startDate <= today && endDate >= today
 }
 
-interface RenameSchemaModalProps {
-  classId: string
-  schema: SchemaDto
-  onClose: () => void
-}
-
-function RenameSchemaModal({ classId, schema, onClose }: RenameSchemaModalProps) {
-  const qc = useQueryClient()
-  const [name, setName] = useState(schema.name ?? '')
-
-  const mutation = useMutation({
-    ...putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation(),
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
-      })
-      onClose()
-    },
-  })
-
-  function handleSave() {
-    if (!name.trim() || mutation.isPending) return
-    mutation.mutate({ path: { classId, schemaId: schema.id! }, body: { name: name.trim() } })
-  }
-
-  return (
-    <Modal isOpen onClose={onClose} title="Omdøb skema" size="sm">
-      <div className="px-6 py-5">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Navn</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              handleSave()
-            }
-          }}
-          autoFocus
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-        />
-        {mutation.isError && (
-          <p className="text-sm text-red-600 mt-2">Der opstod en fejl. Prøv igen.</p>
-        )}
-      </div>
-      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
-        >
-          Annuller
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!name.trim() || mutation.isPending}
-          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {mutation.isPending ? 'Gemmer...' : 'Gem'}
-        </button>
-      </div>
-    </Modal>
-  )
-}
-
-interface DateRangeModalProps {
-  classId: string
-  schema: SchemaDto
-  onClose: () => void
-}
-
-function DateRangeModal({ classId, schema, onClose }: DateRangeModalProps) {
-  const qc = useQueryClient()
-  const [startDate, setStartDate] = useState(schema.startDate ?? '')
-  const [endDate, setEndDate] = useState(schema.endDate ?? '')
-
-  const mutation = useMutation({
-    ...putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation(),
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: getApiV1ClassesByClassIdSchemasQueryKey({ path: { classId } }),
-      })
-      onClose()
-    },
-  })
-
-  function handleSave() {
-    if (mutation.isPending) return
-    if (startDate && endDate && startDate > endDate) return
-    mutation.mutate({
-      path: { classId, schemaId: schema.id! },
-      body: { startDate: startDate || null, endDate: endDate || null },
-    })
-  }
-
-  return (
-    <Modal isOpen onClose={onClose} size="sm">
-      <div className="px-6 py-5 border-b border-gray-100">
-        <h2 className="font-display text-lg font-semibold text-gray-900">Sæt datoperiode</h2>
-        <p className="text-sm text-gray-500 mt-0.5">{schema.name}</p>
-      </div>
-      <div className="px-6 py-5 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Startdato</label>
-            <DatePicker value={startDate} onChange={setStartDate} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slutdato</label>
-            <DatePicker
-              value={endDate}
-              onChange={setEndDate}
-              min={startDate || undefined}
-              align="right"
-            />
-          </div>
-        </div>
-        {startDate && endDate && startDate > endDate && (
-          <p className="text-sm text-red-600">Startdato skal være før slutdato.</p>
-        )}
-        {mutation.isError && <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>}
-      </div>
-      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
-        >
-          Annuller
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={mutation.isPending || (!!startDate && !!endDate && startDate > endDate)}
-          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {mutation.isPending ? 'Gemmer...' : 'Gem'}
-        </button>
-      </div>
-    </Modal>
-  )
-}
-
 function ClassPermissionsTab({ classId }: { classId: string }) {
   const qc = useQueryClient()
   const [selectedStaffId, setSelectedStaffId] = useState('')
@@ -801,8 +656,6 @@ function SchemaList({
   const canEditSchema =
     isAdmin || permissions.length === 0 || permissions.some((p) => p.staffId === staffId)
   const [copyingSchema, setCopyingSchema] = useState<SchemaDto | null>(null)
-  const [editingDateRange, setEditingDateRange] = useState<SchemaDto | null>(null)
-  const [renamingSchema, setRenamingSchema] = useState<SchemaDto | null>(null)
 
   useEffect(() => {
     if (autoOpenCreate) {
@@ -939,47 +792,6 @@ function SchemaList({
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        setEditingDateRange(s)
-                      }}
-                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      Datoer
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setRenamingSchema(s)
-                      }}
-                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                      </svg>
-                      Omdøb
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
                         setCopyingSchema(s)
                       }}
                       className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -1047,20 +859,6 @@ function SchemaList({
           sourceName={copyingSchema.name!}
           onClose={() => setCopyingSchema(null)}
           onSaved={() => setCopyingSchema(null)}
-        />
-      )}
-      {editingDateRange && (
-        <DateRangeModal
-          classId={classId}
-          schema={editingDateRange}
-          onClose={() => setEditingDateRange(null)}
-        />
-      )}
-      {renamingSchema && (
-        <RenameSchemaModal
-          classId={classId}
-          schema={renamingSchema}
-          onClose={() => setRenamingSchema(null)}
         />
       )}
     </div>
