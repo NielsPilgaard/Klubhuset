@@ -3,6 +3,7 @@ import { API_BASE, ApiError } from './client'
 
 export interface UploadOptions {
   file: File
+  fileName?: string
   courseId?: string
   folderId?: string
   onProgress?: (pct: number) => void
@@ -25,6 +26,7 @@ export interface UploadedFile {
  */
 export async function uploadFile({
   file,
+  fileName,
   courseId,
   folderId,
   onProgress,
@@ -39,7 +41,7 @@ export async function uploadFile({
       ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
     },
     body: JSON.stringify({
-      fileName: file.name,
+      fileName: fileName ?? file.name,
       fileSizeBytes: file.size,
       courseId: courseId || null,
       folderId: folderId || null,

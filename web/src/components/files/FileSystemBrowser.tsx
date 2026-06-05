@@ -10,7 +10,7 @@ import {
   deleteApiV1FilesFoldersByIdMutation,
   patchApiV1FilesFoldersByIdMutation,
 } from '../../api/generated/@tanstack/react-query.gen'
-import { postApiV1FilesPresign, postApiV1FilesConfirm } from '../../api/generated/sdk.gen'
+import { uploadFile } from '../../api/upload'
 import type { CourseDto, FolderDto } from '../../api/client'
 import keycloak from '../../auth/keycloak'
 import {
@@ -56,26 +56,13 @@ function UploadModal({
   const mutation = useMutation({
     mutationFn: async ({ file }: { file: File }) => {
       const ext = file.name.includes('.') ? `.${file.name.split('.').pop()!}` : ''
-      const { data: presign } = await postApiV1FilesPresign({
-        body: {
-          fileName: editedName + ext,
-          fileSizeBytes: file.size,
-          courseId: courseId || undefined,
-          folderId: currentFolderId || undefined,
-        },
-        throwOnError: true,
+      return uploadFile({
+        file,
+        fileName: editedName + ext,
+        courseId: courseId || undefined,
+        folderId: currentFolderId || undefined,
+        onProgress: setProgress,
       })
-      await fetch(presign!.uploadUrl!, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': presign!.contentType! },
-      })
-      setProgress(100)
-      const { data: confirmed } = await postApiV1FilesConfirm({
-        body: { confirmToken: presign!.confirmToken },
-        throwOnError: true,
-      })
-      return confirmed
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
@@ -227,7 +214,7 @@ function UploadModal({
           disabled={!selectedFile || isPending}
           className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isPending ? `${progress}%…` : 'Upload'}
+          {isPending ? (progress !== null ? `${progress}%…` : 'Forbereder…') : 'Upload'}
         </button>
       </div>
     </Modal>
@@ -703,7 +690,10 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                   {isAdmin && (
                     <div className="flex items-center justify-end gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); setRenamingFolderId(folder.id!) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setRenamingFolderId(folder.id!)
+                        }}
                         className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
                         title="Omdøb mappe"
                         data-testid={`rename-folder-${folder.id}`}
@@ -711,7 +701,10 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                         <PencilIcon />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteFolder(folder)
+                        }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         title="Slet mappe"
                         data-testid={`delete-folder-${folder.id}`}
