@@ -14,6 +14,7 @@ import {
 import type { ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { FilePicker } from '../components/files/FilePicker'
+import { TildeleVikarPanel } from '../components/vikar/TildeleVikarPanel'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
 
@@ -39,6 +40,11 @@ interface WeekPlanSlotDto {
   beskrivelse: string | null
   lektier: string | null
   files: WeekPlanSlotFileDto[]
+  substituteTeacherId: string | null
+  substituteTeacherName: string | null
+  substituteAideId: string | null
+  substituteAideName: string | null
+  weekPlanId: string
 }
 
 interface HolidayDayDto {
@@ -176,6 +182,7 @@ interface EditSlotModalProps {
   weekdayLabel: string
   courses: CourseDto[]
   onClose: () => void
+  onOpenVikar: () => void
 }
 
 const AUTOSAVE_PREFIX = 'ugeplan_draft_'
@@ -193,6 +200,7 @@ function EditSlotModal({
   weekdayLabel,
   courses,
   onClose,
+  onOpenVikar,
 }: EditSlotModalProps) {
   const qc = useQueryClient()
 
@@ -447,25 +455,42 @@ function EditSlotModal({
         )}
       </div>
 
-      <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-xs text-gray-400">
-          Enter for at gemme · Shift+Enter for linjeskift · Ctrl+S for at gemme
-        </span>
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Luk
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={upsertMutation.isPending}
-            className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${justSaved ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-brand-600 text-white hover:bg-brand-700'}`}
-          >
-            {upsertMutation.isPending ? 'Gemmer...' : justSaved ? 'Gemt ✓' : 'Gem'}
-          </button>
+      <div className="px-6 py-4 border-t border-gray-100 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">
+            Enter for at gemme · Shift+Enter for linjeskift · Ctrl+S for at gemme
+          </span>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Luk
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={upsertMutation.isPending}
+              className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${justSaved ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-brand-600 text-white hover:bg-brand-700'}`}
+            >
+              {upsertMutation.isPending ? 'Gemmer...' : justSaved ? 'Gemt ✓' : 'Gem'}
+            </button>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={onOpenVikar}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+          data-testid="tildel-vikar-button"
+        >
+          {slot.substituteTeacherName || slot.substituteAideName ? (
+            <>
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-400 text-white text-xs font-bold shrink-0">V</span>
+              Vikar: {slot.substituteTeacherName ?? slot.substituteAideName} · Skift
+            </>
+          ) : (
+            'Tildel vikar'
+          )}
+        </button>
       </div>
     </Modal>
   )
@@ -479,10 +504,12 @@ export default function WeekPlanPage() {
   const [searchParams] = useSearchParams()
   const schemaId = searchParams.get('schemaId')
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
   const [editingSchemaSlotId, setEditingSchemaSlotId] = useState<string | null>(null)
+  const [vikarSchemaSlotId, setVikarSchemaSlotId] = useState<string | null>(null)
 
   function prevWeek() {
     if (isoWeek === 1) {
@@ -801,6 +828,18 @@ export default function WeekPlanPage() {
                             <span className="text-xs text-gray-500">{slot.files.length}</span>
                           </div>
                         )}
+
+                        {/* Substitute (vikar) indicator */}
+                        {(slot.substituteTeacherName || slot.substituteAideName) && (
+                          <div className="flex items-center gap-1 mt-1" data-testid="vikar-badge">
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-400 text-white text-xs font-bold shrink-0">
+                              V
+                            </span>
+                            <span className="text-xs text-amber-700 truncate">
+                              {slot.substituteTeacherName ?? slot.substituteAideName}
+                            </span>
+                          </div>
+                        )}
                       </button>
                     )
                   })}
@@ -820,7 +859,7 @@ export default function WeekPlanPage() {
       </div>
 
       {/* Edit modal */}
-      {editingSlot && classId && (
+      {editingSlot && classId && !vikarSchemaSlotId && (
         <EditSlotModal
           slot={editingSlot}
           classId={classId}
@@ -828,10 +867,66 @@ export default function WeekPlanPage() {
           isoWeek={isoWeek}
           schemaId={schemaId}
           weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(editingSlot.weekday)] ?? ''}
+          weekday={WEEKDAY_KEYS.indexOf(editingSlot.weekday) + 1}
           courses={courses}
           onClose={() => setEditingSchemaSlotId(null)}
+          onOpenVikar={async () => {
+            // Ensure the WeekPlanSlot row exists before opening the vikar panel
+            if (editingSlot.id === '00000000-0000-0000-0000-000000000000') {
+              const { mutationFn } = putApiV1ClassesByClassIdUgeplanSlotsMutation()
+              await mutationFn!(
+                {
+                  path: { classId },
+                  query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) },
+                  body: {
+                    schemaSlotId: editingSlot.schemaSlotId,
+                    beskrivelse: null,
+                    lektier: null,
+                    fagSwapCourseId: null,
+                  },
+                },
+                undefined as never
+              )
+              // Refetch so slot.id and slot.weekPlanId are populated
+              await queryClient.invalidateQueries({
+                queryKey: getApiV1ClassesByClassIdUgeplanQueryKey({
+                  path: { classId },
+                  query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) },
+                }),
+              })
+            }
+            setEditingSchemaSlotId(null)
+            setVikarSchemaSlotId(editingSlot.schemaSlotId)
+          }}
         />
       )}
+
+      {/* Vikar panel */}
+      {vikarSchemaSlotId && classId && (() => {
+        const slot = weekPlanData?.slots.find(s => s.schemaSlotId === vikarSchemaSlotId)
+        if (!slot || slot.weekPlanId === '00000000-0000-0000-0000-000000000000') return null
+        return (
+          <TildeleVikarPanel
+            weekPlanId={slot.weekPlanId}
+            slotId={slot.id}
+            schemaSlotId={slot.schemaSlotId}
+            classId={classId}
+            isoYear={isoYear}
+            isoWeek={isoWeek}
+            weekday={WEEKDAY_KEYS.indexOf(slot.weekday) + 1}
+            timeSlotId={slot.timeSlotId}
+            courseName={slot.courseName}
+            weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(slot.weekday)] ?? ''}
+            startTime={slot.startTime}
+            currentSubstituteTeacherId={slot.substituteTeacherId}
+            currentSubstituteTeacherName={slot.substituteTeacherName}
+            currentSubstituteAideId={slot.substituteAideId}
+            currentSubstituteAideName={slot.substituteAideName}
+            schemaId={schemaId}
+            onClose={() => setVikarSchemaSlotId(null)}
+          />
+        )
+      })()}
     </div>
   )
 }
