@@ -22,6 +22,7 @@ async function loginAsAdmin(page: Page) {
 
 test.describe.serial('Staff invitation flow', () => {
   test('invited staff member can log in and lands on their own schedule, not dashboard', async ({ page, request }) => {
+    test.setTimeout(120_000)
     const staffEmail = uniqueStaffEmail()
     const staffName = 'Test Medarbejder'
 
@@ -77,19 +78,24 @@ test.describe.serial('Staff invitation flow', () => {
     }
     expect(invitationUrl, 'No invitation link found in email').toBeDefined()
 
-    // --- Step 5: open invitation page in a fresh context (not logged in) ---
-    // Clear both cookies and localStorage so Keycloak doesn't pick up the admin session
-    // (tokens are stored in localStorage via tokenStore: 'localStorage').
-    await page.context().clearCookies()
-    await page.evaluate(() => localStorage.clear())
-    await page.goto(invitationUrl!)
+    // --- Step 5: open invitation page in a fresh browser context (not logged in) ---
+    // A new context has no cookies or localStorage, so Keycloak starts completely fresh.
+    const browser = page.context().browser()!
+    const freshContext = await browser.newContext()
+    const freshPage = await freshContext.newPage()
+
+    await freshPage.goto(invitationUrl!)
+
+    // Keycloak check-sso may do a redirect cycle (prompt=none → back to invitation URL).
+    // Wait until the page is on localhost:5173 (not Keycloak) before checking the heading.
+    await freshPage.waitForURL((url) => url.hostname === 'localhost' && url.port === '5173', { timeout: 30_000 })
 
     // Invitation page should load with heading visible
-    await expect(page.getByRole('heading', { name: /inviteret/i })).toBeVisible({ timeout: 10_000 })
+    await expect(freshPage.getByRole('heading', { name: /inviteret/i })).toBeVisible({ timeout: 15_000 })
 
     // --- Step 6: click login button, get redirected to Keycloak ---
-    await page.getByRole('button', { name: /opret konto|acceptér/i }).click()
-    await page.waitForURL(/localhost:8080/, { timeout: 15_000 })
+    await freshPage.getByRole('button', { name: /opret konto|acceptér/i }).click()
+    await freshPage.waitForURL(/localhost:8080/, { timeout: 15_000 })
 
     // --- Step 7: log in with temporary password from email ---
     // The invitation email contains a temporary password; extract it from Mailpit
@@ -108,41 +114,41 @@ test.describe.serial('Staff invitation flow', () => {
     expect(passMatch, 'No temporary password found in invitation email').toBeDefined()
     const tempPassword = passMatch![1].replace(/<[^>]+>/g, '').trim()
 
-    await page.locator('#username').fill(staffEmail)
-    await page.locator('#password').fill(tempPassword)
-    await page.getByRole('button', { name: /log ind|sign in/i }).click()
+    await freshPage.locator('#username').fill(staffEmail)
+    await freshPage.locator('#password').fill(tempPassword)
+    await freshPage.getByRole('button', { name: /log ind|sign in/i }).click()
 
     // Keycloak forces UPDATE_PASSWORD — fill new password
-    await page.waitForURL(/localhost:8080.*password|update-password/i, { timeout: 10_000 }).catch(() => {})
-    if (page.url().includes('localhost:8080')) {
+    await freshPage.waitForURL(/localhost:8080.*password|update-password/i, { timeout: 10_000 }).catch(() => {})
+    if (freshPage.url().includes('localhost:8080')) {
       const newPassword = 'NewPass456!'
-      // Keycloak update-password form has password-new and password-confirm fields
-      const newPassField = page.locator('#password-new, input[name="password-new"]')
-      const confirmField = page.locator('#password-confirm, input[name="password-confirm"]')
+      const newPassField = freshPage.locator('#password-new, input[name="password-new"]')
+      const confirmField = freshPage.locator('#password-confirm, input[name="password-confirm"]')
       if (await newPassField.isVisible({ timeout: 5_000 }).catch(() => false)) {
         await newPassField.fill(newPassword)
         await confirmField.fill(newPassword)
-        await page.getByRole('button', { name: /gem|submit|opdater|update/i }).click()
+        await freshPage.getByRole('button', { name: /gem|submit|opdater|update/i }).click()
       }
     }
 
     // --- Step 8: back on invitation page with ?accept=1 — invitation auto-accepted ---
-    await page.waitForURL(/\/invitation\//, { timeout: 20_000 })
-    await expect(page.getByText(/invitation accepteret/i)).toBeVisible({ timeout: 10_000 })
+    await freshPage.waitForURL(/\/invitation\//, { timeout: 20_000 })
+    await expect(freshPage.getByText(/invitation accepteret/i)).toBeVisible({ timeout: 10_000 })
 
     // --- Step 9: click "Gå til mit skema" — must land on /mig/skema, NOT /dashboard ---
     const apiErrors: { url: string; status: number }[] = []
-    page.on('response', (res) => {
+    freshPage.on('response', (res) => {
       if (res.url().includes('/api/v1/') && res.status() === 403) {
         apiErrors.push({ url: res.url(), status: res.status() })
       }
     })
 
-    await page.getByRole('link', { name: /gå til mit skema/i }).click()
-    await expect(page).toHaveURL(/\/mig\/skema/, { timeout: 15_000 })
+    await freshPage.getByRole('link', { name: /gå til mit skema/i }).click()
+    await expect(freshPage).toHaveURL(/\/mig\/skema/, { timeout: 15_000 })
 
     // Wait for all deferred queries to settle
-    await page.waitForTimeout(2_000)
+    await freshPage.waitForTimeout(2_000)
+    await freshContext.close()
     expect(
       apiErrors,
       `Got 403 errors on staff schedule page:\n${apiErrors.map((e) => e.url).join('\n')}`
