@@ -2704,6 +2704,48 @@
         }
       }
     },
+    "/api/v1/parents/{id}/adresse-beskyttelse": {
+      "patch": {
+        "tags": [
+          "Parents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_AdresseBeskyttelseRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_AdresseBeskyttelseRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_AdresseBeskyttelseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/reports/hours/staff.xlsx": {
       "get": {
         "tags": [
@@ -7692,6 +7734,15 @@
         },
         "additionalProperties": false
       },
+      "ParentsController_AdresseBeskyttelseRequest": {
+        "type": "object",
+        "properties": {
+          "adresseBeskyttet": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "ParentsController_InviteParentRequest": {
         "type": "object",
         "properties": {
@@ -7746,6 +7797,9 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "adresseBeskyttet": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

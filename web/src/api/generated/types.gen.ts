@@ -389,6 +389,10 @@ export type ParentMeControllerUpdateContactRequest = {
     shareContactInfo?: boolean;
 };
 
+export type ParentsControllerAdresseBeskyttelseRequest = {
+    adresseBeskyttet?: boolean;
+};
+
 export type ParentsControllerInviteParentRequest = {
     name?: string | null;
     email?: string | null;
@@ -403,6 +407,7 @@ export type ParentsControllerParentDto = {
     students?: Array<ParentsControllerStudentRefDto> | null;
     hasAccount?: boolean;
     createdAt?: string;
+    adresseBeskyttet?: boolean;
 };
 
 export type ParentsControllerStudentRefDto = {
@@ -2122,6 +2127,22 @@ export type PostApiV1ParentsByIdStudentsByStudentIdData = {
 };
 
 export type PostApiV1ParentsByIdStudentsByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiV1ParentsByIdAdresseBeskyttelseData = {
+    body?: ParentsControllerAdresseBeskyttelseRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}/adresse-beskyttelse';
+};
+
+export type PatchApiV1ParentsByIdAdresseBeskyttelseResponses = {
     /**
      * OK
      */

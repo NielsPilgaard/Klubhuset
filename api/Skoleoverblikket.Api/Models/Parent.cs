@@ -31,6 +31,8 @@ public sealed class Parent : ITenantScoped, IEntityTypeConfiguration<Parent>
 	/// <summary>Consent for future parent directory feature. Default off.</summary>
 	public bool ShareContactInfo { get; set; }
 
+	public bool AdresseBeskyttet { get; set; }
+
 	[StringLength(2000)]
 	public string? AvatarUrl { get; set; }
 

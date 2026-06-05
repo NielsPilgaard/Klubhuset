@@ -20,7 +20,7 @@ public sealed class ParentsController(
 	KeycloakAdminService keycloak,
 	ILogger<ParentsController> logger) : ControllerBase
 {
-	public record ParentDto(Guid Id, string Name, string Email, string? Phone, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt);
+	public record ParentDto(Guid Id, string Name, string Email, string? Phone, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt, bool AdresseBeskyttet);
 	public record StudentRefDto(Guid Id, string Name, Guid ClassId, string ClassName);
 	public record InviteParentRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
@@ -172,6 +172,22 @@ public sealed class ParentsController(
 		return NoContent();
 	}
 
+	[HttpPatch("{id:guid}/adresse-beskyttelse")]
+	public async Task<ActionResult> SetAdresseBeskyttelse(Guid id, [FromBody] AdresseBeskyttelseRequest req, CancellationToken ct)
+	{
+		var parent = await db.Parents.FirstOrDefaultAsync(p => p.Id == id, ct);
+		if (parent is null)
+		{
+			return NotFound();
+		}
+
+		parent.AdresseBeskyttet = req.AdresseBeskyttet;
+		await db.SaveChangesAsync(ct);
+		return NoContent();
+	}
+
+	public record AdresseBeskyttelseRequest(bool AdresseBeskyttet);
+
 	private static ParentDto ToDto(Parent p) => new(
 		p.Id,
 		p.Name,
@@ -179,5 +195,6 @@ public sealed class ParentsController(
 		p.Phone,
 		p.Students.Select(s => new StudentRefDto(s.Id, s.Name, s.ClassId, s.Class?.Name ?? string.Empty)).ToList(),
 		p.KeycloakSubject is not null,
-		p.CreatedAt);
+		p.CreatedAt,
+		p.AdresseBeskyttet);
 }

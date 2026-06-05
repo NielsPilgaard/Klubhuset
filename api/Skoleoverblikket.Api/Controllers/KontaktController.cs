@@ -79,16 +79,19 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 			.OrderBy(p => p.Name)
 			.ToListAsync(ct);
 
-		var dtos = parents.Select(p => new KontaktParentDto(
-			p.Id,
-			p.Name,
-			p.Phone,
-			p.Address,
-			p.PostalCode,
-			p.City,
-			p.AvatarUrl,
-			p.Students.Select(s => s.Name).OrderBy(n => n).ToList()
-		)).ToList();
+		var dtos = parents.Select(p =>
+		{
+			var hideDetails = p.AdresseBeskyttet && !isAdmin;
+			return new KontaktParentDto(
+				p.Id,
+				p.Name,
+				hideDetails ? null : p.Phone,
+				hideDetails ? null : p.Address,
+				hideDetails ? null : p.PostalCode,
+				hideDetails ? null : p.City,
+				p.AvatarUrl,
+				p.Students.Select(s => s.Name).OrderBy(n => n).ToList());
+		}).ToList();
 
 		return Ok(dtos);
 	}
