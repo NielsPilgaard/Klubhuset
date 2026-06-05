@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { usePageTitle } from '../hooks/usePageTitle'
 import CoursesSidebar from '../components/CoursesSidebar'
+import DatePicker from '../components/DatePicker'
 import { decodeSidebarDragId } from '../utils/sidebarDragId'
 import {
   getApiV1ClassesByClassIdSchemasBySchemaIdOptions,
@@ -28,6 +29,8 @@ import {
   getApiV1RoomsOptions,
   putApiV1ClassesByClassIdSchemasBySchemaIdSlotsMutation,
   deleteApiV1ClassesByClassIdSchemasBySchemaIdSlotsByTimeSlotIdByWeekdayMutation,
+  putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation,
+  putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import type {
   SchemaDetailDto,
@@ -578,6 +581,81 @@ export default function SchemaBuilderPage() {
   const [selectedCourseId, setSelectedCourseId] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const [editingName, setEditingName] = useState(false)
+  const [editingDates, setEditingDates] = useState(false)
+  const [nameValue, setNameValue] = useState('')
+  const [startDateValue, setStartDateValue] = useState('')
+  const [endDateValue, setEndDateValue] = useState('')
+
+  const renameMutation = useMutation({
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdRenameMutation(),
+    onSuccess: () => {
+      setEditingName(false)
+      qc.setQueryData(
+        getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({
+          path: { classId: classId!, schemaId: schemaId! },
+        }),
+        (old: SchemaDetailDto | undefined) =>
+          old ? { ...old, schema: { ...old.schema, name: nameValue } } : old
+      )
+    },
+  })
+
+  const daterangeMutation = useMutation({
+    ...putApiV1ClassesByClassIdSchemasBySchemaIdDaterangeMutation(),
+    onSuccess: () => {
+      setEditingDates(false)
+      qc.setQueryData(
+        getApiV1ClassesByClassIdSchemasBySchemaIdQueryKey({
+          path: { classId: classId!, schemaId: schemaId! },
+        }),
+        (old: SchemaDetailDto | undefined) =>
+          old
+            ? {
+                ...old,
+                schema: {
+                  ...old.schema,
+                  startDate: startDateValue || null,
+                  endDate: endDateValue || null,
+                },
+              }
+            : old
+      )
+    },
+  })
+
+  function startEditName() {
+    setNameValue(schema?.name ?? '')
+    setEditingName(true)
+  }
+
+  function submitName(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nameValue.trim() || renameMutation.isPending) return
+    renameMutation.mutate({
+      path: { classId: classId!, schemaId: schemaId! },
+      body: { name: nameValue.trim() },
+    })
+  }
+
+  function startEditDates() {
+    setStartDateValue(schema?.startDate ?? '')
+    setEndDateValue(schema?.endDate ?? '')
+    setEditingDates(true)
+  }
+
+  function submitDates(e: React.FormEvent) {
+    e.preventDefault()
+    if (daterangeMutation.isPending) return
+    daterangeMutation.mutate({
+      path: { classId: classId!, schemaId: schemaId! },
+      body: {
+        startDate: startDateValue || null,
+        endDate: endDateValue || null,
+      },
+    })
+  }
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   const {
@@ -875,16 +953,78 @@ export default function SchemaBuilderPage() {
             <div className="h-5 w-36 bg-gray-200 rounded animate-pulse" />
           ) : (
             <>
-              <h1 className="font-display text-base font-semibold text-gray-900 truncate">
-                {schema?.name}
-              </h1>
-              {(schema?.startDate || schema?.endDate) && (
-                <span className="shrink-0 text-xs text-gray-400">
-                  {schema.startDate && schema.endDate
-                    ? `${schema.startDate} – ${schema.endDate}`
-                    : (schema.startDate ?? schema.endDate)}
-                </span>
+              {editingName ? (
+                <form onSubmit={submitName} className="flex items-center gap-1">
+                  <input
+                    autoFocus
+                    value={nameValue}
+                    onChange={(e) => setNameValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Escape' && setEditingName(false)}
+                    onBlur={() => !renameMutation.isPending && setEditingName(false)}
+                    className="font-display text-base font-semibold text-gray-900 border-b border-brand-400 bg-transparent outline-none w-48 truncate"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!nameValue.trim() || renameMutation.isPending}
+                    className="p-1 text-brand-600 hover:text-brand-800 disabled:opacity-40"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                  </button>
+                  <button type="button" onClick={() => setEditingName(false)} className="p-1 text-gray-400 hover:text-gray-600">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startEditName}
+                  className="group flex items-center gap-1.5 font-display text-base font-semibold text-gray-900 truncate hover:text-brand-700 transition-colors"
+                >
+                  {schema?.name}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 group-hover:text-brand-400 shrink-0 transition-colors"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                </button>
               )}
+
+              {editingDates ? (
+                <form onSubmit={submitDates} className="flex items-center gap-1 shrink-0">
+                  <DatePicker
+                    value={startDateValue}
+                    onChange={setStartDateValue}
+                    placeholder="Startdato"
+                  />
+                  <span className="text-xs text-gray-400">–</span>
+                  <DatePicker
+                    value={endDateValue}
+                    onChange={setEndDateValue}
+                    placeholder="Slutdato"
+                    min={startDateValue || undefined}
+                  />
+                  <button
+                    type="submit"
+                    disabled={daterangeMutation.isPending}
+                    className="p-1 text-brand-600 hover:text-brand-800 disabled:opacity-40"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                  </button>
+                  <button type="button" onClick={() => setEditingDates(false)} className="p-1 text-gray-400 hover:text-gray-600">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startEditDates}
+                  className="group shrink-0 flex items-center gap-1 text-xs text-gray-400 hover:text-brand-600 transition-colors"
+                >
+                  {schema?.startDate || schema?.endDate
+                    ? schema?.startDate && schema?.endDate
+                      ? `${schema.startDate} – ${schema.endDate}`
+                      : (schema?.startDate ?? schema?.endDate)
+                    : <span className="italic">Ingen datoer</span>}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 group-hover:text-brand-400 shrink-0 transition-colors"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                </button>
+              )}
+
               {schema?.startDate &&
                 schema?.endDate &&
                 new Date().toISOString().slice(0, 10) >= schema.startDate &&
