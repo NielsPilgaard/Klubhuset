@@ -1,2 +1,2 @@
 *.sh text eol=lf
-web/src/api/generated/** text eol=lf
+web/src/** text eol=lf
