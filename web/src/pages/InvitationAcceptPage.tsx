@@ -3,8 +3,6 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import keycloak from '../auth/keycloak'
 import CookieBanner from '../components/CookieBanner'
 import {
-  getApiV1StaffInvitationsPreview,
-  getApiV1ParentInvitationsPreview,
   postApiV1StaffInvitationsAccept,
   postApiV1ParentInvitationsAccept,
   patchApiV1ParentsMeContact,
@@ -56,30 +54,29 @@ export default function InvitationAcceptPage() {
     const controller = new AbortController()
 
     async function loadPreview() {
-      // Try staff invitation first; fall back to parent invitation.
-      const staffRes = await getApiV1StaffInvitationsPreview({
-        query: { token: token! },
-        signal: controller.signal,
-        throwOnError: false,
-      })
+      // Use plain fetch for these [AllowAnonymous] endpoints to avoid the SDK's
+      // auth interceptor triggering a Keycloak login redirect for unauthenticated users.
+      const staffRes = await fetch(
+        `/api/v1/staff-invitations/preview?token=${encodeURIComponent(token!)}`,
+        { signal: controller.signal },
+      )
 
       let type: InvitationType = 'staff'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: any = staffRes.data
+      let data: any = staffRes.status !== 404 ? await staffRes.json() : null
 
-      if (staffRes.response.status === 404) {
-        const parentRes = await getApiV1ParentInvitationsPreview({
-          query: { token: token! },
-          signal: controller.signal,
-          throwOnError: false,
-        })
-        data = parentRes.data
+      if (staffRes.status === 404) {
+        const parentRes = await fetch(
+          `/api/v1/parent-invitations/preview?token=${encodeURIComponent(token!)}`,
+          { signal: controller.signal },
+        )
+        data = await parentRes.json()
         type = 'parent'
-        if (!parentRes.response.ok) {
+        if (!parentRes.ok) {
           setState('invalid')
           return
         }
-      } else if (!staffRes.response.ok) {
+      } else if (!staffRes.ok) {
         setState('invalid')
         return
       }

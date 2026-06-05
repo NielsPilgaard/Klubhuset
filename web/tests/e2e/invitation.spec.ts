@@ -81,16 +81,14 @@ test.describe.serial('Staff invitation flow', () => {
     // --- Step 5: open invitation page in a fresh browser context (not logged in) ---
     // A new context has no cookies or localStorage, so Keycloak starts completely fresh.
     const browser = page.context().browser()!
-    const freshContext = await browser.newContext()
+    const freshContext = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const freshPage = await freshContext.newPage()
 
     await freshPage.goto(invitationUrl!)
 
-    // Keycloak check-sso may do a redirect cycle (prompt=none → back to invitation URL).
-    // Wait until the page is on localhost:5173 (not Keycloak) before checking the heading.
+    // Invitation page should load with heading visible.
+    // check-sso may redirect through Keycloak and back — wait until back on 5173 and heading appears.
     await freshPage.waitForURL((url) => url.hostname === 'localhost' && url.port === '5173', { timeout: 30_000 })
-
-    // Invitation page should load with heading visible
     await expect(freshPage.getByRole('heading', { name: /inviteret/i })).toBeVisible({ timeout: 15_000 })
 
     // --- Step 6: click login button, get redirected to Keycloak ---
