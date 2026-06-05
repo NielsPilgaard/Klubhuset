@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getApiV1ClassesByClassIdScheduleOptions } from '../../api/generated/@tanstack/react-query.gen'
 import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
-import type { ScheduleSlotDto, ParentMeDto } from '../../api/client'
+import type { ScheduleSlotDto } from '../../api/client'
+import type {
+  ParentMeControllerParentStudentDto as ParentStudentDto,
+  ParentMeControllerParentMeDto as ParentMeDto,
+} from '../../api/generated/types.gen'
 import { WEEKDAY_LABELS, WEEKDAY_NUM } from '../../lib/weekdays'
 import { usePageTitle } from '../../hooks/usePageTitle'
 
@@ -115,30 +120,50 @@ export default function ParentSchemaPage() {
     queryFn: () => getApiV1ParentsMe({ throwOnError: false }),
   })
 
+  const notFound = meRes?.response.status === 404
+  const me = meRes?.data as ParentMeDto | undefined
+  const students: ParentStudentDto[] = notFound ? [] : (me?.students ?? [])
+
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+
+  const selectedStudent =
+    students.find((s) => s.studentId === selectedStudentId) ?? students[0] ?? null
+
   if (isLoading) return <div className="p-6 text-sm text-gray-500">Indlæser...</div>
   if (isError)
     return <div className="p-6 text-sm text-red-600">Noget gik galt. Prøv igen senere.</div>
 
-  const notFound = meRes?.response.status === 404
-  const me = meRes?.data as ParentMeDto | undefined
-  const classes = notFound ? [] : (me?.classes ?? [])
-
   return (
-    <div className="p-4 md:p-6 space-y-8">
-      <h1 className="text-xl font-semibold text-gray-900">Skema</h1>
-      {classes.length === 0 ? (
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="text-xl font-semibold text-gray-900">Skema</h1>
+        {students.length > 1 && (
+          <select
+            value={selectedStudent?.studentId ?? ''}
+            onChange={(e) => setSelectedStudentId(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            data-testid="child-picker"
+          >
+            {students.map((s) => (
+              <option key={s.studentId} value={s.studentId}>
+                {s.studentName}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+      {students.length === 0 ? (
         <p className="text-sm text-gray-500">
           Din konto er endnu ikke tilknyttet nogen klasser. Kontakt skolen, hvis du mener dette er
           en fejl.
         </p>
+      ) : selectedStudent?.classId ? (
+        <ClassScheduleGrid
+          classId={selectedStudent.classId}
+          className={selectedStudent.studentName ?? ''}
+        />
       ) : (
-        classes.map((c) => (
-          <ClassScheduleGrid
-            key={c.classId}
-            classId={c.classId ?? ''}
-            className={c.className ?? ''}
-          />
-        ))
+        <p className="text-sm text-gray-500">Intet skema fundet for dette barn.</p>
       )}
     </div>
   )
