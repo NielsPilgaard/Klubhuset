@@ -461,7 +461,7 @@ foreach ($cls in $classes) {
             if ($roomId) { $slotBody.roomId = $roomId }
 
             try {
-                Invoke-Api -Method POST -Path "/api/v1/classes/$($cls.Id)/schemas/$schemaId/slots" -Body $slotBody | Out-Null
+                Invoke-Api -Method PUT -Path "/api/v1/classes/$($cls.Id)/schemas/$schemaId/slots" -Body $slotBody | Out-Null
             } catch {
                 # Conflict or duplicate — skip silently
             }
@@ -535,7 +535,7 @@ $calendarEntries = @(
 
 foreach ($entry in $calendarEntries) {
     $body = @{ title=$entry.title; type=$entry.type; startDate=$entry.startDate; endDate=$entry.endDate }
-    if ($entry.recurrenceRule) { $body.recurrenceRule = $entry.recurrenceRule }
+    if ($entry.ContainsKey('recurrenceRule')) { $body.recurrenceRule = $entry.recurrenceRule }
     Invoke-Api -Method POST -Path "/api/v1/calendar" -Body $body | Out-Null
     Write-Host "       Calendar: $($entry.title)" -ForegroundColor DarkGreen
 }
