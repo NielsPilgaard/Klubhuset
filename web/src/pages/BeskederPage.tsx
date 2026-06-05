@@ -638,21 +638,64 @@ export default function BeskederPage() {
       </div>
 
       {/* Compose modal */}
-      <Modal isOpen={composeOpen} onClose={() => setComposeOpen(false)} size="lg" contentClassName="bg-white rounded-xl p-6 shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-gray-900">
-                Ny besked
-              </h2>
+      <Modal
+        isOpen={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        size="lg"
+        contentClassName="bg-white rounded-xl p-6 shadow-xl w-full max-w-lg"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold text-gray-900">Ny besked</h2>
+          <button
+            type="button"
+            aria-label="Luk"
+            onClick={() => setComposeOpen(false)}
+            className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Recipient field */}
+        <div className="mb-4">
+          <label
+            htmlFor="compose-recipient"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Modtager
+          </label>
+          {selectedRecipient ? (
+            <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0">
+                {getInitials(selectedRecipient.name)}
+              </div>
+              <span className="text-sm text-gray-900 flex-1">{selectedRecipient.name}</span>
+              <span className="text-xs text-gray-400">
+                {selectedRecipient.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
+              </span>
               <button
                 type="button"
-                aria-label="Luk"
-                onClick={() => setComposeOpen(false)}
-                className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Fjern modtager"
+                onClick={() => setSelectedRecipient(null)}
+                className="ml-1 text-gray-400 hover:text-gray-600"
               >
                 <svg
                   aria-hidden="true"
-                  width="18"
-                  height="18"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -665,149 +708,103 @@ export default function BeskederPage() {
                 </svg>
               </button>
             </div>
-
-            {/* Recipient field */}
-            <div className="mb-4">
-              <label
-                htmlFor="compose-recipient"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Modtager
-              </label>
-              {selectedRecipient ? (
-                <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg">
-                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0">
-                    {getInitials(selectedRecipient.name)}
-                  </div>
-                  <span className="text-sm text-gray-900 flex-1">{selectedRecipient.name}</span>
-                  <span className="text-xs text-gray-400">
-                    {selectedRecipient.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Fjern modtager"
-                    onClick={() => setSelectedRecipient(null)}
-                    className="ml-1 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+          ) : (
+            <div className="relative">
+              <input
+                id="compose-recipient"
+                type="text"
+                value={recipientSearch}
+                onChange={(e) => handleRecipientSearchChange(e.target.value)}
+                placeholder="Søg efter navn (min. 2 tegn)…"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                onFocus={() => {
+                  if (recipientResults.length > 0) setShowDropdown(true)
+                }}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              />
+              {showDropdown && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {recipientResults.map((r) => (
+                    <button
+                      type="button"
+                      key={r.id}
+                      onMouseDown={() => handleSelectRecipient(r)}
+                      className="flex items-center gap-3 w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors"
                     >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <div className="relative">
-                  <input
-                    id="compose-recipient"
-                    type="text"
-                    value={recipientSearch}
-                    onChange={(e) => handleRecipientSearchChange(e.target.value)}
-                    placeholder="Søg efter navn (min. 2 tegn)…"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    onFocus={() => {
-                      if (recipientResults.length > 0) setShowDropdown(true)
-                    }}
-                    onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-                  />
-                  {showDropdown && (
-                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {recipientResults.map((r) => (
-                        <button
-                          type="button"
-                          key={r.id}
-                          onMouseDown={() => handleSelectRecipient(r)}
-                          className="flex items-center gap-3 w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-center justify-center h-7 w-7 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0">
-                            {r.avatarUrl ? (
-                              <img
-                                src={r.avatarUrl}
-                                alt=""
-                                className="h-7 w-7 rounded-full object-cover"
-                              />
-                            ) : (
-                              getInitials(r.name)
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {r.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                      <div className="flex items-center justify-center h-7 w-7 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0">
+                        {r.avatarUrl ? (
+                          <img
+                            src={r.avatarUrl}
+                            alt=""
+                            className="h-7 w-7 rounded-full object-cover"
+                          />
+                        ) : (
+                          getInitials(r.name)
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {r.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
+          )}
+        </div>
 
-            {/* Subject */}
-            <div className="mb-4">
-              <label
-                htmlFor="compose-subject"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Emne
-              </label>
-              <input
-                id="compose-subject"
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Emne"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
+        {/* Subject */}
+        <div className="mb-4">
+          <label htmlFor="compose-subject" className="block text-sm font-medium text-gray-700 mb-1">
+            Emne
+          </label>
+          <input
+            id="compose-subject"
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Emne"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
 
-            {/* Body */}
-            <div className="mb-5">
-              <label
-                htmlFor="compose-body"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Besked
-              </label>
-              <textarea
-                id="compose-body"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={6}
-                placeholder="Skriv din besked her…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-              />
-            </div>
+        {/* Body */}
+        <div className="mb-5">
+          <label htmlFor="compose-body" className="block text-sm font-medium text-gray-700 mb-1">
+            Besked
+          </label>
+          <textarea
+            id="compose-body"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={6}
+            placeholder="Skriv din besked her…"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+          />
+        </div>
 
-            {sendError && <p className="text-sm text-red-600 mb-3">{sendError}</p>}
+        {sendError && <p className="text-sm text-red-600 mb-3">{sendError}</p>}
 
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setComposeOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Annuller
-              </button>
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={sending || !selectedRecipient || !subject.trim() || !body.trim()}
-                className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
-              >
-                {sending ? 'Sender…' : 'Send'}
-              </button>
-            </div>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setComposeOpen(false)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            Annuller
+          </button>
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={sending || !selectedRecipient || !subject.trim() || !body.trim()}
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
+          >
+            {sending ? 'Sender…' : 'Send'}
+          </button>
+        </div>
       </Modal>
     </div>
   )
