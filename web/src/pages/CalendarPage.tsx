@@ -706,8 +706,8 @@ export default function CalendarPage() {
   function renderMonthCard(year: number, month: number, large = false) {
     const weeks = buildMonthGrid(year, month)
     const dayCellClass = large
-      ? 'text-base text-center py-2.5 h-11 rounded-lg select-none font-medium'
-      : 'text-sm text-center py-1 h-8 rounded select-none'
+      ? 'w-full text-base text-center py-2.5 h-11 rounded-lg select-none font-medium'
+      : 'w-full text-sm text-center py-1 h-8 rounded select-none'
     const headerClass = large ? 'text-sm text-center pb-2' : 'text-xs text-center pb-1'
     const weekNumClass = large
       ? 'text-xs text-gray-400 text-right pr-2 leading-none flex items-center justify-end'
