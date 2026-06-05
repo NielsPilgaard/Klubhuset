@@ -58,7 +58,7 @@ export default function InvitationAcceptPage() {
       // auth interceptor triggering a Keycloak login redirect for unauthenticated users.
       const staffRes = await fetch(
         `/api/v1/staff-invitations/preview?token=${encodeURIComponent(token!)}`,
-        { signal: controller.signal },
+        { signal: controller.signal }
       )
 
       let type: InvitationType = 'staff'
@@ -68,7 +68,7 @@ export default function InvitationAcceptPage() {
       if (staffRes.status === 404) {
         const parentRes = await fetch(
           `/api/v1/parent-invitations/preview?token=${encodeURIComponent(token!)}`,
-          { signal: controller.signal },
+          { signal: controller.signal }
         )
         data = await parentRes.json()
         type = 'parent'

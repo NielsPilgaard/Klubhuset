@@ -233,7 +233,8 @@ interface FilePreviewModalProps {
 function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewModalProps) {
   const isImage = contentType.startsWith('image/')
   const isPdf = contentType.includes('pdf')
-  const isText = contentType.startsWith('text/') || /\.(txt|csv|log|md|json|xml|yaml|yml)$/i.test(fileName)
+  const isText =
+    contentType.startsWith('text/') || /\.(txt|csv|log|md|json|xml|yaml|yml)$/i.test(fileName)
   const [textContent, setTextContent] = useState<string | null>(null)
 
   useEffect(() => {
@@ -301,7 +302,9 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
               {textContent === null ? (
                 <p className="text-sm text-gray-400">Indlæser…</p>
               ) : (
-                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">{textContent}</pre>
+                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
+                  {textContent}
+                </pre>
               )}
             </div>
           )}

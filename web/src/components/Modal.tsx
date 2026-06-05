@@ -35,7 +35,8 @@ export function Modal({
       tabIndex={-1}
       aria-label="Luk"
       className={
-        backdropClassName ?? 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 text-left'
+        backdropClassName ??
+        'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 text-left'
       }
       onClick={onClose}
       onKeyDown={onKeyDown}
