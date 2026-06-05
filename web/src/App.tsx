@@ -64,6 +64,7 @@ const BeskederPage = lazy(() => import('./pages/BeskederPage'))
 const FerieindmeldingPage = lazy(() => import('./pages/FerieindmeldingPage'))
 const FerieindmeldingDetailPage = lazy(() => import('./pages/FerieindmeldingDetailPage'))
 const ParentFerieindmeldingPage = lazy(() => import('./pages/parent/ParentFerieindmeldingPage'))
+const BroadcastPage = lazy(() => import('./pages/BroadcastPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -289,6 +290,7 @@ export default function App() {
                   }
                 />
                 <Route path="foraeldre/kontakt" element={<ParentDirectoryPage />} />
+                <Route path="udsend-email" element={<BroadcastPage />} />
                 <Route path="fravaer" element={<FravaerPage />} />
                 <Route path="kontaktbog" element={<KontaktbogPage />} />
                 <Route
