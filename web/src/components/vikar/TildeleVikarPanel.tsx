@@ -24,7 +24,6 @@ interface StaffAvailabilityDto {
 interface TildeleVikarPanelProps {
   weekPlanId: string
   slotId: string
-  schemaSlotId: string
   classId: string
   isoYear: number
   isoWeek: number
@@ -44,7 +43,6 @@ interface TildeleVikarPanelProps {
 export function TildeleVikarPanel({
   weekPlanId,
   slotId,
-  schemaSlotId,
   classId,
   isoYear,
   isoWeek,
@@ -121,11 +119,7 @@ export function TildeleVikarPanel({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/30"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} aria-hidden="true" />
 
       {/* Slide-over panel */}
       <div
@@ -151,7 +145,14 @@ export function TildeleVikarPanel({
             aria-label="Luk"
             data-testid="close-vikar-panel"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -216,7 +217,9 @@ export function TildeleVikarPanel({
               )}
 
               {availability.available.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">Ingen ledige medarbejdere på dette tidspunkt</p>
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Ingen ledige medarbejdere på dette tidspunkt
+                </p>
               )}
 
               {/* Busy staff */}

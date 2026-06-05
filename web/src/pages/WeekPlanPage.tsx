@@ -182,7 +182,7 @@ interface EditSlotModalProps {
   weekdayLabel: string
   courses: CourseDto[]
   onClose: () => void
-  onOpenVikar: () => void
+  onOpenVikar: () => Promise<void>
 }
 
 const AUTOSAVE_PREFIX = 'ugeplan_draft_'
@@ -484,7 +484,9 @@ function EditSlotModal({
         >
           {slot.substituteTeacherName || slot.substituteAideName ? (
             <>
-              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-400 text-white text-xs font-bold shrink-0">V</span>
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-400 text-white text-xs font-bold shrink-0">
+                V
+              </span>
               Vikar: {slot.substituteTeacherName ?? slot.substituteAideName} · Skift
             </>
           ) : (
@@ -867,7 +869,6 @@ export default function WeekPlanPage() {
           isoWeek={isoWeek}
           schemaId={schemaId}
           weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(editingSlot.weekday)] ?? ''}
-          weekday={WEEKDAY_KEYS.indexOf(editingSlot.weekday) + 1}
           courses={courses}
           onClose={() => setEditingSchemaSlotId(null)}
           onOpenVikar={async () => {
@@ -902,31 +903,32 @@ export default function WeekPlanPage() {
       )}
 
       {/* Vikar panel */}
-      {vikarSchemaSlotId && classId && (() => {
-        const slot = weekPlanData?.slots.find(s => s.schemaSlotId === vikarSchemaSlotId)
-        if (!slot || slot.weekPlanId === '00000000-0000-0000-0000-000000000000') return null
-        return (
-          <TildeleVikarPanel
-            weekPlanId={slot.weekPlanId}
-            slotId={slot.id}
-            schemaSlotId={slot.schemaSlotId}
-            classId={classId}
-            isoYear={isoYear}
-            isoWeek={isoWeek}
-            weekday={WEEKDAY_KEYS.indexOf(slot.weekday) + 1}
-            timeSlotId={slot.timeSlotId}
-            courseName={slot.courseName}
-            weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(slot.weekday)] ?? ''}
-            startTime={slot.startTime}
-            currentSubstituteTeacherId={slot.substituteTeacherId}
-            currentSubstituteTeacherName={slot.substituteTeacherName}
-            currentSubstituteAideId={slot.substituteAideId}
-            currentSubstituteAideName={slot.substituteAideName}
-            schemaId={schemaId}
-            onClose={() => setVikarSchemaSlotId(null)}
-          />
-        )
-      })()}
+      {vikarSchemaSlotId &&
+        classId &&
+        (() => {
+          const slot = weekPlanData?.slots.find((s) => s.schemaSlotId === vikarSchemaSlotId)
+          if (!slot || slot.weekPlanId === '00000000-0000-0000-0000-000000000000') return null
+          return (
+            <TildeleVikarPanel
+              weekPlanId={slot.weekPlanId}
+              slotId={slot.id}
+              classId={classId}
+              isoYear={isoYear}
+              isoWeek={isoWeek}
+              weekday={WEEKDAY_KEYS.indexOf(slot.weekday) + 1}
+              timeSlotId={slot.timeSlotId}
+              courseName={slot.courseName}
+              weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(slot.weekday)] ?? ''}
+              startTime={slot.startTime}
+              currentSubstituteTeacherId={slot.substituteTeacherId}
+              currentSubstituteTeacherName={slot.substituteTeacherName}
+              currentSubstituteAideId={slot.substituteAideId}
+              currentSubstituteAideName={slot.substituteAideName}
+              schemaId={schemaId}
+              onClose={() => setVikarSchemaSlotId(null)}
+            />
+          )
+        })()}
     </div>
   )
 }
