@@ -4,13 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
-using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Authorize]
-public sealed class VikarController(AppDbContext db, ITenantContext tenant) : ControllerBase
+public sealed class VikarController(AppDbContext db) : ControllerBase
 {
 	public record AvailableStaffDto(Guid Id, string Name, StaffRole Role);
 
