@@ -30,7 +30,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 		string? OriginalCourseName,
 		string? Beskrivelse,
 		string? Lektier,
-		IReadOnlyList<WeekPlanSlotFileDto> Files);
+		IReadOnlyList<WeekPlanSlotFileDto> Files,
+		Guid? SubstituteTeacherId,
+		string? SubstituteTeacherName,
+		Guid? SubstituteAideId,
+		string? SubstituteAideName,
+		Guid WeekPlanId);
 
 	public record HolidayDayDto(DayOfWeek Weekday, string Title);
 
@@ -132,6 +137,10 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 					.ThenInclude(f => f.SchoolFile)
 			.Include(w => w.Slots)
 				.ThenInclude(s => s.FagSwapCourse)
+			.Include(w => w.Slots)
+				.ThenInclude(s => s.SubstituteTeacher)
+			.Include(w => w.Slots)
+				.ThenInclude(s => s.SubstituteAide)
 			.FirstOrDefaultAsync(w => w.ClassId == classId && w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, ct);
 
 		var breakSlots = schemaSlots
@@ -171,7 +180,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 				Lektier: wps?.Lektier,
 				Files: (wps?.Files ?? [])
 					.Select(f => new WeekPlanSlotFileDto(f.Id, f.SchoolFileId, f.SchoolFile.FileName, f.SchoolFile.Url))
-					.ToList()
+					.ToList(),
+				SubstituteTeacherId: wps?.SubstituteTeacherId,
+				SubstituteTeacherName: wps?.SubstituteTeacher?.Name,
+				SubstituteAideId: wps?.SubstituteAideId,
+				SubstituteAideName: wps?.SubstituteAide?.Name,
+				WeekPlanId: weekPlan?.Id ?? Guid.Empty
 			);
 		}).ToList();
 
@@ -290,6 +304,8 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 
 		// Reload to get navigation props
 		await db.Entry(slot).Reference(s => s.FagSwapCourse).LoadAsync(ct);
+		await db.Entry(slot).Reference(s => s.SubstituteTeacher).LoadAsync(ct);
+		await db.Entry(slot).Reference(s => s.SubstituteAide).LoadAsync(ct);
 
 		var effectiveCourse = slot.FagSwapCourse ?? schemaSlot.Course;
 		var timeSlotLabel = schemaSlot.TimeSlot.Label ?? schemaSlot.TimeSlot.SortOrder.ToString();
@@ -310,7 +326,12 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 			Lektier: slot.Lektier,
 			Files: slot.Files
 				.Select(f => new WeekPlanSlotFileDto(f.Id, f.SchoolFileId, f.SchoolFile.FileName, f.SchoolFile.Url))
-				.ToList()
+				.ToList(),
+			SubstituteTeacherId: slot.SubstituteTeacherId,
+			SubstituteTeacherName: slot.SubstituteTeacher?.Name,
+			SubstituteAideId: slot.SubstituteAideId,
+			SubstituteAideName: slot.SubstituteAide?.Name,
+			WeekPlanId: weekPlan.Id
 		));
 	}
 

@@ -162,7 +162,7 @@ export type ConflictInfo = {
     slotBClassName?: string | null;
 };
 
-export type ConflictType = 'TeacherDoubleBooked' | 'RoomDoubleBooked' | 'AideDoubleBooked';
+export type ConflictType = 'TeacherDoubleBooked' | 'RoomDoubleBooked' | 'AideDoubleBooked' | 'SubstituteDoubleBooked';
 
 export type ContactThreadsControllerAddMessageRequest = {
     body?: string | null;
@@ -852,6 +852,29 @@ export type VacationRegistrationControllerWindowDto = {
 
 export type VacationRegistrationGranularity = 'Weeks' | 'Days';
 
+export type VikarControllerAssignSubstituteRequest = {
+    substituteTeacherId?: string | null;
+    substituteAideId?: string | null;
+};
+
+export type VikarControllerAvailableStaffDto = {
+    id?: string;
+    name?: string | null;
+    role?: StaffRole;
+};
+
+export type VikarControllerBusyStaffDto = {
+    id?: string;
+    name?: string | null;
+    role?: StaffRole;
+    conflictDescription?: string | null;
+};
+
+export type VikarControllerStaffAvailabilityDto = {
+    available?: Array<VikarControllerAvailableStaffDto> | null;
+    busy?: Array<VikarControllerBusyStaffDto> | null;
+};
+
 export type WeekPlanControllerAddFileToSlotRequest = {
     schoolFileId?: string;
 };
@@ -904,6 +927,11 @@ export type WeekPlanControllerWeekPlanSlotDto = {
     beskrivelse?: string | null;
     lektier?: string | null;
     files?: Array<WeekPlanControllerWeekPlanSlotFileDto> | null;
+    substituteTeacherId?: string | null;
+    substituteTeacherName?: string | null;
+    substituteAideId?: string | null;
+    substituteAideName?: string | null;
+    weekPlanId?: string;
 };
 
 export type WeekPlanControllerWeekPlanSlotFileDto = {
@@ -3533,6 +3561,44 @@ export type PutApiV1VacationRegistrationByIdEntriesByStudentIdData = {
 };
 
 export type PutApiV1VacationRegistrationByIdEntriesByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1StaffAvailableData = {
+    body?: never;
+    path?: never;
+    query?: {
+        isoYear?: number;
+        isoWeek?: number;
+        weekday?: number;
+        timeSlotId?: string;
+    };
+    url: '/api/v1/staff/available';
+};
+
+export type GetApiV1StaffAvailableResponses = {
+    /**
+     * OK
+     */
+    200: VikarControllerStaffAvailabilityDto;
+};
+
+export type GetApiV1StaffAvailableResponse = GetApiV1StaffAvailableResponses[keyof GetApiV1StaffAvailableResponses];
+
+export type PutApiV1WeekPlansByWeekPlanIdSlotsBySlotIdSubstituteData = {
+    body?: VikarControllerAssignSubstituteRequest;
+    path: {
+        weekPlanId: string;
+        slotId: string;
+    };
+    query?: never;
+    url: '/api/v1/week-plans/{weekPlanId}/slots/{slotId}/substitute';
+};
+
+export type PutApiV1WeekPlansByWeekPlanIdSlotsBySlotIdSubstituteResponses = {
     /**
      * OK
      */
