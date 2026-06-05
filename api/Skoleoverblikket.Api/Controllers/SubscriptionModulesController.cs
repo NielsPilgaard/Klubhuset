@@ -16,9 +16,9 @@ public sealed class SubscriptionModulesController(
 	ITenantContext tenantContext) : ControllerBase
 {
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyList<string>>> GetActiveModules(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<string>>> GetActiveModules(CancellationToken cancellationToken)
 	{
-		var modules = await subscriptionService.GetActiveModulesAsync(tenantContext.TenantId, ct);
+		var modules = await subscriptionService.GetActiveModulesAsync(tenantContext.TenantId, cancellationToken);
 		return Ok(modules);
 	}
 }

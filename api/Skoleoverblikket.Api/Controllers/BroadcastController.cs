@@ -40,7 +40,7 @@ public sealed class BroadcastController(
 		DateTimeOffset SentAt);
 
 	[HttpPost("preview")]
-	public async Task<ActionResult<BroadcastPreviewDto>> Preview([FromBody] BroadcastPreviewRequest req, CancellationToken ct)
+	public async Task<ActionResult<BroadcastPreviewDto>> Preview([FromBody] BroadcastPreviewRequest req, CancellationToken cancellationToken)
 	{
 		if (req.ClassId.HasValue)
 		{
@@ -55,7 +55,7 @@ public sealed class BroadcastController(
 			return Forbid();
 		}
 
-		var count = await ResolveRecipientCount(req.ClassId, ct);
+		var count = await ResolveRecipientCount(req.ClassId, cancellationToken);
 		return Ok(new BroadcastPreviewDto(count));
 	}
 
@@ -140,19 +140,19 @@ public sealed class BroadcastController(
 
 	[HttpGet("log")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<IReadOnlyList<BroadcastLogDto>>> GetLog(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<BroadcastLogDto>>> GetLog(CancellationToken cancellationToken)
 	{
 		var logs = await db.BroadcastEmails
 			.AsNoTracking()
 			.OrderByDescending(b => b.SentAt)
 			.Take(100)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var classIds = logs.Where(b => b.ClassId.HasValue).Select(b => b.ClassId!.Value).Distinct().ToList();
 		var classes = await db.Classes
 			.AsNoTracking()
 			.Where(c => classIds.Contains(c.Id))
-			.ToDictionaryAsync(c => c.Id, c => c.Name, ct);
+			.ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
 
 		var dtos = logs.Select(b => new BroadcastLogDto(
 			b.Id,
@@ -165,13 +165,13 @@ public sealed class BroadcastController(
 		return Ok(dtos);
 	}
 
-	private async Task<int> ResolveRecipientCount(Guid? classId, CancellationToken ct)
+	private async Task<int> ResolveRecipientCount(Guid? classId, CancellationToken cancellationToken)
 	{
-		var recipients = await ResolveRecipients(classId, ct);
+		var recipients = await ResolveRecipients(classId, cancellationToken);
 		return recipients.Count;
 	}
 
-	private async Task<List<(string Name, string Email)>> ResolveRecipients(Guid? classId, CancellationToken ct)
+	private async Task<List<(string Name, string Email)>> ResolveRecipients(Guid? classId, CancellationToken cancellationToken)
 	{
 		IQueryable<Parent> query;
 
@@ -189,7 +189,7 @@ public sealed class BroadcastController(
 			.AsNoTracking()
 			.Where(p => !string.IsNullOrEmpty(p.Email))
 			.Select(p => new { p.Name, p.Email })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return parents.Select(p => (p.Name, p.Email!)).ToList();
 	}

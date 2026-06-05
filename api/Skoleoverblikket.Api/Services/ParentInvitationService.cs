@@ -20,11 +20,11 @@ public sealed class ParentInvitationService(
 	private static readonly TimeSpan InvitationValidity = TimeSpan.FromDays(14);
 	private readonly string BaseUrl = appOptions.Value.SanitizedBaseUrl;
 
-	public async Task<ParentInvitation> CreateAndSendAsync(Parent parent, CancellationToken ct)
+	public async Task<ParentInvitation> CreateAndSendAsync(Parent parent, CancellationToken cancellationToken)
 	{
 		var pending = await db.ParentInvitations
 			.Where(i => i.ParentId == parent.Id && i.AcceptedAt == null)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 		db.ParentInvitations.RemoveRange(pending);
 
 		var token = GenerateToken();
@@ -39,15 +39,15 @@ public sealed class ParentInvitationService(
 		};
 
 		db.ParentInvitations.Add(invitation);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
-		var temporaryPassword = await EnsureKeycloakAccountAsync(parent, ct);
+		var temporaryPassword = await EnsureKeycloakAccountAsync(parent, cancellationToken);
 
 		var school = await db.Schools
 			.IgnoreQueryFilters()
 			.Where(s => s.Id == tenant.TenantId)
 			.Select(s => s.Name)
-			.FirstOrDefaultAsync(ct) ?? "Skoleoverblikket";
+			.FirstOrDefaultAsync(cancellationToken) ?? "Skoleoverblikket";
 
 		var link = $"{BaseUrl}/parent-invitation/{token}";
 
@@ -56,12 +56,12 @@ public sealed class ParentInvitationService(
 			Subject: $"Invitation til {school} pa Skoleoverblikket",
 			HtmlBody: BuildHtmlEmail(parent.Name, school, link, temporaryPassword),
 			PlainTextBody: BuildPlainEmail(parent.Name, school, link, temporaryPassword)
-		), ct);
+		), cancellationToken);
 
 		return invitation;
 	}
 
-	private async Task<string?> EnsureKeycloakAccountAsync(Parent parent, CancellationToken ct)
+	private async Task<string?> EnsureKeycloakAccountAsync(Parent parent, CancellationToken cancellationToken)
 	{
 		if (!string.IsNullOrWhiteSpace(parent.KeycloakSubject))
 		{
@@ -85,33 +85,33 @@ public sealed class ParentInvitationService(
 			tenant.TenantId,
 			realmRole: Roles.Parent,
 			forcePasswordReset: true,
-			ct);
-		await db.SaveChangesAsync(ct);
+			cancellationToken);
+		await db.SaveChangesAsync(cancellationToken);
 		return temporaryPassword;
 	}
 
-	public async Task<ParentInvitation?> FindValidAsync(string token, CancellationToken ct) =>
+	public async Task<ParentInvitation?> FindValidAsync(string token, CancellationToken cancellationToken) =>
 		await db.ParentInvitations
 				.IgnoreQueryFilters()
 				.Include(i => i.Parent)
 				.FirstOrDefaultAsync(
 					i => i.Token == token && i.AcceptedAt == null && i.ExpiresAt > DateTimeOffset.UtcNow,
-					ct);
+					cancellationToken);
 
-	public async Task MarkAcceptedAsync(ParentInvitation invitation, string keycloakSubject, CancellationToken ct)
+	public async Task MarkAcceptedAsync(ParentInvitation invitation, string keycloakSubject, CancellationToken cancellationToken)
 	{
 		try
 		{
 			invitation.AcceptedAt = DateTimeOffset.UtcNow;
 			var parent = await db.Parents
 								 .IgnoreQueryFilters()
-								 .FirstAsync(p => p.Id == invitation.ParentId, ct);
+								 .FirstAsync(p => p.Id == invitation.ParentId, cancellationToken);
 			parent.KeycloakSubject = keycloakSubject;
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 		catch (DbUpdateConcurrencyException)
 		{
-			await db.Entry(invitation).ReloadAsync(ct);
+			await db.Entry(invitation).ReloadAsync(cancellationToken);
 			if (invitation.AcceptedAt != null)
 			{
 				return;

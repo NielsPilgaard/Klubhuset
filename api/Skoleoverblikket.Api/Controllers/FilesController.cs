@@ -100,7 +100,7 @@ public sealed class FilesController(
 	public async Task<ActionResult<FilesResponseDto>> GetAll(
 		[FromQuery] Guid? courseId,
 		[FromQuery] Guid? folderId,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var fileQuery = db.SchoolFiles
 			.AsNoTracking()
@@ -134,7 +134,7 @@ public sealed class FilesController(
 				f.FolderId,
 				f.UploadedBy,
 				f.UploadedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var folderQuery = db.SchoolFileFolders
 			.AsNoTracking()
@@ -150,7 +150,7 @@ public sealed class FilesController(
 		var folders = await folderQuery
 			.OrderBy(f => f.Name)
 			.Select(f => new FolderDto(f.Id, f.Name, f.ParentId, f.CourseId, f.Course != null ? f.Course.Name : null, f.CreatedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(new FilesResponseDto(files, folders));
 	}
@@ -172,7 +172,7 @@ public sealed class FilesController(
 	[HttpPost("presign")]
 	public async Task<ActionResult<PresignResponse>> Presign(
 		[FromBody] PresignRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (req.FileSizeBytes > MaxFileSizeBytes)
 		{
@@ -191,7 +191,7 @@ public sealed class FilesController(
 			});
 		}
 
-		var usedBytes = await db.SchoolFiles.SumAsync(f => (long?)f.SizeBytes ?? 0, ct);
+		var usedBytes = await db.SchoolFiles.SumAsync(f => (long?)f.SizeBytes ?? 0, cancellationToken);
 		if (usedBytes + req.FileSizeBytes > QuotaBytes)
 		{
 			return ValidationProblem(new ValidationProblemDetails
@@ -202,7 +202,7 @@ public sealed class FilesController(
 
 		if (req.CourseId.HasValue)
 		{
-			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.CourseId.Value, ct);
+			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.CourseId.Value, cancellationToken);
 			if (!courseExists)
 			{
 				return ValidationProblem(new ValidationProblemDetails
@@ -214,7 +214,7 @@ public sealed class FilesController(
 
 		if (req.FolderId.HasValue)
 		{
-			var folderExists = await db.SchoolFileFolders.AnyAsync(f => f.Id == req.FolderId.Value, ct);
+			var folderExists = await db.SchoolFileFolders.AnyAsync(f => f.Id == req.FolderId.Value, cancellationToken);
 			if (!folderExists)
 			{
 				return ValidationProblem(new ValidationProblemDetails
@@ -229,7 +229,7 @@ public sealed class FilesController(
 		var key = $"files/{tenant.TenantId}/{fileId}{ext}";
 
 		var (uploadUrl, publicUrl) = await storage.GeneratePresignedUploadUrlAsync(
-			key, contentType, req.FileSizeBytes, PresignExpiry, ct);
+			key, contentType, req.FileSizeBytes, PresignExpiry, cancellationToken);
 
 		var uploaderName = http.HttpContext?.User.FindFirstValue("name")
 			?? http.HttpContext?.User.FindFirstValue("preferred_username")
@@ -258,7 +258,7 @@ public sealed class FilesController(
 	[HttpPost("confirm")]
 	public async Task<ActionResult<FileDto>> Confirm(
 		[FromBody] ConfirmRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var signingKey = GetSigningKey();
 		if (!TryVerifyToken(req.ConfirmToken, signingKey, out var payload) || payload is null)
@@ -276,12 +276,12 @@ public sealed class FilesController(
 			return Forbid();
 		}
 
-		var alreadyExists = await db.SchoolFiles.AnyAsync(f => f.Id == payload.FileId, ct);
+		var alreadyExists = await db.SchoolFiles.AnyAsync(f => f.Id == payload.FileId, cancellationToken);
 		if (alreadyExists)
 		{
 			var existing = await db.SchoolFiles
 				.Include(f => f.Course)
-				.FirstAsync(f => f.Id == payload.FileId, ct);
+				.FirstAsync(f => f.Id == payload.FileId, cancellationToken);
 
 			return Ok(ToDto(existing));
 		}
@@ -301,7 +301,7 @@ public sealed class FilesController(
 		};
 
 		db.SchoolFiles.Add(schoolFile);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		string? courseName = null;
 		if (payload.CourseId.HasValue)
@@ -309,7 +309,7 @@ public sealed class FilesController(
 			courseName = await db.Courses.AsNoTracking()
 				.Where(c => c.Id == payload.CourseId.Value)
 				.Select(c => c.Name)
-				.FirstOrDefaultAsync(ct);
+				.FirstOrDefaultAsync(cancellationToken);
 		}
 
 		return CreatedAtAction(nameof(GetAll), new FileDto(
@@ -327,16 +327,16 @@ public sealed class FilesController(
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
-		var file = await db.SchoolFiles.FirstOrDefaultAsync(f => f.Id == id, ct);
+		var file = await db.SchoolFiles.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
 		if (file is null)
 		{
 			return NotFound();
 		}
 
 		db.SchoolFiles.Remove(file);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
@@ -348,11 +348,11 @@ public sealed class FilesController(
 	[HttpPost("folders")]
 	public async Task<ActionResult<FolderDto>> CreateFolder(
 		[FromBody] CreateFolderRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (req.ParentId.HasValue)
 		{
-			var parentExists = await db.SchoolFileFolders.AnyAsync(f => f.Id == req.ParentId.Value, ct);
+			var parentExists = await db.SchoolFileFolders.AnyAsync(f => f.Id == req.ParentId.Value, cancellationToken);
 			if (!parentExists)
 			{
 				return ValidationProblem(new ValidationProblemDetails
@@ -364,7 +364,7 @@ public sealed class FilesController(
 
 		if (req.CourseId.HasValue)
 		{
-			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.CourseId.Value, ct);
+			var courseExists = await db.Courses.AnyAsync(c => c.Id == req.CourseId.Value, cancellationToken);
 			if (!courseExists)
 			{
 				return ValidationProblem(new ValidationProblemDetails
@@ -384,7 +384,7 @@ public sealed class FilesController(
 		};
 
 		db.SchoolFileFolders.Add(folder);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		string? courseName = null;
 		if (req.CourseId.HasValue)
@@ -392,7 +392,7 @@ public sealed class FilesController(
 			courseName = await db.Courses.AsNoTracking()
 				.Where(c => c.Id == req.CourseId.Value)
 				.Select(c => c.Name)
-				.FirstOrDefaultAsync(ct);
+				.FirstOrDefaultAsync(cancellationToken);
 		}
 
 		return CreatedAtAction(nameof(GetAll),
@@ -403,18 +403,18 @@ public sealed class FilesController(
 	public async Task<ActionResult<FolderDto>> RenameFolder(
 		Guid id,
 		[FromBody] RenameFolderRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var folder = await db.SchoolFileFolders
 			.Include(f => f.Course)
-			.FirstOrDefaultAsync(f => f.Id == id, ct);
+			.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
 		if (folder is null)
 		{
 			return NotFound();
 		}
 
 		folder.Name = req.Name.Trim();
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return Ok(new FolderDto(folder.Id, folder.Name, folder.ParentId, folder.CourseId, folder.Course?.Name, folder.CreatedAt));
 	}
@@ -423,16 +423,16 @@ public sealed class FilesController(
 
 	[HttpDelete("folders/{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> DeleteFolder(Guid id, CancellationToken ct)
+	public async Task<ActionResult> DeleteFolder(Guid id, CancellationToken cancellationToken)
 	{
-		var folder = await db.SchoolFileFolders.FirstOrDefaultAsync(f => f.Id == id, ct);
+		var folder = await db.SchoolFileFolders.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
 		if (folder is null)
 		{
 			return NotFound();
 		}
 
 		db.SchoolFileFolders.Remove(folder);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 

@@ -11,5 +11,5 @@ public interface INotificationService
 		NotificationType type,
 		Guid? referenceId,
 		string body,
-		CancellationToken ct);
+		CancellationToken cancellationToken);
 }

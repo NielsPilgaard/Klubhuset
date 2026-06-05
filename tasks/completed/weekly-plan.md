@@ -210,7 +210,7 @@ record AddFileToSlotRequest(Guid SchoolFileId);
              (e.Type == CalendarEntryType.Ferie || e.Type == CalendarEntryType.Lukkedag) &&
              e.StartDate <= weekEnd && e.EndDate >= weekStart)
          .OrderBy(e => e.StartDate)
-         .ToListAsync(ct);
+         .ToListAsync(cancellationToken);
      ```
   6. Load `WeekPlan` for `(classId, isoYear, isoWeek)` with `WeekPlanSlots` + `Files` + `FagSwapCourse`. If none exists, continue with null (do NOT create on GET).
   7. Build one `WeekPlanSlotDto` per `SchemaSlot`, merging with `WeekPlanSlot` data when available.

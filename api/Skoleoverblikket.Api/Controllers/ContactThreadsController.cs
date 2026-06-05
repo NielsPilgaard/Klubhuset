@@ -42,7 +42,7 @@ public sealed class ContactThreadsController(
 	public record AddMessageRequest(string Body);
 
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyList<ContactThreadDto>>> GetThreads(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<ContactThreadDto>>> GetThreads(CancellationToken cancellationToken)
 	{
 		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
@@ -56,7 +56,7 @@ public sealed class ContactThreadsController(
 		{
 			var parent = await db.Parents
 				.AsNoTracking()
-				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, ct);
+				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, cancellationToken);
 
 			if (parent is null)
 			{
@@ -68,7 +68,7 @@ public sealed class ContactThreadsController(
 
 		var callerSenderType = isParent ? SenderType.Parent : SenderType.Staff;
 
-		var threads = await query.ToListAsync(ct);
+		var threads = await query.ToListAsync(cancellationToken);
 
 		var result = threads.Select(t =>
 		{
@@ -92,7 +92,7 @@ public sealed class ContactThreadsController(
 		Guid threadId,
 		[FromQuery] int page = 1,
 		[FromQuery] int pageSize = 20,
-		CancellationToken ct = default)
+		CancellationToken cancellationToken = default)
 	{
 		if (pageSize > 50)
 		{
@@ -101,7 +101,7 @@ public sealed class ContactThreadsController(
 
 		var thread = await db.ContactThreads
 			.AsNoTracking()
-			.FirstOrDefaultAsync(t => t.Id == threadId, ct);
+			.FirstOrDefaultAsync(t => t.Id == threadId, cancellationToken);
 
 		if (thread is null)
 		{
@@ -114,14 +114,14 @@ public sealed class ContactThreadsController(
 		if (isParent)
 		{
 			var hasAccess = await db.Parents
-				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == thread.StudentId), ct);
+				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == thread.StudentId), cancellationToken);
 			if (!hasAccess)
 			{
 				return Forbid();
 			}
 		}
 
-		var total = await db.ContactMessages.CountAsync(m => m.ThreadId == threadId, ct);
+		var total = await db.ContactMessages.CountAsync(m => m.ThreadId == threadId, cancellationToken);
 
 		var messages = await db.ContactMessages
 			.AsNoTracking()
@@ -129,7 +129,7 @@ public sealed class ContactThreadsController(
 			.OrderBy(m => m.SentAt)
 			.Skip((page - 1) * pageSize)
 			.Take(pageSize)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var parentIds = messages.Where(m => m.SenderType == SenderType.Parent).Select(m => m.SenderId).Distinct().ToList();
 		var staffIds = messages.Where(m => m.SenderType == SenderType.Staff).Select(m => m.SenderId).Distinct().ToList();
@@ -137,12 +137,12 @@ public sealed class ContactThreadsController(
 		var parents = await db.Parents.AsNoTracking()
 			.Where(p => parentIds.Contains(p.Id))
 			.Select(p => new { p.Id, p.Name })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var staffMembers = await db.Staff.AsNoTracking()
 			.Where(s => staffIds.Contains(s.Id))
 			.Select(s => new { s.Id, s.Name })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var parentMap = parents.ToDictionary(p => p.Id, p => p.Name);
 		var staffMap = staffMembers.ToDictionary(s => s.Id, s => s.Name);
@@ -161,7 +161,7 @@ public sealed class ContactThreadsController(
 	[HttpPost]
 	public async Task<IActionResult> FindOrCreateThread(
 		[FromBody] FindOrCreateThreadRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
@@ -174,7 +174,7 @@ public sealed class ContactThreadsController(
 		{
 			var parent = await db.Parents
 				.AsNoTracking()
-				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, ct);
+				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, cancellationToken);
 
 			if (parent is null)
 			{
@@ -182,7 +182,7 @@ public sealed class ContactThreadsController(
 			}
 
 			var parentOwnsStudent = await db.Parents
-				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == req.StudentId), ct);
+				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == req.StudentId), cancellationToken);
 
 			if (!parentOwnsStudent)
 			{
@@ -197,7 +197,7 @@ public sealed class ContactThreadsController(
 		{
 			var staff = await db.Staff
 				.AsNoTracking()
-				.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, ct);
+				.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, cancellationToken);
 
 			if (staff is null)
 			{
@@ -213,10 +213,10 @@ public sealed class ContactThreadsController(
 			.AsNoTracking()
 			.Where(s => s.Id == req.StudentId)
 			.Select(s => s.Name)
-			.FirstOrDefaultAsync(ct) ?? string.Empty;
+			.FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
 
 		var thread = await db.ContactThreads
-			.FirstOrDefaultAsync(t => t.StudentId == req.StudentId, ct);
+			.FirstOrDefaultAsync(t => t.StudentId == req.StudentId, cancellationToken);
 
 		if (thread is null)
 		{
@@ -241,9 +241,9 @@ public sealed class ContactThreadsController(
 			SentAt = DateTimeOffset.UtcNow,
 		};
 		db.ContactMessages.Add(message);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
-		await SendNotificationsAsync(thread.Id, req.StudentId, studentName, senderName, senderType, ct);
+		await SendNotificationsAsync(thread.Id, req.StudentId, studentName, senderName, senderType, cancellationToken);
 
 		return CreatedAtAction(nameof(GetMessages), new { threadId = thread.Id }, new { ThreadId = thread.Id });
 	}
@@ -252,13 +252,13 @@ public sealed class ContactThreadsController(
 	public async Task<IActionResult> AddMessage(
 		Guid threadId,
 		[FromBody] AddMessageRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		var thread = await db.ContactThreads
-			.FirstOrDefaultAsync(t => t.Id == threadId, ct);
+			.FirstOrDefaultAsync(t => t.Id == threadId, cancellationToken);
 
 		if (thread is null)
 		{
@@ -273,7 +273,7 @@ public sealed class ContactThreadsController(
 		{
 			var parent = await db.Parents
 				.AsNoTracking()
-				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, ct);
+				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, cancellationToken);
 
 			if (parent is null)
 			{
@@ -281,7 +281,7 @@ public sealed class ContactThreadsController(
 			}
 
 			var hasAccess = await db.Parents
-				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == thread.StudentId), ct);
+				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == thread.StudentId), cancellationToken);
 
 			if (!hasAccess)
 			{
@@ -296,7 +296,7 @@ public sealed class ContactThreadsController(
 		{
 			var staff = await db.Staff
 				.AsNoTracking()
-				.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, ct);
+				.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, cancellationToken);
 
 			if (staff is null)
 			{
@@ -312,7 +312,7 @@ public sealed class ContactThreadsController(
 			.AsNoTracking()
 			.Where(s => s.Id == thread.StudentId)
 			.Select(s => s.Name)
-			.FirstOrDefaultAsync(ct) ?? string.Empty;
+			.FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
 
 		var message = new ContactMessage
 		{
@@ -325,21 +325,21 @@ public sealed class ContactThreadsController(
 			SentAt = DateTimeOffset.UtcNow,
 		};
 		db.ContactMessages.Add(message);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
-		await SendNotificationsAsync(threadId, thread.StudentId, studentName, senderName, senderType, ct);
+		await SendNotificationsAsync(threadId, thread.StudentId, studentName, senderName, senderType, cancellationToken);
 
 		return Created(string.Empty, null);
 	}
 
 	[HttpPost("{threadId:guid}/read")]
-	public async Task<IActionResult> MarkRead(Guid threadId, CancellationToken ct)
+	public async Task<IActionResult> MarkRead(Guid threadId, CancellationToken cancellationToken)
 	{
 		var sub = User.GetKeycloakSubject();
 		var isParent = User.IsInRole(Roles.Parent);
 
 		var thread = await db.ContactThreads
-			.FirstOrDefaultAsync(t => t.Id == threadId, ct);
+			.FirstOrDefaultAsync(t => t.Id == threadId, cancellationToken);
 
 		if (thread is null)
 		{
@@ -349,7 +349,7 @@ public sealed class ContactThreadsController(
 		if (isParent)
 		{
 			var hasAccess = await db.Parents
-				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == thread.StudentId), ct);
+				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == thread.StudentId), cancellationToken);
 
 			if (!hasAccess)
 			{
@@ -362,14 +362,14 @@ public sealed class ContactThreadsController(
 
 		var unread = await db.ContactMessages
 			.Where(m => m.ThreadId == threadId && m.ReadAt == null && m.SenderType != callerSenderType)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		foreach (var msg in unread)
 		{
 			msg.ReadAt = now;
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}
@@ -380,11 +380,11 @@ public sealed class ContactThreadsController(
 		string studentName,
 		string senderName,
 		SenderType senderType,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (senderType == SenderType.Parent)
 		{
-			var allStaff = await db.Staff.AsNoTracking().ToListAsync(ct);
+			var allStaff = await db.Staff.AsNoTracking().ToListAsync(cancellationToken);
 			foreach (var s in allStaff)
 			{
 				await notificationService.CreateAsync(
@@ -393,7 +393,7 @@ public sealed class ContactThreadsController(
 					NotificationType.NewContactMessage,
 					threadId,
 					$"{senderName} har sendt en besked om {studentName}",
-					ct);
+					cancellationToken);
 			}
 		}
 		else
@@ -402,7 +402,7 @@ public sealed class ContactThreadsController(
 				.AsNoTracking()
 				.Where(s => s.Id == studentId)
 				.SelectMany(s => s.Parents)
-				.ToListAsync(ct);
+				.ToListAsync(cancellationToken);
 
 			foreach (var p in studentParents)
 			{
@@ -412,7 +412,7 @@ public sealed class ContactThreadsController(
 					NotificationType.NewContactMessage,
 					threadId,
 					$"{senderName} har sendt en besked om {studentName}",
-					ct);
+					cancellationToken);
 			}
 		}
 	}

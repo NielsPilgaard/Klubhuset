@@ -13,7 +13,7 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class SuperAdminTenantsController(AppDbContext db) : ControllerBase
 {
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyList<TenantListItemDto>>> GetTenants(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<TenantListItemDto>>> GetTenants(CancellationToken cancellationToken)
 	{
 		var tenants = await db.Schools
 			.IgnoreQueryFilters()
@@ -30,13 +30,13 @@ public sealed class SuperAdminTenantsController(AppDbContext db) : ControllerBas
 					sub.TrialEnd,
 					sub.CurrentPeriodEnd,
 					sub.ActiveModules.Count))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(tenants);
 	}
 
 	[HttpGet("{schoolId:guid}")]
-	public async Task<ActionResult<TenantDetailDto>> GetTenant(Guid schoolId, CancellationToken ct)
+	public async Task<ActionResult<TenantDetailDto>> GetTenant(Guid schoolId, CancellationToken cancellationToken)
 	{
 		var school = await db.Schools
 			.IgnoreQueryFilters()
@@ -58,7 +58,7 @@ public sealed class SuperAdminTenantsController(AppDbContext db) : ControllerBas
 					sub.ActiveModules
 						.Select(m => new ModuleItemDto(m.Module, m.IsAdminOverride, m.StripeSubscriptionItemId))
 						.ToList()))
-			.FirstOrDefaultAsync(ct);
+			.FirstOrDefaultAsync(cancellationToken);
 
 		if (school is null)
 		{

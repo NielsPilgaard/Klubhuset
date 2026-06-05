@@ -27,7 +27,7 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 		Guid? tenantId,
 		string? realmRole,
 		bool forcePasswordReset,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var attributes = tenantId.HasValue
 			? new Dictionary<string, IReadOnlyList<string>> { ["tenant_id"] = [tenantId.Value.ToString()] }
@@ -44,18 +44,18 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 			Attributes: attributes,
 			RequiredActions: forcePasswordReset ? ["UPDATE_PASSWORD"] : null);
 
-		var createResponse = await adminApi.CreateUserAsync(payload, ct);
+		var createResponse = await adminApi.CreateUserAsync(payload, cancellationToken);
 
 		if (createResponse.StatusCode == System.Net.HttpStatusCode.Conflict)
 		{
-			var existing = await adminApi.GetUsersByEmailAsync(email, exact: true, ct);
+			var existing = await adminApi.GetUsersByEmailAsync(email, exact: true, cancellationToken);
 			return existing.FirstOrDefault()?.Id
 				?? throw new KeycloakException($"Keycloak rejected duplicate user but no existing user found for {email}");
 		}
 
 		if (!createResponse.IsSuccessStatusCode)
 		{
-			var err = await createResponse.Content.ReadAsStringAsync(ct);
+			var err = await createResponse.Content.ReadAsStringAsync(cancellationToken);
 			throw new KeycloakException($"Failed to create Keycloak user: {createResponse.StatusCode} — {err}");
 		}
 
@@ -65,7 +65,7 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 
 		if (!string.IsNullOrEmpty(realmRole))
 		{
-			await AssignRealmRoleAsync(keycloakUserId, realmRole, ct);
+			await AssignRealmRoleAsync(keycloakUserId, realmRole, cancellationToken);
 		}
 
 		return keycloakUserId;
@@ -78,8 +78,8 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 		string lastName,
 		string password,
 		Guid tenantId,
-		CancellationToken ct) =>
-		CreateUserAsync(email, firstName, lastName, password, tenantId, realmRole: "admin", forcePasswordReset: false, ct);
+		CancellationToken cancellationToken) =>
+		CreateUserAsync(email, firstName, lastName, password, tenantId, realmRole: "admin", forcePasswordReset: false, cancellationToken);
 
 	/// <summary>Creates a Keycloak staff user with a temporary password and UPDATE_PASSWORD required action.</summary>
 	public Task<string> CreateStaffUserAsync(
@@ -88,14 +88,14 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 		string lastName,
 		string temporaryPassword,
 		Guid tenantId,
-		CancellationToken ct) =>
-		CreateUserAsync(email, firstName, lastName, temporaryPassword, tenantId, realmRole: null, forcePasswordReset: true, ct);
+		CancellationToken cancellationToken) =>
+		CreateUserAsync(email, firstName, lastName, temporaryPassword, tenantId, realmRole: null, forcePasswordReset: true, cancellationToken);
 
 	/// <summary>
 	/// Exchanges user credentials for a token via the password grant on the web client.
 	/// Used immediately after signup so the frontend gets a JWT with tenant_id already embedded.
 	/// </summary>
-	public async Task<TokenResponse> GetTokenForUserAsync(string email, string password, CancellationToken ct)
+	public async Task<TokenResponse> GetTokenForUserAsync(string email, string password, CancellationToken cancellationToken)
 	{
 		var request = new PasswordTokenRequest(
 			GrantType: "password",
@@ -104,19 +104,19 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 			Password: password,
 			Scope: "openid profile roles tenant");
 
-		return await tokenApi.GetPasswordTokenAsync(request, ct);
+		return await tokenApi.GetPasswordTokenAsync(request, cancellationToken);
 	}
 
 	/// <summary>
 	/// Assigns or removes the Keycloak 'admin' realm role for an existing user.
 	/// Throws <see cref="KeycloakException"/> on failure so callers can roll back DB changes.
 	/// </summary>
-	public async Task SetAdminRoleAsync(string keycloakUserId, bool grant, CancellationToken ct)
+	public async Task SetAdminRoleAsync(string keycloakUserId, bool grant, CancellationToken cancellationToken)
 	{
 		RoleRepresentation role;
 		try
 		{
-			role = await adminApi.GetRoleAsync("admin", ct);
+			role = await adminApi.GetRoleAsync("admin", cancellationToken);
 		}
 		catch (OperationCanceledException)
 		{
@@ -131,11 +131,11 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 		{
 			if (grant)
 			{
-				await adminApi.AssignRoleMappingsAsync(keycloakUserId, [role], ct);
+				await adminApi.AssignRoleMappingsAsync(keycloakUserId, [role], cancellationToken);
 			}
 			else
 			{
-				await adminApi.RemoveRoleMappingsAsync(keycloakUserId, [role], ct);
+				await adminApi.RemoveRoleMappingsAsync(keycloakUserId, [role], cancellationToken);
 			}
 		}
 		catch (OperationCanceledException)
@@ -148,22 +148,22 @@ public sealed class KeycloakAdminService(IKeycloakAdminApi adminApi, IKeycloakTo
 		}
 	}
 
-	public async Task DeleteStaffUserAsync(string keycloakUserId, CancellationToken ct)
+	public async Task DeleteStaffUserAsync(string keycloakUserId, CancellationToken cancellationToken)
 	{
-		var response = await adminApi.DeleteUserAsync(keycloakUserId, ct);
+		var response = await adminApi.DeleteUserAsync(keycloakUserId, cancellationToken);
 		if (!response.IsSuccessStatusCode)
 		{
-			var err = await response.Content.ReadAsStringAsync(ct);
+			var err = await response.Content.ReadAsStringAsync(cancellationToken);
 			throw new KeycloakException($"Failed to delete Keycloak user {keycloakUserId}: {response.StatusCode} — {err}");
 		}
 	}
 
-	private async Task AssignRealmRoleAsync(string userId, string roleName, CancellationToken ct)
+	private async Task AssignRealmRoleAsync(string userId, string roleName, CancellationToken cancellationToken)
 	{
 		try
 		{
-			var role = await adminApi.GetRoleAsync(roleName, ct);
-			await adminApi.AssignRoleMappingsAsync(userId, [role], ct);
+			var role = await adminApi.GetRoleAsync(roleName, cancellationToken);
+			await adminApi.AssignRoleMappingsAsync(userId, [role], cancellationToken);
 		}
 		catch (OperationCanceledException)
 		{

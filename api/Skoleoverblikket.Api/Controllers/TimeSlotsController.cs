@@ -47,12 +47,12 @@ public sealed class TimeSlotsController(
 		string ActiveDays, IReadOnlyList<UpsertBreakRequest> Breaks);
 
 	[HttpGet("time-slot-template")]
-	public async Task<ActionResult<TemplateDto>> GetTemplate(CancellationToken ct)
+	public async Task<ActionResult<TemplateDto>> GetTemplate(CancellationToken cancellationToken)
 	{
 		var timeSlotTemplate = await context.TimeSlotTemplates
 						.AsNoTrackingWithIdentityResolution()
 						.Include(t => t.Breaks)
-						.FirstOrDefaultAsync(ct);
+						.FirstOrDefaultAsync(cancellationToken);
 
 		return timeSlotTemplate is null
 				   ? NotFound()
@@ -61,7 +61,7 @@ public sealed class TimeSlotsController(
 
 	[HttpPut("time-slot-template")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<TemplateDto>> UpsertTemplate([FromBody] UpsertTemplateRequest req, CancellationToken ct)
+	public async Task<ActionResult<TemplateDto>> UpsertTemplate([FromBody] UpsertTemplateRequest req, CancellationToken cancellationToken)
 	{
 		if (req.Breaks.Count > 0)
 		{
@@ -75,7 +75,7 @@ public sealed class TimeSlotsController(
 			}
 		}
 
-		var timeSlotTemplate = await context.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(ct);
+		var timeSlotTemplate = await context.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(cancellationToken);
 		if (timeSlotTemplate is null)
 		{
 			timeSlotTemplate = new TimeSlotTemplate { Id = Guid.NewGuid(), TenantId = tenant.TenantId };
@@ -83,7 +83,7 @@ public sealed class TimeSlotsController(
 		}
 
 		// Back up current state to S3 before any destructive changes
-		await CreateBackupAsync(timeSlotTemplate, ct);
+		await CreateBackupAsync(timeSlotTemplate, cancellationToken);
 
 		timeSlotTemplate.LessonDurationMinutes = req.LessonDurationMinutes;
 		timeSlotTemplate.DayStartTime = req.DayStartTime;
@@ -108,26 +108,26 @@ public sealed class TimeSlotsController(
 		context.TimeSlotTemplateBreaks.AddRange(newBreaks);
 
 		// Regenerate school-level time slots (ClassId = null, SchemaId = null) from the template
-		var existingSchoolSlots = await context.TimeSlots.Where(s => s.ClassId == null && s.SchemaId == null).ToListAsync(ct);
+		var existingSchoolSlots = await context.TimeSlots.Where(s => s.ClassId == null && s.SchemaId == null).ToListAsync(cancellationToken);
 		context.TimeSlots.RemoveRange(existingSchoolSlots);
 
 		var generatedSlots = GenerateSlotsFromTemplate(timeSlotTemplate, tenant.TenantId);
 		context.TimeSlots.AddRange(generatedSlots);
 
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 		return Ok(ToTemplateDto(timeSlotTemplate));
 	}
 
 	[HttpPost("time-slot-template/restore")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<IActionResult> RestoreTemplate(CancellationToken ct)
+	public async Task<IActionResult> RestoreTemplate(CancellationToken cancellationToken)
 	{
 		var key = $"backups/{tenant.TenantId}/default-schedule-backup.json";
 
 		GetObjectResponse s3Response;
 		try
 		{
-			s3Response = await s3.GetObjectAsync(s3Opts.Value.DefaultBucketName, key, ct);
+			s3Response = await s3.GetObjectAsync(s3Opts.Value.DefaultBucketName, key, cancellationToken);
 		}
 		catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 		{
@@ -141,7 +141,7 @@ public sealed class TimeSlotsController(
 		try
 		{
 			using var stream = s3Response.ResponseStream;
-			backup = await JsonSerializer.DeserializeAsync<DefaultScheduleBackup>(stream, BackupJsonOptions, ct)
+			backup = await JsonSerializer.DeserializeAsync<DefaultScheduleBackup>(stream, BackupJsonOptions, cancellationToken)
 				?? throw new InvalidOperationException("Backup JSON var null.");
 		}
 		catch (Exception ex)
@@ -152,19 +152,19 @@ public sealed class TimeSlotsController(
 				statusCode: 422);
 		}
 
-		await using var transaction = await context.Database.BeginTransactionAsync(ct);
+		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 		try
 		{
-			var schoolSlots = await context.TimeSlots.Where(s => s.ClassId == null && s.SchemaId == null).ToListAsync(ct);
+			var schoolSlots = await context.TimeSlots.Where(s => s.ClassId == null && s.SchemaId == null).ToListAsync(cancellationToken);
 			context.TimeSlots.RemoveRange(schoolSlots);
 
-			var schemaLevelSlots = await context.TimeSlots.Where(s => s.SchemaId != null).ToListAsync(ct);
+			var schemaLevelSlots = await context.TimeSlots.Where(s => s.SchemaId != null).ToListAsync(cancellationToken);
 			context.TimeSlots.RemoveRange(schemaLevelSlots);
 
-			var schemaSlotRefs = await context.SchemaSlots.ToListAsync(ct);
+			var schemaSlotRefs = await context.SchemaSlots.ToListAsync(cancellationToken);
 			context.SchemaSlots.RemoveRange(schemaSlotRefs);
 
-			await context.SaveChangesAsync(ct);
+			await context.SaveChangesAsync(cancellationToken);
 
 			var restoredSchoolSlots = backup.SchoolLevelSlots.Select(s => new TimeSlot
 			{
@@ -208,7 +208,7 @@ public sealed class TimeSlotsController(
 			}).ToList();
 			context.SchemaSlots.AddRange(restoredSchemaSlotRefs);
 
-			var template = await context.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(ct);
+			var template = await context.TimeSlotTemplates.Include(t => t.Breaks).FirstOrDefaultAsync(cancellationToken);
 			if (template is not null)
 			{
 				template.LessonDurationMinutes = backup.Template.LessonDurationMinutes;
@@ -231,12 +231,12 @@ public sealed class TimeSlotsController(
 				context.TimeSlotTemplateBreaks.AddRange(restoredBreaks);
 			}
 
-			await context.SaveChangesAsync(ct);
-			await transaction.CommitAsync(ct);
+			await context.SaveChangesAsync(cancellationToken);
+			await transaction.CommitAsync(cancellationToken);
 		}
 		catch (Exception ex)
 		{
-			await transaction.RollbackAsync(ct);
+			await transaction.RollbackAsync(cancellationToken);
 			return Problem(
 				title: "Gendannelse mislykkedes",
 				detail: $"Kunne ikke gendanne sikkerhedskopien: {ex.Message}",
@@ -246,21 +246,21 @@ public sealed class TimeSlotsController(
 		return NoContent();
 	}
 
-	private async Task CreateBackupAsync(TimeSlotTemplate currentTemplate, CancellationToken ct)
+	private async Task CreateBackupAsync(TimeSlotTemplate currentTemplate, CancellationToken cancellationToken)
 	{
 		var schoolLevelSlots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == null && s.SchemaId == null)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var schemaLevelSlots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.SchemaId != null)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var schemaSlots = await context.SchemaSlots
 			.AsNoTracking()
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var backup = new DefaultScheduleBackup(
 			Template: new BackupTemplateDto(
@@ -293,7 +293,7 @@ public sealed class TimeSlotsController(
 		var json = JsonSerializer.Serialize(backup);
 		var key = $"backups/{tenant.TenantId}/default-schedule-backup.json";
 		using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-		await storage.UploadAsync(key, "application/json", stream, ct);
+		await storage.UploadAsync(key, "application/json", stream, cancellationToken);
 	}
 
 	/// <summary>
@@ -397,14 +397,14 @@ public sealed class TimeSlotsController(
 	public record UpsertTimeSlotRequest(int SortOrder, TimeOnly StartTime, TimeOnly EndTime, string? Label, bool IsBreak = false);
 
 	[HttpGet("classes/{classId:guid}/time-slots")]
-	public async Task<ActionResult<List<TimeSlotDto>>> GetForClass(Guid classId, CancellationToken ct)
+	public async Task<ActionResult<List<TimeSlotDto>>> GetForClass(Guid classId, CancellationToken cancellationToken)
 	{
 		var slots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == classId && s.SchemaId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		if (slots.Count > 0)
 		{
@@ -417,15 +417,15 @@ public sealed class TimeSlotsController(
 			.Where(s => s.ClassId == null && s.SchemaId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(schoolSlots);
 	}
 
 	[HttpGet("classes/{classId:guid}/schemas/{schemaId:guid}/time-slots")]
-	public async Task<ActionResult<List<TimeSlotDto>>> GetForSchema(Guid classId, Guid schemaId, CancellationToken ct)
+	public async Task<ActionResult<List<TimeSlotDto>>> GetForSchema(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
-		var schemaExists = await context.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schemaExists = await context.Schemas.AnyAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (!schemaExists)
 		{
 			return NotFound();
@@ -437,7 +437,7 @@ public sealed class TimeSlotsController(
 			.Where(s => s.SchemaId == schemaId)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		if (schemaSlots.Count > 0)
 		{
@@ -450,7 +450,7 @@ public sealed class TimeSlotsController(
 			.Where(s => s.ClassId == classId && s.SchemaId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		if (classSlots.Count > 0)
 		{
@@ -462,7 +462,7 @@ public sealed class TimeSlotsController(
 			.Where(s => s.ClassId == null && s.SchemaId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(schoolSlots);
 	}
@@ -472,15 +472,15 @@ public sealed class TimeSlotsController(
 	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForSchema(
 		Guid classId, Guid schemaId,
 		[FromBody] IReadOnlyList<UpsertTimeSlotRequest> req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
-		var schema = await context.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, ct);
+		var schema = await context.Schemas.FirstOrDefaultAsync(s => s.Id == schemaId && s.ClassId == classId, cancellationToken);
 		if (schema is null)
 		{
 			return NotFound();
 		}
 
-		var existing = await context.TimeSlots.Where(s => s.SchemaId == schemaId).ToListAsync(ct);
+		var existing = await context.TimeSlots.Where(s => s.SchemaId == schemaId).ToListAsync(cancellationToken);
 		context.TimeSlots.RemoveRange(existing);
 
 		var newSlots = req.Select(r => new TimeSlot
@@ -497,7 +497,7 @@ public sealed class TimeSlotsController(
 		}).ToList();
 
 		context.TimeSlots.AddRange(newSlots);
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 
 		var result = newSlots.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak));
 		return Ok(result);
@@ -505,15 +505,15 @@ public sealed class TimeSlotsController(
 
 	[HttpPut("classes/{classId:guid}/time-slots")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForClass(Guid classId, [FromBody] IReadOnlyList<UpsertTimeSlotRequest> req, CancellationToken ct)
+	public async Task<ActionResult<List<TimeSlotDto>>> ReplaceForClass(Guid classId, [FromBody] IReadOnlyList<UpsertTimeSlotRequest> req, CancellationToken cancellationToken)
 	{
-		var exists = await context.Classes.AnyAsync(c => c.Id == classId, ct);
+		var exists = await context.Classes.AnyAsync(c => c.Id == classId, cancellationToken);
 		if (!exists)
 		{
 			return NotFound();
 		}
 
-		var existing = await context.TimeSlots.Where(s => s.ClassId == classId && s.SchemaId == null).ToListAsync(ct);
+		var existing = await context.TimeSlots.Where(s => s.ClassId == classId && s.SchemaId == null).ToListAsync(cancellationToken);
 		context.TimeSlots.RemoveRange(existing);
 
 		var newSlots = req.Select(upsertTimeSlotRequest => new TimeSlot
@@ -529,21 +529,21 @@ public sealed class TimeSlotsController(
 		}).ToList();
 
 		context.TimeSlots.AddRange(newSlots);
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 
 		var result = newSlots.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak));
 		return Ok(result);
 	}
 
 	[HttpGet("time-slots")]
-	public async Task<ActionResult<List<TimeSlotDto>>> GetSchoolLevelSlots(CancellationToken ct)
+	public async Task<ActionResult<List<TimeSlotDto>>> GetSchoolLevelSlots(CancellationToken cancellationToken)
 	{
 		var slots = await context.TimeSlots
 			.AsNoTracking()
 			.Where(s => s.ClassId == null)
 			.OrderBy(s => s.SortOrder)
 			.Select(s => new TimeSlotDto(s.Id, s.ClassId, s.SortOrder, s.StartTime, s.EndTime, s.Label, s.IsBreak))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(slots);
 	}

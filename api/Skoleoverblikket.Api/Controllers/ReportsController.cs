@@ -13,9 +13,9 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 {
 	/// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>
 	[HttpGet("hours/staff.xlsx")]
-	public async Task<IActionResult> GetStaffHoursXlsx(CancellationToken ct)
+	public async Task<IActionResult> GetStaffHoursXlsx(CancellationToken cancellationToken)
 	{
-		var activeSlots = await excel.GetActiveSlotsAsync(ct);
+		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
 
 		var teacherHours = activeSlots
 			.GroupBy(s => (s.TeacherId, s.Teacher.Name, s.Teacher.Role))
@@ -52,9 +52,9 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 
 	/// <summary>GET /api/v1/reports/hours/courses.xlsx</summary>
 	[HttpGet("hours/courses.xlsx")]
-	public async Task<IActionResult> GetCourseHoursXlsx(CancellationToken ct)
+	public async Task<IActionResult> GetCourseHoursXlsx(CancellationToken cancellationToken)
 	{
-		var activeSlots = await excel.GetActiveSlotsAsync(ct);
+		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
 
 		var rows = activeSlots
 			.GroupBy(s => (s.Schema.Class.Name, s.Course.Name))
@@ -86,9 +86,9 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 
 	/// <summary>GET /api/v1/reports/schema.xlsx</summary>
 	[HttpGet("schema.xlsx")]
-	public async Task<IActionResult> GetSchemaXlsx(CancellationToken ct)
+	public async Task<IActionResult> GetSchemaXlsx(CancellationToken cancellationToken)
 	{
-		var activeSlots = await excel.GetActiveSlotsAsync(ct);
+		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
 
 		var rows = activeSlots
 			.OrderBy(s => s.Schema.Class.Name)

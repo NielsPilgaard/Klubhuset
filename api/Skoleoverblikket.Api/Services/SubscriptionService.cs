@@ -23,15 +23,15 @@ public sealed class SubscriptionService(
 	/// <summary>
 	/// Returns the subscription for the given school, creating a Trialing record if none exists.
 	/// </summary>
-	public async Task<LocalSubscription> GetOrCreateAsync(Guid schoolId, CancellationToken ct = default)
+	public async Task<LocalSubscription> GetOrCreateAsync(Guid schoolId, CancellationToken cancellationToken = default)
 	{
-		var sub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
+		var sub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken);
 		if (sub is not null)
 		{
 			return sub;
 		}
 
-		var school = await db.Schools.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == schoolId, ct)
+		var school = await db.Schools.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == schoolId, cancellationToken)
 					 ?? throw new InvalidOperationException($"School {schoolId} not found");
 
 		sub = new LocalSubscription
@@ -46,13 +46,13 @@ public sealed class SubscriptionService(
 
 		try
 		{
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 			return sub;
 		}
 		catch (DbUpdateException)
 		{
 			// Race condition: another request created the subscription. Fetch and return it.
-			var existingSub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
+			var existingSub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken);
 			if (existingSub is not null)
 			{
 				return existingSub;
@@ -69,10 +69,10 @@ public sealed class SubscriptionService(
 		Guid schoolId,
 		string successUrl,
 		string cancelUrl,
-		CancellationToken ct = default)
+		CancellationToken cancellationToken = default)
 	{
-		var sub = await GetOrCreateAsync(schoolId, ct);
-		var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, ct);
+		var sub = await GetOrCreateAsync(schoolId, cancellationToken);
+		var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, cancellationToken);
 
 		var priceId = stripeOptions.Value.BasePriceId;
 
@@ -85,10 +85,10 @@ public sealed class SubscriptionService(
 				Email = school.ContactEmail,
 				Name = school.Name,
 				Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
-			}, cancellationToken: ct);
+			}, cancellationToken: cancellationToken);
 			customerId = customer.Id;
 			sub.StripeCustomerId = customerId;
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		var options = new SessionCreateOptions
@@ -116,7 +116,7 @@ public sealed class SubscriptionService(
 				: null,
 		};
 
-		var session = await sessionService.CreateAsync(options, cancellationToken: ct);
+		var session = await sessionService.CreateAsync(options, cancellationToken: cancellationToken);
 
 		return session.Url ?? throw new InvalidOperationException("Stripe session URL is null");
 	}
@@ -127,9 +127,9 @@ public sealed class SubscriptionService(
 	public async Task<string> CreateBillingPortalSessionAsync(
 		Guid schoolId,
 		string returnUrl,
-		CancellationToken ct = default)
+		CancellationToken cancellationToken = default)
 	{
-		var sub = await GetOrCreateAsync(schoolId, ct);
+		var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 
 		if (sub.StripeCustomerId is null)
 		{
@@ -140,7 +140,7 @@ public sealed class SubscriptionService(
 		{
 			Customer = sub.StripeCustomerId,
 			ReturnUrl = returnUrl,
-		}, cancellationToken: ct);
+		}, cancellationToken: cancellationToken);
 
 		return session.Url ?? throw new InvalidOperationException("Stripe billing portal session URL is null");
 	}
@@ -148,11 +148,11 @@ public sealed class SubscriptionService(
 	/// <summary>
 	/// Returns the active module names for the given school's subscription.
 	/// </summary>
-	public async Task<IReadOnlyList<string>> GetActiveModulesAsync(Guid schoolId, CancellationToken ct = default)
+	public async Task<IReadOnlyList<string>> GetActiveModulesAsync(Guid schoolId, CancellationToken cancellationToken = default)
 	{
 		var sub = await db.Subscriptions
 			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken);
 
 		if (sub is null)
 		{
@@ -167,11 +167,11 @@ public sealed class SubscriptionService(
 	/// <summary>
 	/// Adds a module to the school's subscription via Stripe, then records it in DB.
 	/// </summary>
-	public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+	public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 	{
 		var sub = await db.Subscriptions
 			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
 
 		if (sub.Status != SubscriptionStatus.Active)
@@ -199,7 +199,7 @@ public sealed class SubscriptionService(
 			Subscription = sub.StripeSubscriptionId,
 			Price = priceId,
 			Quantity = 1,
-		}, cancellationToken: ct);
+		}, cancellationToken: cancellationToken);
 
 		db.SubscriptionModuleItems.Add(new SubscriptionModuleItem
 		{
@@ -211,7 +211,7 @@ public sealed class SubscriptionService(
 
 		try
 		{
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 		catch (DbUpdateException ex)
 		{
@@ -219,7 +219,7 @@ public sealed class SubscriptionService(
 			logger.LogWarning(ex, "AddModuleAsync: DB save failed after Stripe item {ItemId} created for school {SchoolId}, module {Module}. Removing Stripe item.", item.Id, schoolId, module);
 			try
 			{
-				await subscriptionItemService.DeleteAsync(item.Id, new SubscriptionItemDeleteOptions(), cancellationToken: ct);
+				await subscriptionItemService.DeleteAsync(item.Id, new SubscriptionItemDeleteOptions(), cancellationToken: cancellationToken);
 			}
 			catch (Exception stripeEx)
 			{
@@ -233,11 +233,11 @@ public sealed class SubscriptionService(
 	/// <summary>
 	/// Removes a module from the school's subscription via Stripe, then removes it from DB.
 	/// </summary>
-	public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+	public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 	{
 		var sub = await db.Subscriptions
 			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
 
 		var moduleItem = sub.ActiveModules.FirstOrDefault(m => m.Module == module);
@@ -249,31 +249,31 @@ public sealed class SubscriptionService(
 		var stripeItemId = (!moduleItem.IsAdminOverride) ? moduleItem.StripeSubscriptionItemId : null;
 
 		db.SubscriptionModuleItems.Remove(moduleItem);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		if (stripeItemId is not null)
 		{
 			await subscriptionItemService.DeleteAsync(
 				stripeItemId,
 				new SubscriptionItemDeleteOptions(),
-				cancellationToken: ct);
+				cancellationToken: cancellationToken);
 		}
 	}
 
 	/// <summary>
 	/// Grants a module to a school via admin override — no Stripe charge.
 	/// </summary>
-	public async Task GrantModuleOverrideAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+	public async Task GrantModuleOverrideAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 	{
 		var sub = await db.Subscriptions
 			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct)
-			?? await GetOrCreateAsync(schoolId, ct);
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
+			?? await GetOrCreateAsync(schoolId, cancellationToken);
 
 		// Re-fetch with modules if GetOrCreateAsync was called
 		if (!db.Entry(sub).Collection(s => s.ActiveModules).IsLoaded)
 		{
-			await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(ct);
+			await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(cancellationToken);
 		}
 
 		if (sub.ActiveModules.Any(m => m.Module == module))
@@ -291,13 +291,13 @@ public sealed class SubscriptionService(
 
 		try
 		{
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 		catch (DbUpdateException)
 		{
 			// Concurrent request inserted the same module — treat as no-op.
 			var alreadyExists = await db.SubscriptionModuleItems
-				.AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, ct);
+				.AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, cancellationToken);
 			if (!alreadyExists)
 			{
 				throw;
@@ -310,7 +310,7 @@ public sealed class SubscriptionService(
 	/// <summary>
 	/// Processes a Stripe webhook event and updates the local subscription record.
 	/// </summary>
-	public async Task HandleWebhookAsync(Event stripeEvent, CancellationToken ct = default)
+	public async Task HandleWebhookAsync(Event stripeEvent, CancellationToken cancellationToken = default)
 	{
 		switch (stripeEvent.Type)
 		{
@@ -318,7 +318,7 @@ public sealed class SubscriptionService(
 				{
 					if (stripeEvent.Data.Object is Session session)
 					{
-						await HandleCheckoutCompletedAsync(session, ct);
+						await HandleCheckoutCompletedAsync(session, cancellationToken);
 					}
 
 					break;
@@ -329,7 +329,7 @@ public sealed class SubscriptionService(
 				{
 					if (stripeEvent.Data.Object is StripeSubscription stripeSub)
 					{
-						await HandleSubscriptionChangedAsync(stripeSub, ct);
+						await HandleSubscriptionChangedAsync(stripeSub, cancellationToken);
 					}
 
 					break;
@@ -339,7 +339,7 @@ public sealed class SubscriptionService(
 				{
 					if (stripeEvent.Data.Object is Invoice invoice)
 					{
-						await HandleInvoicePaymentSucceededAsync(invoice, ct);
+						await HandleInvoicePaymentSucceededAsync(invoice, cancellationToken);
 					}
 
 					break;
@@ -349,7 +349,7 @@ public sealed class SubscriptionService(
 				{
 					if (stripeEvent.Data.Object is Invoice failedInvoice)
 					{
-						await HandleInvoicePaymentFailedAsync(failedInvoice, ct);
+						await HandleInvoicePaymentFailedAsync(failedInvoice, cancellationToken);
 					}
 
 					break;
@@ -361,7 +361,7 @@ public sealed class SubscriptionService(
 		}
 	}
 
-	private async Task HandleCheckoutCompletedAsync(Session session, CancellationToken ct)
+	private async Task HandleCheckoutCompletedAsync(Session session, CancellationToken cancellationToken)
 	{
 		if (!session.Metadata.TryGetValue("school_id", out var schoolIdStr)
 			|| !Guid.TryParse(schoolIdStr, out var schoolId))
@@ -370,7 +370,7 @@ public sealed class SubscriptionService(
 			return;
 		}
 
-		var sub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, ct);
+		var sub = await db.Subscriptions.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken);
 		if (sub is null)
 		{
 			logger.LogWarning("SubscriptionService.HandleCheckoutCompletedAsync: Subscription not found for SchoolId {SchoolId}, SessionId {SessionId}", schoolId, session.Id);
@@ -381,13 +381,13 @@ public sealed class SubscriptionService(
 		sub.StripeSubscriptionId = session.SubscriptionId;
 		sub.Status = SubscriptionStatus.Active;
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 	}
 
-	private async Task HandleSubscriptionChangedAsync(StripeSubscription stripeSub, CancellationToken ct)
+	private async Task HandleSubscriptionChangedAsync(StripeSubscription stripeSub, CancellationToken cancellationToken)
 	{
 		var sub = await db.Subscriptions.FirstOrDefaultAsync(
-			s => s.StripeSubscriptionId == stripeSub.Id, ct);
+			s => s.StripeSubscriptionId == stripeSub.Id, cancellationToken);
 		if (sub is null)
 		{
 			logger.LogWarning("SubscriptionService.HandleSubscriptionChangedAsync: Subscription not found for StripeSubscriptionId {StripeSubscriptionId}", stripeSub.Id);
@@ -419,10 +419,10 @@ public sealed class SubscriptionService(
 			? stripeSub.CurrentPeriodEnd
 			: null;
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 	}
 
-	private async Task HandleInvoicePaymentSucceededAsync(Invoice invoice, CancellationToken ct)
+	private async Task HandleInvoicePaymentSucceededAsync(Invoice invoice, CancellationToken cancellationToken)
 	{
 		if (invoice.SubscriptionId is null)
 		{
@@ -430,7 +430,7 @@ public sealed class SubscriptionService(
 		}
 
 		var sub = await db.Subscriptions.FirstOrDefaultAsync(
-			s => s.StripeSubscriptionId == invoice.SubscriptionId, ct);
+			s => s.StripeSubscriptionId == invoice.SubscriptionId, cancellationToken);
 		if (sub is null)
 		{
 			logger.LogWarning("SubscriptionService.HandleInvoicePaymentSucceededAsync: Subscription not found for StripeSubscriptionId {StripeSubscriptionId}, InvoiceId {InvoiceId}", invoice.SubscriptionId, invoice.Id);
@@ -439,10 +439,10 @@ public sealed class SubscriptionService(
 
 		sub.Status = SubscriptionStatus.Active;
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 	}
 
-	private async Task HandleInvoicePaymentFailedAsync(Invoice invoice, CancellationToken ct)
+	private async Task HandleInvoicePaymentFailedAsync(Invoice invoice, CancellationToken cancellationToken)
 	{
 		if (invoice.SubscriptionId is null)
 		{
@@ -450,7 +450,7 @@ public sealed class SubscriptionService(
 		}
 
 		var sub = await db.Subscriptions.FirstOrDefaultAsync(
-			s => s.StripeSubscriptionId == invoice.SubscriptionId, ct);
+			s => s.StripeSubscriptionId == invoice.SubscriptionId, cancellationToken);
 		if (sub is null)
 		{
 			logger.LogWarning("SubscriptionService.HandleInvoicePaymentFailedAsync: Subscription not found for StripeSubscriptionId {StripeSubscriptionId}, InvoiceId {InvoiceId}", invoice.SubscriptionId, invoice.Id);
@@ -459,6 +459,6 @@ public sealed class SubscriptionService(
 
 		sub.Status = SubscriptionStatus.PastDue;
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 	}
 }

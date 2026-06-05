@@ -95,7 +95,7 @@ public async Task<string> CreateUserAsync(
     Guid? tenantId,          // null = no tenant_id attribute; parents need it set
     string? realmRole,       // null = no role; "admin", "parent", "board" etc.
     bool forcePasswordReset, // true = UPDATE_PASSWORD required action
-    CancellationToken ct)
+    CancellationToken cancellationToken)
 ```
 
 `CreateAdminUserAsync` and `CreateStaffUserAsync` become thin wrappers with no change to call sites.

@@ -15,14 +15,14 @@ public sealed class ParentInvitationsController(
 {
 	[HttpGet("preview")]
 	[AllowAnonymous]
-	public async Task<ActionResult> Preview([FromQuery] string token, CancellationToken ct)
+	public async Task<ActionResult> Preview([FromQuery] string token, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrEmpty(token))
 		{
 			return BadRequest(new ProblemDetails { Title = "Token mangler", Status = 400 });
 		}
 
-		var invitation = await invitationService.FindValidAsync(token, ct);
+		var invitation = await invitationService.FindValidAsync(token, cancellationToken);
 		if (invitation is null)
 		{
 			return Problem(title: "Ugyldig eller udløbet invitation", statusCode: 404);
@@ -32,7 +32,7 @@ public sealed class ParentInvitationsController(
 							 .IgnoreQueryFilters()
 							 .Where(s => s.Id == invitation.TenantId)
 							 .Select(s => new { s.Name })
-							 .FirstOrDefaultAsync(ct);
+							 .FirstOrDefaultAsync(cancellationToken);
 
 		return Ok(new
 		{
@@ -45,7 +45,7 @@ public sealed class ParentInvitationsController(
 
 	[HttpPost("accept")]
 	[Authorize]
-	public async Task<ActionResult> Accept([FromQuery] string token, CancellationToken ct)
+	public async Task<ActionResult> Accept([FromQuery] string token, CancellationToken cancellationToken)
 	{
 		var keycloakSubject = User.GetKeycloakSubject();
 		if (string.IsNullOrEmpty(keycloakSubject))
@@ -53,27 +53,27 @@ public sealed class ParentInvitationsController(
 			return Unauthorized(new ProblemDetails { Title = "Ikke autentificeret", Status = 401 });
 		}
 
-		var invitation = await invitationService.FindValidAsync(token, ct);
+		var invitation = await invitationService.FindValidAsync(token, cancellationToken);
 		if (invitation is null)
 		{
 			return Problem(title: "Ugyldig eller udløbet invitation", statusCode: 404);
 		}
 
-		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, ct);
+		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, cancellationToken);
 		return NoContent();
 	}
 
 	[HttpPost("{parentId:guid}/resend")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> Resend(Guid parentId, CancellationToken ct)
+	public async Task<ActionResult> Resend(Guid parentId, CancellationToken cancellationToken)
 	{
-		var parent = await db.Parents.FirstOrDefaultAsync(p => p.Id == parentId, ct);
+		var parent = await db.Parents.FirstOrDefaultAsync(p => p.Id == parentId, cancellationToken);
 		if (parent is null)
 		{
 			return NotFound();
 		}
 
-		await invitationService.CreateAndSendAsync(parent, ct);
+		await invitationService.CreateAndSendAsync(parent, cancellationToken);
 		return NoContent();
 	}
 }

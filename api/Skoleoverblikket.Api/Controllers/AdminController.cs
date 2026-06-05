@@ -16,11 +16,11 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class AdminController(SubscriptionService subscriptionService) : ControllerBase
 {
 	[HttpPost]
-	public async Task<IActionResult> GrantModule(Guid schoolId, [FromBody] ModuleOverrideRequest request, CancellationToken ct)
+	public async Task<IActionResult> GrantModule(Guid schoolId, [FromBody] ModuleOverrideRequest request, CancellationToken cancellationToken)
 	{
 		try
 		{
-			await subscriptionService.GrantModuleOverrideAsync(schoolId, request.Module, ct);
+			await subscriptionService.GrantModuleOverrideAsync(schoolId, request.Module, cancellationToken);
 			return NoContent();
 		}
 		catch (InvalidOperationException ex) when (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
@@ -34,11 +34,11 @@ public sealed class AdminController(SubscriptionService subscriptionService) : C
 	}
 
 	[HttpDelete("{module}")]
-	public async Task<IActionResult> RevokeModule(Guid schoolId, SubscriptionModule module, CancellationToken ct)
+	public async Task<IActionResult> RevokeModule(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken)
 	{
 		try
 		{
-			await subscriptionService.RemoveModuleAsync(schoolId, module, ct);
+			await subscriptionService.RemoveModuleAsync(schoolId, module, cancellationToken);
 			return NoContent();
 		}
 		catch (InvalidOperationException ex) when (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))

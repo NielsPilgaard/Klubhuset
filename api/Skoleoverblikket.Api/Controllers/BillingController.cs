@@ -30,19 +30,19 @@ public sealed class BillingController(
 	public record CheckoutResponse(string Url);
 
 	[HttpGet("subscription")]
-	public async Task<ActionResult<SubscriptionDto>> GetSubscription(CancellationToken ct)
+	public async Task<ActionResult<SubscriptionDto>> GetSubscription(CancellationToken cancellationToken)
 	{
-		var sub = await subscriptionService.GetOrCreateAsync(tenantContext.TenantId, ct);
-		var modules = await subscriptionService.GetActiveModulesAsync(tenantContext.TenantId, ct);
+		var sub = await subscriptionService.GetOrCreateAsync(tenantContext.TenantId, cancellationToken);
+		var modules = await subscriptionService.GetActiveModulesAsync(tenantContext.TenantId, cancellationToken);
 		return Ok(ToDto(sub, modules));
 	}
 
 	[HttpPost("modules")]
-	public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken ct)
+	public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken cancellationToken)
 	{
 		try
 		{
-			await subscriptionService.AddModuleAsync(tenantContext.TenantId, request.Module, ct);
+			await subscriptionService.AddModuleAsync(tenantContext.TenantId, request.Module, cancellationToken);
 			return NoContent();
 		}
 		catch (InvalidOperationException ex)
@@ -61,11 +61,11 @@ public sealed class BillingController(
 	}
 
 	[HttpDelete("modules/{module}")]
-	public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken ct)
+	public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken cancellationToken)
 	{
 		try
 		{
-			await subscriptionService.RemoveModuleAsync(tenantContext.TenantId, module, ct);
+			await subscriptionService.RemoveModuleAsync(tenantContext.TenantId, module, cancellationToken);
 			return NoContent();
 		}
 		catch (InvalidOperationException ex)
@@ -85,7 +85,7 @@ public sealed class BillingController(
 	public record ModuleRequest(SubscriptionModule Module);
 
 	[HttpPost("checkout")]
-	public async Task<ActionResult<CheckoutResponse>> CreateCheckout(CancellationToken ct)
+	public async Task<ActionResult<CheckoutResponse>> CreateCheckout(CancellationToken cancellationToken)
 	{
 		var baseUrl = appOptions.Value.BaseUrl;
 		var successUrl = $"{baseUrl}/abonnement?success=true";
@@ -94,7 +94,7 @@ public sealed class BillingController(
 		try
 		{
 			var url = await subscriptionService.CreateCheckoutSessionAsync(
-				tenantContext.TenantId, successUrl, cancelUrl, ct);
+				tenantContext.TenantId, successUrl, cancelUrl, cancellationToken);
 			return Ok(new CheckoutResponse(url));
 		}
 		catch (Stripe.StripeException ex)
@@ -108,14 +108,14 @@ public sealed class BillingController(
 	}
 
 	[HttpPost("portal")]
-	public async Task<ActionResult<CheckoutResponse>> CreatePortal(CancellationToken ct)
+	public async Task<ActionResult<CheckoutResponse>> CreatePortal(CancellationToken cancellationToken)
 	{
 		var returnUrl = $"{appOptions.Value.BaseUrl}/abonnement";
 
 		try
 		{
 			var url = await subscriptionService.CreateBillingPortalSessionAsync(
-				tenantContext.TenantId, returnUrl, ct);
+				tenantContext.TenantId, returnUrl, cancellationToken);
 			return Ok(new CheckoutResponse(url));
 		}
 		catch (Stripe.StripeException ex)

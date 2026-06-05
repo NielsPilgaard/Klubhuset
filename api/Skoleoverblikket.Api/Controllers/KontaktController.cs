@@ -22,7 +22,7 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 		IReadOnlyList<string> StudentNames);
 
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyList<KontaktParentDto>>> GetKontakt(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<KontaktParentDto>>> GetKontakt(CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
@@ -77,7 +77,7 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 		var parents = await query
 			.AsNoTracking()
 			.OrderBy(p => p.Name)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var dtos = parents.Select(p =>
 		{

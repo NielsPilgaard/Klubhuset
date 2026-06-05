@@ -22,13 +22,13 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	[HttpPost]
 	[Authorize(Roles = Roles.Parent)]
 	public async Task<IActionResult> ReportAbsence(
-		[FromBody] ReportAbsenceRequest req, CancellationToken ct)
+		[FromBody] ReportAbsenceRequest req, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
 			.AsNoTracking()
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -36,7 +36,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 		}
 
 		var parentOwnsStudent = await db.Parents
-			.AnyAsync(p => p.KeycloakSubject == subject && p.Students.Any(s => s.Id == req.StudentId), ct);
+			.AnyAsync(p => p.KeycloakSubject == subject && p.Students.Any(s => s.Id == req.StudentId), cancellationToken);
 
 		if (!parentOwnsStudent)
 		{
@@ -54,19 +54,19 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 		};
 
 		db.AbsenceReports.Add(report);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return CreatedAtAction(nameof(GetMine), new { }, null);
 	}
 
 	[HttpGet("mine")]
 	[Authorize(Roles = Roles.Parent)]
-	public async Task<ActionResult<IReadOnlyList<AbsenceReportDto>>> GetMine(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<AbsenceReportDto>>> GetMine(CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents.AsNoTracking()
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -81,7 +81,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 			.Select(a => new AbsenceReportDto(
 				a.Id, a.StudentId, a.Student.Name,
 				a.Date, a.EndDate, a.Reason, a.Status, a.CreatedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(reports);
 	}
@@ -90,7 +90,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<IReadOnlyList<AbsenceReportDto>>> GetAbsences(
 		[FromQuery] Guid? classId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var query = db.AbsenceReports
 			.AsNoTracking()
@@ -117,18 +117,18 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 			.Select(a => new AbsenceReportDto(
 				a.Id, a.StudentId, a.Student.Name,
 				a.Date, a.EndDate, a.Reason, a.Status, a.CreatedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(reports);
 	}
 
 	[HttpPost("{id:guid}/confirm")]
-	public async Task<IActionResult> ConfirmAbsence(Guid id, CancellationToken ct)
+	public async Task<IActionResult> ConfirmAbsence(Guid id, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var staff = await db.Staff.AsNoTracking()
-			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
 
 		if (staff is null)
 		{
@@ -137,7 +137,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 
 		var report = await db.AbsenceReports
 			.Include(a => a.Student)
-			.FirstOrDefaultAsync(a => a.Id == id, ct);
+			.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
 		if (report is null)
 		{
@@ -154,7 +154,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 		report.ConfirmedByStaffId = staff.Id;
 		report.ConfirmedAt = DateTimeOffset.UtcNow;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		var staffName = staff.Name;
 		var body = $"{staffName} har bekræftet {report.Student.Name}s fravær {report.Date:d. MMMM}";
@@ -165,18 +165,18 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 			NotificationType.AbsenceConfirmed,
 			report.Id,
 			body,
-			ct);
+			cancellationToken);
 
 		return NoContent();
 	}
 
 	[HttpPost("{id:guid}/dismiss")]
-	public async Task<IActionResult> DismissAbsence(Guid id, CancellationToken ct)
+	public async Task<IActionResult> DismissAbsence(Guid id, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var staff = await db.Staff.AsNoTracking()
-			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
 
 		if (staff is null)
 		{
@@ -185,7 +185,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 
 		var report = await db.AbsenceReports
 			.Include(a => a.Student)
-			.FirstOrDefaultAsync(a => a.Id == id, ct);
+			.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
 		if (report is null)
 		{
@@ -202,7 +202,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 		report.ConfirmedByStaffId = staff.Id;
 		report.ConfirmedAt = DateTimeOffset.UtcNow;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		var staffName = staff.Name;
 		var body = $"{staffName} har afvist {report.Student.Name}s fravær {report.Date:d. MMMM}";
@@ -213,19 +213,19 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 			NotificationType.AbsenceDismissed,
 			report.Id,
 			body,
-			ct);
+			cancellationToken);
 
 		return NoContent();
 	}
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = Roles.Parent)]
-	public async Task<IActionResult> CancelAbsence(Guid id, CancellationToken ct)
+	public async Task<IActionResult> CancelAbsence(Guid id, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents.AsNoTracking()
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -233,7 +233,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 		}
 
 		var report = await db.AbsenceReports
-			.FirstOrDefaultAsync(a => a.Id == id && a.ReportedByParentId == parent.Id, ct);
+			.FirstOrDefaultAsync(a => a.Id == id && a.ReportedByParentId == parent.Id, cancellationToken);
 
 		if (report is null)
 		{
@@ -246,7 +246,7 @@ public sealed class AbsenceController(AppDbContext db, INotificationService noti
 		}
 
 		db.AbsenceReports.Remove(report);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}

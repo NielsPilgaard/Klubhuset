@@ -18,9 +18,9 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 
 	[HttpGet]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<List<ClassPermissionDto>>> GetAll(Guid classId, CancellationToken ct)
+	public async Task<ActionResult<List<ClassPermissionDto>>> GetAll(Guid classId, CancellationToken cancellationToken)
 	{
-		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
+		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, cancellationToken);
 		if (!classExists)
 		{
 			return NotFound();
@@ -31,30 +31,30 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 			.Where(p => p.ClassId == classId)
 			.OrderBy(p => p.Staff.Name)
 			.Select(p => new ClassPermissionDto(p.StaffId, p.Staff.Name, p.GrantedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(permissions);
 	}
 
 	[HttpPost]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<ClassPermissionDto>> Grant(Guid classId, [FromBody] GrantPermissionRequest req, CancellationToken ct)
+	public async Task<ActionResult<ClassPermissionDto>> Grant(Guid classId, [FromBody] GrantPermissionRequest req, CancellationToken cancellationToken)
 	{
 
-		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
+		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, cancellationToken);
 		if (!classExists)
 		{
 			return NotFound();
 		}
 
-		var staff = await db.Staff.FirstOrDefaultAsync(s => s.Id == req.StaffId, ct);
+		var staff = await db.Staff.FirstOrDefaultAsync(s => s.Id == req.StaffId, cancellationToken);
 		if (staff is null)
 		{
 			return NotFound();
 		}
 
 		var alreadyExists = await db.ClassPermissions
-			.AnyAsync(p => p.ClassId == classId && p.StaffId == req.StaffId, ct);
+			.AnyAsync(p => p.ClassId == classId && p.StaffId == req.StaffId, cancellationToken);
 
 		if (alreadyExists)
 		{
@@ -74,7 +74,7 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 		};
 
 		db.ClassPermissions.Add(permission);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return CreatedAtAction(nameof(GetAll), new { classId },
 			new ClassPermissionDto(permission.StaffId, staff.Name, permission.GrantedAt));
@@ -82,10 +82,10 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 
 	[HttpDelete("{staffId:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> Revoke(Guid classId, Guid staffId, CancellationToken ct)
+	public async Task<ActionResult> Revoke(Guid classId, Guid staffId, CancellationToken cancellationToken)
 	{
 		var permission = await db.ClassPermissions
-			.FirstOrDefaultAsync(p => p.ClassId == classId && p.StaffId == staffId, ct);
+			.FirstOrDefaultAsync(p => p.ClassId == classId && p.StaffId == staffId, cancellationToken);
 
 		if (permission is null)
 		{
@@ -93,7 +93,7 @@ public sealed class ClassPermissionsController(AppDbContext db, ITenantContext t
 		}
 
 		db.ClassPermissions.Remove(permission);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}

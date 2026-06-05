@@ -31,36 +31,36 @@ public sealed class StaffInvitationsController(
 
 	[HttpGet]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<List<InvitationDto>>> GetAll(CancellationToken ct)
+	public async Task<ActionResult<List<InvitationDto>>> GetAll(CancellationToken cancellationToken)
 	{
 		var invitations = await db.StaffInvitations
 								  .AsNoTracking()
 								  .Include(i => i.Staff)
 								  .OrderByDescending(i => i.CreatedAt)
-								  .ToListAsync(ct);
+								  .ToListAsync(cancellationToken);
 
 		return Ok(invitations.Select(ToDto).ToList());
 	}
 
 	[HttpGet("by-staff/{staffId:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<List<InvitationDto>>> GetByStaff(Guid staffId, CancellationToken ct)
+	public async Task<ActionResult<List<InvitationDto>>> GetByStaff(Guid staffId, CancellationToken cancellationToken)
 	{
 		var invitations = await db.StaffInvitations
 								  .AsNoTracking()
 								  .Include(i => i.Staff)
 								  .Where(i => i.StaffId == staffId)
 								  .OrderByDescending(i => i.CreatedAt)
-								  .ToListAsync(ct);
+								  .ToListAsync(cancellationToken);
 
 		return Ok(invitations.Select(ToDto).ToList());
 	}
 
 	[HttpPost("invite/{staffId:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<InvitationDto>> SendInvite(Guid staffId, CancellationToken ct)
+	public async Task<ActionResult<InvitationDto>> SendInvite(Guid staffId, CancellationToken cancellationToken)
 	{
-		var staff = await db.Staff.FirstOrDefaultAsync(s => s.Id == staffId, ct);
+		var staff = await db.Staff.FirstOrDefaultAsync(s => s.Id == staffId, cancellationToken);
 		if (staff is null)
 		{
 			return NotFound();
@@ -81,7 +81,7 @@ public sealed class StaffInvitationsController(
 		}
 
 		var emailAlreadyClaimed = await db.Staff
-			.AnyAsync(s => s.Id != staffId && s.Email == staff.Email && s.KeycloakSubject != null, ct);
+			.AnyAsync(s => s.Id != staffId && s.Email == staff.Email && s.KeycloakSubject != null, cancellationToken);
 		if (emailAlreadyClaimed)
 		{
 			return Problem(
@@ -92,11 +92,11 @@ public sealed class StaffInvitationsController(
 
 		try
 		{
-			var invitation = await invitationService.CreateAndSendAsync(staff, ct);
+			var invitation = await invitationService.CreateAndSendAsync(staff, cancellationToken);
 			var withStaff = await db.StaffInvitations
 									.AsNoTracking()
 									.Include(i => i.Staff)
-									.FirstAsync(i => i.Id == invitation.Id, ct);
+									.FirstAsync(i => i.Id == invitation.Id, cancellationToken);
 
 			return Ok(ToDto(withStaff));
 		}
@@ -119,7 +119,7 @@ public sealed class StaffInvitationsController(
 
 	[HttpPost("accept")]
 	[Authorize]
-	public async Task<ActionResult> Accept([FromBody] AcceptInvitationRequest req, CancellationToken ct)
+	public async Task<ActionResult> Accept([FromBody] AcceptInvitationRequest req, CancellationToken cancellationToken)
 	{
 		// Extract authenticated subject from claims
 		var keycloakSubject = User.GetKeycloakSubject();
@@ -134,7 +134,7 @@ public sealed class StaffInvitationsController(
 			});
 		}
 
-		var invitation = await invitationService.FindValidAsync(req.Token, ct);
+		var invitation = await invitationService.FindValidAsync(req.Token, cancellationToken);
 		if (invitation is null)
 		{
 			return Problem(
@@ -143,13 +143,13 @@ public sealed class StaffInvitationsController(
 				statusCode: 400);
 		}
 
-		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, ct);
+		await invitationService.MarkAcceptedAsync(invitation, keycloakSubject, cancellationToken);
 
 		if (invitation.Staff.IsAdmin)
 		{
 			try
 			{
-				await keycloak.SetAdminRoleAsync(keycloakSubject, grant: true, ct);
+				await keycloak.SetAdminRoleAsync(keycloakSubject, grant: true, cancellationToken);
 			}
 			catch (KeycloakException ex)
 			{
@@ -162,7 +162,7 @@ public sealed class StaffInvitationsController(
 
 	[HttpGet("preview")]
 	[AllowAnonymous]
-	public async Task<ActionResult> PreviewInvitation([FromQuery] string token, CancellationToken ct)
+	public async Task<ActionResult> PreviewInvitation([FromQuery] string token, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrEmpty(token))
 		{
@@ -174,7 +174,7 @@ public sealed class StaffInvitationsController(
 			});
 		}
 
-		var invitation = await invitationService.FindValidAsync(token, ct);
+		var invitation = await invitationService.FindValidAsync(token, cancellationToken);
 		if (invitation is null)
 		{
 			return Problem(
@@ -187,7 +187,7 @@ public sealed class StaffInvitationsController(
 							 .IgnoreQueryFilters()
 							 .Where(s => s.Id == invitation.TenantId)
 							 .Select(s => new { s.Name })
-							 .FirstOrDefaultAsync(ct);
+							 .FirstOrDefaultAsync(cancellationToken);
 
 		return Ok(new
 		{

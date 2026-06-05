@@ -10,7 +10,7 @@ public sealed class ExcelReportBuilder(AppDbContext db)
 {
 	private const string XlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-	public async Task<List<SchemaSlot>> GetActiveSlotsAsync(CancellationToken ct)
+	public async Task<List<SchemaSlot>> GetActiveSlotsAsync(CancellationToken cancellationToken)
 	{
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		return await db.SchemaSlots
@@ -22,7 +22,7 @@ public sealed class ExcelReportBuilder(AppDbContext db)
 			.Include(s => s.Teacher)
 			.Include(s => s.Room)
 			.Include(s => s.Aide)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 	}
 
 	public static void StyleHeader(IXLRow row)

@@ -32,7 +32,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
 	/// Compares clock-time overlap across ALL active schemas in the tenant,
 	/// so teacher/room/aide double-bookings across different classes are caught.
 	/// </summary>
-	public async Task<IReadOnlyList<ConflictInfo>> DetectAsync(Guid schemaId, CancellationToken ct = default)
+	public async Task<IReadOnlyList<ConflictInfo>> DetectAsync(Guid schemaId, CancellationToken cancellationToken = default)
 	{
 		// Load the target schema's slots with time information
 		var targetSlots = await db.SchemaSlots
@@ -43,7 +43,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
 								  .Include(s => s.Room)
 								  .Include(s => s.Aide)
 								  .Include(s => s.Schema).ThenInclude(sc => sc.Class)
-								  .ToListAsync(ct);
+								  .ToListAsync(cancellationToken);
 
 		if (targetSlots.Count == 0)
 		{
@@ -60,7 +60,7 @@ public sealed class ConflictDetectionService(AppDbContext db)
 								 .Include(s => s.Room)
 								 .Include(s => s.Aide)
 								 .Include(s => s.Schema).ThenInclude(sc => sc.Class)
-								 .ToListAsync(ct);
+								 .ToListAsync(cancellationToken);
 
 		// All slots to check against = target + other active schemas
 		var allSlots = targetSlots.Concat(otherSlots).ToList();

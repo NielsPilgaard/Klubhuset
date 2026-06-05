@@ -16,13 +16,13 @@ public sealed class NotificationService(AppDbContext db, ITenantContext tenantCo
 		NotificationType type,
 		Guid? referenceId,
 		string body,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		// 1. Check preference — find by (UserId==recipientId && UserType==recipientType && Type==type)
 		//    If not found, default InApp=true, Email=true
 		var pref = await db.NotificationPreferences
 			.AsNoTracking()
-			.FirstOrDefaultAsync(p => p.UserId == recipientId && p.UserType == recipientType && p.Type == type, ct);
+			.FirstOrDefaultAsync(p => p.UserId == recipientId && p.UserType == recipientType && p.Type == type, cancellationToken);
 		bool inApp = pref?.InApp ?? true;
 		bool emailEnabled = pref?.Email ?? true;
 
@@ -40,15 +40,15 @@ public sealed class NotificationService(AppDbContext db, ITenantContext tenantCo
 				Body = body,
 				CreatedAt = DateTimeOffset.UtcNow,
 			});
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		// 3. If email: get recipient email
 		if (emailEnabled)
 		{
 			string? recipientEmail = recipientType == RecipientType.Parent
-				? await db.Parents.AsNoTracking().Where(p => p.Id == recipientId).Select(p => p.Email).FirstOrDefaultAsync(ct)
-				: await db.Staff.AsNoTracking().Where(s => s.Id == recipientId).Select(s => s.Email).FirstOrDefaultAsync(ct);
+				? await db.Parents.AsNoTracking().Where(p => p.Id == recipientId).Select(p => p.Email).FirstOrDefaultAsync(cancellationToken)
+				: await db.Staff.AsNoTracking().Where(s => s.Id == recipientId).Select(s => s.Email).FirstOrDefaultAsync(cancellationToken);
 
 			if (!string.IsNullOrEmpty(recipientEmail))
 			{
@@ -59,7 +59,7 @@ public sealed class NotificationService(AppDbContext db, ITenantContext tenantCo
 					Subject: body,
 					HtmlBody: BuildHtmlEmail(body, settingsUrl),
 					PlainTextBody: BuildPlainEmail(body, settingsUrl)
-				), ct);
+				), cancellationToken);
 			}
 		}
 	}

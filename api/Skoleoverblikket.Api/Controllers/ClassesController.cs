@@ -22,7 +22,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 		[Range(0, 10)] int? GradeLevel);
 
 	[HttpGet]
-	public async Task<ActionResult<List<ClassDto>>> GetAll(CancellationToken ct)
+	public async Task<ActionResult<List<ClassDto>>> GetAll(CancellationToken cancellationToken)
 	{
 		var isAdmin = User.IsInRole(Roles.Admin);
 
@@ -31,7 +31,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 			var classes = await context.Classes
 				.AsNoTracking()
 				.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel, true))
-				.ToListAsync(ct);
+				.ToListAsync(cancellationToken);
 			return Ok(classes.OrderBy(c => c.Name, NaturalSortComparer.Instance).ToList());
 		}
 
@@ -41,19 +41,19 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 			.AsNoTracking()
 			.Where(s => s.KeycloakSubject == subject)
 			.Select(s => (Guid?)s.Id)
-			.FirstOrDefaultAsync(ct);
+			.FirstOrDefaultAsync(cancellationToken);
 
 		var allClasses = await context.Classes
 			.AsNoTracking()
 			.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel, true))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		// Load all permission rows for this tenant (scoped by global query filter)
 		var permissionsByClass = await context.ClassPermissions
 			.AsNoTracking()
 			.GroupBy(p => p.ClassId)
 			.Select(g => new { ClassId = g.Key, StaffIds = g.Select(p => p.StaffId).ToList() })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		// staffId == null means no linked Staff row — treat as no access to any restricted class
 		var restrictedClassIds = permissionsByClass
@@ -70,13 +70,13 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	}
 
 	[HttpGet("{id:guid}")]
-	public async Task<ActionResult<ClassDto>> GetById(Guid id, CancellationToken ct)
+	public async Task<ActionResult<ClassDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
 		var @class = await context.Classes
 								  .AsNoTracking()
 								  .Where(c => c.Id == id)
 								  .Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel))
-								  .FirstOrDefaultAsync(ct);
+								  .FirstOrDefaultAsync(cancellationToken);
 
 		return @class is null
 				   ? NotFound()
@@ -85,7 +85,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 	[HttpPost]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<ClassDto>> Create([FromBody] UpsertClassRequest req, CancellationToken ct)
+	public async Task<ActionResult<ClassDto>> Create([FromBody] UpsertClassRequest req, CancellationToken cancellationToken)
 	{
 		var @class = new Class
 		{
@@ -98,8 +98,8 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 		context.Classes.Add(@class);
 
-		await context.SaveChangesAsync(ct);
-		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
+		await context.SaveChangesAsync(cancellationToken);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: cancellationToken);
 
 		return CreatedAtAction(nameof(GetById), new { id = @class.Id },
 			new ClassDto(@class.Id, @class.Name, @class.Description, @class.GradeLevel));
@@ -107,9 +107,9 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 	[HttpPut("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<ClassDto>> Update(Guid id, [FromBody] UpsertClassRequest req, CancellationToken ct)
+	public async Task<ActionResult<ClassDto>> Update(Guid id, [FromBody] UpsertClassRequest req, CancellationToken cancellationToken)
 	{
-		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
+		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 		if (@class is null)
 		{
 			return NotFound();
@@ -119,16 +119,16 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 		@class.Description = req.Description;
 		@class.GradeLevel = req.GradeLevel;
 
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 
 		return Ok(new ClassDto(@class.Id, @class.Name, @class.Description, @class.GradeLevel));
 	}
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
-		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, ct);
+		var @class = await context.Classes.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 		if (@class is null)
 		{
 			return NotFound();
@@ -136,21 +136,21 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 		context.Classes.Remove(@class);
 
-		await context.SaveChangesAsync(ct);
-		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
+		await context.SaveChangesAsync(cancellationToken);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: cancellationToken);
 
 		return NoContent();
 	}
 
 	[HttpGet("archived")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<List<ClassDto>>> GetArchived(CancellationToken ct)
+	public async Task<ActionResult<List<ClassDto>>> GetArchived(CancellationToken cancellationToken)
 	{
 		var classes = await context.Classes
 			.IgnoreQueryFilters()
 			.Where(c => c.TenantId == tenant.TenantId && c.ArchivedAt != null)
 			.Select(c => new ClassDto(c.Id, c.Name, c.Description, c.GradeLevel))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(classes.OrderBy(c => c.Name, NaturalSortComparer.Instance).ToList());
 	}
@@ -164,7 +164,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 	[HttpPost("year-roll")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> YearRoll([FromBody] YearRollRequest req, CancellationToken ct)
+	public async Task<ActionResult> YearRoll([FromBody] YearRollRequest req, CancellationToken cancellationToken)
 	{
 		var archiveSet = req.Archive.ToHashSet();
 		var renameIds = req.Renames.Select(r => r.ClassId).ToList();
@@ -187,7 +187,7 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 
 		var classes = await context.Classes
 			.Where(c => affectedIds.Contains(c.Id))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		foreach (var rename in req.Renames)
 		{
@@ -217,8 +217,8 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 			});
 		}
 
-		await context.SaveChangesAsync(ct);
-		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
+		await context.SaveChangesAsync(cancellationToken);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: cancellationToken);
 
 		return NoContent();
 	}

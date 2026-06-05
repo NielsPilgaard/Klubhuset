@@ -8,5 +8,5 @@ public sealed class NullNotificationService : INotificationService
 		NotificationType type,
 		Guid? referenceId,
 		string body,
-		CancellationToken ct) => Task.CompletedTask;
+		CancellationToken cancellationToken) => Task.CompletedTask;
 }

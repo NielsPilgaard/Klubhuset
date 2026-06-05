@@ -37,7 +37,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 		[FromQuery] int isoWeek,
 		[FromQuery] int weekday,
 		[FromQuery] Guid timeSlotId,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (!IsoWeekValidation.IsValid(isoYear, isoWeek))
 		{
@@ -51,13 +51,13 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 
 		var requestedDay = (DayOfWeek)weekday;
 
-		var timeSlot = await db.TimeSlots.AsNoTracking().FirstOrDefaultAsync(t => t.Id == timeSlotId, ct);
+		var timeSlot = await db.TimeSlots.AsNoTracking().FirstOrDefaultAsync(t => t.Id == timeSlotId, cancellationToken);
 		if (timeSlot is null)
 		{
 			return NotFound();
 		}
 
-		var allStaff = await db.Staff.AsNoTracking().OrderBy(s => s.Name).ToListAsync(ct);
+		var allStaff = await db.Staff.AsNoTracking().OrderBy(s => s.Name).ToListAsync(cancellationToken);
 
 		// Find all SchemaSlots on this weekday whose time overlaps the requested time slot
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -68,7 +68,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 			.Include(s => s.TimeSlot)
 			.Include(s => s.Course)
 			.Include(s => s.Schema).ThenInclude(sc => sc.Class)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		overlappingSchemaSlots = overlappingSchemaSlots
 			.Where(s => Overlaps(s.TimeSlot.StartTime, s.TimeSlot.EndTime, timeSlot.StartTime, timeSlot.EndTime))
@@ -83,7 +83,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 			.Include(wps => wps.SchemaSlot).ThenInclude(ss => ss.TimeSlot)
 			.Include(wps => wps.SchemaSlot).ThenInclude(ss => ss.Course)
 			.Include(wps => wps.SchemaSlot).ThenInclude(ss => ss.Schema).ThenInclude(sc => sc.Class)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var overlappingSubstitutes = weekPlanSlotIds
 			.Where(wps => wps.SchemaSlot.Weekday == requestedDay &&
@@ -154,14 +154,14 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 		Guid weekPlanId,
 		Guid slotId,
 		[FromBody] AssignSubstituteRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (req.SubstituteTeacherId.HasValue && req.SubstituteTeacherId == req.SubstituteAideId)
 		{
 			return Problem("Samme person kan ikke tildeles som både lærer og pædagog", statusCode: 400);
 		}
 
-		var weekPlan = await db.WeekPlans.FirstOrDefaultAsync(w => w.Id == weekPlanId, ct);
+		var weekPlan = await db.WeekPlans.FirstOrDefaultAsync(w => w.Id == weekPlanId, cancellationToken);
 		if (weekPlan is null)
 		{
 			return NotFound();
@@ -169,7 +169,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 
 		if (req.SubstituteTeacherId.HasValue)
 		{
-			var exists = await db.Staff.AnyAsync(s => s.Id == req.SubstituteTeacherId.Value, ct);
+			var exists = await db.Staff.AnyAsync(s => s.Id == req.SubstituteTeacherId.Value, cancellationToken);
 			if (!exists)
 			{
 				return Problem("SubstituteTeacherId tilhører ikke denne lejer", statusCode: 400);
@@ -178,7 +178,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 
 		if (req.SubstituteAideId.HasValue)
 		{
-			var exists = await db.Staff.AnyAsync(s => s.Id == req.SubstituteAideId.Value, ct);
+			var exists = await db.Staff.AnyAsync(s => s.Id == req.SubstituteAideId.Value, cancellationToken);
 			if (!exists)
 			{
 				return Problem("SubstituteAideId tilhører ikke denne lejer", statusCode: 400);
@@ -188,7 +188,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 		var slot = await db.WeekPlanSlots
 			.Include(s => s.SubstituteTeacher)
 			.Include(s => s.SubstituteAide)
-			.FirstOrDefaultAsync(s => s.Id == slotId && s.WeekPlanId == weekPlanId, ct);
+			.FirstOrDefaultAsync(s => s.Id == slotId && s.WeekPlanId == weekPlanId, cancellationToken);
 
 		if (slot is null)
 		{
@@ -199,7 +199,7 @@ public sealed class VikarController(AppDbContext db, ITenantContext tenant) : Co
 		slot.SubstituteAideId = req.SubstituteAideId;
 		slot.UpdatedAt = DateTimeOffset.UtcNow;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return Ok(new
 		{

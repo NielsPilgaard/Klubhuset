@@ -21,14 +21,14 @@ This task completes the parent module into a full communication platform and add
 | Auth context isParent, parent sidebar nav | `web/src/auth/AuthContext.ts`, `web/src/components/Sidebar.tsx` |
 | S3-compatible storage (`IObjectStorage`, presigned upload) | `api/Skoleoverblikket.Api/Storage/IObjectStorage.cs` |
 | School logo upload pattern | `api/Skoleoverblikket.Api/Models/School.cs` (`LogoUrl`) |
-| Email sender | `api/Skoleoverblikket.Api/Email/IEmailSender.cs` — `Task SendAsync(EmailMessage, ct)` |
+| Email sender | `api/Skoleoverblikket.Api/Email/IEmailSender.cs` — `Task SendAsync(EmailMessage, cancellationToken)` |
 | Presign+confirm pattern | `api/Skoleoverblikket.Api/Controllers/FilesController.cs` — HMAC-signed confirm token |
 
 ### Email sender interface (for NotificationService)
 
 ```csharp
 // api/Skoleoverblikket.Api/Email/IEmailSender.cs
-Task SendAsync(EmailMessage message, CancellationToken ct);
+Task SendAsync(EmailMessage message, CancellationToken cancellationToken);
 
 record EmailMessage(string To, string Subject, string HtmlBody, string? PlainTextBody = null);
 ```
@@ -41,7 +41,7 @@ Avatar upload does NOT use the full FilesController HMAC token. Simpler pattern:
 
 1. `POST /api/v1/parents/me/avatar/presign`
    - Body: `{ contentType: "image/jpeg"|"image/png"|"image/webp", fileSizeBytes: number }` (max 5 MB)
-   - Calls `storage.GeneratePresignedUploadUrlAsync(key, contentType, fileSizeBytes, expiry=15min, ct)`
+   - Calls `storage.GeneratePresignedUploadUrlAsync(key, contentType, fileSizeBytes, expiry=15min, cancellationToken)`
    - Returns: `{ uploadUrl: string, objectKey: string }`
    - S3 key pattern: `avatars/{tenantId}/parents/{parentId}{ext}`
 
@@ -202,7 +202,7 @@ AbsenceReport {
 Same pattern as `ParentClassAccess`. Before reporting absence:
 ```csharp
 var parentOwnsStudent = await db.Parents
-    .AnyAsync(p => p.KeycloakSubject == User.Sub() && p.Students.Any(s => s.Id == req.StudentId), ct);
+    .AnyAsync(p => p.KeycloakSubject == User.Sub() && p.Students.Any(s => s.Id == req.StudentId), cancellationToken);
 if (!parentOwnsStudent) return Forbid();
 ```
 
@@ -222,7 +222,7 @@ New file: `api/Skoleoverblikket.Api/Controllers/AbsenceController.cs`
 ```csharp
 // api/Skoleoverblikket.Api/Services/INotificationService.cs
 Task CreateAsync(Guid recipientId, RecipientType recipientType, NotificationType type,
-    Guid? referenceId, string body, CancellationToken ct);
+    Guid? referenceId, string body, CancellationToken cancellationToken);
 ```
 
 Register a `NullNotificationService : INotificationService` stub in DI. Feature 5 replaces it.
@@ -284,7 +284,7 @@ NotificationPreference {
 // Constructor: AppDbContext db, ITenantContext tenant, IEmailSender email, IConfiguration config
 
 public async Task CreateAsync(Guid recipientId, RecipientType recipientType, NotificationType type,
-    Guid? referenceId, string body, CancellationToken ct)
+    Guid? referenceId, string body, CancellationToken cancellationToken)
 {
     // 1. Check NotificationPreference — if none exists, default InApp=true, Email=true
     // 2. If InApp: insert Notification row

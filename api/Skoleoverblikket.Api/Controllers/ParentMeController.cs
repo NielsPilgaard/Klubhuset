@@ -17,7 +17,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 	public record ParentStudentDto(Guid StudentId, string StudentName, Guid ClassId);
 
 	[HttpGet]
-	public async Task<ActionResult<ParentMeDto>> GetMe(CancellationToken ct)
+	public async Task<ActionResult<ParentMeDto>> GetMe(CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
@@ -29,7 +29,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 		var parent = await db.Parents
 			.AsNoTracking()
 			.Include(p => p.Students).ThenInclude(s => s.Class)
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -53,7 +53,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 
 	[HttpPost("avatar/presign")]
 	public async Task<ActionResult<AvatarPresignResponse>> PresignAvatar(
-		[FromBody] AvatarPresignRequest req, CancellationToken ct)
+		[FromBody] AvatarPresignRequest req, CancellationToken cancellationToken)
 	{
 		if (!IsAllowedImageContentType(req.ContentType))
 		{
@@ -67,7 +67,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 
 		var subject = User.GetKeycloakSubject();
 		var parent = await db.Parents.AsNoTracking()
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -79,7 +79,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 		var expiry = TimeSpan.FromMinutes(15);
 
 		var (uploadUrl, _) = await storage.GeneratePresignedUploadUrlAsync(
-			key, req.ContentType, req.FileSizeBytes, expiry, ct);
+			key, req.ContentType, req.FileSizeBytes, expiry, cancellationToken);
 
 		return Ok(new AvatarPresignResponse(uploadUrl, key));
 	}
@@ -93,12 +93,12 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 
 	[HttpPatch("contact")]
 	public async Task<IActionResult> UpdateContact(
-		[FromBody] UpdateContactRequest req, CancellationToken ct)
+		[FromBody] UpdateContactRequest req, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -111,7 +111,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 		parent.City = req.City;
 		parent.ShareContactInfo = req.ShareContactInfo;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
@@ -119,11 +119,11 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 
 	[HttpPost("avatar/confirm")]
 	public async Task<IActionResult> ConfirmAvatar(
-		[FromBody] AvatarConfirmRequest req, CancellationToken ct)
+		[FromBody] AvatarConfirmRequest req, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 		var parent = await db.Parents
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -137,10 +137,10 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 		}
 
 		var (_, publicUrl) = await storage.GeneratePresignedUploadUrlAsync(
-			req.ObjectKey, "image/jpeg", 1, TimeSpan.FromHours(24 * 365), ct);
+			req.ObjectKey, "image/jpeg", 1, TimeSpan.FromHours(24 * 365), cancellationToken);
 
 		parent.AvatarUrl = publicUrl;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}

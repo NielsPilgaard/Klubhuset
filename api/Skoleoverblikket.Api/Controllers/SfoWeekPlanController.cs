@@ -42,7 +42,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 	public async Task<ActionResult<SfoWeekPlanDto>> Get(
 		[FromQuery] int? isoYear,
 		[FromQuery] int? isoWeek,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (isoYear is null || isoWeek is null)
 		{
@@ -60,12 +60,12 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			.AsNoTracking()
 			.Include(s => s.StaffAssignments).ThenInclude(ss => ss.Staff)
 			.OrderBy(s => s.DayOfWeek).ThenBy(s => s.StartTime)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var weekPlan = await db.SfoWeekPlans
 			.AsNoTracking()
 			.Include(w => w.Shifts)
-			.FirstOrDefaultAsync(w => w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, ct);
+			.FirstOrDefaultAsync(w => w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, cancellationToken);
 
 		var weekPlanId = weekPlan?.Id ?? Guid.Empty;
 
@@ -89,7 +89,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 	[HttpPut("shifts")]
 	public async Task<ActionResult<SfoWeekPlanShiftDto>> UpsertShift(
 		[FromBody] UpsertSfoWeekPlanShiftRequest request,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		if (!IsoWeekValidation.IsValid(request.IsoYear, request.IsoWeek))
 		{
@@ -99,21 +99,21 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		var shift = await db.SfoShifts
 			.AsNoTracking()
 			.Include(s => s.StaffAssignments).ThenInclude(ss => ss.Staff)
-			.FirstOrDefaultAsync(s => s.Id == request.SfoShiftId, ct);
+			.FirstOrDefaultAsync(s => s.Id == request.SfoShiftId, cancellationToken);
 
 		if (shift is null)
 		{
 			return NotFound();
 		}
 
-		var weekPlanId = await GetOrCreateWeekPlanId(request.IsoYear, request.IsoWeek, ct);
+		var weekPlanId = await GetOrCreateWeekPlanId(request.IsoYear, request.IsoWeek, cancellationToken);
 		if (weekPlanId is null)
 		{
 			return Problem("Kunne ikke oprette ugeplan", statusCode: 500);
 		}
 
 		var weekShift = await db.SfoWeekPlanShifts
-			.FirstOrDefaultAsync(ws => ws.SfoWeekPlanId == weekPlanId.Value && ws.SfoShiftId == request.SfoShiftId, ct);
+			.FirstOrDefaultAsync(ws => ws.SfoWeekPlanId == weekPlanId.Value && ws.SfoShiftId == request.SfoShiftId, cancellationToken);
 
 		if (weekShift is not null)
 		{
@@ -134,7 +134,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			db.SfoWeekPlanShifts.Add(weekShift);
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return Ok(new SfoWeekPlanShiftDto(
 			weekShift.Id,
@@ -147,12 +147,12 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			weekShift.Beskrivelse));
 	}
 
-	private async Task<Guid?> GetOrCreateWeekPlanId(int isoYear, int isoWeek, CancellationToken ct)
+	private async Task<Guid?> GetOrCreateWeekPlanId(int isoYear, int isoWeek, CancellationToken cancellationToken)
 	{
 		var id = await db.SfoWeekPlans
 			.Where(w => w.IsoYear == isoYear && w.IsoWeek == isoWeek)
 			.Select(w => (Guid?)w.Id)
-			.FirstOrDefaultAsync(ct);
+			.FirstOrDefaultAsync(cancellationToken);
 
 		if (id is not null)
 		{
@@ -167,12 +167,12 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 			IsoWeek = isoWeek,
 		});
 
-		try { await db.SaveChangesAsync(ct); }
+		try { await db.SaveChangesAsync(cancellationToken); }
 		catch (DbUpdateException) { db.ChangeTracker.Clear(); }
 
 		return await db.SfoWeekPlans
 			.Where(w => w.IsoYear == isoYear && w.IsoWeek == isoWeek)
 			.Select(w => (Guid?)w.Id)
-			.FirstOrDefaultAsync(ct);
+			.FirstOrDefaultAsync(cancellationToken);
 	}
 }

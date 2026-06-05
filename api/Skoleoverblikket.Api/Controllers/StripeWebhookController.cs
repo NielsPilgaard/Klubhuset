@@ -17,14 +17,14 @@ public sealed partial class StripeWebhookController(
 	[HttpPost]
 	[AllowAnonymous]
 	[DisableRequestSizeLimit]
-	public async Task<IActionResult> Handle(CancellationToken ct)
+	public async Task<IActionResult> Handle(CancellationToken cancellationToken)
 	{
 		LogWebhookReceived(logger, HttpContext.Connection.RemoteIpAddress);
 
 		string json;
 		using (var reader = new StreamReader(Request.Body, leaveOpen: true))
 		{
-			json = await reader.ReadToEndAsync(ct);
+			json = await reader.ReadToEndAsync(cancellationToken);
 		}
 
 		LogPayloadSize(logger, json.Length);
@@ -55,7 +55,7 @@ public sealed partial class StripeWebhookController(
 
 		try
 		{
-			await subscriptionService.HandleWebhookAsync(stripeEvent, ct);
+			await subscriptionService.HandleWebhookAsync(stripeEvent, cancellationToken);
 			LogWebhookHandled(logger, stripeEvent.Type, stripeEvent.Id);
 		}
 		catch (Exception ex)

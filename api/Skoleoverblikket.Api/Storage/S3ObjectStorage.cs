@@ -9,7 +9,7 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 {
 	private readonly S3Options _options = opts.Value;
 
-	public async Task UploadAsync(string key, string contentType, Stream content, CancellationToken ct = default)
+	public async Task UploadAsync(string key, string contentType, Stream content, CancellationToken cancellationToken = default)
 	{
 		var request = new PutObjectRequest
 		{
@@ -20,10 +20,10 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 			CannedACL = S3CannedACL.NoACL,
 		};
 
-		await s3.PutObjectAsync(request, ct);
+		await s3.PutObjectAsync(request, cancellationToken);
 	}
 
-	public async Task<string> UploadPublicAsync(string key, string contentType, Stream content, CancellationToken ct = default)
+	public async Task<string> UploadPublicAsync(string key, string contentType, Stream content, CancellationToken cancellationToken = default)
 	{
 		var request = new PutObjectRequest
 		{
@@ -34,13 +34,13 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 			CannedACL = S3CannedACL.PublicRead,
 		};
 
-		await s3.PutObjectAsync(request, ct);
+		await s3.PutObjectAsync(request, cancellationToken);
 
 		return BuildPublicUrl(key);
 	}
 
 	public Task<(string UploadUrl, string PublicUrl)> GeneratePresignedUploadUrlAsync(
-		string key, string contentType, long contentLength, TimeSpan expiry, CancellationToken ct = default)
+		string key, string contentType, long contentLength, TimeSpan expiry, CancellationToken cancellationToken = default)
 	{
 		var request = new GetPreSignedUrlRequest
 		{
@@ -57,9 +57,9 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 		return Task.FromResult((uploadUrl, publicUrl));
 	}
 
-	public async Task DeleteAsync(string key, CancellationToken ct = default)
+	public async Task DeleteAsync(string key, CancellationToken cancellationToken = default)
 	{
-		await s3.DeleteObjectAsync(_options.DefaultBucketName, key, ct);
+		await s3.DeleteObjectAsync(_options.DefaultBucketName, key, cancellationToken);
 	}
 
 	public string? GetKeyFromPublicUrl(string publicUrl)

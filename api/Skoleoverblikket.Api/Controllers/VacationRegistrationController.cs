@@ -68,7 +68,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 
 	[HttpGet]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<IReadOnlyList<WindowDto>>> GetWindows(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<WindowDto>>> GetWindows(CancellationToken cancellationToken)
 	{
 		var windows = await db.VacationRegistrationWindows
 			.AsNoTracking()
@@ -76,14 +76,14 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 			.Select(w => new WindowDto(
 				w.Id, w.Title, w.RegistrationDeadline, w.CareStartDate, w.CareEndDate,
 				w.Granularity, w.IsOpen, w.Entries.Count, w.CreatedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(windows);
 	}
 
 	[HttpPost]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<IActionResult> CreateWindow([FromBody] CreateWindowRequest req, CancellationToken ct)
+	public async Task<IActionResult> CreateWindow([FromBody] CreateWindowRequest req, CancellationToken cancellationToken)
 	{
 		var window = new VacationRegistrationWindow
 		{
@@ -97,11 +97,11 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		};
 
 		db.VacationRegistrationWindows.Add(window);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		if (req.IsOpen)
 		{
-			await NotifyAllParentsAsync(window, ct);
+			await NotifyAllParentsAsync(window, cancellationToken);
 		}
 
 		return CreatedAtAction(nameof(GetWindows), new { }, null);
@@ -109,10 +109,10 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 
 	[HttpPut("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<IActionResult> UpdateWindow(Guid id, [FromBody] UpdateWindowRequest req, CancellationToken ct)
+	public async Task<IActionResult> UpdateWindow(Guid id, [FromBody] UpdateWindowRequest req, CancellationToken cancellationToken)
 	{
 		var window = await db.VacationRegistrationWindows
-			.FirstOrDefaultAsync(w => w.Id == id, ct);
+			.FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
 
 		if (window is null)
 		{
@@ -128,11 +128,11 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		window.Granularity = req.Granularity;
 		window.IsOpen = req.IsOpen;
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		if (!wasOpen && req.IsOpen)
 		{
-			await NotifyAllParentsAsync(window, ct);
+			await NotifyAllParentsAsync(window, cancellationToken);
 		}
 
 		return NoContent();
@@ -140,10 +140,10 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<IActionResult> DeleteWindow(Guid id, CancellationToken ct)
+	public async Task<IActionResult> DeleteWindow(Guid id, CancellationToken cancellationToken)
 	{
 		var window = await db.VacationRegistrationWindows
-			.FirstOrDefaultAsync(w => w.Id == id, ct);
+			.FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
 
 		if (window is null)
 		{
@@ -151,17 +151,17 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		}
 
 		db.VacationRegistrationWindows.Remove(window);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}
 
 	[HttpGet("{id:guid}/entries")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<IReadOnlyList<EntryDto>>> GetEntries(Guid id, CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<EntryDto>>> GetEntries(Guid id, CancellationToken cancellationToken)
 	{
 		var windowExists = await db.VacationRegistrationWindows
-			.AnyAsync(w => w.Id == id, ct);
+			.AnyAsync(w => w.Id == id, cancellationToken);
 
 		if (!windowExists)
 		{
@@ -185,7 +185,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 				e.Note,
 				e.SubmittedAt,
 				e.UpdatedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(entries);
 	}
@@ -194,7 +194,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 
 	[HttpGet("open")]
 	[Authorize(Roles = Roles.Parent)]
-	public async Task<ActionResult<IReadOnlyList<WindowDto>>> GetOpenWindows(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<WindowDto>>> GetOpenWindows(CancellationToken cancellationToken)
 	{
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -205,21 +205,21 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 			.Select(w => new WindowDto(
 				w.Id, w.Title, w.RegistrationDeadline, w.CareStartDate, w.CareEndDate,
 				w.Granularity, w.IsOpen, w.Entries.Count, w.CreatedAt))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(windows);
 	}
 
 	[HttpGet("{id:guid}/my-entries")]
 	[Authorize(Roles = Roles.Parent)]
-	public async Task<ActionResult<IReadOnlyList<MyEntryDto>>> GetMyEntries(Guid id, CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<MyEntryDto>>> GetMyEntries(Guid id, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
 			.AsNoTracking()
 			.Include(p => p.Students)
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -227,7 +227,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		}
 
 		var windowExists = await db.VacationRegistrationWindows
-			.AnyAsync(w => w.Id == id, ct);
+			.AnyAsync(w => w.Id == id, cancellationToken);
 
 		if (!windowExists)
 		{
@@ -239,7 +239,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		var existingEntries = await db.VacationRegistrationEntries
 			.AsNoTracking()
 			.Where(e => e.WindowId == id && studentIds.Contains(e.StudentId))
-			.ToDictionaryAsync(e => e.StudentId, ct);
+			.ToDictionaryAsync(e => e.StudentId, cancellationToken);
 
 		var result = parent.Students
 			.OrderBy(s => s.Name)
@@ -262,14 +262,14 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 
 	[HttpPut("{id:guid}/entries/{studentId:guid}")]
 	[Authorize(Roles = Roles.Parent)]
-	public async Task<IActionResult> UpsertEntry(Guid id, Guid studentId, [FromBody] UpsertEntryRequest req, CancellationToken ct)
+	public async Task<IActionResult> UpsertEntry(Guid id, Guid studentId, [FromBody] UpsertEntryRequest req, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
 			.AsNoTracking()
 			.Include(p => p.Students)
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -284,7 +284,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
 		var window = await db.VacationRegistrationWindows
-			.FirstOrDefaultAsync(w => w.Id == id, ct);
+			.FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
 
 		if (window is null)
 		{
@@ -300,7 +300,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		}
 
 		var entry = await db.VacationRegistrationEntries
-			.FirstOrDefaultAsync(e => e.WindowId == id && e.StudentId == studentId, ct);
+			.FirstOrDefaultAsync(e => e.WindowId == id && e.StudentId == studentId, cancellationToken);
 
 		var selectedDates = string.Join(',', req.SelectedDates);
 
@@ -324,21 +324,21 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 			entry.UpdatedAt = DateTimeOffset.UtcNow;
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}
 
 	[HttpDelete("{id:guid}/entries/{studentId:guid}")]
 	[Authorize(Roles = Roles.Parent)]
-	public async Task<IActionResult> DeleteEntry(Guid id, Guid studentId, CancellationToken ct)
+	public async Task<IActionResult> DeleteEntry(Guid id, Guid studentId, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
 		var parent = await db.Parents
 			.AsNoTracking()
 			.Include(p => p.Students)
-			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(p => p.KeycloakSubject == subject, cancellationToken);
 
 		if (parent is null)
 		{
@@ -354,7 +354,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 
 		var window = await db.VacationRegistrationWindows
 			.AsNoTracking()
-			.FirstOrDefaultAsync(w => w.Id == id, ct);
+			.FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
 
 		if (window is null)
 		{
@@ -370,7 +370,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		}
 
 		var entry = await db.VacationRegistrationEntries
-			.FirstOrDefaultAsync(e => e.WindowId == id && e.StudentId == studentId, ct);
+			.FirstOrDefaultAsync(e => e.WindowId == id && e.StudentId == studentId, cancellationToken);
 
 		if (entry is null)
 		{
@@ -378,16 +378,16 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 		}
 
 		db.VacationRegistrationEntries.Remove(entry);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
-	private async Task NotifyAllParentsAsync(VacationRegistrationWindow window, CancellationToken ct)
+	private async Task NotifyAllParentsAsync(VacationRegistrationWindow window, CancellationToken cancellationToken)
 	{
-		var allParents = await db.Parents.AsNoTracking().ToListAsync(ct);
+		var allParents = await db.Parents.AsNoTracking().ToListAsync(cancellationToken);
 
 		foreach (var parent in allParents)
 		{
@@ -397,7 +397,7 @@ public sealed class VacationRegistrationController(AppDbContext db, ITenantConte
 				NotificationType.VacationRegistrationOpened,
 				window.Id,
 				$"Ferietilmelding åben: {window.Title}. Frist: {window.RegistrationDeadline:d. MMMM}.",
-				ct);
+				cancellationToken);
 		}
 	}
 }

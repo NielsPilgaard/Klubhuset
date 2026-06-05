@@ -20,7 +20,7 @@ public sealed class StaffInvitationService(
 {
 	private static readonly TimeSpan InvitationValidity = TimeSpan.FromDays(14);
 
-	public async Task<StaffInvitation> CreateAndSendAsync(Staff staff, CancellationToken ct)
+	public async Task<StaffInvitation> CreateAndSendAsync(Staff staff, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrWhiteSpace(staff.Email))
 		{
@@ -30,7 +30,7 @@ public sealed class StaffInvitationService(
 		// Expire any existing pending invitations for this staff member
 		var existing = await db.StaffInvitations
 							   .Where(i => i.StaffId == staff.Id && i.AcceptedAt == null)
-							   .ToListAsync(ct);
+							   .ToListAsync(cancellationToken);
 
 		db.StaffInvitations.RemoveRange(existing);
 
@@ -46,7 +46,7 @@ public sealed class StaffInvitationService(
 		};
 
 		db.StaffInvitations.Add(invitation);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		// Create a Keycloak account for the invited user if one doesn't exist yet.
 		// A temporary password is set so the user can log in; UPDATE_PASSWORD required action
@@ -60,9 +60,9 @@ public sealed class StaffInvitationService(
 				var nameParts = staff.Name.Split(' ', 2);
 				var firstName = nameParts[0];
 				var lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
-				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, temporaryPassword, tenant.TenantId, ct);
+				var keycloakSubject = await keycloakAdmin.CreateStaffUserAsync(staff.Email, firstName, lastName, temporaryPassword, tenant.TenantId, cancellationToken);
 				staff.KeycloakSubject = keycloakSubject;
-				await db.SaveChangesAsync(ct);
+				await db.SaveChangesAsync(cancellationToken);
 			}
 			catch (KeycloakException ex)
 			{
@@ -75,7 +75,7 @@ public sealed class StaffInvitationService(
 							 .IgnoreQueryFilters()
 							 .Where(s => s.Id == tenant.TenantId)
 							 .Select(s => s.Name)
-							 .FirstOrDefaultAsync(ct) ??
+							 .FirstOrDefaultAsync(cancellationToken) ??
 					 "Skoleoverblikket";
 
 		var link = $"{appOptions.Value.SanitizedBaseUrl}/invitation/{token}";
@@ -86,36 +86,36 @@ public sealed class StaffInvitationService(
 								  HtmlBody: BuildHtmlEmail(staff.Name, school, link, temporaryPassword),
 								  PlainTextBody: BuildPlainEmail(staff.Name, school, link, temporaryPassword)
 							  ),
-							  ct);
+							  cancellationToken);
 
 		return invitation;
 	}
 
-	public async Task<StaffInvitation?> FindValidAsync(string token, CancellationToken ct) =>
+	public async Task<StaffInvitation?> FindValidAsync(string token, CancellationToken cancellationToken) =>
 		await db.StaffInvitations
 				.IgnoreQueryFilters()
 				.Include(i => i.Staff)
 				.FirstOrDefaultAsync(
 					i => i.Token == token && i.AcceptedAt == null && i.ExpiresAt > DateTimeOffset.UtcNow,
-					ct);
+					cancellationToken);
 
-	public async Task MarkAcceptedAsync(StaffInvitation invitation, string keycloakSubject, CancellationToken ct)
+	public async Task MarkAcceptedAsync(StaffInvitation invitation, string keycloakSubject, CancellationToken cancellationToken)
 	{
 		try
 		{
 			invitation.AcceptedAt = DateTimeOffset.UtcNow;
 			var staff = await db.Staff
 								.IgnoreQueryFilters()
-								.FirstAsync(s => s.Id == invitation.StaffId, ct);
+								.FirstAsync(s => s.Id == invitation.StaffId, cancellationToken);
 
 			staff.KeycloakSubject = keycloakSubject;
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 		catch (DbUpdateConcurrencyException)
 		{
 			// Another request has already accepted this invitation
 			// Refresh the entity and check if it's already accepted
-			await db.Entry(invitation).ReloadAsync(ct);
+			await db.Entry(invitation).ReloadAsync(cancellationToken);
 			if (invitation.AcceptedAt != null)
 			{
 				// Invitation was already accepted, which is fine

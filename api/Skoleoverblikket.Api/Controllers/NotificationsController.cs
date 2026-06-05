@@ -24,9 +24,9 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 
 	/// <summary>Returns the last 50 notifications for the authenticated caller, newest first.</summary>
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyList<NotificationDto>>> GetNotifications(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<NotificationDto>>> GetNotifications(CancellationToken cancellationToken)
 	{
-		var (recipientId, recipientType) = await ResolveCallerAsync(ct);
+		var (recipientId, recipientType) = await ResolveCallerAsync(cancellationToken);
 		if (recipientId is null)
 		{
 			return Ok(Array.Empty<NotificationDto>());
@@ -38,23 +38,23 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 			.OrderByDescending(n => n.CreatedAt)
 			.Take(50)
 			.Select(n => new NotificationDto(n.Id, n.Type, n.Body, n.CreatedAt, n.ReadAt, n.ReferenceId))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(notifications);
 	}
 
 	/// <summary>Marks a single notification as read.</summary>
 	[HttpPost("{id:guid}/read")]
-	public async Task<IActionResult> MarkRead(Guid id, CancellationToken ct)
+	public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
 	{
-		var (recipientId, recipientType) = await ResolveCallerAsync(ct);
+		var (recipientId, recipientType) = await ResolveCallerAsync(cancellationToken);
 		if (recipientId is null)
 		{
 			return Forbid();
 		}
 
 		var notification = await db.Notifications
-			.FirstOrDefaultAsync(n => n.Id == id && n.RecipientId == recipientId.Value && n.RecipientType == recipientType, ct);
+			.FirstOrDefaultAsync(n => n.Id == id && n.RecipientId == recipientId.Value && n.RecipientType == recipientType, cancellationToken);
 
 		if (notification is null)
 		{
@@ -64,7 +64,7 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 		if (notification.ReadAt is null)
 		{
 			notification.ReadAt = DateTimeOffset.UtcNow;
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		return NoContent();
@@ -72,9 +72,9 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 
 	/// <summary>Marks all unread notifications for the caller as read.</summary>
 	[HttpPost("read-all")]
-	public async Task<IActionResult> MarkAllRead(CancellationToken ct)
+	public async Task<IActionResult> MarkAllRead(CancellationToken cancellationToken)
 	{
-		var (recipientId, recipientType) = await ResolveCallerAsync(ct);
+		var (recipientId, recipientType) = await ResolveCallerAsync(cancellationToken);
 		if (recipientId is null)
 		{
 			return Forbid();
@@ -82,7 +82,7 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 
 		var unread = await db.Notifications
 			.Where(n => n.RecipientId == recipientId.Value && n.RecipientType == recipientType && n.ReadAt == null)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var now = DateTimeOffset.UtcNow;
 		foreach (var n in unread)
@@ -92,13 +92,13 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 
 		if (unread.Count > 0)
 		{
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		return NoContent();
 	}
 
-	private async Task<(Guid? recipientId, RecipientType recipientType)> ResolveCallerAsync(CancellationToken ct)
+	private async Task<(Guid? recipientId, RecipientType recipientType)> ResolveCallerAsync(CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 		if (subject is null)
@@ -112,7 +112,7 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 				.AsNoTracking()
 				.Where(p => p.KeycloakSubject == subject)
 				.Select(p => (Guid?)p.Id)
-				.FirstOrDefaultAsync(ct);
+				.FirstOrDefaultAsync(cancellationToken);
 			return (parentId, RecipientType.Parent);
 		}
 		else
@@ -121,7 +121,7 @@ public sealed class NotificationsController(AppDbContext db) : ControllerBase
 				.AsNoTracking()
 				.Where(s => s.KeycloakSubject == subject)
 				.Select(s => (Guid?)s.Id)
-				.FirstOrDefaultAsync(ct);
+				.FirstOrDefaultAsync(cancellationToken);
 			return (staffId, RecipientType.Staff);
 		}
 	}
@@ -137,9 +137,9 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 
 	/// <summary>Returns all notification preferences for the caller.</summary>
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyList<NotificationPreferenceDto>>> GetPreferences(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<NotificationPreferenceDto>>> GetPreferences(CancellationToken cancellationToken)
 	{
-		var (userId, userType) = await ResolveCallerAsync(ct);
+		var (userId, userType) = await ResolveCallerAsync(cancellationToken);
 		if (userId is null)
 		{
 			return Ok(Array.Empty<NotificationPreferenceDto>());
@@ -149,7 +149,7 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 			.AsNoTracking()
 			.Where(p => p.UserId == userId.Value && p.UserType == userType)
 			.Select(p => new NotificationPreferenceDto(p.Type, p.InApp, p.Email))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(prefs);
 	}
@@ -157,14 +157,14 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 	/// <summary>Replaces all notification preferences for the caller with the provided list.</summary>
 	[HttpPut]
 	public async Task<IActionResult> UpsertPreferences(
-		[FromBody] IReadOnlyList<UpsertPreferenceItem> items, CancellationToken ct)
+		[FromBody] IReadOnlyList<UpsertPreferenceItem> items, CancellationToken cancellationToken)
 	{
 		if (items.GroupBy(i => i.Type).Any(g => g.Count() > 1))
 		{
 			return BadRequest(new { detail = "Duplicate notification types are not allowed." });
 		}
 
-		var (userId, userType) = await ResolveCallerAsync(ct);
+		var (userId, userType) = await ResolveCallerAsync(cancellationToken);
 		if (userId is null)
 		{
 			return Forbid();
@@ -173,7 +173,7 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 		// Delete existing, insert new batch
 		var existing = await db.NotificationPreferences
 			.Where(p => p.UserId == userId.Value && p.UserType == userType)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 		db.NotificationPreferences.RemoveRange(existing);
 
 		foreach (var item in items)
@@ -190,11 +190,11 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 			});
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
-	private async Task<(Guid? userId, RecipientType userType)> ResolveCallerAsync(CancellationToken ct)
+	private async Task<(Guid? userId, RecipientType userType)> ResolveCallerAsync(CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 		if (subject is null)
@@ -208,7 +208,7 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 				.AsNoTracking()
 				.Where(p => p.KeycloakSubject == subject)
 				.Select(p => (Guid?)p.Id)
-				.FirstOrDefaultAsync(ct);
+				.FirstOrDefaultAsync(cancellationToken);
 			return (parentId, RecipientType.Parent);
 		}
 		else
@@ -217,7 +217,7 @@ public sealed class NotificationPreferencesController(AppDbContext db, ITenantCo
 				.AsNoTracking()
 				.Where(s => s.KeycloakSubject == subject)
 				.Select(s => (Guid?)s.Id)
-				.FirstOrDefaultAsync(ct);
+				.FirstOrDefaultAsync(cancellationToken);
 			return (staffId, RecipientType.Staff);
 		}
 	}

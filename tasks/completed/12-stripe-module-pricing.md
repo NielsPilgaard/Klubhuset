@@ -106,9 +106,9 @@ Inject `SubscriptionItemService` via constructor.
 **Add `AddModuleAsync`:**
 
 ```csharp
-public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 {
-    var sub = await GetOrCreateAsync(schoolId, ct);
+    var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 
     if (sub.StripeSubscriptionId is null)
         throw new InvalidOperationException("School does not have an active Stripe subscription.");
@@ -117,7 +117,7 @@ public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, Cance
         throw new InvalidOperationException($"No Stripe price configured for module {module}.");
 
     var alreadyActive = await db.SubscriptionModuleItems
-        .AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, ct);
+        .AnyAsync(m => m.SubscriptionId == sub.Id && m.Module == module, cancellationToken);
     if (alreadyActive) return;
 
     var item = await subscriptionItemService.CreateAsync(new SubscriptionItemCreateOptions
@@ -125,7 +125,7 @@ public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, Cance
         Subscription = sub.StripeSubscriptionId,
         Price = priceId,
         Quantity = 1,
-    }, cancellationToken: ct);
+    }, cancellationToken: cancellationToken);
 
     db.SubscriptionModuleItems.Add(new SubscriptionModuleItem
     {
@@ -135,26 +135,26 @@ public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, Cance
         StripeSubscriptionItemId = item.Id,
         CreatedAt = DateTimeOffset.UtcNow,
     });
-    await db.SaveChangesAsync(ct);
+    await db.SaveChangesAsync(cancellationToken);
 }
 ```
 
 **Add `RemoveModuleAsync`:**
 
 ```csharp
-public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken ct = default)
+public async Task RemoveModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 {
-    var sub = await GetOrCreateAsync(schoolId, ct);
+    var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 
     var moduleItem = await db.SubscriptionModuleItems
-        .FirstOrDefaultAsync(m => m.SubscriptionId == sub.Id && m.Module == module, ct);
+        .FirstOrDefaultAsync(m => m.SubscriptionId == sub.Id && m.Module == module, cancellationToken);
     if (moduleItem is null) return;
 
     await subscriptionItemService.DeleteAsync(moduleItem.StripeSubscriptionItemId,
-        new SubscriptionItemDeleteOptions(), cancellationToken: ct);
+        new SubscriptionItemDeleteOptions(), cancellationToken: cancellationToken);
 
     db.SubscriptionModuleItems.Remove(moduleItem);
-    await db.SaveChangesAsync(ct);
+    await db.SaveChangesAsync(cancellationToken);
 }
 ```
 
@@ -168,13 +168,13 @@ Add three endpoints, all behind `[Authorize(Roles = "admin")]`:
 
 ```csharp
 [HttpGet("modules")]
-public async Task<ActionResult<IEnumerable<SubscriptionModule>>> GetActiveModules(CancellationToken ct)
+public async Task<ActionResult<IEnumerable<SubscriptionModule>>> GetActiveModules(CancellationToken cancellationToken)
 
 [HttpPost("modules")]
-public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken ct)
+public async Task<IActionResult> AddModule([FromBody] ModuleRequest request, CancellationToken cancellationToken)
 
 [HttpDelete("modules/{module}")]
-public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken ct)
+public async Task<IActionResult> RemoveModule(SubscriptionModule module, CancellationToken cancellationToken)
 ```
 
 - `InvalidOperationException` → 400 ProblemDetails

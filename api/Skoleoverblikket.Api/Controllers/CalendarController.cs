@@ -22,7 +22,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 	public record DefaultHolidayDto(string Title, CalendarEntryType Type, DateOnly StartDate, DateOnly EndDate);
 
 	[HttpGet]
-	public async Task<ActionResult<List<CalendarEntryDto>>> GetAll([FromQuery] int? year, CancellationToken ct)
+	public async Task<ActionResult<List<CalendarEntryDto>>> GetAll([FromQuery] int? year, CancellationToken cancellationToken)
 	{
 		var query = db.CalendarEntries.AsNoTracking();
 
@@ -37,7 +37,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 		var rawEntries = await query
 			.OrderBy(e => e.StartDate)
 			.Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var result = new List<CalendarEntryDto>(rawEntries.Count);
 		var filterStart = year.HasValue ? new DateOnly(year.Value, 1, 1) : (DateOnly?)null;
@@ -71,7 +71,7 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 
 	[HttpPost]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<CalendarEntryDto>> Create([FromBody] CreateCalendarEntryRequest req, CancellationToken ct)
+	public async Task<ActionResult<CalendarEntryDto>> Create([FromBody] CreateCalendarEntryRequest req, CancellationToken cancellationToken)
 	{
 		if (req.StartDate > req.EndDate)
 		{
@@ -90,20 +90,20 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 			RecurrenceEnd = req.RecurrenceEnd,
 		};
 		db.CalendarEntries.Add(entry);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return CreatedAtAction(nameof(GetAll), new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
 	}
 
 	[HttpPut("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<CalendarEntryDto>> Update(Guid id, [FromBody] UpdateCalendarEntryRequest req, CancellationToken ct)
+	public async Task<ActionResult<CalendarEntryDto>> Update(Guid id, [FromBody] UpdateCalendarEntryRequest req, CancellationToken cancellationToken)
 	{
 		if (req.StartDate > req.EndDate)
 		{
 			return Problem("StartDate skal være før eller lig EndDate", statusCode: 400);
 		}
 
-		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 		if (entry is null)
 		{
 			return NotFound();
@@ -115,31 +115,31 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 		entry.EndDate = req.EndDate;
 		entry.RecurrenceRule = req.RecurrenceRule;
 		entry.RecurrenceEnd = req.RecurrenceEnd;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return Ok(new CalendarEntryDto(entry.Id, entry.Type, entry.Title, entry.StartDate, entry.EndDate, entry.RecurrenceRule, entry.RecurrenceEnd, entry.ExcludedDates));
 	}
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
-		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 		if (entry is null)
 		{
 			return NotFound();
 		}
 
 		db.CalendarEntries.Remove(entry);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
 	// Exclude a single occurrence of a recurring event (adds date to ExcludedDates).
 	[HttpDelete("{id:guid}/occurrences/{date}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> DeleteOccurrence(Guid id, DateOnly date, CancellationToken ct)
+	public async Task<ActionResult> DeleteOccurrence(Guid id, DateOnly date, CancellationToken cancellationToken)
 	{
-		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 		if (entry is null)
 		{
 			return NotFound();
@@ -155,16 +155,16 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 			.ToHashSet() ?? [];
 		existing.Add(date.ToString("yyyy-MM-dd"));
 		entry.ExcludedDates = string.Join(',', existing.OrderBy(d => d));
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
 	// Truncate a recurring event so it ends before the given date (delete this and all subsequent).
 	[HttpDelete("{id:guid}/from/{date}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> DeleteFrom(Guid id, DateOnly date, CancellationToken ct)
+	public async Task<ActionResult> DeleteFrom(Guid id, DateOnly date, CancellationToken cancellationToken)
 	{
-		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, ct);
+		var entry = await db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 		if (entry is null)
 		{
 			return NotFound();
@@ -195,18 +195,18 @@ public sealed class CalendarController(AppDbContext db, ITenantContext tenant) :
 			}
 		}
 
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
 	[HttpGet("export.ics")]
-	public async Task<IActionResult> ExportIcs(CancellationToken ct)
+	public async Task<IActionResult> ExportIcs(CancellationToken cancellationToken)
 	{
 		var entries = await db.CalendarEntries
 			.AsNoTracking()
 			.OrderBy(e => e.StartDate)
 			.Select(e => new CalendarEntryDto(e.Id, e.Type, e.Title, e.StartDate, e.EndDate, e.RecurrenceRule, e.RecurrenceEnd, e.ExcludedDates))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var bytes = IcsBuilder.Build(entries);
 		Response.Headers.Append("Content-Disposition", "attachment; filename=\"skoleoverblikket-kalender.ics\"");

@@ -51,7 +51,7 @@ public sealed class MessagesController(
 		RecipientType Type,
 		string? AvatarUrl);
 
-	private async Task<(Guid Id, string Name, RecipientType Type)?> ResolveCallerAsync(CancellationToken ct)
+	private async Task<(Guid Id, string Name, RecipientType Type)?> ResolveCallerAsync(CancellationToken cancellationToken)
 	{
 		var sub = User.GetKeycloakSubject();
 
@@ -59,7 +59,7 @@ public sealed class MessagesController(
 		{
 			var parent = await db.Parents
 				.AsNoTracking()
-				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, ct);
+				.FirstOrDefaultAsync(p => p.KeycloakSubject == sub, cancellationToken);
 
 			return parent is null
 				? null
@@ -68,7 +68,7 @@ public sealed class MessagesController(
 
 		var staff = await db.Staff
 			.AsNoTracking()
-			.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, ct);
+			.FirstOrDefaultAsync(s => s.KeycloakSubject == sub, cancellationToken);
 
 		return staff is null
 			? null
@@ -76,9 +76,9 @@ public sealed class MessagesController(
 	}
 
 	[HttpGet("inbox")]
-	public async Task<ActionResult<IReadOnlyList<InboxMessageDto>>> GetInbox(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<InboxMessageDto>>> GetInbox(CancellationToken cancellationToken)
 	{
-		var caller = await ResolveCallerAsync(ct);
+		var caller = await ResolveCallerAsync(cancellationToken);
 		if (caller is null)
 		{
 			return Forbid();
@@ -91,7 +91,7 @@ public sealed class MessagesController(
 			.Where(m => m.RecipientId == callerId)
 			.OrderByDescending(m => m.SentAt)
 			.Take(50)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var parentIds = messages.Where(m => m.SenderType == RecipientType.Parent).Select(m => m.SenderId).Distinct().ToList();
 		var staffIds = messages.Where(m => m.SenderType == RecipientType.Staff).Select(m => m.SenderId).Distinct().ToList();
@@ -99,12 +99,12 @@ public sealed class MessagesController(
 		var parents = await db.Parents.AsNoTracking()
 			.Where(p => parentIds.Contains(p.Id))
 			.Select(p => new { p.Id, p.Name })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var staffMembers = await db.Staff.AsNoTracking()
 			.Where(s => staffIds.Contains(s.Id))
 			.Select(s => new { s.Id, s.Name })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var parentMap = parents.ToDictionary(p => p.Id, p => p.Name);
 		var staffMap = staffMembers.ToDictionary(s => s.Id, s => s.Name);
@@ -121,9 +121,9 @@ public sealed class MessagesController(
 	}
 
 	[HttpGet("sent")]
-	public async Task<ActionResult<IReadOnlyList<SentMessageDto>>> GetSent(CancellationToken ct)
+	public async Task<ActionResult<IReadOnlyList<SentMessageDto>>> GetSent(CancellationToken cancellationToken)
 	{
-		var caller = await ResolveCallerAsync(ct);
+		var caller = await ResolveCallerAsync(cancellationToken);
 		if (caller is null)
 		{
 			return Forbid();
@@ -136,7 +136,7 @@ public sealed class MessagesController(
 			.Where(m => m.SenderId == callerId)
 			.OrderByDescending(m => m.SentAt)
 			.Take(50)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var parentIds = messages.Where(m => m.RecipientType == RecipientType.Parent).Select(m => m.RecipientId).Distinct().ToList();
 		var staffIds = messages.Where(m => m.RecipientType == RecipientType.Staff).Select(m => m.RecipientId).Distinct().ToList();
@@ -144,12 +144,12 @@ public sealed class MessagesController(
 		var parents = await db.Parents.AsNoTracking()
 			.Where(p => parentIds.Contains(p.Id))
 			.Select(p => new { p.Id, p.Name })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var staffMembers = await db.Staff.AsNoTracking()
 			.Where(s => staffIds.Contains(s.Id))
 			.Select(s => new { s.Id, s.Name })
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		var parentMap = parents.ToDictionary(p => p.Id, p => p.Name);
 		var staffMap = staffMembers.ToDictionary(s => s.Id, s => s.Name);
@@ -168,9 +168,9 @@ public sealed class MessagesController(
 	[HttpPost]
 	public async Task<IActionResult> SendMessage(
 		[FromBody] SendMessageRequest req,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
-		var caller = await ResolveCallerAsync(ct);
+		var caller = await ResolveCallerAsync(cancellationToken);
 		if (caller is null)
 		{
 			return Forbid();
@@ -181,7 +181,7 @@ public sealed class MessagesController(
 		if (callerType == RecipientType.Parent && req.RecipientType == RecipientType.Parent)
 		{
 			var recipientConsents = await db.Parents
-				.AnyAsync(p => p.Id == req.RecipientId && p.ShareContactInfo, ct);
+				.AnyAsync(p => p.Id == req.RecipientId && p.ShareContactInfo, cancellationToken);
 
 			if (!recipientConsents)
 			{
@@ -203,7 +203,7 @@ public sealed class MessagesController(
 		};
 
 		db.Messages.Add(message);
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		await notificationService.CreateAsync(
 			req.RecipientId,
@@ -211,15 +211,15 @@ public sealed class MessagesController(
 			NotificationType.NewMessage,
 			message.Id,
 			$"{callerName} har sendt dig en besked: {req.Subject}",
-			ct);
+			cancellationToken);
 
 		return Created(string.Empty, new { message.Id });
 	}
 
 	[HttpPost("{id:guid}/read")]
-	public async Task<IActionResult> MarkRead(Guid id, CancellationToken ct)
+	public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
 	{
-		var caller = await ResolveCallerAsync(ct);
+		var caller = await ResolveCallerAsync(cancellationToken);
 		if (caller is null)
 		{
 			return Forbid();
@@ -228,7 +228,7 @@ public sealed class MessagesController(
 		var (callerId, _, _) = caller.Value;
 
 		var message = await db.Messages
-			.FirstOrDefaultAsync(m => m.Id == id && m.RecipientId == callerId, ct);
+			.FirstOrDefaultAsync(m => m.Id == id && m.RecipientId == callerId, cancellationToken);
 
 		if (message is null)
 		{
@@ -238,7 +238,7 @@ public sealed class MessagesController(
 		if (message.ReadAt is null)
 		{
 			message.ReadAt = DateTimeOffset.UtcNow;
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		return NoContent();
@@ -247,9 +247,9 @@ public sealed class MessagesController(
 	[HttpGet("recipients")]
 	public async Task<ActionResult<IReadOnlyList<RecipientDto>>> GetRecipients(
 		[FromQuery] string q = "",
-		CancellationToken ct = default)
+		CancellationToken cancellationToken = default)
 	{
-		var caller = await ResolveCallerAsync(ct);
+		var caller = await ResolveCallerAsync(cancellationToken);
 		if (caller is null)
 		{
 			return Forbid();
@@ -262,7 +262,7 @@ public sealed class MessagesController(
 			cacheKey,
 			async token => await BuildAllRecipientsAsync(callerId, callerType, token),
 			options => options.SetDuration(TimeSpan.FromSeconds(30)),
-			ct);
+			cancellationToken);
 
 		var filtered = string.IsNullOrEmpty(q)
 			? all
@@ -274,26 +274,26 @@ public sealed class MessagesController(
 	private async Task<List<RecipientDto>> BuildAllRecipientsAsync(
 		Guid callerId,
 		RecipientType callerType,
-		CancellationToken ct)
+		CancellationToken cancellationToken)
 	{
 		var results = new List<RecipientDto>();
 
 		if (callerType == RecipientType.Parent)
 		{
-			var staff = await db.Staff.AsNoTracking().ToListAsync(ct);
+			var staff = await db.Staff.AsNoTracking().ToListAsync(cancellationToken);
 			results.AddRange(staff.Select(s => new RecipientDto(s.Id, s.Name, RecipientType.Staff, s.AvatarUrl)));
 
 			var parents = await db.Parents.AsNoTracking()
 				.Where(p => p.ShareContactInfo && p.Id != callerId)
-				.ToListAsync(ct);
+				.ToListAsync(cancellationToken);
 			results.AddRange(parents.Select(p => new RecipientDto(p.Id, p.Name, RecipientType.Parent, p.AvatarUrl)));
 		}
 		else
 		{
-			var parents = await db.Parents.AsNoTracking().ToListAsync(ct);
+			var parents = await db.Parents.AsNoTracking().ToListAsync(cancellationToken);
 			results.AddRange(parents.Select(p => new RecipientDto(p.Id, p.Name, RecipientType.Parent, p.AvatarUrl)));
 
-			var staff = await db.Staff.AsNoTracking().ToListAsync(ct);
+			var staff = await db.Staff.AsNoTracking().ToListAsync(cancellationToken);
 			results.AddRange(staff.Select(s => new RecipientDto(s.Id, s.Name, RecipientType.Staff, s.AvatarUrl)));
 		}
 

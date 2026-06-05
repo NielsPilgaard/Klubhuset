@@ -23,7 +23,7 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		[StringLength(200)] string? Label);
 
 	[HttpGet]
-	public async Task<ActionResult<List<SfoShiftDto>>> GetAll(CancellationToken ct)
+	public async Task<ActionResult<List<SfoShiftDto>>> GetAll(CancellationToken cancellationToken)
 	{
 		var shifts = await context.SfoShifts
 			.AsNoTracking()
@@ -31,25 +31,25 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 				.ThenInclude(sa => sa.Staff)
 			.OrderBy(s => s.DayOfWeek)
 			.ThenBy(s => s.StartTime)
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 
 		return Ok(shifts.Select(ToDto).ToList());
 	}
 
 	[HttpGet("{id:guid}")]
-	public async Task<ActionResult<SfoShiftDto>> GetById(Guid id, CancellationToken ct)
+	public async Task<ActionResult<SfoShiftDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
 		var shift = await context.SfoShifts
 			.AsNoTracking()
 			.Include(s => s.StaffAssignments)
 				.ThenInclude(sa => sa.Staff)
-			.FirstOrDefaultAsync(s => s.Id == id, ct);
+			.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
 		return shift is null ? NotFound() : Ok(ToDto(shift));
 	}
 
 	[HttpPost]
-	public async Task<ActionResult<SfoShiftDto>> Create([FromBody] UpsertSfoShiftRequest req, CancellationToken ct)
+	public async Task<ActionResult<SfoShiftDto>> Create([FromBody] UpsertSfoShiftRequest req, CancellationToken cancellationToken)
 	{
 		if (!TryParseTime(req.StartTime, out var start) || !TryParseTime(req.EndTime, out var end))
 		{
@@ -74,13 +74,13 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		};
 
 		context.SfoShifts.Add(shift);
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 
 		return CreatedAtAction(nameof(GetById), new { id = shift.Id }, ToDto(shift));
 	}
 
 	[HttpPut("{id:guid}")]
-	public async Task<ActionResult<SfoShiftDto>> Update(Guid id, [FromBody] UpsertSfoShiftRequest req, CancellationToken ct)
+	public async Task<ActionResult<SfoShiftDto>> Update(Guid id, [FromBody] UpsertSfoShiftRequest req, CancellationToken cancellationToken)
 	{
 		if (!TryParseTime(req.StartTime, out var start) || !TryParseTime(req.EndTime, out var end))
 		{
@@ -97,7 +97,7 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		var shift = await context.SfoShifts
 			.Include(s => s.StaffAssignments)
 				.ThenInclude(sa => sa.Staff)
-			.FirstOrDefaultAsync(s => s.Id == id, ct);
+			.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
 		if (shift is null)
 		{
@@ -109,42 +109,42 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		shift.EndTime = end;
 		shift.Label = req.Label;
 
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 
 		return Ok(ToDto(shift));
 	}
 
 	[HttpDelete("{id:guid}")]
-	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
-		var shift = await context.SfoShifts.FirstOrDefaultAsync(s => s.Id == id, ct);
+		var shift = await context.SfoShifts.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 		if (shift is null)
 		{
 			return NotFound();
 		}
 
 		context.SfoShifts.Remove(shift);
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}
 
 	[HttpPost("{id:guid}/staff/{staffId:guid}")]
-	public async Task<ActionResult> AssignStaff(Guid id, Guid staffId, CancellationToken ct)
+	public async Task<ActionResult> AssignStaff(Guid id, Guid staffId, CancellationToken cancellationToken)
 	{
-		var shift = await context.SfoShifts.FirstOrDefaultAsync(s => s.Id == id, ct);
+		var shift = await context.SfoShifts.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 		if (shift is null)
 		{
 			return NotFound();
 		}
 
-		var staffExists = await context.Staff.AnyAsync(s => s.Id == staffId, ct);
+		var staffExists = await context.Staff.AnyAsync(s => s.Id == staffId, cancellationToken);
 		if (!staffExists)
 		{
 			return NotFound();
 		}
 
-		var already = await context.SfoShiftStaff.AnyAsync(ss => ss.ShiftId == id && ss.StaffId == staffId, ct);
+		var already = await context.SfoShiftStaff.AnyAsync(ss => ss.ShiftId == id && ss.StaffId == staffId, cancellationToken);
 		if (already)
 		{
 			return Conflict();
@@ -158,15 +158,15 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 			StaffId = staffId,
 		});
 
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 
 	[HttpDelete("{id:guid}/staff/{staffId:guid}")]
-	public async Task<ActionResult> RemoveStaff(Guid id, Guid staffId, CancellationToken ct)
+	public async Task<ActionResult> RemoveStaff(Guid id, Guid staffId, CancellationToken cancellationToken)
 	{
 		var assignment = await context.SfoShiftStaff
-			.FirstOrDefaultAsync(ss => ss.ShiftId == id && ss.StaffId == staffId, ct);
+			.FirstOrDefaultAsync(ss => ss.ShiftId == id && ss.StaffId == staffId, cancellationToken);
 
 		if (assignment is null)
 		{
@@ -174,7 +174,7 @@ public sealed class SfoController(AppDbContext context, ITenantContext tenant) :
 		}
 
 		context.SfoShiftStaff.Remove(assignment);
-		await context.SaveChangesAsync(ct);
+		await context.SaveChangesAsync(cancellationToken);
 		return NoContent();
 	}
 

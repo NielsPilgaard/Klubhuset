@@ -17,7 +17,7 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 
 	[HttpPost("avatar/presign")]
 	public async Task<ActionResult<AvatarPresignResponse>> PresignAvatar(
-		[FromBody] AvatarPresignRequest req, CancellationToken ct)
+		[FromBody] AvatarPresignRequest req, CancellationToken cancellationToken)
 	{
 		if (!IsAllowedImageContentType(req.ContentType))
 		{
@@ -31,7 +31,7 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 
 		var subject = User.GetKeycloakSubject();
 		var staff = await db.Staff.AsNoTracking()
-			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
 
 		if (staff is null)
 		{
@@ -43,7 +43,7 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 		var expiry = TimeSpan.FromMinutes(15);
 
 		var (uploadUrl, _) = await storage.GeneratePresignedUploadUrlAsync(
-			key, req.ContentType, req.FileSizeBytes, expiry, ct);
+			key, req.ContentType, req.FileSizeBytes, expiry, cancellationToken);
 
 		return Ok(new AvatarPresignResponse(uploadUrl, key));
 	}
@@ -52,11 +52,11 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 
 	[HttpPost("avatar/confirm")]
 	public async Task<IActionResult> ConfirmAvatar(
-		[FromBody] AvatarConfirmRequest req, CancellationToken ct)
+		[FromBody] AvatarConfirmRequest req, CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 		var staff = await db.Staff
-			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, ct);
+			.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
 
 		if (staff is null)
 		{
@@ -70,10 +70,10 @@ public sealed class StaffMeController(AppDbContext db, IObjectStorage storage) :
 		}
 
 		var (_, publicUrl) = await storage.GeneratePresignedUploadUrlAsync(
-			req.ObjectKey, "image/jpeg", 1, TimeSpan.FromHours(24 * 365), ct);
+			req.ObjectKey, "image/jpeg", 1, TimeSpan.FromHours(24 * 365), cancellationToken);
 
 		staff.AvatarUrl = publicUrl;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		return NoContent();
 	}

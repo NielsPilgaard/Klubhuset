@@ -19,18 +19,18 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	public record PatchAdminPermissionRequest(bool IsAdmin);
 
 	[HttpGet]
-	public async Task<ActionResult<List<StaffDto>>> GetAll(CancellationToken ct)
+	public async Task<ActionResult<List<StaffDto>>> GetAll(CancellationToken cancellationToken)
 	{
 		var staff = await db.Staff
 			.AsNoTracking()
 			.OrderBy(s => s.Name)
 			.Select(s => new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject))
-			.ToListAsync(ct);
+			.ToListAsync(cancellationToken);
 		return Ok(staff);
 	}
 
 	[HttpGet("me")]
-	public async Task<ActionResult<StaffDto>> GetMe(CancellationToken ct)
+	public async Task<ActionResult<StaffDto>> GetMe(CancellationToken cancellationToken)
 	{
 		var subject = User.GetKeycloakSubject();
 
@@ -43,7 +43,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			.AsNoTracking()
 			.Where(s => s.KeycloakSubject == subject)
 			.Select(s => new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject))
-			.FirstOrDefaultAsync(ct);
+			.FirstOrDefaultAsync(cancellationToken);
 
 		return staff is null
 			? NotFound()
@@ -51,13 +51,13 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	}
 
 	[HttpGet("{id:guid}")]
-	public async Task<ActionResult<StaffDto>> GetById(Guid id, CancellationToken ct)
+	public async Task<ActionResult<StaffDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
 		var staff = await db.Staff
 							.AsNoTracking()
 							.Where(s => s.Id == id)
 							.Select(s => new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject))
-							.FirstOrDefaultAsync(ct);
+							.FirstOrDefaultAsync(cancellationToken);
 
 		return staff is null
 				   ? NotFound()
@@ -66,11 +66,11 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 	[HttpPost]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<StaffDto>> Create([FromBody] UpsertStaffRequest req, CancellationToken ct)
+	public async Task<ActionResult<StaffDto>> Create([FromBody] UpsertStaffRequest req, CancellationToken cancellationToken)
 	{
 		if (!string.IsNullOrWhiteSpace(req.Email))
 		{
-			var emailTaken = await db.Staff.AnyAsync(s => s.Email == req.Email, ct);
+			var emailTaken = await db.Staff.AnyAsync(s => s.Email == req.Email, cancellationToken);
 			if (emailTaken)
 			{
 				return ValidationProblem(new ValidationProblemDetails
@@ -91,17 +91,17 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			IsAdmin = req.IsAdmin,
 		};
 		db.Staff.Add(s);
-		await db.SaveChangesAsync(ct);
-		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
+		await db.SaveChangesAsync(cancellationToken);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: cancellationToken);
 		return CreatedAtAction(nameof(GetById), new { id = s.Id },
 			new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject));
 	}
 
 	[HttpPut("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<StaffDto>> Update(Guid id, [FromBody] UpsertStaffRequest req, CancellationToken ct)
+	public async Task<ActionResult<StaffDto>> Update(Guid id, [FromBody] UpsertStaffRequest req, CancellationToken cancellationToken)
 	{
-		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
+		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 		if (s is null)
 		{
 			return NotFound();
@@ -109,7 +109,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 		if (!string.IsNullOrWhiteSpace(req.Email) && req.Email != s.Email)
 		{
-			var emailTaken = await db.Staff.AnyAsync(other => other.Id != id && other.Email == req.Email, ct);
+			var emailTaken = await db.Staff.AnyAsync(other => other.Id != id && other.Email == req.Email, cancellationToken);
 			if (emailTaken)
 			{
 				return ValidationProblem(new ValidationProblemDetails
@@ -129,27 +129,27 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 		if (isAdminChanged && s.KeycloakSubject is not null)
 		{
-			var validationResult = await ValidateAdminChangeAsync(id, req.IsAdmin, ct);
+			var validationResult = await ValidateAdminChangeAsync(id, req.IsAdmin, cancellationToken);
 			if (validationResult is not null)
 			{
 				return validationResult;
 			}
 
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 			try
 			{
-				await keycloak.SetAdminRoleAsync(s.KeycloakSubject, req.IsAdmin, ct);
+				await keycloak.SetAdminRoleAsync(s.KeycloakSubject, req.IsAdmin, cancellationToken);
 			}
 			catch (KeycloakException ex)
 			{
 				s.IsAdmin = !req.IsAdmin;
-				await db.SaveChangesAsync(ct);
+				await db.SaveChangesAsync(cancellationToken);
 				return Problem(title: "Keycloak-synkronisering fejlede", detail: ex.Message, statusCode: 502);
 			}
 		}
 		else
 		{
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 		}
 
 		return Ok(new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject));
@@ -157,9 +157,9 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 	[HttpPatch("{id:guid}/admin-permission")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult<StaffDto>> PatchAdminPermission(Guid id, [FromBody] PatchAdminPermissionRequest req, CancellationToken ct)
+	public async Task<ActionResult<StaffDto>> PatchAdminPermission(Guid id, [FromBody] PatchAdminPermissionRequest req, CancellationToken cancellationToken)
 	{
-		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
+		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 		if (s is null)
 		{
 			return NotFound();
@@ -178,23 +178,23 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 			return Ok(new StaffDto(s.Id, s.Name, s.Email, s.Phone, s.Role, s.IsAdmin, s.KeycloakSubject));
 		}
 
-		var validationResult = await ValidateAdminChangeAsync(id, req.IsAdmin, ct);
+		var validationResult = await ValidateAdminChangeAsync(id, req.IsAdmin, cancellationToken);
 		if (validationResult is not null)
 		{
 			return validationResult;
 		}
 
 		s.IsAdmin = req.IsAdmin;
-		await db.SaveChangesAsync(ct);
+		await db.SaveChangesAsync(cancellationToken);
 
 		try
 		{
-			await keycloak.SetAdminRoleAsync(s.KeycloakSubject, req.IsAdmin, ct);
+			await keycloak.SetAdminRoleAsync(s.KeycloakSubject, req.IsAdmin, cancellationToken);
 		}
 		catch (KeycloakException ex)
 		{
 			s.IsAdmin = !req.IsAdmin;
-			await db.SaveChangesAsync(ct);
+			await db.SaveChangesAsync(cancellationToken);
 			return Problem(title: "Keycloak-synkronisering fejlede", detail: ex.Message, statusCode: 502);
 		}
 
@@ -203,9 +203,9 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 	[HttpDelete("{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
-		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
+		var s = await db.Staff.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 		if (s is null)
 		{
 			return NotFound();
@@ -219,7 +219,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 				statusCode: StatusCodes.Status403Forbidden);
 		}
 
-		var hasSlots = await db.SchemaSlots.AnyAsync(sl => sl.TeacherId == id || sl.AideId == id, ct);
+		var hasSlots = await db.SchemaSlots.AnyAsync(sl => sl.TeacherId == id || sl.AideId == id, cancellationToken);
 		if (hasSlots)
 		{
 			return Problem(
@@ -231,7 +231,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 		{
 			try
 			{
-				await keycloak.DeleteStaffUserAsync(s.KeycloakSubject, ct);
+				await keycloak.DeleteStaffUserAsync(s.KeycloakSubject, cancellationToken);
 			}
 			catch (KeycloakException ex)
 			{
@@ -240,16 +240,16 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 		}
 
 		db.Staff.Remove(s);
-		await db.SaveChangesAsync(ct);
-		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: ct);
+		await db.SaveChangesAsync(cancellationToken);
+		await cache.RemoveAsync(SchoolsController.OnboardingCacheKey(tenant.TenantId), token: cancellationToken);
 		return NoContent();
 	}
 
-	private async Task<ActionResult?> ValidateAdminChangeAsync(Guid staffId, bool newIsAdmin, CancellationToken ct)
+	private async Task<ActionResult?> ValidateAdminChangeAsync(Guid staffId, bool newIsAdmin, CancellationToken cancellationToken)
 	{
 		var currentUserId = User.GetKeycloakSubject();
 
-		var staff = await db.Staff.AsNoTracking().FirstOrDefaultAsync(s => s.Id == staffId, ct);
+		var staff = await db.Staff.AsNoTracking().FirstOrDefaultAsync(s => s.Id == staffId, cancellationToken);
 		if (staff?.KeycloakSubject is not null && staff.KeycloakSubject == currentUserId && !newIsAdmin)
 		{
 			return Problem(
@@ -260,7 +260,7 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 
 		if (!newIsAdmin)
 		{
-			var adminCount = await db.Staff.CountAsync(s => s.IsAdmin, ct);
+			var adminCount = await db.Staff.CountAsync(s => s.IsAdmin, cancellationToken);
 			if (adminCount <= 1)
 			{
 				return Problem(

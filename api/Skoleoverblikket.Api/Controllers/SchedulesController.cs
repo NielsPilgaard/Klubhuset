@@ -30,9 +30,9 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 	/// Weekly schedule for a class from its active schema.
 	/// </summary>
 	[HttpGet("classes/{classId:guid}/schedule")]
-	public async Task<ActionResult<List<ScheduleSlotDto>>> GetClassSchedule(Guid classId, CancellationToken ct)
+	public async Task<ActionResult<List<ScheduleSlotDto>>> GetClassSchedule(Guid classId, CancellationToken cancellationToken)
 	{
-		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, ct);
+		var classExists = await db.Classes.AnyAsync(c => c.Id == classId, cancellationToken);
 		if (!classExists)
 		{
 			return NotFound();
@@ -66,7 +66,7 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 										s.Aide != null ? s.Aide.Name : null,
 										s.TeacherId,
 										s.Teacher.Name))
-							.ToListAsync(ct);
+							.ToListAsync(cancellationToken);
 
 		return Ok(slots);
 	}
@@ -75,9 +75,9 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 	/// Weekly schedule for a staff member (teacher or aide) across all active schemas.
 	/// </summary>
 	[HttpGet("staff/{staffId:guid}/schedule")]
-	public async Task<ActionResult<List<ScheduleSlotDto>>> GetStaffSchedule(Guid staffId, CancellationToken ct)
+	public async Task<ActionResult<List<ScheduleSlotDto>>> GetStaffSchedule(Guid staffId, CancellationToken cancellationToken)
 	{
-		var staffExists = await db.Staff.AnyAsync(s => s.Id == staffId, ct);
+		var staffExists = await db.Staff.AnyAsync(s => s.Id == staffId, cancellationToken);
 		if (!staffExists)
 		{
 			return NotFound();
@@ -111,7 +111,7 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 										s.Aide != null ? s.Aide.Name : null,
 										s.TeacherId,
 										s.Teacher.Name))
-							.ToListAsync(ct);
+							.ToListAsync(cancellationToken);
 
 		return Ok(slots);
 	}
@@ -120,9 +120,9 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 	/// Weekly schedule for a room across all active schemas.
 	/// </summary>
 	[HttpGet("rooms/{roomId:guid}/schedule")]
-	public async Task<ActionResult<List<ScheduleSlotDto>>> GetRoomSchedule(Guid roomId, CancellationToken ct)
+	public async Task<ActionResult<List<ScheduleSlotDto>>> GetRoomSchedule(Guid roomId, CancellationToken cancellationToken)
 	{
-		var roomExists = await db.Rooms.AnyAsync(r => r.Id == roomId, ct);
+		var roomExists = await db.Rooms.AnyAsync(r => r.Id == roomId, cancellationToken);
 		if (!roomExists)
 		{
 			return NotFound();
@@ -156,7 +156,7 @@ public sealed class SchedulesController(AppDbContext db) : ControllerBase
 										s.Aide != null ? s.Aide.Name : null,
 										s.TeacherId,
 										s.Teacher.Name))
-							.ToListAsync(ct);
+							.ToListAsync(cancellationToken);
 
 		return Ok(slots);
 	}
