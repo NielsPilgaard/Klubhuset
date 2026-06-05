@@ -7,7 +7,8 @@ public enum ConflictType
 {
 	TeacherDoubleBooked,
 	RoomDoubleBooked,
-	AideDoubleBooked
+	AideDoubleBooked,
+	SubstituteDoubleBooked
 }
 
 public record ConflictInfo(

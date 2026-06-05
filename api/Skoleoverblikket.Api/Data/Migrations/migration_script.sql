@@ -1557,3 +1557,56 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    ALTER TABLE "WeekPlanSlots" ADD "SubstituteAideId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    ALTER TABLE "WeekPlanSlots" ADD "SubstituteTeacherId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    CREATE INDEX "IX_WeekPlanSlots_SubstituteAideId" ON "WeekPlanSlots" ("SubstituteAideId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    CREATE INDEX "IX_WeekPlanSlots_SubstituteTeacherId" ON "WeekPlanSlots" ("SubstituteTeacherId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    ALTER TABLE "WeekPlanSlots" ADD CONSTRAINT "FK_WeekPlanSlots_Staff_SubstituteAideId" FOREIGN KEY ("SubstituteAideId") REFERENCES "Staff" ("Id") ON DELETE RESTRICT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    ALTER TABLE "WeekPlanSlots" ADD CONSTRAINT "FK_WeekPlanSlots_Staff_SubstituteTeacherId" FOREIGN KEY ("SubstituteTeacherId") REFERENCES "Staff" ("Id") ON DELETE RESTRICT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260605045206_AddSubstituteStaffToWeekPlanSlot') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260605045206_AddSubstituteStaffToWeekPlanSlot', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

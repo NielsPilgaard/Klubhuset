@@ -24,6 +24,14 @@ public sealed class WeekPlanSlot : ITenantScoped, IEntityTypeConfiguration<WeekP
 	public Guid? FagSwapCourseId { get; set; }
 	public Course? FagSwapCourse { get; set; }
 
+	/// <summary>Substitute teacher for this week only. Null = schema-assigned teacher covers.</summary>
+	public Guid? SubstituteTeacherId { get; set; }
+	public Staff? SubstituteTeacher { get; set; }
+
+	/// <summary>Substitute aide for this week only. Null = schema-assigned aide covers.</summary>
+	public Guid? SubstituteAideId { get; set; }
+	public Staff? SubstituteAide { get; set; }
+
 	public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 	public ICollection<WeekPlanSlotFile> Files { get; set; } = [];
 
@@ -33,6 +41,8 @@ public sealed class WeekPlanSlot : ITenantScoped, IEntityTypeConfiguration<WeekP
 		builder.HasOne(s => s.WeekPlan).WithMany(w => w.Slots).HasForeignKey(s => s.WeekPlanId).OnDelete(DeleteBehavior.Cascade);
 		builder.HasOne(s => s.SchemaSlot).WithMany().HasForeignKey(s => s.SchemaSlotId).OnDelete(DeleteBehavior.Cascade);
 		builder.HasOne(s => s.FagSwapCourse).WithMany().HasForeignKey(s => s.FagSwapCourseId).OnDelete(DeleteBehavior.SetNull);
+		builder.HasOne(s => s.SubstituteTeacher).WithMany().HasForeignKey(s => s.SubstituteTeacherId).OnDelete(DeleteBehavior.Restrict);
+		builder.HasOne(s => s.SubstituteAide).WithMany().HasForeignKey(s => s.SubstituteAideId).OnDelete(DeleteBehavior.Restrict);
 		builder.HasIndex(s => new { s.WeekPlanId, s.SchemaSlotId }).IsUnique();
 	}
 }
