@@ -1207,7 +1207,10 @@ export default function ClassesPage() {
                 <div className="relative shrink-0 ml-4">
                   <button
                     data-testid={`class-menu-${cls.id}`}
-                    onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === cls.id ? null : cls.id!) }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setOpenMenuId(openMenuId === cls.id ? null : cls.id!)
+                    }}
                     className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                     title="Flere handlinger"
                   >

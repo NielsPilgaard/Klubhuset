@@ -217,14 +217,9 @@ export default function PrintSchemaPage() {
           margin: 10mm;
         }
         @media print {
-          html, body { margin: 0; height: 100%; }
+          html, body { margin: 0; }
           .no-print { display: none !important; }
-          .print-page {
-            height: calc(100vh - 0px);
-          }
-          .print-table {
-            height: calc(100% - 72px) !important;
-          }
+          .print-table tr { page-break-inside: avoid; }
         }
         .print-page {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

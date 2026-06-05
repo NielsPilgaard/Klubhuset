@@ -122,7 +122,13 @@ export default function CoursesSidebar({
 
       {/* Mobile backdrop */}
       {isOpen && (
-        <button type="button" tabIndex={-1} aria-label="Luk sidebar" className="lg:hidden fixed inset-0 z-40 bg-black/30" onClick={onToggle} />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="Luk sidebar"
+          className="lg:hidden fixed inset-0 z-40 bg-black/30"
+          onClick={onToggle}
+        />
       )}
 
       {/* Sidebar panel */}

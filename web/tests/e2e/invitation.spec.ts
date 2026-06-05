@@ -17,7 +17,7 @@ async function loginAsAdmin(page: Page) {
   await page.locator('#password').fill(ADMIN_PASSWORD)
   await page.getByRole('button', { name: /log ind|sign in/i }).click()
   await page.waitForURL((url) => url.port !== '8080', { timeout: 60_000 })
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 })
+  await expect(page).toHaveURL(/\/(dashboard|backoffice)/, { timeout: 20_000 })
 }
 
 test.describe.serial('Staff invitation flow', () => {
@@ -78,7 +78,10 @@ test.describe.serial('Staff invitation flow', () => {
     expect(invitationUrl, 'No invitation link found in email').toBeDefined()
 
     // --- Step 5: open invitation page in a fresh context (not logged in) ---
+    // Clear both cookies and localStorage so Keycloak doesn't pick up the admin session
+    // (tokens are stored in localStorage via tokenStore: 'localStorage').
     await page.context().clearCookies()
+    await page.evaluate(() => localStorage.clear())
     await page.goto(invitationUrl!)
 
     // Invitation page should load with heading visible

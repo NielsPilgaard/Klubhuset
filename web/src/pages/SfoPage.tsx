@@ -265,7 +265,13 @@ export default function SfoPage() {
               </button>
               {showYearPicker && (
                 <>
-                  <button type="button" tabIndex={-1} aria-label="Luk årvælger" className="fixed inset-0 z-20" onClick={() => setShowYearPicker(false)} />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label="Luk årvælger"
+                    className="fixed inset-0 z-20"
+                    onClick={() => setShowYearPicker(false)}
+                  />
                   <div className="absolute left-1/2 -translate-x-1/2 top-9 z-30 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[90px]">
                     {[-2, -1, 0, 1, 2].map((offset) => {
                       const y = getISOWeekYear(new Date()) + offset

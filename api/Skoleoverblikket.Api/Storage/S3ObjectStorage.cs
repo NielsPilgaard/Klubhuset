@@ -81,7 +81,7 @@ public sealed class S3ObjectStorage(IAmazonS3 s3, IOptions<S3Options> opts) : IO
 
 	private string BuildPublicUrl(string key)
 	{
-		var encodedKey = WebUtility.UrlEncode(key.TrimStart('/'));
-		return $"{_options.SanitizedPublicEndpoint}/{_options.DefaultBucketName}/{encodedKey}";
+		var encoded = string.Join("/", key.TrimStart('/').Split('/').Select(Uri.EscapeDataString));
+		return $"{_options.SanitizedPublicEndpoint}/{_options.DefaultBucketName}/{encoded}";
 	}
 }

@@ -279,10 +279,10 @@ function SkoledagCard() {
       const { api } = await import('../api/client')
       return api.post<void>('/time-slot-template/restore', null)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1TimeSlotTemplateQueryKey() })
-      setInitialized(false)
+    onSuccess: async () => {
       setRestoreError(null)
+      setInitialized(false)
+      await qc.refetchQueries({ queryKey: getApiV1TimeSlotTemplateQueryKey() })
       setRestoreSuccess(true)
       setTimeout(() => setRestoreSuccess(false), 4000)
     },

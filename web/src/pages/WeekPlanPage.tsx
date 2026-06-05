@@ -482,7 +482,7 @@ export default function WeekPlanPage() {
 
   const [isoYear, setIsoYear] = useState(() => getISOWeekYear(new Date()))
   const [isoWeek, setIsoWeek] = useState(() => getISOWeek(new Date()))
-  const [editingSlot, setEditingSlot] = useState<WeekPlanSlotDto | null>(null)
+  const [editingSchemaSlotId, setEditingSchemaSlotId] = useState<string | null>(null)
 
   function prevWeek() {
     if (isoWeek === 1) {
@@ -518,6 +518,8 @@ export default function WeekPlanPage() {
     enabled: !!classId,
   })
   const weekPlanData = rawWeekPlanData as WeekPlanDto | undefined
+  const editingSlot =
+    weekPlanData?.slots.find((s) => s.schemaSlotId === editingSchemaSlotId) ?? null
 
   const { data: rawCourses } = useQuery(getApiV1CoursesOptions())
   const courses = (rawCourses ?? []) as CourseDto[]
@@ -733,7 +735,7 @@ export default function WeekPlanPage() {
                       <button
                         key={`slot-${slot.schemaSlotId}`}
                         type="button"
-                        onClick={() => setEditingSlot(slot)}
+                        onClick={() => setEditingSchemaSlotId(slot.schemaSlotId)}
                         className={`w-full text-left border-b border-r border-gray-200 p-2 min-h-[80px] cursor-pointer transition-colors ${isHolidayCol ? 'bg-amber-50 pointer-events-none' : 'bg-white hover:bg-gray-50'}`}
                       >
                         {/* Course badge */}
@@ -827,7 +829,7 @@ export default function WeekPlanPage() {
           schemaId={schemaId}
           weekdayLabel={WEEKDAYS[WEEKDAY_KEYS.indexOf(editingSlot.weekday)] ?? ''}
           courses={courses}
-          onClose={() => setEditingSlot(null)}
+          onClose={() => setEditingSchemaSlotId(null)}
         />
       )}
     </div>
