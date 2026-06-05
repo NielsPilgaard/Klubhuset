@@ -1670,6 +1670,7 @@ export type GetApiV1FilesData = {
     query?: {
         courseId?: string;
         folderId?: string;
+        search?: string;
     };
     url: '/api/v1/files';
 };

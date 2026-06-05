@@ -100,8 +100,11 @@ public sealed class FilesController(
 	public async Task<ActionResult<FilesResponseDto>> GetAll(
 		[FromQuery] Guid? courseId,
 		[FromQuery] Guid? folderId,
+		[FromQuery] string? search,
 		CancellationToken cancellationToken)
 	{
+		var isSearching = !string.IsNullOrWhiteSpace(search);
+
 		var fileQuery = db.SchoolFiles
 			.AsNoTracking()
 			.Include(f => f.Course)
@@ -112,7 +115,14 @@ public sealed class FilesController(
 			fileQuery = fileQuery.Where(f => f.CourseId == courseId.Value);
 		}
 
-		if (folderId.HasValue)
+		if (isSearching)
+		{
+			var term = search!.Trim().ToLower();
+			fileQuery = fileQuery.Where(f =>
+				f.FileName.ToLower().Contains(term) ||
+				(f.Course != null && f.Course.Name.ToLower().Contains(term)));
+		}
+		else if (folderId.HasValue)
 		{
 			fileQuery = fileQuery.Where(f => f.FolderId == folderId.Value);
 		}
@@ -139,12 +149,21 @@ public sealed class FilesController(
 		var folderQuery = db.SchoolFileFolders
 			.AsNoTracking()
 			.Include(f => f.Course)
-			.Where(f => f.ParentId == folderId)
 			.AsQueryable();
 
 		if (courseId.HasValue)
 		{
 			folderQuery = folderQuery.Where(f => f.CourseId == courseId.Value);
+		}
+
+		if (isSearching)
+		{
+			var term = search!.Trim().ToLower();
+			folderQuery = folderQuery.Where(f => f.Name.ToLower().Contains(term));
+		}
+		else
+		{
+			folderQuery = folderQuery.Where(f => f.ParentId == folderId);
 		}
 
 		var folders = await folderQuery

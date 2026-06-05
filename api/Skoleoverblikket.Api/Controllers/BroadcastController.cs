@@ -22,6 +22,7 @@ public sealed class BroadcastController(
 	IAuthorizationService authz,
 	IEmailSender emailSender,
 	IOptions<SmtpOptions> smtpOptions,
+	IOptions<ApplicationOptions> appOptions,
 	ILogger<BroadcastController> logger) : ControllerBase
 {
 	public record BroadcastRequest(
@@ -94,13 +95,14 @@ public sealed class BroadcastController(
 			return Unauthorized();
 		}
 
-		var school = await db.Schools.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+		var school = await db.Schools.AsNoTracking().IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == tenantContext.TenantId, cancellationToken);
 		var schoolName = school?.Name ?? "Skoleoverblikket";
 
 		var recipients = await ResolveRecipients(req.ClassId, cancellationToken);
 
+		var settingsUrl = $"{appOptions.Value.SanitizedBaseUrl}/indstillinger/notifikationer";
 		var footer = $"<p style=\"font-size:12px;color:#888;\">Du modtager denne e-mail fra {HtmlEncoder.Default.Encode(schoolName)}. " +
-					 "Log ind og gå til Indstillinger for at ændre dine e-mailpræferencer.</p>";
+					 $"<a href=\"{HtmlEncoder.Default.Encode(settingsUrl)}\">Log ind og gå til Notifikationsindstillinger</a> for at ændre dine e-mailpræferencer.</p>";
 
 		var bccAddresses = recipients
 			.Where(r => !string.IsNullOrWhiteSpace(r.Email))
@@ -113,7 +115,13 @@ public sealed class BroadcastController(
 			try
 			{
 				var html = BuildHtml(req.Body, footer);
-				await emailSender.SendAsync(new EmailMessage(smtpOptions.Value.FromAddress, req.Subject, html, Bcc: bccAddresses), cancellationToken);
+				const int batchSize = 50;
+				for (int i = 0; i < bccAddresses.Count; i += batchSize)
+				{
+					var batch = bccAddresses.Skip(i).Take(batchSize).ToList();
+					await emailSender.SendAsync(new EmailMessage(smtpOptions.Value.FromAddress, req.Subject, html, Bcc: batch), cancellationToken);
+				}
+
 				sent = bccAddresses.Count;
 			}
 			catch (Exception ex)

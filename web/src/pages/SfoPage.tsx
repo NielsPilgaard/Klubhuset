@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+
+const MD_ALLOWED: string[] = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br']
 import { Modal } from '../components/Modal'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -454,9 +457,11 @@ export default function SfoPage() {
                         )}
                         <div className="flex-1">
                           {weekShift?.beskrivelse ? (
-                            <p className="text-xs text-gray-600 line-clamp-4 whitespace-pre-wrap">
-                              {weekShift.beskrivelse}
-                            </p>
+                            <div className="text-xs text-gray-600 line-clamp-4 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+                              <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
+                                {weekShift.beskrivelse}
+                              </ReactMarkdown>
+                            </div>
                           ) : (
                             <p className="text-xs text-gray-300 italic">Aktivitet…</p>
                           )}

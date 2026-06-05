@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+
+const MD_ALLOWED: string[] = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br']
 import { useQuery } from '@tanstack/react-query'
 import { getApiV1ClassesByClassIdUgeplanOptions } from '../../api/generated/@tanstack/react-query.gen'
 import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
@@ -108,13 +111,19 @@ function ClassWeekPlan({
                       <span className="text-sm font-medium text-gray-900">{s.courseName}</span>
                     </div>
                     {s.beskrivelse && (
-                      <p className="mt-1 text-xs text-gray-600 ml-18">{s.beskrivelse}</p>
+                      <div className="mt-1 text-xs text-gray-600 ml-18 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+                        <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
+                          {s.beskrivelse}
+                        </ReactMarkdown>
+                      </div>
                     )}
                     {s.lektier && (
-                      <p className="mt-1 text-xs text-amber-700 ml-18">
+                      <div className="mt-1 text-xs text-amber-700 ml-18 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
                         <span className="font-medium">Lektier: </span>
-                        {s.lektier}
-                      </p>
+                        <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
+                          {s.lektier}
+                        </ReactMarkdown>
+                      </div>
                     )}
                   </div>
                 ))}
