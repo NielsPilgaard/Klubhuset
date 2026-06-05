@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type React from 'react'
 
 interface ModalProps {
@@ -27,6 +28,14 @@ export function Modal({
   onKeyDown,
   children,
 }: ModalProps) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   if (!isOpen) return null
 
   return (

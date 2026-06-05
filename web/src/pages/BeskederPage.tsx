@@ -6,6 +6,7 @@ import {
   postApiV1Messages,
   postApiV1MessagesByIdRead,
 } from '../api/generated/sdk.gen'
+import { Modal } from '../components/Modal'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 type RecipientType = 'Parent' | 'Staff'
@@ -637,16 +638,9 @@ export default function BeskederPage() {
       </div>
 
       {/* Compose modal */}
-      {composeOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="compose-dialog-title"
-            className="max-w-lg w-full bg-white rounded-xl p-6 shadow-xl"
-          >
+      <Modal isOpen={composeOpen} onClose={() => setComposeOpen(false)} size="lg" contentClassName="bg-white rounded-xl p-6 shadow-xl w-full max-w-lg">
             <div className="flex items-center justify-between mb-5">
-              <h2 id="compose-dialog-title" className="text-base font-semibold text-gray-900">
+              <h2 className="text-base font-semibold text-gray-900">
                 Ny besked
               </h2>
               <button
@@ -814,9 +808,7 @@ export default function BeskederPage() {
                 {sending ? 'Sender…' : 'Send'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   )
 }
