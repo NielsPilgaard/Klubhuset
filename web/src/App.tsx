@@ -31,6 +31,7 @@ const RoomsPage = lazy(() => import('./pages/RoomsPage'))
 const RoomSchedulePage = lazy(() => import('./pages/RoomSchedulePage'))
 const PrintSchemaPage = lazy(() => import('./pages/PrintSchemaPage'))
 const SfoPrintPage = lazy(() => import('./pages/SfoPrintPage'))
+const UgeplanPrintPage = lazy(() => import('./pages/UgeplanPrintPage'))
 const SkoleindstillingerPage = lazy(() => import('./pages/SkoleindstillingerPage'))
 const SchoolSetupWizardPage = lazy(() => import('./pages/SchoolSetupWizardPage'))
 const FilesPage = lazy(() => import('./pages/FilesPage'))
@@ -129,6 +130,7 @@ export default function App() {
               <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
               <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />
               <Route path="udskriv/sfo" element={<SfoPrintPage />} />
+              <Route path="udskriv/ugeplan" element={<UgeplanPrintPage />} />
 
               {/* Pages outside Layout (no sidebar) */}
               <Route path="setup" element={<SchoolSetupWizardPage />} />
