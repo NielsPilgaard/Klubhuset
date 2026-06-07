@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
 import {
   getApiV1AbsenceOptions,
+  getApiV1ClassesOptions,
   postApiV1AbsenceByIdConfirmMutation,
   postApiV1AbsenceByIdDismissMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { AbsenceControllerAbsenceReportDto as AbsenceReportDto } from '../api/generated/types.gen'
+import { DatePicker } from '../components/DatePicker'
 
 function StatusBadge({ status }: { status: AbsenceReportDto['status'] }) {
   const map = {
@@ -31,10 +33,16 @@ export default function FravaerPage() {
   const monthStart = `${today.slice(0, 8)}01`
   const [from, setFrom] = useState(monthStart)
   const [to, setTo] = useState(today)
+  const [classId, setClassId] = useState<string>('')
   const [actionError, setActionError] = useState<string | null>(null)
 
+  const { data: classes = [] } = useQuery({
+    ...getApiV1ClassesOptions(),
+    select: (data) => data ?? [],
+  })
+
   const { data: reports = [], isLoading } = useQuery({
-    ...getApiV1AbsenceOptions({ query: { from, to } }),
+    ...getApiV1AbsenceOptions({ query: { from, to, classId: classId || undefined } }),
     select: (data) => data as AbsenceReportDto[],
   })
 
@@ -69,20 +77,22 @@ export default function FravaerPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-2 items-center">
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
+        <div className="flex flex-wrap gap-2 items-center">
+          <select
+            value={classId}
+            onChange={(e) => setClassId(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option value="">Alle klasser</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id ?? ''}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <DatePicker value={from} onChange={setFrom} align="right" />
           <span className="text-gray-400 text-sm">–</span>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
+          <DatePicker value={to} onChange={setTo} align="right" />
         </div>
       </div>
 
