@@ -40,10 +40,12 @@ public static class AuthExtensions
 			opt.AddPolicy(Policies.EditClass, p => p.Requirements.Add(new EditClassRequirement()));
 			opt.AddPolicy(Policies.EditWeekPlan, p => p.Requirements.Add(new EditWeekPlanRequirement()));
 			opt.AddPolicy(Policies.ParentClassAccess, p => p.Requirements.Add(new ParentClassAccessRequirement()));
+			opt.AddPolicy(Policies.SendGroupMessage, p => p.Requirements.Add(new GroupMessageRequirement()));
 		});
 		services.AddScoped<IAuthorizationHandler, EditClassAuthorizationHandler>();
 		services.AddScoped<IAuthorizationHandler, EditWeekPlanAuthorizationHandler>();
 		services.AddScoped<IAuthorizationHandler, ParentClassAccessHandler>();
+		services.AddScoped<IAuthorizationHandler, GroupMessageAuthorizationHandler>();
 		services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformer>();
 
 		return services;

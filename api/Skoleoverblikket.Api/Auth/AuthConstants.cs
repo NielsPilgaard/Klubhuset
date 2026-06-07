@@ -12,4 +12,5 @@ public static class Policies
 	public const string EditClass = "EditClass";
 	public const string EditWeekPlan = "EditWeekPlan";
 	public const string ParentClassAccess = "ParentClassAccess";
+	public const string SendGroupMessage = "SendGroupMessage";
 }
