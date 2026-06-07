@@ -18,4 +18,5 @@ public class Message : ITenantScoped
 	public required string Body { get; set; }
 	public DateTimeOffset SentAt { get; set; }
 	public DateTimeOffset? ReadAt { get; set; }
+	public Guid? GroupMessageId { get; set; }
 }
