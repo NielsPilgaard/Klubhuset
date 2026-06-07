@@ -22,6 +22,7 @@ function StudentModal({ initial, classes, onClose }: StudentModalProps) {
   const qc = useQueryClient()
   const [name, setName] = useState(initial?.name ?? '')
   const [classId, setClassId] = useState(initial?.classId ?? classes[0]?.id ?? '')
+  const [isEnrolledInSfo, setIsEnrolledInSfo] = useState(initial?.isEnrolledInSfo ?? false)
 
   const createMutation = useMutation({
     ...postApiV1StudentsMutation(),
@@ -43,7 +44,7 @@ function StudentModal({ initial, classes, onClose }: StudentModalProps) {
 
   function handleSave() {
     if (!name.trim() || !classId || isPending) return
-    const body = { name, classId }
+    const body = { name, classId, isEnrolledInSfo }
     if (initial) {
       updateMutation.mutate({ path: { id: initial.id! }, body })
     } else {
@@ -68,6 +69,17 @@ function StudentModal({ initial, classes, onClose }: StudentModalProps) {
             placeholder="Elevens fulde navn"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
+        </div>
+        <div>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isEnrolledInSfo}
+              onChange={(e) => setIsEnrolledInSfo(e.target.checked)}
+              className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span className="font-medium text-gray-700">Indmeldt i SFO</span>
+          </label>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Klasse *</label>

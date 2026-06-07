@@ -15,10 +15,11 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize(Roles = Roles.Admin)]
 public sealed class StudentsController(AppDbContext db, ITenantContext tenant, IObjectStorage storage) : ControllerBase
 {
-	public record StudentDto(Guid Id, string Name, Guid ClassId, string ClassName, DateTimeOffset CreatedAt);
+	public record StudentDto(Guid Id, string Name, Guid ClassId, string ClassName, bool IsEnrolledInSfo, DateTimeOffset CreatedAt);
 	public record UpsertStudentRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
-		Guid ClassId);
+		Guid ClassId,
+		bool IsEnrolledInSfo);
 
 	[HttpGet]
 	public async Task<ActionResult<List<StudentDto>>> GetAll([FromQuery] Guid? classId, CancellationToken cancellationToken)
@@ -33,7 +34,7 @@ public sealed class StudentsController(AppDbContext db, ITenantContext tenant, I
 		var students = await query
 			.OrderBy(s => s.Class.Name)
 			.ThenBy(s => s.Name)
-			.Select(s => new StudentDto(s.Id, s.Name, s.ClassId, s.Class.Name, s.CreatedAt))
+			.Select(s => new StudentDto(s.Id, s.Name, s.ClassId, s.Class.Name, s.IsEnrolledInSfo, s.CreatedAt))
 			.ToListAsync(cancellationToken);
 
 		return Ok(students);
@@ -54,13 +55,14 @@ public sealed class StudentsController(AppDbContext db, ITenantContext tenant, I
 			TenantId = tenant.TenantId,
 			Name = req.Name,
 			ClassId = req.ClassId,
+			IsEnrolledInSfo = req.IsEnrolledInSfo,
 		};
 
 		db.Students.Add(student);
 		await db.SaveChangesAsync(cancellationToken);
 
 		var className = await db.Classes.Where(c => c.Id == req.ClassId).Select(c => c.Name).FirstAsync(cancellationToken);
-		return CreatedAtAction(nameof(GetAll), new StudentDto(student.Id, student.Name, student.ClassId, className, student.CreatedAt));
+		return CreatedAtAction(nameof(GetAll), new StudentDto(student.Id, student.Name, student.ClassId, className, student.IsEnrolledInSfo, student.CreatedAt));
 	}
 
 	[HttpPut("{id:guid}")]
@@ -80,10 +82,11 @@ public sealed class StudentsController(AppDbContext db, ITenantContext tenant, I
 
 		student.Name = req.Name;
 		student.ClassId = req.ClassId;
+		student.IsEnrolledInSfo = req.IsEnrolledInSfo;
 		await db.SaveChangesAsync(cancellationToken);
 
 		var className = await db.Classes.Where(c => c.Id == req.ClassId).Select(c => c.Name).FirstAsync(cancellationToken);
-		return Ok(new StudentDto(student.Id, student.Name, student.ClassId, className, student.CreatedAt));
+		return Ok(new StudentDto(student.Id, student.Name, student.ClassId, className, student.IsEnrolledInSfo, student.CreatedAt));
 	}
 
 	[HttpDelete("{id:guid}")]
