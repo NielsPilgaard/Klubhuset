@@ -84,11 +84,13 @@ export default function FravaerPage() {
             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Alle klasser</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id ?? ''}>
-                {c.name}
-              </option>
-            ))}
+            {classes
+              .filter((c) => c.id != null && c.name != null)
+              .map((c) => (
+                <option key={c.id} value={c.id!}>
+                  {c.name}
+                </option>
+              ))}
           </select>
           <DatePicker value={from} onChange={setFrom} align="right" />
           <span className="text-gray-400 text-sm">–</span>

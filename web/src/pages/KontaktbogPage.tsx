@@ -74,7 +74,11 @@ export default function KontaktbogPage() {
     },
   })
 
-  const { data: students = [] } = useQuery({
+  const {
+    data: students = [],
+    isLoading: studentsLoading,
+    error: studentsError,
+  } = useQuery({
     queryKey: [{ _id: 'getApiV1Students' }],
     queryFn: async () => {
       const { data } = await getApiV1Students({ throwOnError: false })
@@ -195,7 +199,16 @@ export default function KontaktbogPage() {
             aria-label="Ny samtale"
             title="Ny samtale"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               <line x1="12" y1="8" x2="12" y2="16" />
               <line x1="8" y1="12" x2="16" y2="12" />
@@ -215,10 +228,14 @@ export default function KontaktbogPage() {
               <option value="">Vælg elev…</option>
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}{s.className ? ` (${s.className})` : ''}
+                  {s.name ?? 'Ukendt elev'}
+                  {s.className ? ` (${s.className})` : ''}
                 </option>
               ))}
             </select>
+            {students.length === 0 && !studentsLoading && studentsError && (
+              <p className="text-xs text-red-600">Kunne ikke indlæse elever. Prøv igen.</p>
+            )}
             <textarea
               value={composeBody}
               onChange={(e) => setComposeBody(e.target.value)}
@@ -237,7 +254,11 @@ export default function KontaktbogPage() {
             )}
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => { setShowCompose(false); setComposeStudentId(''); setComposeBody('') }}
+                onClick={() => {
+                  setShowCompose(false)
+                  setComposeStudentId('')
+                  setComposeBody('')
+                }}
                 className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Annuller
