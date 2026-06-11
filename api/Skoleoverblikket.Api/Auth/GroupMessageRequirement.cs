@@ -36,7 +36,7 @@ public sealed class GroupMessageAuthorizationHandler(AppDbContext db, ITenantCon
 				.Select(s => new { s.IsAdmin })
 				.FirstOrDefaultAsync();
 
-			if (adminStaff?.IsAdmin == true || adminStaff is null)
+			if (adminStaff?.IsAdmin == true)
 			{
 				context.Succeed(requirement);
 				return;
