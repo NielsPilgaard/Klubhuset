@@ -267,9 +267,17 @@ export type MessagesControllerGroupPreviewDto = {
 };
 
 export type MessagesControllerGroupPreviewRequest = {
-    audience?: BroadcastAudience;
-    classId?: string | null;
-    staffRole?: StaffRole;
+    audience: 'ClassParents';
+    classId: string;
+} | {
+    audience: 'StaffByRole';
+    staffRole: StaffRole;
+} | {
+    audience: 'AllParents';
+} | {
+    audience: 'SfoParents';
+} | {
+    audience: 'AllStaff';
 };
 
 export type MessagesControllerInboxMessageDto = {
@@ -291,9 +299,25 @@ export type MessagesControllerRecipientDto = {
 };
 
 export type MessagesControllerSendGroupMessageRequest = {
-    audience?: BroadcastAudience;
-    classId?: string | null;
-    staffRole?: StaffRole;
+    audience: 'ClassParents';
+    classId: string;
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'StaffByRole';
+    staffRole: StaffRole;
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'AllParents';
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'SfoParents';
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'AllStaff';
     subject?: string | null;
     body?: string | null;
 };

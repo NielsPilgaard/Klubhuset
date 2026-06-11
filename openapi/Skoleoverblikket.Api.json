@@ -7436,20 +7436,92 @@
         "additionalProperties": false
       },
       "MessagesController_GroupPreviewRequest": {
-        "type": "object",
-        "properties": {
-          "audience": {
-            "$ref": "#/components/schemas/BroadcastAudience"
+        "oneOf": [
+          {
+            "required": [
+              "audience",
+              "classId"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "ClassParents"
+                ],
+                "type": "string"
+              },
+              "classId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "additionalProperties": false
           },
-          "classId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
+          {
+            "required": [
+              "audience",
+              "staffRole"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "StaffByRole"
+                ],
+                "type": "string"
+              },
+              "staffRole": {
+                "$ref": "#/components/schemas/StaffRole"
+              }
+            },
+            "additionalProperties": false
           },
-          "staffRole": {
-            "$ref": "#/components/schemas/StaffRole"
+          {
+            "required": [
+              "audience"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "AllParents"
+                ],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "required": [
+              "audience"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "SfoParents"
+                ],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "required": [
+              "audience"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "AllStaff"
+                ],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
-        },
+        ],
         "additionalProperties": false
       },
       "MessagesController_InboxMessageDto": {
@@ -7512,28 +7584,132 @@
         "additionalProperties": false
       },
       "MessagesController_SendGroupMessageRequest": {
-        "type": "object",
-        "properties": {
-          "audience": {
-            "$ref": "#/components/schemas/BroadcastAudience"
+        "oneOf": [
+          {
+            "required": [
+              "audience",
+              "classId"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "ClassParents"
+                ],
+                "type": "string"
+              },
+              "classId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "subject": {
+                "type": "string",
+                "nullable": true
+              },
+              "body": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
-          "classId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
+          {
+            "required": [
+              "audience",
+              "staffRole"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "StaffByRole"
+                ],
+                "type": "string"
+              },
+              "staffRole": {
+                "$ref": "#/components/schemas/StaffRole"
+              },
+              "subject": {
+                "type": "string",
+                "nullable": true
+              },
+              "body": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
-          "staffRole": {
-            "$ref": "#/components/schemas/StaffRole"
+          {
+            "required": [
+              "audience"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "AllParents"
+                ],
+                "type": "string"
+              },
+              "subject": {
+                "type": "string",
+                "nullable": true
+              },
+              "body": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
-          "subject": {
-            "type": "string",
-            "nullable": true
+          {
+            "required": [
+              "audience"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "SfoParents"
+                ],
+                "type": "string"
+              },
+              "subject": {
+                "type": "string",
+                "nullable": true
+              },
+              "body": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
-          "body": {
-            "type": "string",
-            "nullable": true
+          {
+            "required": [
+              "audience"
+            ],
+            "type": "object",
+            "properties": {
+              "audience": {
+                "enum": [
+                  "AllStaff"
+                ],
+                "type": "string"
+              },
+              "subject": {
+                "type": "string",
+                "nullable": true
+              },
+              "body": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           }
-        },
+        ],
         "additionalProperties": false
       },
       "MessagesController_SendMessageRequest": {

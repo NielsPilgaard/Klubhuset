@@ -133,18 +133,20 @@ function GroupComposeModal({
   const [previewLoading, setPreviewLoading] = useState(false)
   const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const classOptions = isParent ? parentClasses.map((c) => ({ id: c.classId, name: c.className })) : allClasses.map((c) => ({ id: c.id ?? '', name: c.name ?? '' }))
+  const classOptions = isParent
+    ? parentClasses.map((c) => ({ id: c.classId, name: c.className }))
+    : allClasses.map((c) => ({ id: c.id ?? '', name: c.name ?? '' }))
 
   const sendMutation = useMutation({
     mutationFn: async () => {
+      const sendBody =
+        audience === 'ClassParents'
+          ? { audience, classId, subject, body }
+          : audience === 'StaffByRole'
+            ? { audience, staffRole, subject, body }
+            : { audience, subject, body }
       await postApiV1MessagesGroup({
-        body: {
-          audience,
-          classId: audience === 'ClassParents' ? classId : null,
-          staffRole: audience === 'StaffByRole' ? staffRole : null,
-          subject,
-          body,
-        },
+        body: sendBody,
         throwOnError: true,
       })
     },
@@ -160,11 +162,12 @@ function GroupComposeModal({
     previewDebounceRef.current = setTimeout(async () => {
       try {
         const res = await postApiV1MessagesGroupPreview({
-          body: {
-            audience: aud,
-            classId: aud === 'ClassParents' ? cid : null,
-            staffRole: aud === 'StaffByRole' ? role : null,
-          },
+          body:
+            aud === 'ClassParents'
+              ? { audience: aud, classId: cid }
+              : aud === 'StaffByRole'
+                ? { audience: aud, staffRole: role }
+                : { audience: aud },
           throwOnError: false,
         })
         setPreviewCount(res.data?.recipientCount ?? 0)
@@ -200,11 +203,16 @@ function GroupComposeModal({
 
   const audienceLabel = (() => {
     switch (audience) {
-      case 'AllParents': return 'Alle forældre'
-      case 'SfoParents': return 'SFO-forældre'
-      case 'AllStaff': return 'Alt personale'
-      case 'StaffByRole': return staffRole === 'Teacher' ? 'Lærere' : staffRole === 'Aide' ? 'Pædagoger' : 'Vikarer'
-      case 'ClassParents': return `Forældre i ${classOptions.find((c) => c.id === classId)?.name ?? 'klassen'}`
+      case 'AllParents':
+        return 'Alle forældre'
+      case 'SfoParents':
+        return 'SFO-forældre'
+      case 'AllStaff':
+        return 'Alt personale'
+      case 'StaffByRole':
+        return staffRole === 'Teacher' ? 'Lærere' : staffRole === 'Aide' ? 'Pædagoger' : 'Vikarer'
+      case 'ClassParents':
+        return `Forældre i ${classOptions.find((c) => c.id === classId)?.name ?? 'klassen'}`
     }
   })()
 
@@ -223,8 +231,19 @@ function GroupComposeModal({
           onClick={onClose}
           className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
         >
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          <svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
@@ -264,7 +283,9 @@ function GroupComposeModal({
                 className="ml-8 w-[calc(100%-2rem)] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 {classOptions.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             )}
@@ -324,7 +345,8 @@ function GroupComposeModal({
             {previewLoading && 'Henter modtagere…'}
             {!previewLoading && previewCount !== null && (
               <span>
-                <span className="font-semibold text-gray-800">{previewCount}</span> modtager{previewCount !== 1 ? 'e' : ''}
+                <span className="font-semibold text-gray-800">{previewCount}</span> modtager
+                {previewCount !== 1 ? 'e' : ''}
               </span>
             )}
           </div>
@@ -402,9 +424,18 @@ function GroupComposeModal({
       {step === 'confirm' && (
         <div>
           <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-700 mb-5">
-            <div><span className="font-medium">Modtagere: </span>{audienceLabel}</div>
-            <div><span className="font-medium">Antal: </span><span className="font-semibold text-brand-700">{previewCount ?? '…'}</span></div>
-            <div><span className="font-medium">Emne: </span>{subject}</div>
+            <div>
+              <span className="font-medium">Modtagere: </span>
+              {audienceLabel}
+            </div>
+            <div>
+              <span className="font-medium">Antal: </span>
+              <span className="font-semibold text-brand-700">{previewCount ?? '…'}</span>
+            </div>
+            <div>
+              <span className="font-medium">Emne: </span>
+              {subject}
+            </div>
           </div>
           {previewCount === 0 && (
             <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-4">
@@ -438,14 +469,25 @@ function GroupComposeModal({
       {step === 'done' && (
         <div className="text-center py-4">
           <div className="mx-auto h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-600">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="text-green-600"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
           <p className="text-sm font-medium text-gray-900 mb-4">Gruppebesked sendt!</p>
           <button
             type="button"
-            onClick={() => { onSent(); onClose() }}
+            onClick={() => {
+              onSent()
+              onClose()
+            }}
             className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
             Luk
@@ -555,7 +597,10 @@ export default function BeskederPage() {
         setFilteredRecipients(allRecipients)
         return
       }
-      const { data } = await getApiV1MessagesRecipients({ query: { q: searchAtCall }, throwOnError: false })
+      const { data } = await getApiV1MessagesRecipients({
+        query: { q: searchAtCall },
+        throwOnError: false,
+      })
       setDirectorySearch((current) => {
         if (current === searchAtCall) setFilteredRecipients((data ?? []) as RecipientDto[])
         return current
@@ -569,7 +614,9 @@ export default function BeskederPage() {
     const msg = inbox.find((m) => m.id === id)
     if (msg && !msg.readAt) {
       await postApiV1MessagesByIdRead({ path: { id }, throwOnError: false })
-      setInbox((prev) => prev.map((m) => (m.id === id ? { ...m, readAt: new Date().toISOString() } : m)))
+      setInbox((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, readAt: new Date().toISOString() } : m))
+      )
     }
   }
 
@@ -582,7 +629,10 @@ export default function BeskederPage() {
       return
     }
     searchDebounceRef.current = setTimeout(async () => {
-      const { data } = await getApiV1MessagesRecipients({ query: { q: value }, throwOnError: false })
+      const { data } = await getApiV1MessagesRecipients({
+        query: { q: value },
+        throwOnError: false,
+      })
       if (data) {
         const results = data as RecipientDto[]
         setRecipientResults(results)
@@ -652,8 +702,21 @@ export default function BeskederPage() {
             onClick={() => setGroupComposeOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
             Gruppebesked
           </button>
@@ -662,8 +725,19 @@ export default function BeskederPage() {
             onClick={() => handleOpenCompose()}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Ny besked
           </button>
@@ -673,12 +747,28 @@ export default function BeskederPage() {
       {/* Content */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Directory panel */}
-        <div className={`w-full lg:w-64 shrink-0 border-r border-gray-200 bg-white flex flex-col ${mobilePanel === 'directory' ? 'flex' : 'hidden lg:flex'}`}>
+        <div
+          className={`w-full lg:w-64 shrink-0 border-r border-gray-200 bg-white flex flex-col ${mobilePanel === 'directory' ? 'flex' : 'hidden lg:flex'}`}
+        >
           <div className="px-3 py-3 border-b border-gray-100 shrink-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Kontakter</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              Kontakter
+            </p>
             <div className="relative">
-              <svg aria-hidden="true" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <svg
+                aria-hidden="true"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
               <input
                 type="text"
@@ -692,10 +782,14 @@ export default function BeskederPage() {
           </div>
           <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
             {directoryLoading && (
-              <div className="flex items-center justify-center py-8 text-sm text-gray-400">Indlæser…</div>
+              <div className="flex items-center justify-center py-8 text-sm text-gray-400">
+                Indlæser…
+              </div>
             )}
             {!directoryLoading && filteredRecipients.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-sm text-gray-400">Ingen kontakter</div>
+              <div className="flex items-center justify-center py-8 text-sm text-gray-400">
+                Ingen kontakter
+              </div>
             )}
             {filteredRecipients.map((r) => (
               <button
@@ -713,15 +807,31 @@ export default function BeskederPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
-                  <p className="text-xs text-gray-400">{r.type === 'Parent' ? 'Forælder' : 'Medarbejder'}</p>
+                  <p className="text-xs text-gray-400">
+                    {r.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
+                  </p>
                 </div>
               </button>
             ))}
           </div>
           <div className="lg:hidden px-3 py-2 border-t border-gray-100">
-            <button type="button" onClick={() => setMobilePanel('list')} className="flex items-center gap-1 text-sm text-brand-600 font-medium">
+            <button
+              type="button"
+              onClick={() => setMobilePanel('list')}
+              className="flex items-center gap-1 text-sm text-brand-600 font-medium"
+            >
               Indbakke
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -729,18 +839,26 @@ export default function BeskederPage() {
         </div>
 
         {/* Message list */}
-        <div className={`w-full lg:w-72 shrink-0 border-r border-gray-200 bg-white flex flex-col ${mobilePanel === 'list' ? 'flex' : 'hidden lg:flex'}`}>
+        <div
+          className={`w-full lg:w-72 shrink-0 border-r border-gray-200 bg-white flex flex-col ${mobilePanel === 'list' ? 'flex' : 'hidden lg:flex'}`}
+        >
           <div className="flex border-b border-gray-200 shrink-0">
             <button
               type="button"
-              onClick={() => { setTab('inbox'); setSelectedId(null) }}
+              onClick={() => {
+                setTab('inbox')
+                setSelectedId(null)
+              }}
               className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'inbox' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Indbakke
             </button>
             <button
               type="button"
-              onClick={() => { setTab('sent'); setSelectedId(null) }}
+              onClick={() => {
+                setTab('sent')
+                setSelectedId(null)
+              }}
               className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'sent' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Sendt
@@ -749,7 +867,9 @@ export default function BeskederPage() {
 
           <div className="flex-1 overflow-y-auto">
             {loading && (
-              <div className="flex items-center justify-center py-12 text-sm text-gray-500">Indlæser…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-gray-500">
+                Indlæser…
+              </div>
             )}
             {!loading && currentMessages.length === 0 && (
               <div className="flex items-center justify-center py-12 px-4">
@@ -768,13 +888,23 @@ export default function BeskederPage() {
                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedId === msg.id ? 'bg-brand-50' : ''}`}
                     >
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className={`text-sm truncate ${isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                        <span
+                          className={`text-sm truncate ${isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}
+                        >
                           {msg.senderName}
                         </span>
-                        <span className="text-xs text-gray-400 shrink-0 ml-2">{formatRelativeTime(msg.sentAt)}</span>
+                        <span className="text-xs text-gray-400 shrink-0 ml-2">
+                          {formatRelativeTime(msg.sentAt)}
+                        </span>
                       </div>
-                      <p className={`text-sm truncate ${isUnread ? 'font-medium text-gray-800' : 'text-gray-600'}`}>{msg.subject}</p>
-                      <p className="text-xs text-gray-400 truncate mt-0.5">{truncate(msg.body, 80)}</p>
+                      <p
+                        className={`text-sm truncate ${isUnread ? 'font-medium text-gray-800' : 'text-gray-600'}`}
+                      >
+                        {msg.subject}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                        {truncate(msg.body, 80)}
+                      </p>
                     </button>
                   )
                 })}
@@ -783,33 +913,58 @@ export default function BeskederPage() {
                   <button
                     type="button"
                     key={msg.id}
-                    onClick={() => { setSelectedId(msg.id); setMobilePanel('detail') }}
+                    onClick={() => {
+                      setSelectedId(msg.id)
+                      setMobilePanel('detail')
+                    }}
                     className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedId === msg.id ? 'bg-brand-50' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {msg.isGroup && (
-                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">Gruppe</span>
+                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">
+                            Gruppe
+                          </span>
                         )}
                         <span className="text-sm font-medium text-gray-700 truncate">
                           {msg.isGroup ? msg.audienceLabel : `Til: ${msg.recipientName}`}
                         </span>
                         {msg.isGroup && msg.groupRecipientCount != null && (
-                          <span className="shrink-0 text-xs text-gray-400">({msg.groupRecipientCount})</span>
+                          <span className="shrink-0 text-xs text-gray-400">
+                            ({msg.groupRecipientCount})
+                          </span>
                         )}
                       </div>
-                      <span className="text-xs text-gray-400 shrink-0 ml-2">{formatRelativeTime(msg.sentAt)}</span>
+                      <span className="text-xs text-gray-400 shrink-0 ml-2">
+                        {formatRelativeTime(msg.sentAt)}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-600 truncate">{msg.subject}</p>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">{truncate(msg.body, 80)}</p>
+                    <p className="text-xs text-gray-400 truncate mt-0.5">
+                      {truncate(msg.body, 80)}
+                    </p>
                   </button>
                 ))}
             </div>
           </div>
 
           <div className="lg:hidden px-3 py-2 border-t border-gray-100">
-            <button type="button" onClick={() => setMobilePanel('directory')} className="flex items-center gap-1 text-sm text-gray-500">
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <button
+              type="button"
+              onClick={() => setMobilePanel('directory')}
+              className="flex items-center gap-1 text-sm text-gray-500"
+            >
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
               Kontakter
@@ -818,12 +973,28 @@ export default function BeskederPage() {
         </div>
 
         {/* Detail panel */}
-        <div className={`flex-1 bg-gray-50 min-w-0 flex flex-col ${mobilePanel === 'detail' ? 'flex' : 'hidden lg:flex'}`}>
+        <div
+          className={`flex-1 bg-gray-50 min-w-0 flex flex-col ${mobilePanel === 'detail' ? 'flex' : 'hidden lg:flex'}`}
+        >
           {selectedMsg ? (
             <div className="flex flex-col h-full">
               <div className="lg:hidden px-4 pt-3">
-                <button type="button" onClick={() => setMobilePanel('list')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <button
+                  type="button"
+                  onClick={() => setMobilePanel('list')}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                >
+                  <svg
+                    aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <polyline points="15 18 9 12 15 6" />
                   </svg>
                   Tilbage
@@ -831,7 +1002,9 @@ export default function BeskederPage() {
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="max-w-2xl">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">{selectedMsg.subject}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    {selectedMsg.subject}
+                  </h2>
                   <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
                     <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
                       {tab === 'inbox'
@@ -841,40 +1014,65 @@ export default function BeskederPage() {
                     <div className="min-w-0">
                       {tab === 'inbox' ? (
                         <>
-                          <p className="text-sm font-medium text-gray-900">{(selectedMsg as InboxMessageDto).senderName}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {(selectedMsg as InboxMessageDto).senderName}
+                          </p>
                           <p className="text-xs text-gray-500">
-                            {(selectedMsg as InboxMessageDto).senderType === 'Parent' ? 'Forælder' : 'Medarbejder'}
-                            {' · '}{formatRelativeTime(selectedMsg.sentAt)}
+                            {(selectedMsg as InboxMessageDto).senderType === 'Parent'
+                              ? 'Forælder'
+                              : 'Medarbejder'}
+                            {' · '}
+                            {formatRelativeTime(selectedMsg.sentAt)}
                           </p>
                         </>
                       ) : (
                         <>
                           <div className="flex items-center gap-1.5">
                             {(selectedMsg as SentMessageDto).isGroup && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">Gruppe</span>
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">
+                                Gruppe
+                              </span>
                             )}
                             <p className="text-sm font-medium text-gray-900">
                               {(selectedMsg as SentMessageDto).isGroup
                                 ? (selectedMsg as SentMessageDto).audienceLabel
                                 : `Til: ${(selectedMsg as SentMessageDto).recipientName}`}
                             </p>
-                            {(selectedMsg as SentMessageDto).isGroup && (selectedMsg as SentMessageDto).groupRecipientCount != null && (
-                              <span className="text-xs text-gray-400">({(selectedMsg as SentMessageDto).groupRecipientCount} modtagere)</span>
-                            )}
+                            {(selectedMsg as SentMessageDto).isGroup &&
+                              (selectedMsg as SentMessageDto).groupRecipientCount != null && (
+                                <span className="text-xs text-gray-400">
+                                  ({(selectedMsg as SentMessageDto).groupRecipientCount} modtagere)
+                                </span>
+                              )}
                           </div>
-                          <p className="text-xs text-gray-500">{formatRelativeTime(selectedMsg.sentAt)}</p>
+                          <p className="text-xs text-gray-500">
+                            {formatRelativeTime(selectedMsg.sentAt)}
+                          </p>
                         </>
                       )}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{selectedMsg.body}</div>
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {selectedMsg.body}
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <svg aria-hidden="true" className="mx-auto mb-3 text-gray-300" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  aria-hidden="true"
+                  className="mx-auto mb-3 text-gray-300"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
@@ -900,29 +1098,58 @@ export default function BeskederPage() {
             onClick={() => setComposeOpen(false)}
             className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
         <div className="mb-4">
-          <label htmlFor="compose-recipient" className="block text-sm font-medium text-gray-700 mb-1">Modtager</label>
+          <label
+            htmlFor="compose-recipient"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Modtager
+          </label>
           {selectedRecipient ? (
             <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg">
               <div className="flex items-center justify-center h-6 w-6 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0">
                 {getInitials(selectedRecipient.name)}
               </div>
               <span className="text-sm text-gray-900 flex-1">{selectedRecipient.name}</span>
-              <span className="text-xs text-gray-400">{selectedRecipient.type === 'Parent' ? 'Forælder' : 'Medarbejder'}</span>
+              <span className="text-xs text-gray-400">
+                {selectedRecipient.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
+              </span>
               <button
                 type="button"
                 aria-label="Fjern modtager"
                 onClick={() => setSelectedRecipient(null)}
                 className="ml-1 text-gray-400 hover:text-gray-600"
               >
-                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -935,7 +1162,9 @@ export default function BeskederPage() {
                 onChange={(e) => handleRecipientSearchChange(e.target.value)}
                 placeholder="Søg efter navn (min. 2 tegn)…"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                onFocus={() => { if (recipientResults.length > 0) setShowDropdown(true) }}
+                onFocus={() => {
+                  if (recipientResults.length > 0) setShowDropdown(true)
+                }}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
               />
               {showDropdown && (
@@ -949,14 +1178,20 @@ export default function BeskederPage() {
                     >
                       <div className="flex items-center justify-center h-7 w-7 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0">
                         {r.avatarUrl ? (
-                          <img src={r.avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
+                          <img
+                            src={r.avatarUrl}
+                            alt=""
+                            className="h-7 w-7 rounded-full object-cover"
+                          />
                         ) : (
                           getInitials(r.name)
                         )}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
-                        <p className="text-xs text-gray-500">{r.type === 'Parent' ? 'Forælder' : 'Medarbejder'}</p>
+                        <p className="text-xs text-gray-500">
+                          {r.type === 'Parent' ? 'Forælder' : 'Medarbejder'}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -967,7 +1202,9 @@ export default function BeskederPage() {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="compose-subject" className="block text-sm font-medium text-gray-700 mb-1">Emne</label>
+          <label htmlFor="compose-subject" className="block text-sm font-medium text-gray-700 mb-1">
+            Emne
+          </label>
           <input
             id="compose-subject"
             type="text"
@@ -979,7 +1216,9 @@ export default function BeskederPage() {
         </div>
 
         <div className="mb-5">
-          <label htmlFor="compose-body" className="block text-sm font-medium text-gray-700 mb-1">Besked</label>
+          <label htmlFor="compose-body" className="block text-sm font-medium text-gray-700 mb-1">
+            Besked
+          </label>
           <textarea
             id="compose-body"
             value={body}
@@ -993,7 +1232,11 @@ export default function BeskederPage() {
         {sendError && <p className="text-sm text-red-600 mb-3">{sendError}</p>}
 
         <div className="flex items-center justify-end gap-3">
-          <button type="button" onClick={() => setComposeOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+          <button
+            type="button"
+            onClick={() => setComposeOpen(false)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
             Annuller
           </button>
           <button
