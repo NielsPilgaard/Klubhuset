@@ -2,8 +2,8 @@
 <#
 .SYNOPSIS
     Run all CI checks locally. Collect errors from all steps before exiting.
-.PARAMETER Fix
-    Auto-fix dotnet formatting violations instead of just reporting them.
+.PARAMETER NoFix
+    Report dotnet formatting violations instead of auto-fixing them (default is to fix).
 .PARAMETER SkipTests
     Skip API integration tests (useful for quick compile checks).
 .PARAMETER SkipFrontend
@@ -12,7 +12,7 @@
     Skip all dotnet steps (format, build, tests).
 #>
 param(
-    [switch]$Fix,
+    [switch]$NoFix,
     [switch]$SkipTests,
     [switch]$SkipFrontend,
     [switch]$SkipDotnet
@@ -53,12 +53,23 @@ if (-not $SkipFrontend) {
 }
 
 if (-not $SkipDotnet) {
-    Step "dotnet format" {
-        Set-Location $RepoRoot
-        if ($Fix) {
-            dotnet format api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj
-        } else {
+    if ($NoFix) {
+        Step "dotnet format" {
+            Set-Location $RepoRoot
             dotnet format api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --verify-no-changes
+        }
+    } else {
+        Write-Host "`n==> dotnet format (auto-fix)" -ForegroundColor Cyan
+        Set-Location $RepoRoot
+        dotnet format api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj > $null 2>&1
+        $fmtExit = $LASTEXITCODE
+        if ($fmtExit -ne 0) {
+            $script:Errors += "FAIL [dotnet format]`n(output suppressed — run with -NoFix to see violations)"
+            $script:StepResults += @{ Name = "dotnet format"; Pass = $false }
+            Write-Host "FAIL: dotnet format" -ForegroundColor Red
+        } else {
+            $script:StepResults += @{ Name = "dotnet format"; Pass = $true }
+            Write-Host "PASS: dotnet format" -ForegroundColor Green
         }
     }
 

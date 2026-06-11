@@ -10,11 +10,11 @@ Runs all checks matching CI via `verify.ps1` at the repo root.
 ## Run
 
 ```powershell
-# Check everything
+# Check everything (auto-fixes dotnet formatting by default)
 pwsh scripts/verify.ps1
 
-# Auto-fix dotnet formatting, then check
-pwsh scripts/verify.ps1 -Fix
+# Report formatting violations instead of fixing
+pwsh scripts/verify.ps1 -NoFix
 
 # Skip integration tests (quick compile check)
 pwsh scripts/verify.ps1 -SkipTests
@@ -37,6 +37,6 @@ Playwright is not part of `verify.ps1` — use the `/test` skill for that.
 ## Rules
 
 - Run `verify.ps1` after every code change, before committing or declaring done
-- Use `-Fix` when dotnet format is the only failure — it auto-fixes and reruns clean
+- Auto-fix runs by default; use `-NoFix` only when you want to inspect violations without changing files
 - If Docker is not running, integration tests fail with a container error — say so explicitly rather than treating it as a code bug
 - Do not report work as done until the script exits 0
