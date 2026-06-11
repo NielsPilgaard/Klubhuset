@@ -47,28 +47,7 @@ export type BillingControllerSubscriptionDto = {
     activeModules?: Array<string> | null;
 };
 
-export type BroadcastControllerBroadcastLogDto = {
-    id?: string;
-    senderName?: string | null;
-    className?: string | null;
-    subject?: string | null;
-    recipientCount?: number;
-    sentAt?: string;
-};
-
-export type BroadcastControllerBroadcastPreviewDto = {
-    recipientCount?: number;
-};
-
-export type BroadcastControllerBroadcastPreviewRequest = {
-    classId?: string | null;
-};
-
-export type BroadcastControllerBroadcastRequest = {
-    classId?: string | null;
-    subject?: string | null;
-    body?: string | null;
-};
+export type BroadcastAudience = 'AllParents' | 'ClassParents' | 'SfoParents' | 'AllStaff' | 'StaffByRole';
 
 export type CalendarControllerCalendarEntryDto = {
     id?: string;
@@ -283,6 +262,24 @@ export type KontaktControllerKontaktParentDto = {
     studentNames?: Array<string> | null;
 };
 
+export type MessagesControllerGroupPreviewDto = {
+    recipientCount?: number;
+};
+
+export type MessagesControllerGroupPreviewRequest = {
+    audience: 'ClassParents';
+    classId: string;
+} | {
+    audience: 'StaffByRole';
+    staffRole: StaffRole;
+} | {
+    audience: 'AllParents';
+} | {
+    audience: 'SfoParents';
+} | {
+    audience: 'AllStaff';
+};
+
 export type MessagesControllerInboxMessageDto = {
     id?: string;
     senderId?: string;
@@ -301,6 +298,30 @@ export type MessagesControllerRecipientDto = {
     avatarUrl?: string | null;
 };
 
+export type MessagesControllerSendGroupMessageRequest = {
+    audience: 'ClassParents';
+    classId: string;
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'StaffByRole';
+    staffRole: StaffRole;
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'AllParents';
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'SfoParents';
+    subject?: string | null;
+    body?: string | null;
+} | {
+    audience: 'AllStaff';
+    subject?: string | null;
+    body?: string | null;
+};
+
 export type MessagesControllerSendMessageRequest = {
     recipientId?: string;
     recipientType?: RecipientType;
@@ -317,6 +338,9 @@ export type MessagesControllerSentMessageDto = {
     body?: string | null;
     sentAt?: string;
     readAt?: string | null;
+    isGroup?: boolean;
+    audienceLabel?: string | null;
+    groupRecipientCount?: number | null;
 };
 
 export type ModuleItemDto = {
@@ -337,7 +361,7 @@ export type NotificationPreferencesControllerUpsertPreferenceItem = {
     email?: boolean;
 };
 
-export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanChanged' | 'AbsenceConfirmed' | 'AbsenceDismissed' | 'VacationRegistrationOpened';
+export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanChanged' | 'AbsenceConfirmed' | 'AbsenceDismissed' | 'VacationRegistrationOpened' | 'GroupMessage';
 
 export type NotificationsControllerNotificationDto = {
     id?: string;
@@ -692,12 +716,14 @@ export type StudentsControllerStudentDto = {
     name?: string | null;
     classId?: string;
     className?: string | null;
+    isEnrolledInSfo?: boolean;
     createdAt?: string;
 };
 
 export type StudentsControllerUpsertStudentRequest = {
     name?: string | null;
     classId?: string;
+    isEnrolledInSfo?: boolean;
 };
 
 export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri';
@@ -1149,52 +1175,6 @@ export type PostApiV1BillingPortalResponses = {
 };
 
 export type PostApiV1BillingPortalResponse = PostApiV1BillingPortalResponses[keyof PostApiV1BillingPortalResponses];
-
-export type PostApiV1BroadcastEmailPreviewData = {
-    body?: BroadcastControllerBroadcastPreviewRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/broadcast-email/preview';
-};
-
-export type PostApiV1BroadcastEmailPreviewResponses = {
-    /**
-     * OK
-     */
-    200: BroadcastControllerBroadcastPreviewDto;
-};
-
-export type PostApiV1BroadcastEmailPreviewResponse = PostApiV1BroadcastEmailPreviewResponses[keyof PostApiV1BroadcastEmailPreviewResponses];
-
-export type PostApiV1BroadcastEmailData = {
-    body?: BroadcastControllerBroadcastRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/broadcast-email';
-};
-
-export type PostApiV1BroadcastEmailResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type GetApiV1BroadcastEmailLogData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/broadcast-email/log';
-};
-
-export type GetApiV1BroadcastEmailLogResponses = {
-    /**
-     * OK
-     */
-    200: Array<BroadcastControllerBroadcastLogDto>;
-};
-
-export type GetApiV1BroadcastEmailLogResponse = GetApiV1BroadcastEmailLogResponses[keyof GetApiV1BroadcastEmailLogResponses];
 
 export type GetApiV1CalendarData = {
     body?: never;
@@ -1877,6 +1857,36 @@ export type GetApiV1MessagesRecipientsResponses = {
 };
 
 export type GetApiV1MessagesRecipientsResponse = GetApiV1MessagesRecipientsResponses[keyof GetApiV1MessagesRecipientsResponses];
+
+export type PostApiV1MessagesGroupPreviewData = {
+    body?: MessagesControllerGroupPreviewRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/messages/group/preview';
+};
+
+export type PostApiV1MessagesGroupPreviewResponses = {
+    /**
+     * OK
+     */
+    200: MessagesControllerGroupPreviewDto;
+};
+
+export type PostApiV1MessagesGroupPreviewResponse = PostApiV1MessagesGroupPreviewResponses[keyof PostApiV1MessagesGroupPreviewResponses];
+
+export type PostApiV1MessagesGroupData = {
+    body?: MessagesControllerSendGroupMessageRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/messages/group';
+};
+
+export type PostApiV1MessagesGroupResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1NotificationPreferencesData = {
     body?: never;

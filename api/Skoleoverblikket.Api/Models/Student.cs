@@ -21,6 +21,8 @@ public sealed class Student : ITenantScoped, IEntityTypeConfiguration<Student>
 	[StringLength(2000)]
 	public string? AvatarUrl { get; set; }
 
+	public bool IsEnrolledInSfo { get; set; }
+
 	public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
 	public void Configure(EntityTypeBuilder<Student> builder)

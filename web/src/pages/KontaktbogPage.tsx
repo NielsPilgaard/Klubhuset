@@ -4,6 +4,8 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import {
   getApiV1ContactThreads,
   getApiV1ContactThreadsByThreadIdMessages,
+  getApiV1Students,
+  postApiV1ContactThreads,
   postApiV1ContactThreadsByThreadIdRead,
   postApiV1ContactThreadsByThreadIdMessages,
 } from '../api/generated/sdk.gen'
@@ -57,6 +59,9 @@ export default function KontaktbogPage() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
   const [messageBody, setMessageBody] = useState('')
   const [showMobileMessages, setShowMobileMessages] = useState(false)
+  const [showCompose, setShowCompose] = useState(false)
+  const [composeStudentId, setComposeStudentId] = useState<string>('')
+  const [composeBody, setComposeBody] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const threadsQueryKey = [{ _id: 'getApiV1ContactThreads' }] as const
@@ -67,6 +72,19 @@ export default function KontaktbogPage() {
       const { data } = await getApiV1ContactThreads({ throwOnError: false })
       return (data ?? []) as ContactThreadDto[]
     },
+  })
+
+  const {
+    data: students = [],
+    isLoading: studentsLoading,
+    error: studentsError,
+  } = useQuery({
+    queryKey: [{ _id: 'getApiV1Students' }],
+    queryFn: async () => {
+      const { data } = await getApiV1Students({ throwOnError: false })
+      return (data ?? []) as { id: string; name: string | null; className: string | null }[]
+    },
+    enabled: showCompose,
   })
 
   const { data: messagesData } = useQuery({
@@ -119,6 +137,26 @@ export default function KontaktbogPage() {
     },
   })
 
+  const newThreadMutation = useMutation({
+    mutationFn: async ({ studentId, body }: { studentId: string; body: string }) => {
+      const { data } = await postApiV1ContactThreads({
+        body: { studentId, body },
+        throwOnError: true,
+      })
+      return data as { id: string } | null
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: threadsQueryKey })
+      if (data?.id) {
+        setSelectedThreadId(data.id)
+        setShowMobileMessages(true)
+      }
+      setShowCompose(false)
+      setComposeStudentId('')
+      setComposeBody('')
+    },
+  })
+
   function handleSelectThread(threadId: string) {
     setSelectedThreadId(threadId)
     setShowMobileMessages(true)
@@ -130,6 +168,13 @@ export default function KontaktbogPage() {
       return
     }
     sendMessageMutation.mutate({ threadId: selectedThreadId, body: messageBody.trim() })
+  }
+
+  function handleNewThread() {
+    if (!composeStudentId || !composeBody.trim()) {
+      return
+    }
+    newThreadMutation.mutate({ studentId: composeStudentId, body: composeBody.trim() })
   }
 
   useEffect(() => {
@@ -144,11 +189,90 @@ export default function KontaktbogPage() {
       <div
         className={`w-full lg:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col ${showMobileMessages ? 'hidden lg:flex' : 'flex'}`}
       >
-        <div className="px-4 py-4 border-b border-gray-100">
+        <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-between gap-2">
           <h1 className="font-display text-xl font-semibold text-gray-900">
             Kontaktbog – alle klasser
           </h1>
+          <button
+            onClick={() => setShowCompose(true)}
+            className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+            aria-label="Ny samtale"
+            title="Ny samtale"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </button>
         </div>
+
+        {/* New thread compose panel */}
+        {showCompose && (
+          <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 space-y-2">
+            <p className="text-xs font-medium text-gray-700">Ny samtale</p>
+            <select
+              value={composeStudentId}
+              onChange={(e) => setComposeStudentId(e.target.value)}
+              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+            >
+              <option value="">Vælg elev…</option>
+              {students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name ?? 'Ukendt elev'}
+                  {s.className ? ` (${s.className})` : ''}
+                </option>
+              ))}
+            </select>
+            {students.length === 0 && !studentsLoading && studentsError && (
+              <p className="text-xs text-red-600">Kunne ikke indlæse elever. Prøv igen.</p>
+            )}
+            <textarea
+              value={composeBody}
+              onChange={(e) => setComposeBody(e.target.value)}
+              rows={3}
+              placeholder="Skriv din første besked…"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault()
+                  handleNewThread()
+                }
+              }}
+            />
+            {newThreadMutation.isError && (
+              <p className="text-xs text-red-600">Der opstod en fejl. Prøv igen.</p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowCompose(false)
+                  setComposeStudentId('')
+                  setComposeBody('')
+                }}
+                className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Annuller
+              </button>
+              <button
+                onClick={handleNewThread}
+                disabled={newThreadMutation.isPending || !composeStudentId || !composeBody.trim()}
+                className="px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
+              >
+                {newThreadMutation.isPending ? 'Sender…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {threadsLoading && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500">

@@ -43,7 +43,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<Message> Messages => Set<Message>();
 	public DbSet<VacationRegistrationWindow> VacationRegistrationWindows => Set<VacationRegistrationWindow>();
 	public DbSet<VacationRegistrationEntry> VacationRegistrationEntries => Set<VacationRegistrationEntry>();
-	public DbSet<BroadcastEmail> BroadcastEmails => Set<BroadcastEmail>();
+	public DbSet<GroupMessage> GroupMessages => Set<GroupMessage>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

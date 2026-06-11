@@ -33,6 +33,8 @@ public static class SwaggerExtensions
 
 			options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
 			{ [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
+
+			options.SchemaFilter<GroupMessageSchemaFilter>();
 		});
 
 		return services;

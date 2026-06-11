@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Skoleoverblikket.Api.Data;
@@ -11,9 +12,11 @@ using Skoleoverblikket.Api.Data;
 namespace Skoleoverblikket.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260606071047_AddIsEnrolledInSfoToStudent")]
+    partial class AddIsEnrolledInSfoToStudent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -344,10 +347,7 @@ namespace Skoleoverblikket.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GroupMessages", t =>
-                        {
-                            t.HasCheckConstraint("CK_GroupMessages_Sender", "\"SenderStaffId\" IS NOT NULL OR \"SenderParentId\" IS NOT NULL");
-                        });
+                    b.ToTable("GroupMessages");
                 });
 
             modelBuilder.Entity("Skoleoverblikket.Api.Models.Message", b =>
@@ -391,10 +391,6 @@ namespace Skoleoverblikket.Api.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupMessageId")
-                        .HasDatabaseName("IX_Messages_GroupMessageId")
-                        .HasFilter("\"GroupMessageId\" IS NOT NULL");
 
                     b.ToTable("Messages");
                 });

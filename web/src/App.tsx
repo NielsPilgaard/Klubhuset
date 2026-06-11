@@ -31,6 +31,7 @@ const RoomsPage = lazy(() => import('./pages/RoomsPage'))
 const RoomSchedulePage = lazy(() => import('./pages/RoomSchedulePage'))
 const PrintSchemaPage = lazy(() => import('./pages/PrintSchemaPage'))
 const SfoPrintPage = lazy(() => import('./pages/SfoPrintPage'))
+const UgeplanPrintPage = lazy(() => import('./pages/UgeplanPrintPage'))
 const SkoleindstillingerPage = lazy(() => import('./pages/SkoleindstillingerPage'))
 const SchoolSetupWizardPage = lazy(() => import('./pages/SchoolSetupWizardPage'))
 const FilesPage = lazy(() => import('./pages/FilesPage'))
@@ -64,8 +65,6 @@ const BeskederPage = lazy(() => import('./pages/BeskederPage'))
 const FerieindmeldingPage = lazy(() => import('./pages/FerieindmeldingPage'))
 const FerieindmeldingDetailPage = lazy(() => import('./pages/FerieindmeldingDetailPage'))
 const ParentFerieindmeldingPage = lazy(() => import('./pages/parent/ParentFerieindmeldingPage'))
-const BroadcastPage = lazy(() => import('./pages/BroadcastPage'))
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -129,6 +128,7 @@ export default function App() {
               <Route path="udskriv/medarbejder/:staffId" element={<PrintSchemaPage />} />
               <Route path="udskriv/lokale/:roomId" element={<PrintSchemaPage />} />
               <Route path="udskriv/sfo" element={<SfoPrintPage />} />
+              <Route path="udskriv/ugeplan" element={<UgeplanPrintPage />} />
 
               {/* Pages outside Layout (no sidebar) */}
               <Route path="setup" element={<SchoolSetupWizardPage />} />
@@ -290,7 +290,6 @@ export default function App() {
                   }
                 />
                 <Route path="foraeldre/kontakt" element={<ParentDirectoryPage />} />
-                <Route path="udsend-email" element={<BroadcastPage />} />
                 <Route path="fravaer" element={<FravaerPage />} />
                 <Route path="kontaktbog" element={<KontaktbogPage />} />
                 <Route

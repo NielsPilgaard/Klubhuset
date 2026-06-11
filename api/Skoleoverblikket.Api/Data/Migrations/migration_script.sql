@@ -1610,3 +1610,81 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260606071047_AddIsEnrolledInSfoToStudent') THEN
+    DROP TABLE "BroadcastEmails";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260606071047_AddIsEnrolledInSfoToStudent') THEN
+    ALTER TABLE "Students" ADD "IsEnrolledInSfo" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260606071047_AddIsEnrolledInSfoToStudent') THEN
+    ALTER TABLE "Messages" ADD "GroupMessageId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260606071047_AddIsEnrolledInSfoToStudent') THEN
+    CREATE TABLE "GroupMessages" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "SenderStaffId" uuid,
+        "SenderParentId" uuid,
+        "SenderName" character varying(200) NOT NULL,
+        "Audience" integer NOT NULL,
+        "ClassId" uuid,
+        "StaffRole" integer,
+        "Subject" character varying(200) NOT NULL,
+        "Body" character varying(10000) NOT NULL,
+        "RecipientCount" integer NOT NULL,
+        "SentAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_GroupMessages" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260606071047_AddIsEnrolledInSfoToStudent') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260606071047_AddIsEnrolledInSfoToStudent', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611033342_Add_GroupMessage_Index_And_Sender_Constraint') THEN
+    CREATE INDEX "IX_Messages_GroupMessageId" ON "Messages" ("GroupMessageId") WHERE "GroupMessageId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611033342_Add_GroupMessage_Index_And_Sender_Constraint') THEN
+    ALTER TABLE "GroupMessages" ADD CONSTRAINT "CK_GroupMessages_Sender" CHECK ("SenderStaffId" IS NOT NULL OR "SenderParentId" IS NOT NULL);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611033342_Add_GroupMessage_Index_And_Sender_Constraint') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260611033342_Add_GroupMessage_Index_And_Sender_Constraint', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

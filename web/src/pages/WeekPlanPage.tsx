@@ -16,6 +16,7 @@ import type { ClassDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { FilePicker } from '../components/files/FilePicker'
 import { TildeleVikarPanel } from '../components/vikar/TildeleVikarPanel'
+import { getISOWeek, getISOWeekYear, getISOWeeksInYear } from '../utils/isoWeek'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
 
@@ -77,29 +78,6 @@ interface WeekPlanDto {
 interface CourseDto {
   id: string
   name: string
-}
-
-// ─── ISO week helpers ─────────────────────────────────────────────────────────
-
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
-function getISOWeekYear(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-  return d.getUTCFullYear()
-}
-
-function getISOWeeksInYear(year: number): number {
-  // A year has 53 weeks if Jan 1 or Dec 31 is Thursday
-  const jan1 = new Date(Date.UTC(year, 0, 1)).getUTCDay()
-  const dec31 = new Date(Date.UTC(year, 11, 31)).getUTCDay()
-  return jan1 === 4 || dec31 === 4 ? 53 : 52
 }
 
 // Returns the Monday of the ISO week
@@ -634,7 +612,34 @@ export default function WeekPlanPage() {
             Denne uge
           </button>
         </div>
-        <div className="w-32" /> {/* spacer for right side */}
+        <div className="flex justify-end w-32">
+          <button
+            onClick={() =>
+              window.open(
+                `/udskriv/ugeplan?classId=${classId}&isoYear=${isoYear}&isoWeek=${isoWeek}${schemaId ? `&schemaId=${schemaId}` : ''}`,
+                '_blank'
+              )
+            }
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Udskriv ugeplan"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+            Udskriv
+          </button>
+        </div>
       </div>
 
       {/* Holiday banner */}

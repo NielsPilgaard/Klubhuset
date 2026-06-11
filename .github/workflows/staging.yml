@@ -15,41 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull API and Keycloak images
-        env:
-          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
-          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
-          # WEB_IMAGE unused here — we build it locally with the staging Keycloak URL
-          WEB_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.event.workflow_run.head_sha }}
-        run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull api keycloak keycloak-db postgres mailpit localstack
-
-      - name: Build web image with staging Keycloak URL
-        # The published web image has the production Keycloak URL baked in (https://auth.skoleoverblikket.dk).
-        # For e2e tests we need http://localhost:8080, so we rebuild locally.
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: web/Dockerfile
-          push: false
-          load: true
-          tags: skoleoverblikket-web-e2e:latest
-          build-args: |
-            VITE_KEYCLOAK_URL=http://localhost:8080
-
-      - name: Start staging stack
-        env:
-          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
-          WEB_IMAGE: skoleoverblikket-web-e2e:latest
-          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
-        run: docker compose -f infrastructure/docker/docker-compose.staging.yml up -d --wait
-
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
@@ -67,6 +32,7 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ hashFiles('web/package-lock.json') }}
+          restore-keys: playwright-chromium-
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -77,6 +43,44 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
         working-directory: web
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull API and Keycloak images
+        timeout-minutes: 15
+        env:
+          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
+          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
+          # WEB_IMAGE unused here — we build it locally with the staging Keycloak URL
+          WEB_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-web:sha-${{ github.event.workflow_run.head_sha }}
+        run: docker compose -f infrastructure/docker/docker-compose.staging.yml pull api keycloak keycloak-db postgres mailpit localstack
+
+      - name: Build web image with staging Keycloak URL
+        # The published web image has the production Keycloak URL baked in (https://auth.skoleoverblikket.dk).
+        # For e2e tests we need http://localhost:8080, so we rebuild locally.
+        timeout-minutes: 10
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          push: false
+          load: true
+          tags: skoleoverblikket-web-e2e:latest
+          build-args: |
+            VITE_KEYCLOAK_URL=http://localhost:8080
+
+      - name: Start staging stack
+        timeout-minutes: 5
+        env:
+          API_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-api:sha-${{ github.event.workflow_run.head_sha }}
+          WEB_IMAGE: skoleoverblikket-web-e2e:latest
+          KEYCLOAK_IMAGE: ghcr.io/nielspilgaard/skoleoverblikket-keycloak:sha-${{ github.event.workflow_run.head_sha }}
+        run: docker compose -f infrastructure/docker/docker-compose.staging.yml up -d --wait
 
       - name: Run Playwright e2e tests
         env:

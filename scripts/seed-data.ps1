@@ -430,6 +430,11 @@ foreach ($cls in $classes) {
     $schemaId = $schema.id
     $classSchemas[$cls.Id] = $schemaId
 
+    Invoke-Api -Method PUT -Path "/api/v1/classes/$($cls.Id)/schemas/$schemaId/daterange" -Body @{
+        startDate = "2025-08-01"
+        endDate   = "2026-06-30"
+    } | Out-Null
+
     $courses = $gradeCourses[[int]$cls.GradeLevel]
     if (-not $courses) { $courses = $gradeCourses[5] }
 
