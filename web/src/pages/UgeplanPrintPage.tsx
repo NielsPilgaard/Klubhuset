@@ -5,23 +5,10 @@ import {
   getApiV1ClassesByClassIdUgeplanOptions,
   getApiV1ClassesOptions,
 } from '../api/generated/@tanstack/react-query.gen'
+import { getISOWeek, getISOWeekYear } from '../utils/isoWeek'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 const WEEKDAY_KEYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
-function getISOWeekYear(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-  return d.getUTCFullYear()
-}
 
 export default function UgeplanPrintPage() {
   const [searchParams] = useSearchParams()
@@ -164,20 +151,26 @@ export default function UgeplanPrintPage() {
         <div className="print-header">
           <div>
             <h1 className="print-title">{className ? `${className} – Ugeplan` : 'Ugeplan'}</h1>
-            <p className="print-subtitle">Uge {isoWeek}, {isoYear}</p>
+            <p className="print-subtitle">
+              Uge {isoWeek}, {isoYear}
+            </p>
           </div>
           <p className="print-date">Udskrevet {new Date().toLocaleDateString('da-DK')}</p>
         </div>
 
         {slots.length === 0 ? (
-          <p className="print-empty">Ingen lektioner for uge {isoWeek}, {isoYear}</p>
+          <p className="print-empty">
+            Ingen lektioner for uge {isoWeek}, {isoYear}
+          </p>
         ) : (
           <table className="print-table">
             <thead>
               <tr>
                 <th className="print-th print-th-time">Tid</th>
                 {WEEKDAYS.map((d) => (
-                  <th key={d} className="print-th">{d}</th>
+                  <th key={d} className="print-th">
+                    {d}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -198,9 +191,10 @@ export default function UgeplanPrintPage() {
                           {daySlots?.map((slot) => (
                             <div key={slot.id} className="print-cell">
                               <span className="print-course">{slot.courseName}</span>
-                              {slot.originalCourseName && slot.originalCourseName !== slot.courseName && (
-                                <span className="print-swap">↔ {slot.originalCourseName}</span>
-                              )}
+                              {slot.originalCourseName &&
+                                slot.originalCourseName !== slot.courseName && (
+                                  <span className="print-swap">↔ {slot.originalCourseName}</span>
+                                )}
                               {slot.beskrivelse && (
                                 <span className="print-beskrivelse">{slot.beskrivelse}</span>
                               )}
