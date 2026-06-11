@@ -1663,3 +1663,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611033342_Add_GroupMessage_Index_And_Sender_Constraint') THEN
+    CREATE INDEX "IX_Messages_GroupMessageId" ON "Messages" ("GroupMessageId") WHERE "GroupMessageId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611033342_Add_GroupMessage_Index_And_Sender_Constraint') THEN
+    ALTER TABLE "GroupMessages" ADD CONSTRAINT "CK_GroupMessages_Sender" CHECK ("SenderStaffId" IS NOT NULL OR "SenderParentId" IS NOT NULL);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611033342_Add_GroupMessage_Index_And_Sender_Constraint') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260611033342_Add_GroupMessage_Index_And_Sender_Constraint', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

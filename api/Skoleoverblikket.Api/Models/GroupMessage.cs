@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skoleoverblikket.Api.Data;
 
 namespace Skoleoverblikket.Api.Models;
@@ -12,7 +14,7 @@ public enum BroadcastAudience
 	StaffByRole,
 }
 
-public sealed class GroupMessage : ITenantScoped
+public sealed class GroupMessage : ITenantScoped, IEntityTypeConfiguration<GroupMessage>
 {
 	public Guid Id { get; set; }
 	public Guid TenantId { get; set; }
@@ -36,4 +38,11 @@ public sealed class GroupMessage : ITenantScoped
 	public int RecipientCount { get; set; }
 
 	public DateTimeOffset SentAt { get; init; } = DateTimeOffset.UtcNow;
+
+	public void Configure(EntityTypeBuilder<GroupMessage> builder)
+	{
+		builder.ToTable(t => t.HasCheckConstraint(
+			"CK_GroupMessages_Sender",
+			"\"SenderStaffId\" IS NOT NULL OR \"SenderParentId\" IS NOT NULL"));
+	}
 }
