@@ -14,6 +14,7 @@ interface PreferenceState {
 const ALL_TYPES: NotificationType[] = [
   'NewMessage',
   'NewContactMessage',
+  'GroupMessage',
   'WeekPlanChanged',
   'AbsenceConfirmed',
   'AbsenceDismissed',
@@ -23,6 +24,7 @@ const ALL_TYPES: NotificationType[] = [
 const TYPE_LABELS: Record<NotificationType, string> = {
   NewMessage: 'Ny besked',
   NewContactMessage: 'Ny besked i kontaktbog',
+  GroupMessage: 'Gruppebesked',
   WeekPlanChanged: 'Ugeplanen opdateret',
   AbsenceConfirmed: 'Fravær bekræftet',
   AbsenceDismissed: 'Fravær afvist',

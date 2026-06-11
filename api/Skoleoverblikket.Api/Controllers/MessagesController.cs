@@ -486,16 +486,13 @@ public sealed class MessagesController(
 		}
 
 		// In-app notifications
-		foreach (var recipient in recipients)
-		{
-			await notificationService.CreateAsync(
-				recipient.Id,
-				recipient.RecipientType,
-				NotificationType.GroupMessage,
-				groupMessage.Id,
-				$"{callerName} har sendt dig en gruppebesked: {req.Subject}",
-				cancellationToken);
-		}
+		var notificationRequests = recipients.Select(recipient => new NotificationRequest(
+			recipient.Id,
+			recipient.RecipientType,
+			NotificationType.GroupMessage,
+			groupMessage.Id,
+			$"{callerName} har sendt dig en gruppebesked: {req.Subject}")).ToList();
+		await notificationService.CreateBatchAsync(notificationRequests, cancellationToken);
 
 		return Created(string.Empty, new { groupMessageId = groupMessage.Id, recipientCount = recipients.Count });
 	}
@@ -521,51 +518,51 @@ public sealed class MessagesController(
 		switch (audience)
 		{
 			case BroadcastAudience.AllParents:
-			{
-				var rows = await db.Parents.AsNoTracking()
-					.Where(p => p.Email != null)
-					.Select(p => new { p.Id, p.Name, p.Email })
-					.ToListAsync(cancellationToken);
-				return rows.Select(p => new RecipientInfo(p.Id, RecipientType.Parent, p.Name, p.Email)).ToList();
-			}
+				{
+					var rows = await db.Parents.AsNoTracking()
+						.Where(p => p.Email != null)
+						.Select(p => new { p.Id, p.Name, p.Email })
+						.ToListAsync(cancellationToken);
+					return rows.Select(p => new RecipientInfo(p.Id, RecipientType.Parent, p.Name, p.Email)).ToList();
+				}
 			case BroadcastAudience.ClassParents when classId.HasValue:
-			{
-				var rows = await db.Students.AsNoTracking()
-					.Where(s => s.ClassId == classId.Value)
-					.SelectMany(s => s.Parents)
-					.Where(p => p.Email != null)
-					.Distinct()
-					.Select(p => new { p.Id, p.Name, p.Email })
-					.ToListAsync(cancellationToken);
-				return rows.Select(p => new RecipientInfo(p.Id, RecipientType.Parent, p.Name, p.Email)).ToList();
-			}
+				{
+					var rows = await db.Students.AsNoTracking()
+						.Where(s => s.ClassId == classId.Value)
+						.SelectMany(s => s.Parents)
+						.Where(p => p.Email != null)
+						.Distinct()
+						.Select(p => new { p.Id, p.Name, p.Email })
+						.ToListAsync(cancellationToken);
+					return rows.Select(p => new RecipientInfo(p.Id, RecipientType.Parent, p.Name, p.Email)).ToList();
+				}
 			case BroadcastAudience.SfoParents:
-			{
-				var rows = await db.Students.AsNoTracking()
-					.Where(s => s.IsEnrolledInSfo)
-					.SelectMany(s => s.Parents)
-					.Where(p => p.Email != null)
-					.Distinct()
-					.Select(p => new { p.Id, p.Name, p.Email })
-					.ToListAsync(cancellationToken);
-				return rows.Select(p => new RecipientInfo(p.Id, RecipientType.Parent, p.Name, p.Email)).ToList();
-			}
+				{
+					var rows = await db.Students.AsNoTracking()
+						.Where(s => s.IsEnrolledInSfo)
+						.SelectMany(s => s.Parents)
+						.Where(p => p.Email != null)
+						.Distinct()
+						.Select(p => new { p.Id, p.Name, p.Email })
+						.ToListAsync(cancellationToken);
+					return rows.Select(p => new RecipientInfo(p.Id, RecipientType.Parent, p.Name, p.Email)).ToList();
+				}
 			case BroadcastAudience.AllStaff:
-			{
-				var rows = await db.Staff.AsNoTracking()
-					.Where(s => s.Email != null)
-					.Select(s => new { s.Id, s.Name, s.Email })
-					.ToListAsync(cancellationToken);
-				return rows.Select(s => new RecipientInfo(s.Id, RecipientType.Staff, s.Name, s.Email)).ToList();
-			}
+				{
+					var rows = await db.Staff.AsNoTracking()
+						.Where(s => s.Email != null)
+						.Select(s => new { s.Id, s.Name, s.Email })
+						.ToListAsync(cancellationToken);
+					return rows.Select(s => new RecipientInfo(s.Id, RecipientType.Staff, s.Name, s.Email)).ToList();
+				}
 			case BroadcastAudience.StaffByRole when staffRole.HasValue:
-			{
-				var rows = await db.Staff.AsNoTracking()
-					.Where(s => s.Role == staffRole.Value && s.Email != null)
-					.Select(s => new { s.Id, s.Name, s.Email })
-					.ToListAsync(cancellationToken);
-				return rows.Select(s => new RecipientInfo(s.Id, RecipientType.Staff, s.Name, s.Email)).ToList();
-			}
+				{
+					var rows = await db.Staff.AsNoTracking()
+						.Where(s => s.Role == staffRole.Value && s.Email != null)
+						.Select(s => new { s.Id, s.Name, s.Email })
+						.ToListAsync(cancellationToken);
+					return rows.Select(s => new RecipientInfo(s.Id, RecipientType.Staff, s.Name, s.Email)).ToList();
+				}
 			default:
 				return [];
 		}

@@ -64,6 +64,94 @@ public sealed class NotificationService(AppDbContext db, ITenantContext tenantCo
 		}
 	}
 
+	public async Task CreateBatchAsync(
+		IEnumerable<NotificationRequest> requests,
+		CancellationToken cancellationToken)
+	{
+		var list = requests.ToList();
+		if (list.Count == 0) return;
+
+		var types = list.Select(r => r.Type).Distinct().ToList();
+		var recipientIds = list.Select(r => r.RecipientId).Distinct().ToList();
+
+		var prefs = await db.NotificationPreferences
+			.AsNoTracking()
+			.Where(p => recipientIds.Contains(p.UserId) && types.Contains(p.Type))
+			.ToListAsync(cancellationToken);
+
+		var prefLookup = prefs.ToDictionary(p => (p.UserId, p.UserType, p.Type));
+
+		var now = DateTimeOffset.UtcNow;
+		var emailsToSend = new List<(string Email, string Subject, string Body)>();
+
+		foreach (var req in list)
+		{
+			prefLookup.TryGetValue((req.RecipientId, req.RecipientType, req.Type), out var pref);
+			bool inApp = pref?.InApp ?? true;
+			bool emailEnabled = pref?.Email ?? true;
+
+			if (inApp)
+			{
+				db.Notifications.Add(new Notification
+				{
+					Id = Guid.NewGuid(),
+					TenantId = tenantContext.TenantId,
+					RecipientId = req.RecipientId,
+					RecipientType = req.RecipientType,
+					Type = req.Type,
+					ReferenceId = req.ReferenceId,
+					Body = req.Body,
+					CreatedAt = now,
+				});
+			}
+
+			if (emailEnabled)
+			{
+				emailsToSend.Add((req.RecipientId.ToString(), req.Body, req.Body));
+			}
+		}
+
+		await db.SaveChangesAsync(cancellationToken);
+
+		if (emailsToSend.Count > 0)
+		{
+			var baseUrl = appOptions.Value.SanitizedBaseUrl;
+			var settingsUrl = $"{baseUrl}/indstillinger/notifikationer";
+
+			var parentIds = list.Where(r => r.RecipientType == RecipientType.Parent).Select(r => r.RecipientId).Distinct().ToList();
+			var staffAndBoardIds = list.Where(r => r.RecipientType == RecipientType.Staff || r.RecipientType == RecipientType.Board).Select(r => r.RecipientId).Distinct().ToList();
+
+			var parentEmails = parentIds.Count > 0
+				? await db.Parents.AsNoTracking().Where(p => parentIds.Contains(p.Id) && p.Email != null)
+					.ToDictionaryAsync(p => p.Id, p => p.Email!, cancellationToken)
+				: new Dictionary<Guid, string>();
+
+			var staffEmails = staffAndBoardIds.Count > 0
+				? await db.Staff.AsNoTracking().Where(s => staffAndBoardIds.Contains(s.Id) && s.Email != null)
+					.ToDictionaryAsync(s => s.Id, s => s.Email!, cancellationToken)
+				: new Dictionary<Guid, string>();
+
+			foreach (var req in list)
+			{
+				prefLookup.TryGetValue((req.RecipientId, req.RecipientType, req.Type), out var pref);
+				if (!(pref?.Email ?? true)) continue;
+
+				var recipientEmail = req.RecipientType == RecipientType.Parent
+					? parentEmails.GetValueOrDefault(req.RecipientId)
+					: staffEmails.GetValueOrDefault(req.RecipientId);
+
+				if (string.IsNullOrEmpty(recipientEmail)) continue;
+
+				await email.SendAsync(new EmailMessage(
+					To: recipientEmail,
+					Subject: req.Body,
+					HtmlBody: BuildHtmlEmail(req.Body, settingsUrl),
+					PlainTextBody: BuildPlainEmail(req.Body, settingsUrl)
+				), cancellationToken);
+			}
+		}
+	}
+
 	private static string BuildHtmlEmail(string body, string settingsUrl)
 	{
 		var encodedBody = HtmlEncoder.Default.Encode(body);
