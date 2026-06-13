@@ -237,7 +237,12 @@ function BestyrelsesmedlemmerCard() {
     return { Authorization: `Bearer ${keycloak.token}` }
   }
 
-  const { data: members, isLoading } = useQuery<BoardMemberDto[]>({
+  const {
+    data: members,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<BoardMemberDto[]>({
     queryKey: ['board-members'],
     queryFn: async () => {
       const headers = await authHeader()
@@ -334,6 +339,10 @@ function BestyrelsesmedlemmerCard() {
             {[...Array(2)].map((_, i) => (
               <div key={i} className="h-10 bg-gray-100 rounded" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="px-6 py-8 text-center text-sm text-red-600">
+            {error instanceof Error ? error.message : 'Kunne ikke hente bestyrelsesmedlemmer'}
           </div>
         ) : members?.length === 0 ? (
           <div className="px-6 py-8 text-center text-sm text-gray-400">

@@ -9922,7 +9922,8 @@
           "Biologi",
           "FysikKemi",
           "Samfundsfag",
-          "Fri"
+          "Fri",
+          "Madkundskab"
         ],
         "type": "string"
       },

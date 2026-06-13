@@ -383,6 +383,14 @@ export default function App() {
                     </AdminRoute>
                   }
                 />
+                <Route
+                  path="bestyrelse/staa-maal-med"
+                  element={
+                    <BoardRoute>
+                      <StaaMaalMedPage />
+                    </BoardRoute>
+                  }
+                />
               </Route>
             </Routes>
           </Suspense>

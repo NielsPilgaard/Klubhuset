@@ -1,38 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { getApiV1BoardFilesOptions } from '../api/generated/@tanstack/react-query.gen'
 import { usePageTitle } from '../hooks/usePageTitle'
-import keycloak from '../auth/keycloak'
-
-interface BoardFile {
-  id: string
-  fileName: string
-  sizeBytes: number
-  uploadedAt: string
-}
-
-interface BoardFolder {
-  id: string
-  name: string
-}
-
-interface BoardFilesResponse {
-  files: BoardFile[]
-  folders: BoardFolder[]
-}
 
 export default function BestyrelseFilerPage() {
   usePageTitle('Bestyrelsesdokumenter')
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['board-files'],
-    queryFn: async () => {
-      await keycloak.updateToken(30).catch(() => keycloak.login())
-      const res = await fetch('/api/v1/board-files', {
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-      if (!res.ok) throw new Error('Kunne ikke hente filer')
-      return res.json() as Promise<BoardFilesResponse>
-    },
-  })
+  const { data, isLoading } = useQuery(getApiV1BoardFilesOptions())
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-8">
@@ -49,13 +22,13 @@ export default function BestyrelseFilerPage() {
             </div>
           ))}
         </div>
-      ) : data?.files.length === 0 && data?.folders.length === 0 ? (
+      ) : (data?.files ?? []).length === 0 && (data?.folders ?? []).length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           <p>Ingen bestyrelsesdokumenter endnu</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-          {data?.folders.map((folder) => (
+          {(data?.folders ?? []).map((folder) => (
             <div key={folder.id} className="px-5 py-3 flex items-center gap-3">
               <svg
                 width="16"
@@ -71,7 +44,7 @@ export default function BestyrelseFilerPage() {
               <span className="text-sm text-gray-700">{folder.name}</span>
             </div>
           ))}
-          {data?.files.map((file) => (
+          {(data?.files ?? []).map((file) => (
             <div key={file.id} className="px-5 py-3 flex items-center gap-3">
               <svg
                 width="16"
@@ -87,7 +60,7 @@ export default function BestyrelseFilerPage() {
               </svg>
               <span className="text-sm text-gray-700 flex-1 truncate">{file.fileName}</span>
               <span className="text-xs text-gray-400 shrink-0">
-                {new Date(file.uploadedAt).toLocaleDateString('da-DK')}
+                {file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('da-DK') : ''}
               </span>
             </div>
           ))}

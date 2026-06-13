@@ -35,6 +35,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   FysikKemi: 'Fysik/Kemi',
   Samfundsfag: 'Samfundsfag',
   Tysk: 'Tysk',
+  Fransk: 'Fransk',
   Madkundskab: 'Madkundskab',
 }
 
@@ -65,7 +66,7 @@ export default function StaaMaalMedPage() {
   const { data, isLoading, isError } = useQuery<CoverageResponse>({
     queryKey: ['staa-maal-med-coverage'],
     queryFn: async () => {
-      await keycloak.updateToken(30).catch(() => keycloak.login())
+      await keycloak.updateToken(30)
       const res = await fetch('/api/v1/staa-maal-med/coverage', {
         headers: { Authorization: `Bearer ${keycloak.token}` },
       })

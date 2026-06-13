@@ -19,7 +19,11 @@ export default function BoardInvitationPage() {
   const [accepted, setAccepted] = useState(false)
 
   useEffect(() => {
-    if (!token) return
+    if (!token) {
+      setLoading(false)
+      setError('Ugyldigt invitationslink')
+      return
+    }
     fetch(`/api/v1/board-invitations/preview?token=${encodeURIComponent(token)}`)
       .then((res) => {
         if (!res.ok) throw new Error('Ugyldigt eller udløbet link')
