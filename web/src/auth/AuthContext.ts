@@ -7,6 +7,7 @@ export interface AuthContextValue {
   authenticated: boolean
   isAdmin: boolean
   isParent: boolean
+  isBoard: boolean
   isSuperAdmin: boolean
   staffRole: StaffRole | null
   staffId: string | null

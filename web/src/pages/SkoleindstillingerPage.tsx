@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import keycloak from '../auth/keycloak'
 import {
   getApiV1SchoolsSettingsOptions,
   getApiV1SchoolsSettingsQueryKey,
@@ -207,7 +208,236 @@ export default function SkoleindstillingerPage() {
 
       {/* Skoledag */}
       <SkoledagCard />
+
+      {/* Bestyrelsesmedlemmer */}
+      <BestyrelsesmedlemmerCard />
     </div>
+  )
+}
+
+interface BoardMemberDto {
+  id: string
+  name: string
+  email: string
+  canAccessTeacherData: boolean
+  hasAccount: boolean
+  createdAt: string
+}
+
+function BestyrelsesmedlemmerCard() {
+  const qc = useQueryClient()
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteName, setInviteName] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviting, setInviting] = useState(false)
+
+  const authHeader = async () => {
+    await keycloak.updateToken(30).catch(() => keycloak.login())
+    return { Authorization: `Bearer ${keycloak.token}` }
+  }
+
+  const { data: members, isLoading } = useQuery<BoardMemberDto[]>({
+    queryKey: ['board-members'],
+    queryFn: async () => {
+      const headers = await authHeader()
+      const res = await fetch('/api/v1/board-members', { headers })
+      if (!res.ok) throw new Error('Kunne ikke hente bestyrelsesmedlemmer')
+      return res.json() as Promise<BoardMemberDto[]>
+    },
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({
+      id,
+      canAccessTeacherData,
+    }: {
+      id: string
+      canAccessTeacherData: boolean
+    }) => {
+      const headers = await authHeader()
+      const res = await fetch(`/api/v1/board-members/${id}/teacher-data-access`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canAccessTeacherData }),
+      })
+      if (!res.ok) throw new Error('Kunne ikke opdatere adgang')
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['board-members'] }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const headers = await authHeader()
+      const res = await fetch(`/api/v1/board-members/${id}`, { method: 'DELETE', headers })
+      if (!res.ok) throw new Error('Kunne ikke slette bestyrelsesmedlem')
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['board-members'] }),
+  })
+
+  async function handleInvite() {
+    setInviteError(null)
+    setInviting(true)
+    try {
+      const headers = await authHeader()
+      const res = await fetch('/api/v1/board-members/invite', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: inviteName.trim(), email: inviteEmail.trim() }),
+      })
+      if (!res.ok) {
+        const body = (await res.json()) as { detail?: string; title?: string }
+        throw new Error(body.detail ?? body.title ?? 'Invitation mislykkedes')
+      }
+      void qc.invalidateQueries({ queryKey: ['board-members'] })
+      setShowInviteModal(false)
+      setInviteName('')
+      setInviteEmail('')
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Der opstod en fejl')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <div className="px-6 py-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700">Bestyrelsesmedlemmer</h2>
+            <p className="mt-0.5 text-xs text-gray-400">
+              Administrer adgang til bestyrelsesmodulet
+            </p>
+          </div>
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Inviter
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="px-6 py-4 animate-pulse space-y-3">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded" />
+            ))}
+          </div>
+        ) : members?.length === 0 ? (
+          <div className="px-6 py-8 text-center text-sm text-gray-400">
+            Ingen bestyrelsesmedlemmer endnu
+          </div>
+        ) : (
+          members?.map((member) => (
+            <div key={member.id} className="px-6 py-4 flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{member.name}</p>
+                <p className="text-xs text-gray-500 truncate">{member.email}</p>
+              </div>
+              {member.hasAccount ? (
+                <span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                  Konto oprettet
+                </span>
+              ) : (
+                <span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500">
+                  Afventer
+                </span>
+              )}
+              <label className="shrink-0 flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={member.canAccessTeacherData}
+                  onChange={(e) =>
+                    toggleMutation.mutate({ id: member.id, canAccessTeacherData: e.target.checked })
+                  }
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                />
+                Læreradgang
+              </label>
+              <button
+                onClick={() => deleteMutation.mutate(member.id)}
+                disabled={deleteMutation.isPending}
+                className="shrink-0 p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+                title="Fjern bestyrelsesmedlem"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4h6v2" />
+                </svg>
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <Modal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        title="Inviter bestyrelsesmedlem"
+      >
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+            <input
+              value={inviteName}
+              onChange={(e) => setInviteName(e.target.value)}
+              placeholder="Fornavn Efternavn"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="bestyrelse@skolen.dk"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowInviteModal(false)}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuller
+            </button>
+            <button
+              type="button"
+              onClick={handleInvite}
+              disabled={!inviteName.trim() || !inviteEmail.trim() || inviting}
+              className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {inviting ? 'Sender...' : 'Send invitation'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
   )
 }
 

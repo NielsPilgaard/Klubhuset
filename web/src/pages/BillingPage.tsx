@@ -164,6 +164,17 @@ export default function BillingPage() {
           onDeactivate={() => removeModuleMutation.mutate({ path: { module: 'ParentModule' } })}
           blockedReason={!data?.isActive ? 'Kræver aktivt betalt abonnement' : undefined}
         />
+        <ModuleCard
+          name="Bestyrelsesmodul"
+          description="Giv bestyrelsesmedlemmer en dedikeret adgang med aggregerede statistikker og bestyrelsesdokumenter. Admin styrer adgangsniveau pr. bestyrelsesmedlem."
+          price="299 kr/md"
+          isActive={activeModules.includes('BoardModule')}
+          canToggle={data?.isActive ?? false}
+          isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
+          onActivate={() => addModuleMutation.mutate({ body: { module: 'BoardModule' } })}
+          onDeactivate={() => removeModuleMutation.mutate({ path: { module: 'BoardModule' } })}
+          blockedReason={!data?.isActive ? 'Kræver aktivt betalt abonnement' : undefined}
+        />
       </div>
     </div>
   )

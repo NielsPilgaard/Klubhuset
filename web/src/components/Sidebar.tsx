@@ -14,6 +14,7 @@ interface NavItem {
   icon: React.ReactNode
   adminOnly?: boolean
   parentOnly?: boolean
+  boardOnly?: boolean
   moduleGated?: boolean
   group?: string
 }
@@ -319,6 +320,89 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    to: '/staa-maal-med',
+    label: 'Stå mål med',
+    adminOnly: true,
+    group: 'Planlægning',
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    ),
+  },
+  {
+    to: '/bestyrelse/oversigt',
+    label: 'Oversigt',
+    boardOnly: true,
+    group: 'Bestyrelse',
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+      </svg>
+    ),
+  },
+  {
+    to: '/bestyrelse/filer',
+    label: 'Filer',
+    boardOnly: true,
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/bestyrelse/staa-maal-med',
+    label: 'Stå mål med',
+    boardOnly: true,
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    ),
+  },
+  {
     to: '/foraeldrevisning/skema',
     label: 'Skema',
     parentOnly: true,
@@ -568,7 +652,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { logout, userName, isAdmin, isParent } = useAuth()
+  const { logout, userName, isAdmin, isParent, isBoard } = useAuth()
   const { hasParentModule } = useSubscription()
   const { data: school } = useQuery({ ...getApiV1SchoolsSettingsOptions(), enabled: isAdmin })
   const { data: onboarding } = useQuery({
@@ -584,6 +668,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     (onboarding.roomCount ?? 0) > 0
 
   const visibleNavItems = navItems.filter((item) => {
+    if (isBoard) return item.boardOnly === true
+    if (item.boardOnly) return false
     if (isParent) return item.parentOnly === true
     if (item.parentOnly) return false
     if (item.moduleGated && !hasParentModule) return false

@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     effectiveViewAs === 'admin' || (effectiveViewAs === 'default' && roles.includes('admin'))
   const isParent =
     effectiveViewAs === 'parent' || (effectiveViewAs === 'default' && roles.includes('parent'))
+  const isBoard = effectiveViewAs === 'default' && roles.includes('board')
 
   return (
     <AuthContext.Provider
@@ -100,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authenticated,
         isAdmin,
         isParent,
+        isBoard,
         isSuperAdmin,
         staffRole,
         staffId,

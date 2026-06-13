@@ -65,6 +65,12 @@ const BeskederPage = lazy(() => import('./pages/BeskederPage'))
 const FerieindmeldingPage = lazy(() => import('./pages/FerieindmeldingPage'))
 const FerieindmeldingDetailPage = lazy(() => import('./pages/FerieindmeldingDetailPage'))
 const ParentFerieindmeldingPage = lazy(() => import('./pages/parent/ParentFerieindmeldingPage'))
+const BestyrelseDashboardPage = lazy(() => import('./pages/BestyrelseDashboardPage'))
+const BestyrelseFilerPage = lazy(() => import('./pages/BestyrelseFilerPage'))
+const BestyrelseSkemaerPage = lazy(() => import('./pages/BestyrelseSkemaerPage'))
+const BestyrelseMedarbejderePage = lazy(() => import('./pages/BestyrelseMedarbejderePage'))
+const StaaMaalMedPage = lazy(() => import('./pages/StaaMaalMedPage'))
+const BoardInvitationPage = lazy(() => import('./pages/BoardInvitationPage'))
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -75,10 +81,11 @@ const queryClient = new QueryClient({
 })
 
 function HomeRedirect() {
-  const { authenticated, isAdmin, isParent, isSuperAdmin, viewAs } = useAuth()
+  const { authenticated, isAdmin, isParent, isBoard, isSuperAdmin, viewAs } = useAuth()
   if (authenticated) {
     if (isSuperAdmin && viewAs === 'default') return <Navigate to="/backoffice" replace />
     if (isParent) return <Navigate to="/foraeldrevisning/skema" replace />
+    if (isBoard) return <Navigate to="/bestyrelse/oversigt" replace />
     return <Navigate to={isAdmin ? '/dashboard' : '/mig/skema'} replace />
   }
   return <LandingPage />
@@ -102,6 +109,12 @@ function SuperAdminRoute({ children }: { children: JSX.Element }) {
   return <>{children}</>
 }
 
+function BoardRoute({ children }: { children: JSX.Element }) {
+  const { isBoard } = useAuth()
+  if (!isBoard) return <Navigate to="/mig/skema" replace />
+  return <>{children}</>
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -121,6 +134,7 @@ export default function App() {
               <Route path="signup" element={<SignupPage />} />
               <Route path="invitation/:token" element={<InvitationAcceptPage />} />
               <Route path="parent-invitation/:token" element={<InvitationAcceptPage />} />
+              <Route path="board-invitation/:token" element={<BoardInvitationPage />} />
               <Route path="om" element={<OmPage />} />
               <Route path="privatlivspolitik" element={<PrivatlivspolitikPage />} />
               <Route path="kontakt" element={<KontaktPage />} />
@@ -327,6 +341,46 @@ export default function App() {
                     <ParentRoute>
                       <ParentFerieindmeldingPage />
                     </ParentRoute>
+                  }
+                />
+                <Route
+                  path="bestyrelse/oversigt"
+                  element={
+                    <BoardRoute>
+                      <BestyrelseDashboardPage />
+                    </BoardRoute>
+                  }
+                />
+                <Route
+                  path="bestyrelse/filer"
+                  element={
+                    <BoardRoute>
+                      <BestyrelseFilerPage />
+                    </BoardRoute>
+                  }
+                />
+                <Route
+                  path="bestyrelse/skemaer"
+                  element={
+                    <BoardRoute>
+                      <BestyrelseSkemaerPage />
+                    </BoardRoute>
+                  }
+                />
+                <Route
+                  path="bestyrelse/medarbejdere"
+                  element={
+                    <BoardRoute>
+                      <BestyrelseMedarbejderePage />
+                    </BoardRoute>
+                  }
+                />
+                <Route
+                  path="staa-maal-med"
+                  element={
+                    <AdminRoute>
+                      <StaaMaalMedPage />
+                    </AdminRoute>
                   }
                 />
               </Route>
