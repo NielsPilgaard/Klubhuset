@@ -17,5 +17,6 @@ export const SUBJECT_CATEGORY_LABELS: Record<SubjectCategory, string> = {
   Biologi: 'Biologi',
   FysikKemi: 'Fysik/kemi',
   Samfundsfag: 'Samfundsfag',
+  Madkundskab: 'Madkundskab',
   Fri: 'Fri',
 }

@@ -810,7 +810,7 @@ export type StudentsControllerUpsertStudentRequest = {
     isEnrolledInSfo?: boolean;
 };
 
-export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri';
+export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri' | 'Madkundskab';
 
 export type SubscriptionModule = 'ParentModule' | 'BoardModule';
 
