@@ -30,7 +30,7 @@ public sealed class BoardFile : ITenantScoped, IEntityTypeConfiguration<BoardFil
 	[StringLength(200)]
 	public required string UploadedBy { get; set; }
 
-	public DateTimeOffset UploadedAt { get; init; } = DateTimeOffset.UtcNow;
+	public DateTimeOffset UploadedAt { get; init; }
 
 	public void Configure(EntityTypeBuilder<BoardFile> builder)
 	{

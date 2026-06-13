@@ -19,7 +19,7 @@ public sealed class BoardFileFolder : ITenantScoped, IEntityTypeConfiguration<Bo
 	public ICollection<BoardFileFolder> Children { get; set; } = [];
 	public ICollection<BoardFile> Files { get; set; } = [];
 
-	public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+	public DateTimeOffset CreatedAt { get; init; }
 
 	public void Configure(EntityTypeBuilder<BoardFileFolder> builder)
 	{

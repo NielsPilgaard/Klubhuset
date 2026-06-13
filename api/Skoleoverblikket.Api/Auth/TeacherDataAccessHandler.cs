@@ -40,5 +40,9 @@ public sealed class TeacherDataAccessHandler(AppDbContext db) : AuthorizationHan
 		{
 			context.Succeed(requirement);
 		}
+		else
+		{
+			context.Fail();
+		}
 	}
 }

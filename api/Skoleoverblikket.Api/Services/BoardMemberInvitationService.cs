@@ -54,7 +54,7 @@ public sealed class BoardMemberInvitationService(
 					nameParts.Length > 1 ? nameParts[1] : string.Empty,
 					temporaryPassword,
 					tenant.TenantId,
-					realmRole: "board",
+					realmRole: Roles.Board,
 					forcePasswordReset: true,
 					cancellationToken);
 				member.KeycloakSubject = keycloakSubject;

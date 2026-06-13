@@ -13,7 +13,7 @@ namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/board-members")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize]
 public sealed class BoardMembersController(
 	AppDbContext db,
 	ITenantContext tenant,
@@ -35,6 +35,7 @@ public sealed class BoardMembersController(
 	public record ToggleTeacherDataRequest(bool CanAccessTeacherData);
 
 	[HttpGet]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<List<BoardMemberDto>>> GetAll(CancellationToken cancellationToken)
 	{
 		var members = await db.BoardMembers
@@ -46,6 +47,7 @@ public sealed class BoardMembersController(
 	}
 
 	[HttpGet("{id:guid}")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<BoardMemberDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
 		var member = await db.BoardMembers.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
@@ -70,20 +72,42 @@ public sealed class BoardMembersController(
 	}
 
 	[HttpPost("invite")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<BoardMemberDto>> Invite(
 		[FromBody] InviteBoardMemberRequest req,
 		CancellationToken cancellationToken)
 	{
-		var member = new BoardMember
-		{
-			Id = Guid.NewGuid(),
-			TenantId = tenant.TenantId,
-			Name = req.Name.Trim(),
-			Email = req.Email.Trim().ToLowerInvariant(),
-		};
+		var normalizedEmail = req.Email.Trim().ToLowerInvariant();
 
-		db.BoardMembers.Add(member);
-		await db.SaveChangesAsync(cancellationToken);
+		var existing = await db.BoardMembers
+			.FirstOrDefaultAsync(m => m.Email == normalizedEmail, cancellationToken);
+
+		BoardMember member;
+		if (existing is not null)
+		{
+			member = existing;
+		}
+		else
+		{
+			member = new BoardMember
+			{
+				Id = Guid.NewGuid(),
+				TenantId = tenant.TenantId,
+				Name = req.Name.Trim(),
+				Email = normalizedEmail,
+			};
+			db.BoardMembers.Add(member);
+			try
+			{
+				await db.SaveChangesAsync(cancellationToken);
+			}
+			catch (DbUpdateException)
+			{
+				// Race condition: another request created the same member
+				member = await db.BoardMembers
+					.FirstAsync(m => m.Email == normalizedEmail, cancellationToken);
+			}
+		}
 
 		await invitationService.CreateAndSendAsync(member, cancellationToken);
 
@@ -91,6 +115,7 @@ public sealed class BoardMembersController(
 	}
 
 	[HttpDelete("{id:guid}")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
 		var member = await db.BoardMembers.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
@@ -102,9 +127,12 @@ public sealed class BoardMembersController(
 			{
 				await keycloakAdmin.DeleteStaffUserAsync(member.KeycloakSubject, cancellationToken);
 			}
-			catch (KeycloakException)
+			catch (KeycloakException ex)
 			{
-				// Log but don't fail — DB cleanup is more important
+				return Problem(
+					detail: ex.Message,
+					title: "Keycloak-brugeren kunne ikke slettes. Prøv igen.",
+					statusCode: StatusCodes.Status502BadGateway);
 			}
 		}
 
@@ -114,6 +142,7 @@ public sealed class BoardMembersController(
 	}
 
 	[HttpPatch("{id:guid}/teacher-data-access")]
+	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<BoardMemberDto>> ToggleTeacherDataAccess(
 		Guid id,
 		[FromBody] ToggleTeacherDataRequest req,
