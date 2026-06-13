@@ -55,9 +55,18 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 		Guid? AideId);
 
 	[HttpGet]
-	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent},{Roles.Board}")]
 	public async Task<ActionResult<List<SchemaDto>>> GetAll(Guid classId, CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var boardResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!boardResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
 		if (!authResult.Succeeded)
 		{
@@ -75,9 +84,18 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpGet("{schemaId:guid}")]
-	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent},{Roles.Board}")]
 	public async Task<ActionResult<SchemaDetailDto>> GetById(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var boardResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!boardResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
 		if (!authResult.Succeeded)
 		{
@@ -379,9 +397,18 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpGet("{schemaId:guid}/slots")]
-	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent},{Roles.Board}")]
 	public async Task<ActionResult<List<SlotDto>>> GetSlots(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var boardResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!boardResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
 		if (!authResult.Succeeded)
 		{
@@ -493,9 +520,18 @@ public sealed class SchemasController(AppDbContext db, ITenantContext tenant, Co
 	}
 
 	[HttpGet("{schemaId:guid}/conflicts")]
-	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent}")]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Parent},{Roles.Board}")]
 	public async Task<ActionResult<List<ConflictInfo>>> GetConflicts(Guid classId, Guid schemaId, CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var boardResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!boardResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var authResult = await authz.AuthorizeAsync(User, classId, Policies.ParentClassAccess);
 		if (!authResult.Succeeded)
 		{

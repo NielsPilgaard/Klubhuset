@@ -13,7 +13,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/classes")]
 [Authorize]
-public sealed class ClassesController(AppDbContext context, ITenantContext tenant, IFusionCache cache) : ControllerBase
+public sealed class ClassesController(AppDbContext context, ITenantContext tenant, IFusionCache cache, IAuthorizationService authz) : ControllerBase
 {
 	public record ClassDto(Guid Id, string Name, string? Description, int? GradeLevel, bool IsAccessibleToCurrentUser = true);
 	public record UpsertClassRequest(
@@ -24,6 +24,15 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	[HttpGet]
 	public async Task<ActionResult<List<ClassDto>>> GetAll(CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var authResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!authResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var isAdmin = User.IsInRole(Roles.Admin);
 
 		if (isAdmin)
@@ -72,6 +81,15 @@ public sealed class ClassesController(AppDbContext context, ITenantContext tenan
 	[HttpGet("{id:guid}")]
 	public async Task<ActionResult<ClassDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var authResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!authResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var @class = await context.Classes
 								  .AsNoTracking()
 								  .Where(c => c.Id == id)

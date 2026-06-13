@@ -12,7 +12,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/staff")]
 [Authorize]
-public sealed class StaffController(AppDbContext db, ITenantContext tenant, KeycloakAdminService keycloak, ILogger<StaffController> logger, IFusionCache cache) : ControllerBase
+public sealed class StaffController(AppDbContext db, ITenantContext tenant, KeycloakAdminService keycloak, ILogger<StaffController> logger, IFusionCache cache, IAuthorizationService authz) : ControllerBase
 {
 	public record StaffDto(Guid Id, string Name, string? Email, string? Phone, StaffRole Role, bool IsAdmin, string? KeycloakSubject);
 	public record UpsertStaffRequest(string Name, string? Email, string? Phone, StaffRole Role, bool IsAdmin = false);
@@ -21,6 +21,15 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	[HttpGet]
 	public async Task<ActionResult<List<StaffDto>>> GetAll(CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var authResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!authResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var staff = await db.Staff
 			.AsNoTracking()
 			.OrderBy(s => s.Name)
@@ -53,6 +62,15 @@ public sealed class StaffController(AppDbContext db, ITenantContext tenant, Keyc
 	[HttpGet("{id:guid}")]
 	public async Task<ActionResult<StaffDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
+		if (User.IsInRole(Roles.Board))
+		{
+			var authResult = await authz.AuthorizeAsync(User, null, Policies.CanAccessTeacherData);
+			if (!authResult.Succeeded)
+			{
+				return Forbid();
+			}
+		}
+
 		var staff = await db.Staff
 							.AsNoTracking()
 							.Where(s => s.Id == id)
