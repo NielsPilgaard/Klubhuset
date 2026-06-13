@@ -14,6 +14,7 @@ public static class ServicesExtensions
 		services.AddScoped<ExcelReportBuilder>();
 		services.AddScoped<SubscriptionService>();
 		services.AddScoped<INotificationService, NotificationService>();
+		services.AddSingleton<UvmTimetableService>();
 
 		services.AddOptions<ApplicationOptions>()
 			.BindConfiguration(ApplicationOptions.SectionName)

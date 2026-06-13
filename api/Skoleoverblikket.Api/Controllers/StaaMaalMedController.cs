@@ -1,61 +1,18 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
+using Skoleoverblikket.Api.Services;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/staa-maal-med")]
 [Authorize(Roles = $"{Roles.Admin},{Roles.Board}")]
-public sealed class StaaMaalMedController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
+public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable) : ControllerBase
 {
-	private static Dictionary<string, Dictionary<int, double>>? _timetal;
-	private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-	private static readonly Lock _lock = new();
-
-	private Dictionary<string, Dictionary<int, double>> LoadTimetal()
-	{
-		if (_timetal is not null)
-		{
-			return _timetal;
-		}
-
-		lock (_lock)
-		{
-			if (_timetal is not null)
-			{
-				return _timetal;
-			}
-
-			var dataPath = Path.Combine(env.ContentRootPath, "data", "uvm-timetal");
-			if (!Directory.Exists(dataPath))
-			{
-				dataPath = Path.Combine(AppContext.BaseDirectory, "data", "uvm-timetal");
-			}
-
-			var files = Directory.GetFiles(dataPath, "*.json").OrderDescending().ToArray();
-			if (files.Length == 0)
-			{
-				return _timetal = [];
-			}
-
-			// Pick file matching current school year (e.g. 2025-2026.json for Aug 2025 – Jul 2026)
-			var now = DateTime.UtcNow;
-			var schoolYearStart = now.Month >= 8 ? now.Year : now.Year - 1;
-			var targetName = $"{schoolYearStart}-{schoolYearStart + 1}.json";
-			var match = files.FirstOrDefault(f => Path.GetFileName(f) == targetName) ?? files[0];
-
-			var json = System.IO.File.ReadAllText(match);
-			_timetal = JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, double>>>(json,
-				JsonOptions) ?? [];
-			return _timetal;
-		}
-	}
-
 	public record SubjectCoverageDto(string Category, double WeeklyHours, string Status);
 	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects);
 	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
@@ -63,7 +20,7 @@ public sealed class StaaMaalMedController(AppDbContext db, IWebHostEnvironment e
 	[HttpGet("coverage")]
 	public async Task<ActionResult<CoverageResponseDto>> GetCoverage(CancellationToken cancellationToken)
 	{
-		var timetal = LoadTimetal();
+		var timetal = timetable.Load();
 
 		var today = DateOnly.FromDateTime(DateTime.UtcNow);
 		var activeSlots = await db.SchemaSlots
@@ -112,7 +69,6 @@ public sealed class StaaMaalMedController(AppDbContext db, IWebHostEnvironment e
 					gradeLevel,
 					subjects.OrderBy(s => s.Category).ToList());
 			})
-			.OrderBy(c => c.GradeLevel).ThenBy(c => c.ClassName)
 			.ToList();
 
 		// Also include classes with a grade but no active schema slots (all missing)
@@ -140,7 +96,6 @@ public sealed class StaaMaalMedController(AppDbContext db, IWebHostEnvironment e
 			{
 				classes.Add(new ClassCoverageDto(cls.Id, cls.Name, gradeLevel, subjects.OrderBy(s => s.Category).ToList()));
 			}
-
 		}
 
 		classes.Sort((a, b) =>

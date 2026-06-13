@@ -10,7 +10,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/reports")]
 [Authorize(Roles = Roles.Admin)]
-public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
+public sealed class ReportsController(ExcelReportBuilder excel, UvmTimetableService timetable) : ControllerBase
 {
 	/// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>
 	[HttpGet("hours/staff.xlsx")]
@@ -135,24 +135,15 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 	[HttpGet("uvm-minimumstimetal.xlsx")]
 	public async Task<IActionResult> GetUvmMinimumstimetalXlsx(CancellationToken cancellationToken)
 	{
-		// UVM minimum hours per year by subject and grade (1-9)
-		static double GetMinimum(string subject, int grade) => subject switch
-		{
-			"Dansk" => grade switch { 1 => 330, 2 => 300, 3 => 270, _ => 210 },
-			"Matematik" => 150,
-			"Historie" => grade switch { 3 => 30, 4 or 5 or 6 or 7 or 8 => 60, 9 => 30, _ => 0 },
-			_ => 0,
-		};
+		var timetal = timetable.Load();
 
 		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
 
 		var rows = activeSlots
 			.Where(s =>
 				s.Schema.Class.GradeLevel.HasValue &&
-				s.Schema.Class.GradeLevel.Value >= 1 &&
-				s.Schema.Class.GradeLevel.Value <= 9 &&
 				s.Course.Category.HasValue &&
-				s.Course.Category is SubjectCategory.Dansk or SubjectCategory.Matematik or SubjectCategory.Historie)
+				s.Course.Category != SubjectCategory.Fri)
 			.GroupBy(s => (
 				ClassName: s.Schema.Class.Name,
 				GradeLevel: s.Schema.Class.GradeLevel!.Value,
@@ -161,7 +152,8 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 			{
 				var weeklyHours = Math.Round(g.Sum(s => (s.TimeSlot.EndTime - s.TimeSlot.StartTime).TotalHours), 2);
 				var annualHours = Math.Round(weeklyHours * 40, 0);
-				var minimum = GetMinimum(g.Key.Subject, g.Key.GradeLevel);
+				var vejledende = timetal.TryGetValue(g.Key.Subject, out var gradeMap) && gradeMap.TryGetValue(g.Key.GradeLevel, out var wh) ? wh : 0.0;
+				var minimum = Math.Round(vejledende * 40, 0);
 				var status = minimum == 0 ? "Ikke relevant"
 					: annualHours >= minimum ? "Opfyldt"
 					: $"Mangler {minimum - annualHours:0} timer";
