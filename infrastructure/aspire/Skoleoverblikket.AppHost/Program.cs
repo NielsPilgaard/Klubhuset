@@ -8,7 +8,7 @@ var pgPassword = builder.AddParameter("postgres-password", secret: true);
 
 var postgres = builder.AddPostgres("postgres", userName: pgUsername, password: pgPassword)
                       .WithLifetime(ContainerLifetime.Persistent)
-                      .WithVolume("skoleoverblikket-pgdata", "/var/lib/postgresql/data")
+                      .WithVolume("skoleoverblikket-pgdata", "/var/lib/postgresql")
                       .WithPgAdmin(pgAdmin => pgAdmin.WithContainerRuntimeArgs(
                                        "--label",
                                        $"com.docker.compose.project={label}"))

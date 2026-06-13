@@ -1,0 +1,1 @@
+allow llm-generating suggestion for how class schemas can look. per-class, should select teachers, courseess etc to use.
