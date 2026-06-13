@@ -133,7 +133,7 @@ public sealed class CalendarCrudTests
 		await Assert.That(names).Contains("Pinse");
 		await Assert.That(names).Contains("Grundlovsdag");
 		await Assert.That(names).Contains("Sommerferie");
-		await Assert.That(defaults.Count).IsEqualTo(8);
+		await Assert.That(defaults!.Count).IsEqualTo(8);
 	}
 
 	[Test]

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Tenancy;
 using Testcontainers.PostgreSql;
 using TUnit.AspNetCore;
@@ -53,6 +54,10 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>
 			services.AddAuthentication(TestAuthHandler.SchemeName)
 					.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
 						TestAuthHandler.SchemeName, _ => { });
+
+			// Replace notification service with a no-op so tests don't need an SMTP server
+			services.RemoveAll<INotificationService>();
+			services.AddScoped<INotificationService, NoOpNotificationService>();
 		});
 	}
 
