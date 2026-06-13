@@ -5,6 +5,9 @@ import { usePageTitle } from '../hooks/usePageTitle'
 interface SubjectCoverage {
   category: string
   weeklyHours: number
+  vejledendeWeeklyHours: number
+  annualHours: number
+  vejledendeAnnualHours: number
   status: 'green' | 'yellow' | 'red' | 'missing'
 }
 
@@ -39,23 +42,29 @@ const CATEGORY_LABELS: Record<string, string> = {
   Madkundskab: 'Madkundskab',
 }
 
-function StatusDot({ status }: { status: SubjectCoverage['status'] }) {
+function StatusDot({ subject }: { subject: SubjectCoverage }) {
   const colors = {
     green: 'bg-green-400',
     yellow: 'bg-yellow-400',
     red: 'bg-red-400',
     missing: 'bg-gray-200',
   }
-  const labels = {
+  const statusLabel = {
     green: 'Opfyldt',
     yellow: '75–99%',
     red: 'Under 75%',
     missing: 'Ikke planlagt',
-  }
+  }[subject.status]
+
+  const hoursSuffix =
+    subject.status !== 'missing'
+      ? ` · ${subject.annualHours}t / ${subject.vejledendeAnnualHours}t`
+      : ''
+
   return (
     <span
-      className={`inline-block w-3 h-3 rounded-full ${colors[status]}`}
-      title={labels[status]}
+      className={`inline-block w-3 h-3 rounded-full ${colors[subject.status]}`}
+      title={`${statusLabel}${hoursSuffix}`}
     />
   )
 }
@@ -148,7 +157,7 @@ export default function StaaMaalMedPage() {
                       return (
                         <td key={cat} className="px-3 py-2.5 text-center border-b border-gray-100">
                           {subject ? (
-                            <StatusDot status={subject.status} />
+                            <StatusDot subject={subject} />
                           ) : (
                             <span className="text-gray-200">—</span>
                           )}

@@ -690,6 +690,9 @@ export type StaaMaalMedControllerCoverageResponseDto = {
 export type StaaMaalMedControllerSubjectCoverageDto = {
     category?: string | null;
     weeklyHours?: number;
+    vejledendeWeeklyHours?: number;
+    annualHours?: number;
+    vejledendeAnnualHours?: number;
     status?: string | null;
 };
 

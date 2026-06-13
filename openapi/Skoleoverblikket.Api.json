@@ -9530,6 +9530,18 @@
             "type": "number",
             "format": "double"
           },
+          "vejledendeWeeklyHours": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualHours": {
+            "type": "number",
+            "format": "double"
+          },
+          "vejledendeAnnualHours": {
+            "type": "number",
+            "format": "double"
+          },
           "status": {
             "type": "string",
             "nullable": true
