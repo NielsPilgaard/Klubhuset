@@ -28,6 +28,13 @@ const EXPORTS: ExportCard[] = [
     path: '/reports/schema.xlsx',
     filename: 'skema.xlsx',
   },
+  {
+    title: 'UVM minimumstimetal',
+    description:
+      'Sammenligning af planlagte timer med UVM minimumstimetal for dansk, matematik og historie',
+    path: '/reports/uvm-minimumstimetal.xlsx',
+    filename: 'uvm-minimumstimetal.xlsx',
+  },
 ]
 
 function DownloadIcon() {

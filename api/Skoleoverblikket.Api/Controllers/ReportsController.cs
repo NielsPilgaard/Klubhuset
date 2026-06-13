@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -128,5 +129,70 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 
 		ws.Columns().AdjustToContents();
 		return ExcelReportBuilder.ToXlsx(wb, "skema.xlsx");
+	}
+
+	/// <summary>GET /api/v1/reports/uvm-minimumstimetal.xlsx</summary>
+	[HttpGet("uvm-minimumstimetal.xlsx")]
+	public async Task<IActionResult> GetUvmMinimumstimetalXlsx(CancellationToken cancellationToken)
+	{
+		// UVM minimum hours per year by subject and grade (1-9)
+		static double GetMinimum(string subject, int grade) => subject switch
+		{
+			"Dansk" => grade switch { 1 => 330, 2 => 300, 3 => 270, _ => 210 },
+			"Matematik" => 150,
+			"Historie" => grade switch { 3 => 30, 4 or 5 or 6 or 7 or 8 => 60, 9 => 30, _ => 0 },
+			_ => 0,
+		};
+
+		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
+
+		var rows = activeSlots
+			.Where(s =>
+				s.Schema.Class.GradeLevel.HasValue &&
+				s.Schema.Class.GradeLevel.Value >= 1 &&
+				s.Schema.Class.GradeLevel.Value <= 9 &&
+				s.Course.Category.HasValue &&
+				s.Course.Category is SubjectCategory.Dansk or SubjectCategory.Matematik or SubjectCategory.Historie)
+			.GroupBy(s => (
+				ClassName: s.Schema.Class.Name,
+				GradeLevel: s.Schema.Class.GradeLevel!.Value,
+				Subject: s.Course.Category!.Value.ToString()))
+			.Select(g =>
+			{
+				var weeklyHours = Math.Round(g.Sum(s => (s.TimeSlot.EndTime - s.TimeSlot.StartTime).TotalHours), 2);
+				var annualHours = Math.Round(weeklyHours * 40, 0);
+				var minimum = GetMinimum(g.Key.Subject, g.Key.GradeLevel);
+				var status = minimum == 0 ? "Ikke relevant"
+					: annualHours >= minimum ? "Opfyldt"
+					: $"Mangler {minimum - annualHours:0} timer";
+				return (g.Key.ClassName, g.Key.GradeLevel, g.Key.Subject, weeklyHours, annualHours, minimum, status);
+			})
+			.OrderBy(r => r.GradeLevel).ThenBy(r => r.ClassName).ThenBy(r => r.Subject)
+			.ToList();
+
+		using var wb = new XLWorkbook();
+		var ws = wb.AddWorksheet("UVM minimumstimetal");
+		ws.Cell(1, 1).Value = "Klasse";
+		ws.Cell(1, 2).Value = "Klassetrin";
+		ws.Cell(1, 3).Value = "Fag";
+		ws.Cell(1, 4).Value = "Planlagte timer (uge)";
+		ws.Cell(1, 5).Value = "Estimerede årstimer";
+		ws.Cell(1, 6).Value = "Minimumstimetal";
+		ws.Cell(1, 7).Value = "Status";
+		ExcelReportBuilder.StyleHeader(ws.Row(1));
+
+		for (var i = 0; i < rows.Count; i++)
+		{
+			ws.Cell(i + 2, 1).Value = rows[i].ClassName;
+			ws.Cell(i + 2, 2).Value = rows[i].GradeLevel;
+			ws.Cell(i + 2, 3).Value = rows[i].Subject;
+			ws.Cell(i + 2, 4).Value = rows[i].weeklyHours;
+			ws.Cell(i + 2, 5).Value = rows[i].annualHours;
+			ws.Cell(i + 2, 6).Value = rows[i].minimum;
+			ws.Cell(i + 2, 7).Value = rows[i].status;
+		}
+
+		ws.Columns().AdjustToContents();
+		return ExcelReportBuilder.ToXlsx(wb, "uvm-minimumstimetal.xlsx");
 	}
 }
