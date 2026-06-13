@@ -10,7 +10,8 @@ export default defineConfig({
   testDir: './tests/e2e',
   globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: false,
-  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 4 : 3,
+  retries: 1,
   timeout: 60_000,
   use: {
     baseURL: WEB_URL,
@@ -24,12 +25,12 @@ export default defineConfig({
     },
   ],
   // Start the full Aspire stack before tests if not already running.
-  // Set SKIP_ASPIRE=1 to skip (e.g. when the stack is already up).
+  // Set SKIP_ASPIRE=1 to skip (e.g. when the stack is already up in CI or locally).
   webServer: process.env.SKIP_ASPIRE
     ? undefined
     : [
         {
-          command: `aspire run --non-interactive`,
+          command: 'aspire run --non-interactive',
           url: WEB_URL,
           timeout: 180_000,
           reuseExistingServer: true,
