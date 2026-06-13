@@ -119,6 +119,88 @@ public sealed class CalendarCrudTests
 	}
 
 	[Test]
+	public async Task GetDefaults_2025SchoolYear_ReturnsAllEightStandardHolidays()
+	{
+		var response = await _client.GetAsync("/api/v1/calendar/defaults?year=2025");
+		var defaults = await response.Content.ReadFromJsonAsync<List<CalendarController.DefaultHolidayDto>>(JsonOpts);
+
+		var names = defaults!.Select(d => d.Title).ToHashSet();
+		await Assert.That(names).Contains("Efterårsferie");
+		await Assert.That(names).Contains("Juleferie");
+		await Assert.That(names).Contains("Vinterferie");
+		await Assert.That(names).Contains("Påskeferie");
+		await Assert.That(names).Contains("Kristi Himmelfartsdag");
+		await Assert.That(names).Contains("Pinse");
+		await Assert.That(names).Contains("Grundlovsdag");
+		await Assert.That(names).Contains("Sommerferie");
+		await Assert.That(defaults.Count).IsEqualTo(8);
+	}
+
+	[Test]
+	public async Task GetDefaults_2025SchoolYear_FixedHolidayDatesCorrect()
+	{
+		// School year 2025/2026: year param 2025, schoolEndYear 2026
+		var response = await _client.GetAsync("/api/v1/calendar/defaults?year=2025");
+		var defaults = await response.Content.ReadFromJsonAsync<List<CalendarController.DefaultHolidayDto>>(JsonOpts);
+		var byName = defaults!.ToDictionary(d => d.Title);
+
+		// Efterårsferie: ISO week 42 of 2025 = Mon Oct 13 – Fri Oct 17
+		await Assert.That(byName["Efterårsferie"].StartDate).IsEqualTo(new DateOnly(2025, 10, 13));
+		await Assert.That(byName["Efterårsferie"].EndDate).IsEqualTo(new DateOnly(2025, 10, 17));
+
+		// Juleferie: Dec 22, 2025 – Jan 2, 2026
+		await Assert.That(byName["Juleferie"].StartDate).IsEqualTo(new DateOnly(2025, 12, 22));
+		await Assert.That(byName["Juleferie"].EndDate).IsEqualTo(new DateOnly(2026, 1, 2));
+
+		// Vinterferie: ISO week 7 of 2026 = Mon Feb 9 – Fri Feb 13
+		await Assert.That(byName["Vinterferie"].StartDate).IsEqualTo(new DateOnly(2026, 2, 9));
+		await Assert.That(byName["Vinterferie"].EndDate).IsEqualTo(new DateOnly(2026, 2, 13));
+
+		// Sommerferie: Jun 26, 2026 – Aug 7, 2026
+		await Assert.That(byName["Sommerferie"].StartDate).IsEqualTo(new DateOnly(2026, 6, 26));
+		await Assert.That(byName["Sommerferie"].EndDate).IsEqualTo(new DateOnly(2026, 8, 7));
+
+		// Grundlovsdag: Jun 5, 2026
+		await Assert.That(byName["Grundlovsdag"].StartDate).IsEqualTo(new DateOnly(2026, 6, 5));
+	}
+
+	[Test]
+	public async Task GetDefaults_2025SchoolYear_EasterDerivedHolidayDatesCorrect()
+	{
+		// Easter 2026 = April 5 (computed via Gregorian algorithm)
+		var response = await _client.GetAsync("/api/v1/calendar/defaults?year=2025");
+		var defaults = await response.Content.ReadFromJsonAsync<List<CalendarController.DefaultHolidayDto>>(JsonOpts);
+		var byName = defaults!.ToDictionary(d => d.Title);
+
+		// Påskeferie: Palm Sunday (Easter-7) = Mar 29 through Easter Monday (Easter+1) = Apr 6
+		await Assert.That(byName["Påskeferie"].StartDate).IsEqualTo(new DateOnly(2026, 3, 29));
+		await Assert.That(byName["Påskeferie"].EndDate).IsEqualTo(new DateOnly(2026, 4, 6));
+
+		// Kristi Himmelfartsdag: Easter+39 = May 14
+		await Assert.That(byName["Kristi Himmelfartsdag"].StartDate).IsEqualTo(new DateOnly(2026, 5, 14));
+		await Assert.That(byName["Kristi Himmelfartsdag"].EndDate).IsEqualTo(new DateOnly(2026, 5, 14));
+
+		// Pinse: Whit Friday (Easter+48) = May 23 through Whit Monday (Easter+50) = May 25
+		await Assert.That(byName["Pinse"].StartDate).IsEqualTo(new DateOnly(2026, 5, 23));
+		await Assert.That(byName["Pinse"].EndDate).IsEqualTo(new DateOnly(2026, 5, 25));
+	}
+
+	[Test]
+	public async Task GetDefaults_HolidayTypes_FerieAndLukkedag()
+	{
+		var response = await _client.GetAsync("/api/v1/calendar/defaults?year=2025");
+		var defaults = await response.Content.ReadFromJsonAsync<List<CalendarController.DefaultHolidayDto>>(JsonOpts);
+		var byName = defaults!.ToDictionary(d => d.Title);
+
+		await Assert.That(byName["Efterårsferie"].Type).IsEqualTo(CalendarEntryType.Ferie);
+		await Assert.That(byName["Juleferie"].Type).IsEqualTo(CalendarEntryType.Ferie);
+		await Assert.That(byName["Påskeferie"].Type).IsEqualTo(CalendarEntryType.Ferie);
+		await Assert.That(byName["Pinse"].Type).IsEqualTo(CalendarEntryType.Ferie);
+		await Assert.That(byName["Kristi Himmelfartsdag"].Type).IsEqualTo(CalendarEntryType.Lukkedag);
+		await Assert.That(byName["Grundlovsdag"].Type).IsEqualTo(CalendarEntryType.Lukkedag);
+	}
+
+	[Test]
 	public async Task TenantIsolation_EntryNotVisibleToOtherTenant()
 	{
 		// Create entry for default tenant
