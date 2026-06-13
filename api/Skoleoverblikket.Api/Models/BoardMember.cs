@@ -21,8 +21,14 @@ public sealed class BoardMember : ITenantScoped, IEntityTypeConfiguration<BoardM
 
 	public bool CanAccessTeacherData { get; set; }
 
-	public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+	public DateTimeOffset CreatedAt { get; init; }
 
-	public void Configure(EntityTypeBuilder<BoardMember> builder) =>
+	public void Configure(EntityTypeBuilder<BoardMember> builder)
+	{
 		builder.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+		builder.HasIndex(e => new { e.TenantId, e.Email }).IsUnique();
+		builder.HasIndex(e => new { e.TenantId, e.KeycloakSubject })
+			.IsUnique()
+			.HasFilter("\"KeycloakSubject\" IS NOT NULL");
+	}
 }
