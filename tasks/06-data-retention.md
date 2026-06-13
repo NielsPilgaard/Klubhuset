@@ -8,6 +8,8 @@ The privacy policy (Privatlivspolitik) states that school data is retained for 9
 
 This task implements the automated cleanup so the stated policy is actually enforced.
 
+Let's change this to 180 days, if there's no compliance constraint there
+
 ### What to build
 
 #### 1. Track cancellation date
