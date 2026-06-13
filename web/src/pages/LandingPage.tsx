@@ -169,7 +169,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Forældremodul"
-              description="Forældre får adgang til klassens skema, kalender og ugeplan. Kontaktbog og kontaktbibliotek inkluderet."
+              description="Forældre får adgang til klassens skema, kalender og ugeplan. Kontaktbog, beskeder og kontaktbibliotek inkluderet."
             />
             <FeatureCard
               icon={
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Bestyrelsesmodul"
-              description="Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og &ldquo;stå mål med&rdquo;-assistent."
+              description="Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over &ldquo;stå mål med&rdquo;-dækning."
             />
           </div>
         </div>
@@ -229,10 +229,11 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold mb-3">Enkel og gennemsigtig pris</h2>
           <p className="text-brand-200 mb-12">Enkel pris — udvid efter behov.</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start max-w-3xl mx-auto">
+          {/* Layout: Basis left, modules stacked right */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto">
             {/* Basis card */}
-            <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-visible">
-              <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100">
+            <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-visible w-full lg:w-auto lg:flex-1">
+              <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100 rounded-t-2xl">
                 <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
                 <div className="mt-2 flex items-end gap-1 justify-center">
                   <span className="font-display text-5xl font-semibold text-brand-900">499</span>
@@ -289,29 +290,32 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Add-on modules card */}
-            <div className="bg-gray-50 text-gray-900 rounded-2xl border border-gray-200 overflow-hidden text-left">
-              <div className="px-8 pt-8 pb-6 border-b border-gray-200">
-                <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                  Tillægsmoduler
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Udvid Basis med moduler tilpasset din skole — betal kun for det, I bruger.
-                </p>
+            {/* Add-on modules — separate cards stacked */}
+            <div className="w-full lg:w-auto lg:flex-1 flex flex-col gap-3">
+              <div className="text-center text-xs text-brand-200 uppercase tracking-wide font-medium pb-1">
+                Valgfrie tillægsmoduler
               </div>
-              <div className="px-8 py-6 space-y-4">
-                <ModuleItem
-                  title="Forældremodul"
-                  price="499 kr/md"
-                  description="Ugeplaner, kontaktbog, kontakter og kalenderadgang"
-                />
-                <ModuleItem
-                  title="Bestyrelsesmodul"
-                  price="299 kr/md"
-                  description={'Dokumentdeling og "stå mål med"-assistent'}
-                />
-                <p className="text-xs text-gray-400 pt-2">Samles på én månedlig faktura.</p>
-              </div>
+              <ModuleCard
+                title="Forældremodul"
+                price="499"
+                features={[
+                  'Ugeplaner og kalenderadgang',
+                  'Kontaktbog og beskeder',
+                  'Kontaktbibliotek',
+                  'Fraværsindberetning',
+                ]}
+              />
+              <ModuleCard
+                title="Bestyrelsesmodul"
+                price="299"
+                features={[
+                  'Dokumentdeling med bestyrelsen',
+                  'Overblik over "stå mål med"-dækning',
+                ]}
+              />
+              <p className="text-xs text-brand-200/70 text-center pt-1">
+                Kræver Basis · Samles på én faktura
+              </p>
             </div>
           </div>
         </div>
@@ -442,32 +446,41 @@ function AudienceItem({ title, description }: { title: string; description: stri
   )
 }
 
-function ModuleItem({
+function ModuleCard({
   title,
   price,
-  description,
+  features,
 }: {
   title: string
   price: string
-  description: string
+  features: string[]
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        className="w-4 h-4 text-brand-600 shrink-0 mt-0.5"
-      >
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-      <div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-medium text-gray-700">{title}</span>
-          <span className="text-xs text-gray-400">{price}</span>
+    <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
+      <div className="px-6 pt-6 pb-4 bg-brand-50 border-b border-brand-100 text-center">
+        <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">{title}</p>
+        <div className="mt-2 flex items-end gap-1 justify-center">
+          <span className="text-lg text-gray-500 mb-2">+</span>
+          <span className="font-display text-5xl font-semibold text-brand-900">{price}</span>
+          <span className="text-lg text-gray-500 mb-2">kr/md</span>
         </div>
-        <p className="text-xs text-gray-400">{description}</p>
+        <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
+      </div>
+      <div className="px-6 py-4 space-y-2">
+        {features.map((f) => (
+          <div key={f} className="flex items-center gap-3 text-sm">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="w-4 h-4 text-brand-600 shrink-0"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span>{f}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
