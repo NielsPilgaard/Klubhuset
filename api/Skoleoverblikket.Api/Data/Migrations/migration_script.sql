@@ -1688,3 +1688,112 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE TABLE "BoardFileFolders" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "ParentId" uuid,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_BoardFileFolders" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_BoardFileFolders_BoardFileFolders_ParentId" FOREIGN KEY ("ParentId") REFERENCES "BoardFileFolders" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE TABLE "BoardMembers" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "Email" character varying(500) NOT NULL,
+        "KeycloakSubject" character varying(500),
+        "CanAccessTeacherData" boolean NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_BoardMembers" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE TABLE "BoardFiles" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "FileName" character varying(500) NOT NULL,
+        "ContentType" character varying(200) NOT NULL,
+        "SizeBytes" bigint NOT NULL,
+        "StorageKey" character varying(1000) NOT NULL,
+        "Url" character varying(2000) NOT NULL,
+        "FolderId" uuid,
+        "UploadedBy" character varying(200) NOT NULL,
+        "UploadedAt" timestamp with time zone NOT NULL DEFAULT (now()),
+        CONSTRAINT "PK_BoardFiles" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_BoardFiles_BoardFileFolders_FolderId" FOREIGN KEY ("FolderId") REFERENCES "BoardFileFolders" ("Id") ON DELETE SET NULL
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE TABLE "BoardMemberInvitations" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "BoardMemberId" uuid NOT NULL,
+        "Email" character varying(500) NOT NULL,
+        "Token" character varying(128) NOT NULL,
+        "ExpiresAt" timestamp with time zone NOT NULL,
+        "AcceptedAt" timestamp with time zone,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "RowVersion" bytea,
+        CONSTRAINT "PK_BoardMemberInvitations" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_BoardMemberInvitations_BoardMembers_BoardMemberId" FOREIGN KEY ("BoardMemberId") REFERENCES "BoardMembers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE INDEX "IX_BoardFileFolders_ParentId" ON "BoardFileFolders" ("ParentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE INDEX "IX_BoardFiles_FolderId" ON "BoardFiles" ("FolderId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE INDEX "IX_BoardMemberInvitations_BoardMemberId" ON "BoardMemberInvitations" ("BoardMemberId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    CREATE UNIQUE INDEX "IX_BoardMemberInvitations_Token" ON "BoardMemberInvitations" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260611051652_AddBoardModule') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260611051652_AddBoardModule', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

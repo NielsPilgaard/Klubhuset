@@ -44,6 +44,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<VacationRegistrationWindow> VacationRegistrationWindows => Set<VacationRegistrationWindow>();
 	public DbSet<VacationRegistrationEntry> VacationRegistrationEntries => Set<VacationRegistrationEntry>();
 	public DbSet<GroupMessage> GroupMessages => Set<GroupMessage>();
+	public DbSet<BoardMember> BoardMembers => Set<BoardMember>();
+	public DbSet<BoardMemberInvitation> BoardMemberInvitations => Set<BoardMemberInvitation>();
+	public DbSet<BoardFile> BoardFiles => Set<BoardFile>();
+	public DbSet<BoardFileFolder> BoardFileFolders => Set<BoardFileFolder>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
