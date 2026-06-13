@@ -152,6 +152,43 @@ export default function LandingPage() {
               title="Filhåndtering"
               description="Upload og del filer pr. fag. Let tilgængeligt for alle medarbejdere."
             />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="w-6 h-6"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  <path d="M3 13h4M9 13h4" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              }
+              title="Forældremodul"
+              description="Forældre får adgang til klassens skema, kalender og ugeplan. Kontaktbog og kontaktbibliotek inkluderet."
+            />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="w-6 h-6"
+                >
+                  <rect x="2" y="7" width="20" height="14" rx="2" />
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                  <line x1="12" y1="12" x2="12" y2="16" />
+                  <line x1="10" y1="14" x2="14" y2="14" />
+                </svg>
+              }
+              title="Bestyrelsesmodul"
+              description="Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og &ldquo;stå mål med&rdquo;-assistent."
+            />
           </div>
         </div>
       </section>
@@ -252,28 +289,25 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Add-on modules teaser card */}
-            <div className="bg-gray-50 text-gray-900 rounded-2xl border border-dashed border-gray-300 overflow-hidden text-left">
+            {/* Add-on modules card */}
+            <div className="bg-gray-50 text-gray-900 rounded-2xl border border-gray-200 overflow-hidden text-left">
               <div className="px-8 pt-8 pb-6 border-b border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                    Tillægsmoduler
-                  </p>
-                  <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full font-medium">
-                    Kommer snart
-                  </span>
-                </div>
+                <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+                  Tillægsmoduler
+                </p>
                 <p className="text-sm text-gray-500 mt-1">
                   Udvid Basis med moduler tilpasset din skole — betal kun for det, I bruger.
                 </p>
               </div>
               <div className="px-8 py-6 space-y-4">
-                <ComingSoonItem
+                <ModuleItem
                   title="Forældremodul"
+                  price="499 kr/md"
                   description="Ugeplaner, kontaktbog, kontakter og kalenderadgang"
                 />
-                <ComingSoonItem
+                <ModuleItem
                   title="Bestyrelsesmodul"
+                  price="299 kr/md"
                   description={'Dokumentdeling og "stå mål med"-assistent'}
                 />
                 <p className="text-xs text-gray-400 pt-2">Samles på én månedlig faktura.</p>
@@ -408,7 +442,15 @@ function AudienceItem({ title, description }: { title: string; description: stri
   )
 }
 
-function ComingSoonItem({ title, description }: { title: string; description: string }) {
+function ModuleItem({
+  title,
+  price,
+  description,
+}: {
+  title: string
+  price: string
+  description: string
+}) {
   return (
     <div className="flex items-start gap-3">
       <svg
@@ -416,13 +458,15 @@ function ComingSoonItem({ title, description }: { title: string; description: st
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"
-        className="w-4 h-4 text-gray-400 shrink-0 mt-0.5"
+        className="w-4 h-4 text-brand-600 shrink-0 mt-0.5"
       >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
+        <polyline points="20 6 9 17 4 12" />
       </svg>
       <div>
-        <span className="text-sm font-medium text-gray-500">{title}</span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-medium text-gray-700">{title}</span>
+          <span className="text-xs text-gray-400">{price}</span>
+        </div>
         <p className="text-xs text-gray-400">{description}</p>
       </div>
     </div>
