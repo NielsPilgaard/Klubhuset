@@ -10,6 +10,7 @@ public static class ServicesExtensions
 		services.AddScoped<ConflictDetectionService>();
 		services.AddScoped<StaffInvitationService>();
 		services.AddScoped<ParentInvitationService>();
+		services.AddScoped<BoardMemberInvitationService>();
 		services.AddScoped<ExcelReportBuilder>();
 		services.AddScoped<SubscriptionService>();
 		services.AddScoped<INotificationService, NotificationService>();

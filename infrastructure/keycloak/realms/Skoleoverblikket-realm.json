@@ -64,6 +64,10 @@
       {
         "name": "superadmin",
         "description": "Platform superadmin — modul-override og administrationsadgang"
+      },
+      {
+        "name": "board",
+        "description": "Bestyrelsesmedlem — adgang til bestyrelsesmodul"
       }
     ]
   },
