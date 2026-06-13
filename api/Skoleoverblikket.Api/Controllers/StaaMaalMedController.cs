@@ -13,7 +13,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize(Roles = $"{Roles.Admin},{Roles.Board}")]
 public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable) : ControllerBase
 {
-	public record SubjectCoverageDto(string Category, double WeeklyHours, string Status);
+	public record SubjectCoverageDto(string Category, double WeeklyHours, double VejledendeWeeklyHours, double AnnualHours, double VejledendeAnnualHours, string Status);
 	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects);
 	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
 
@@ -31,12 +31,18 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 			.Include(s => s.TimeSlot)
 			.ToListAsync(cancellationToken);
 
+		var holidays = await db.CalendarEntries
+			.AsNoTracking()
+			.Where(e => e.Type == CalendarEntryType.Ferie || e.Type == CalendarEntryType.Lukkedag)
+			.ToListAsync(cancellationToken);
+
 		var classes = activeSlots
 			.Where(s => s.Schema.Class.GradeLevel.HasValue && s.Course.Category.HasValue && s.Course.Category != SubjectCategory.Fri)
-			.GroupBy(s => (s.Schema.ClassId, s.Schema.Class.Name, GradeLevel: s.Schema.Class.GradeLevel!.Value))
+			.GroupBy(s => (s.Schema.ClassId, s.Schema.Class.Name, GradeLevel: s.Schema.Class.GradeLevel!.Value, s.Schema.StartDate, s.Schema.EndDate))
 			.Select(classGroup =>
 			{
 				var gradeLevel = classGroup.Key.GradeLevel;
+				var weekCount = SchoolWeekCalculator.CountSchoolWeeks(classGroup.Key.StartDate, classGroup.Key.EndDate, holidays);
 				var hoursPerCategory = classGroup
 					.GroupBy(s => s.Course.Category!.Value)
 					.ToDictionary(g => g.Key, g => g.Sum(s => (s.TimeSlot.EndTime - s.TimeSlot.StartTime).TotalHours));
@@ -60,7 +66,13 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 						: actual < vejledende ? "yellow"
 						: "green";
 
-					subjects.Add(new SubjectCoverageDto(categoryName, Math.Round(actual, 2), status));
+					subjects.Add(new SubjectCoverageDto(
+						categoryName,
+						Math.Round(actual, 2),
+						Math.Round(vejledende, 2),
+						Math.Round(actual * weekCount, 0),
+						Math.Round(vejledende * weekCount, 0),
+						status));
 				}
 
 				return new ClassCoverageDto(
@@ -89,7 +101,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 					continue;
 				}
 
-				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, "missing"));
+				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, 0.0, "missing"));
 			}
 
 			if (subjects.Count > 0)

@@ -1,7 +1,9 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 
@@ -10,7 +12,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/reports")]
 [Authorize(Roles = Roles.Admin)]
-public sealed class ReportsController(ExcelReportBuilder excel, UvmTimetableService timetable) : ControllerBase
+public sealed class ReportsController(ExcelReportBuilder excel, UvmTimetableService timetable, AppDbContext db) : ControllerBase
 {
 	/// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>
 	[HttpGet("hours/staff.xlsx")]
@@ -139,6 +141,11 @@ public sealed class ReportsController(ExcelReportBuilder excel, UvmTimetableServ
 
 		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
 
+		var holidays = await db.CalendarEntries
+			.AsNoTracking()
+			.Where(e => e.Type == CalendarEntryType.Ferie || e.Type == CalendarEntryType.Lukkedag)
+			.ToListAsync(cancellationToken);
+
 		var rows = activeSlots
 			.Where(s =>
 				s.Schema.Class.GradeLevel.HasValue &&
@@ -147,13 +154,16 @@ public sealed class ReportsController(ExcelReportBuilder excel, UvmTimetableServ
 			.GroupBy(s => (
 				ClassName: s.Schema.Class.Name,
 				GradeLevel: s.Schema.Class.GradeLevel!.Value,
-				Subject: s.Course.Category!.Value.ToString()))
+				Subject: s.Course.Category!.Value.ToString(),
+				 s.Schema.StartDate,
+				 s.Schema.EndDate))
 			.Select(g =>
 			{
+				var weekCount = SchoolWeekCalculator.CountSchoolWeeks(g.Key.StartDate, g.Key.EndDate, holidays);
 				var weeklyHours = Math.Round(g.Sum(s => (s.TimeSlot.EndTime - s.TimeSlot.StartTime).TotalHours), 2);
-				var annualHours = Math.Round(weeklyHours * 40, 0);
+				var annualHours = Math.Round(weeklyHours * weekCount, 0);
 				var vejledende = timetal.TryGetValue(g.Key.Subject, out var gradeMap) && gradeMap.TryGetValue(g.Key.GradeLevel, out var wh) ? wh : 0.0;
-				var minimum = Math.Round(vejledende * 40, 0);
+				var minimum = Math.Round(vejledende * weekCount, 0);
 				var status = minimum == 0 ? "Ikke relevant"
 					: annualHours >= minimum ? "Opfyldt"
 					: $"Mangler {minimum - annualHours:0} timer";
