@@ -32,9 +32,9 @@
 
 | Area | File | Status | Notes |
 |------|------|--------|-------|
-| StaaMaalMedController — coverage calc accuracy | `StaaMaalMedTests.cs` | ⬜ pending | |
-| ReportsController — Excel export data | `ReportsTests.cs` | ⬜ pending | |
-| BillingController — trial days, subscription state | `BillingTests.cs` | ⬜ pending | |
+| StaaMaalMedController — coverage calc accuracy | `StaaMaalMedTests.cs` | ✅ done | 7 tests |
+| ReportsController — Excel export data | `ReportsTests.cs` | ✅ done | 11 tests |
+| BillingController — trial days, subscription state | `BillingTests.cs` | ✅ done | 8 tests |
 
 ## Already covered (baseline)
 
