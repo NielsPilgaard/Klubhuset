@@ -40,8 +40,7 @@ export default function LandingPage() {
             Spar tid på det kedelige — brug den på børnene
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto">
-            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen demo, ingen oplæring
-            nødvendig.
+            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen oplæring nødvendig.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
