@@ -519,17 +519,18 @@ foreach ($cls in $classes) {
 # ─── step 9: calendar entries ──────────────────────────────────────────────────
 
 Write-Host ""
-Write-Host "[9/11] Creating calendar entries..." -ForegroundColor Cyan
+Write-Host "[9/12] Creating calendar entries..." -ForegroundColor Cyan
 
-$calendarEntries = @(
-    @{ title = "Vinterferie"; type = "Ferie"; startDate = "2026-02-14"; endDate = "2026-02-22" }
-    @{ title = "Påskeferie"; type = "Ferie"; startDate = "2026-04-02"; endDate = "2026-04-13" }
-    @{ title = "St. Bededag"; type = "Lukkedag"; startDate = "2026-05-08"; endDate = "2026-05-08" }
-    @{ title = "Grundlovsdag"; type = "Lukkedag"; startDate = "2026-06-05"; endDate = "2026-06-05" }
-    @{ title = "Pinse"; type = "Ferie"; startDate = "2026-05-23"; endDate = "2026-05-26" }
-    @{ title = "Sommerferie"; type = "Ferie"; startDate = "2026-06-27"; endDate = "2026-08-09" }
-    @{ title = "Efterårsferie"; type = "Ferie"; startDate = "2026-10-17"; endDate = "2026-10-25" }
-    @{ title = "Juleferie"; type = "Ferie"; startDate = "2026-12-19"; endDate = "2027-01-03" }
+# Fetch standard Danish school holidays for 2025 (= school year 2025/2026)
+$defaults = Invoke-Api -Method GET -Path "/api/v1/calendar/defaults?year=2025"
+foreach ($entry in $defaults) {
+    $body = @{ title = $entry.title; type = $entry.type; startDate = $entry.startDate; endDate = $entry.endDate }
+    Invoke-Api -Method POST -Path "/api/v1/calendar" -Body $body | Out-Null
+    Write-Host "       Calendar: $($entry.title)" -ForegroundColor DarkGreen
+}
+
+# Extra school-specific entries
+$extraCalendarEntries = @(
     @{ title = "Planlægningsdag"; type = "Arbejdsdag"; startDate = "2026-01-02"; endDate = "2026-01-02" }
     @{ title = "Pædagogisk dag"; type = "Arbejdsdag"; startDate = "2026-03-02"; endDate = "2026-03-02" }
     @{ title = "Pædagogisk dag"; type = "Arbejdsdag"; startDate = "2026-08-10"; endDate = "2026-08-10" }
@@ -538,18 +539,59 @@ $calendarEntries = @(
     @{ title = "Forældremøde"; type = "Begivenhed"; startDate = "2026-09-03"; endDate = "2026-09-03"; recurrenceRule = "FREQ=YEARLY" }
     @{ title = "Motionsdag"; type = "Begivenhed"; startDate = "2026-09-25"; endDate = "2026-09-25" }
 )
-
-foreach ($entry in $calendarEntries) {
+foreach ($entry in $extraCalendarEntries) {
     $body = @{ title = $entry.title; type = $entry.type; startDate = $entry.startDate; endDate = $entry.endDate }
     if ($entry.ContainsKey('recurrenceRule')) { $body.recurrenceRule = $entry.recurrenceRule }
     Invoke-Api -Method POST -Path "/api/v1/calendar" -Body $body | Out-Null
     Write-Host "       Calendar: $($entry.title)" -ForegroundColor DarkGreen
 }
 
-# ─── step 10: SFO shifts and week plans ────────────────────────────────────────
+# ─── step 10: vacation registration windows ────────────────────────────────────
 
 Write-Host ""
-Write-Host "[10/11] Creating SFO shifts and week plan notes..." -ForegroundColor Cyan
+Write-Host "[10/12] Creating vacation registration windows..." -ForegroundColor Cyan
+
+$vacationWindows = @(
+    @{
+        title                = "Sommerferie 2026 — SFO ferietilmelding"
+        registrationDeadline = "2026-05-31"
+        careStartDate        = "2026-06-27"
+        careEndDate          = "2026-08-09"
+        granularity          = "Weeks"
+        isOpen               = $true
+    }
+    @{
+        title                = "Vinterferie 2026 — SFO ferietilmelding"
+        registrationDeadline = "2026-02-01"
+        careStartDate        = "2026-02-14"
+        careEndDate          = "2026-02-22"
+        granularity          = "Days"
+        isOpen               = $false
+    }
+    @{
+        title                = "Påskeferie 2026 — SFO ferietilmelding"
+        registrationDeadline = "2026-03-22"
+        careStartDate        = "2026-04-02"
+        careEndDate          = "2026-04-13"
+        granularity          = "Days"
+        isOpen               = $false
+    }
+)
+
+foreach ($vw in $vacationWindows) {
+    try {
+        Invoke-Api -Method POST -Path "/api/v1/vacation-registration" -Body $vw | Out-Null
+        Write-Host "       Vacation window: $($vw.title)" -ForegroundColor DarkGreen
+    }
+    catch {
+        Write-Warning "       Skipping vacation window '$($vw.title)'"
+    }
+}
+
+# ─── step 11: SFO shifts and week plans ────────────────────────────────────────
+
+Write-Host ""
+Write-Host "[11/12] Creating SFO shifts and week plan notes..." -ForegroundColor Cyan
 
 $sfoShiftDefs = @(
     @{ dayOfWeek = 1; startTime = "06:30"; endTime = "08:00"; label = "Morgen SFO — mandag" }
@@ -615,7 +657,7 @@ Write-Host "       SFO week plans: done" -ForegroundColor DarkGreen
 # ─── step 11: file folders and fake files ──────────────────────────────────────
 
 Write-Host ""
-Write-Host "[11/11] Creating file folders and uploading sample files..." -ForegroundColor Cyan
+Write-Host "[12/12] Creating file folders and uploading sample files..." -ForegroundColor Cyan
 
 $folderDefs = @(
     @{ name = "Dansk materialer"; parentId = $null; courseId = $null }
@@ -693,7 +735,8 @@ Write-Host " Staff:         $($staffDefs.Count) (+ 1 seed admin)"
 Write-Host " Students:      ~$($classes.Count * 10)"
 Write-Host " Schema slots:  Mon-Fri x $($lessonSlots.Count) lesson slots x $($classes.Count) classes"
 Write-Host " Week plans:    Weeks 2-5 / 2026, all classes"
-Write-Host " Calendar:      $($calendarEntries.Count) entries"
+Write-Host " Calendar:      $($defaults.Count + $extraCalendarEntries.Count) entries ($($defaults.Count) standard + $($extraCalendarEntries.Count) extra)"
+Write-Host " Vacation windows: $($vacationWindows.Count) (sommerferie open, vinter+påske closed)"
 Write-Host " SFO shifts:    $($sfoShiftDefs.Count) (with week plans weeks 2-5)"
 Write-Host " File folders:  $($folderDefs.Count)"
 Write-Host " Files:         $($fileDefs.Count)"
