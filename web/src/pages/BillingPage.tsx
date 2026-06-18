@@ -162,7 +162,7 @@ export default function BillingPage() {
           isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
           onActivate={() => addModuleMutation.mutate({ body: { module: 'ParentModule' } })}
           onDeactivate={() => removeModuleMutation.mutate({ path: { module: 'ParentModule' } })}
-          blockedReason={!data?.isActive ? 'Kræver aktivt betalt abonnement' : undefined}
+          blockedReason={!data?.isActive ? 'Kræver aktivt basis abonnement' : undefined}
         />
         <ModuleCard
           name="Bestyrelsesmodul"
@@ -173,7 +173,7 @@ export default function BillingPage() {
           isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
           onActivate={() => addModuleMutation.mutate({ body: { module: 'BoardModule' } })}
           onDeactivate={() => removeModuleMutation.mutate({ path: { module: 'BoardModule' } })}
-          blockedReason={!data?.isActive ? 'Kræver aktivt betalt abonnement' : undefined}
+          blockedReason={!data?.isActive ? 'Kræver aktivt basis abonnement' : undefined}
         />
       </div>
     </div>
