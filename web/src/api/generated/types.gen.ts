@@ -263,6 +263,14 @@ export type CoursesControllerUpsertCourseRequest = {
 
 export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 
+export type DemoRequestControllerDemoRequestDto = {
+    navn?: string | null;
+    skole?: string | null;
+    email?: string | null;
+    telefon?: string | null;
+    besked?: string | null;
+};
+
 export type FilesControllerConfirmRequest = {
     confirmToken?: string | null;
 };
@@ -1979,6 +1987,20 @@ export type PutApiV1CoursesByIdResponses = {
 };
 
 export type PutApiV1CoursesByIdResponse = PutApiV1CoursesByIdResponses[keyof PutApiV1CoursesByIdResponses];
+
+export type PostApiV1DemoRequestData = {
+    body?: DemoRequestControllerDemoRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/v1/demo-request';
+};
+
+export type PostApiV1DemoRequestResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiV1FilesData = {
     body?: never;

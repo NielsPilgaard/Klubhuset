@@ -2086,6 +2086,37 @@
         }
       }
     },
+    "/api/v1/demo-request": {
+      "post": {
+        "tags": [
+          "DemoRequest"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestController_DemoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestController_DemoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestController_DemoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/files": {
       "get": {
         "tags": [
@@ -8019,6 +8050,32 @@
         ],
         "type": "string"
       },
+      "DemoRequestController_DemoRequestDto": {
+        "type": "object",
+        "properties": {
+          "navn": {
+            "type": "string",
+            "nullable": true
+          },
+          "skole": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefon": {
+            "type": "string",
+            "nullable": true
+          },
+          "besked": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FilesController_ConfirmRequest": {
         "type": "object",
         "properties": {
@@ -10811,6 +10868,9 @@
     },
     {
       "name": "Courses"
+    },
+    {
+      "name": "DemoRequest"
     },
     {
       "name": "Files"
