@@ -1,26 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import keycloak from '../auth/keycloak'
 import { usePageTitle } from '../hooks/usePageTitle'
-
-interface SubjectCoverage {
-  category: string
-  weeklyHours: number
-  vejledendeWeeklyHours: number
-  annualHours: number
-  vejledendeAnnualHours: number
-  status: 'green' | 'yellow' | 'red' | 'missing'
-}
-
-interface ClassCoverage {
-  classId: string
-  className: string
-  gradeLevel: number
-  subjects: SubjectCoverage[]
-}
-
-interface CoverageResponse {
-  classes: ClassCoverage[]
-}
+import { getApiV1StaaMaalMedCoverageOptions } from '../api/generated/@tanstack/react-query.gen'
+import type { StaaMaalMedControllerSubjectCoverageDto } from '../api/generated/types.gen'
 
 const CATEGORY_LABELS: Record<string, string> = {
   Dansk: 'Dansk',
@@ -42,29 +23,30 @@ const CATEGORY_LABELS: Record<string, string> = {
   Madkundskab: 'Madkundskab',
 }
 
-function StatusDot({ subject }: { subject: SubjectCoverage }) {
-  const colors = {
+function StatusDot({ subject }: { subject: StaaMaalMedControllerSubjectCoverageDto }) {
+  const status = subject.status ?? 'missing'
+  const colors: Record<string, string> = {
     green: 'bg-green-400',
     yellow: 'bg-yellow-400',
     red: 'bg-red-400',
     missing: 'bg-gray-200',
   }
-  const statusLabel = {
+  const statusLabels: Record<string, string> = {
     green: 'Opfyldt',
     yellow: '75–99%',
     red: 'Under 75%',
     missing: 'Ikke planlagt',
-  }[subject.status]
+  }
 
   const hoursSuffix =
-    subject.status !== 'missing'
+    status !== 'missing'
       ? ` · ${subject.annualHours}t / ${subject.vejledendeAnnualHours}t`
       : ''
 
   return (
     <span
-      className={`inline-block w-3 h-3 rounded-full ${colors[subject.status]}`}
-      title={`${statusLabel}${hoursSuffix}`}
+      className={`inline-block w-3 h-3 rounded-full ${colors[status] ?? 'bg-gray-200'}`}
+      title={`${statusLabels[status] ?? status}${hoursSuffix}`}
     />
   )
 }
@@ -72,17 +54,7 @@ function StatusDot({ subject }: { subject: SubjectCoverage }) {
 export default function StaaMaalMedPage() {
   usePageTitle('Stå mål med')
 
-  const { data, isLoading, isError } = useQuery<CoverageResponse>({
-    queryKey: ['staa-maal-med-coverage'],
-    queryFn: async () => {
-      await keycloak.updateToken(30)
-      const res = await fetch('/api/v1/staa-maal-med/coverage', {
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-      if (!res.ok) throw new Error('Kunne ikke hente dækning')
-      return res.json() as Promise<CoverageResponse>
-    },
-  })
+  const { data, isLoading, isError } = useQuery(getApiV1StaaMaalMedCoverageOptions())
 
   const allCategories = [
     ...new Set((data?.classes ?? []).flatMap((c) => c.subjects.map((s) => s.category))),

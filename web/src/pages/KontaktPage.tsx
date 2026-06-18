@@ -2,6 +2,7 @@ import Logo from '../components/Logo'
 import Footer from '../components/Footer'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useState } from 'react'
+import { postApiV1DemoRequest } from '../api/generated/sdk.gen'
 
 export default function KontaktPage() {
   usePageTitle('Book en demo')
@@ -51,19 +52,17 @@ function DemoForm() {
     const data = new FormData(form)
 
     try {
-      const res = await fetch('/api/v1/demo-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          navn: data.get('navn'),
-          skole: data.get('skole'),
-          email: data.get('email'),
-          telefon: data.get('telefon') || null,
-          besked: data.get('besked') || null,
-        }),
+      const res = await postApiV1DemoRequest({
+        body: {
+          navn: data.get('navn') as string,
+          skole: data.get('skole') as string,
+          email: data.get('email') as string,
+          telefon: (data.get('telefon') as string) || null,
+          besked: (data.get('besked') as string) || null,
+        },
       })
 
-      if (!res.ok) {
+      if (res.error) {
         setError('Noget gik galt. Prøv igen eller ring til os.')
         return
       }

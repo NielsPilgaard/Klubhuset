@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import keycloak from '../auth/keycloak'
 import {
   getApiV1SchoolsSettingsOptions,
   getApiV1SchoolsSettingsQueryKey,
@@ -10,6 +9,11 @@ import {
   getApiV1TimeSlotTemplateOptions,
   getApiV1TimeSlotTemplateQueryKey,
   putApiV1TimeSlotTemplateMutation,
+  getApiV1BoardMembersOptions,
+  getApiV1BoardMembersQueryKey,
+  deleteApiV1BoardMembersByIdMutation,
+  patchApiV1BoardMembersByIdTeacherDataAccessMutation,
+  postApiV1BoardMembersInviteMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import { TimeInput } from '../components/TimeInput'
 import { LessonDurationSlider } from '../components/LessonDurationSlider'
@@ -215,15 +219,6 @@ export default function SkoleindstillingerPage() {
   )
 }
 
-interface BoardMemberDto {
-  id: string
-  name: string
-  email: string
-  canAccessTeacherData: boolean
-  hasAccount: boolean
-  createdAt: string
-}
-
 function BestyrelsesmedlemmerCard() {
   const qc = useQueryClient()
   const [showInviteModal, setShowInviteModal] = useState(false)
@@ -232,74 +227,47 @@ function BestyrelsesmedlemmerCard() {
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviting, setInviting] = useState(false)
 
-  const authHeader = async () => {
-    await keycloak.updateToken(30).catch(() => keycloak.login())
-    return { Authorization: `Bearer ${keycloak.token}` }
-  }
-
   const {
     data: members,
     isLoading,
     isError,
     error,
-  } = useQuery<BoardMemberDto[]>({
-    queryKey: ['board-members'],
-    queryFn: async () => {
-      const headers = await authHeader()
-      const res = await fetch('/api/v1/board-members', { headers })
-      if (!res.ok) throw new Error('Kunne ikke hente bestyrelsesmedlemmer')
-      return res.json() as Promise<BoardMemberDto[]>
-    },
-  })
+  } = useQuery(getApiV1BoardMembersOptions())
 
   const toggleMutation = useMutation({
-    mutationFn: async ({
-      id,
-      canAccessTeacherData,
-    }: {
-      id: string
-      canAccessTeacherData: boolean
-    }) => {
-      const headers = await authHeader()
-      const res = await fetch(`/api/v1/board-members/${id}/teacher-data-access`, {
-        method: 'PATCH',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ canAccessTeacherData }),
-      })
-      if (!res.ok) throw new Error('Kunne ikke opdatere adgang')
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['board-members'] }),
+    ...patchApiV1BoardMembersByIdTeacherDataAccessMutation(),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: getApiV1BoardMembersQueryKey() }),
   })
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const headers = await authHeader()
-      const res = await fetch(`/api/v1/board-members/${id}`, { method: 'DELETE', headers })
-      if (!res.ok) throw new Error('Kunne ikke slette bestyrelsesmedlem')
+    ...deleteApiV1BoardMembersByIdMutation(),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: getApiV1BoardMembersQueryKey() }),
+  })
+
+  const inviteMutation = useMutation({
+    ...postApiV1BoardMembersInviteMutation(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: getApiV1BoardMembersQueryKey() })
+      setShowInviteModal(false)
+      setInviteName('')
+      setInviteEmail('')
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['board-members'] }),
+    onError: (err: unknown) => {
+      const detail = (err as { detail?: string; title?: string })?.detail
+      const title = (err as { detail?: string; title?: string })?.title
+      setInviteError(detail ?? title ?? 'Invitation mislykkedes')
+    },
   })
 
   async function handleInvite() {
     setInviteError(null)
     setInviting(true)
     try {
-      const headers = await authHeader()
-      const res = await fetch('/api/v1/board-members/invite', {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: inviteName.trim(), email: inviteEmail.trim() }),
+      await inviteMutation.mutateAsync({
+        body: { name: inviteName.trim(), email: inviteEmail.trim() },
       })
-      if (!res.ok) {
-        const body = (await res.json()) as { detail?: string; title?: string }
-        throw new Error(body.detail ?? body.title ?? 'Invitation mislykkedes')
-      }
-      void qc.invalidateQueries({ queryKey: ['board-members'] })
-      setShowInviteModal(false)
-      setInviteName('')
-      setInviteEmail('')
-    } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Der opstod en fejl')
+    } catch {
+      // error handled in onError
     } finally {
       setInviting(false)
     }
@@ -369,14 +337,14 @@ function BestyrelsesmedlemmerCard() {
                   type="checkbox"
                   checked={member.canAccessTeacherData}
                   onChange={(e) =>
-                    toggleMutation.mutate({ id: member.id, canAccessTeacherData: e.target.checked })
+                    toggleMutation.mutate({ path: { id: member.id }, body: { canAccessTeacherData: e.target.checked } })
                   }
                   className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 />
                 Læreradgang
               </label>
               <button
-                onClick={() => deleteMutation.mutate(member.id)}
+                onClick={() => deleteMutation.mutate({ path: { id: member.id } })}
                 disabled={deleteMutation.isPending}
                 className="shrink-0 p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
                 title="Fjern bestyrelsesmedlem"

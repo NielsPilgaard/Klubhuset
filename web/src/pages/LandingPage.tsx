@@ -348,7 +348,7 @@ export default function LandingPage() {
               />
               <ModuleCard
                 title="Bestyrelsesmodul"
-                price="299"
+                price="199"
                 features={['Dokumentdeling med bestyrelsen', 'Overblik over "stå mål med"-dækning']}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">

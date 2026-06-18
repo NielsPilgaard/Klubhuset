@@ -14,6 +14,7 @@ async function fetchEmailPreview(type: EmailType, params: Record<string, string>
     keycloak.login()
   })
   const qs = new URLSearchParams(params).toString()
+  // Raw fetch intentional: endpoint returns text/html, not JSON; SDK client cannot handle non-JSON responses.
   const res = await fetch(`/api/v1/admin/email-preview/${type}?${qs}`, {
     headers: { Authorization: `Bearer ${keycloak.token}` },
   })

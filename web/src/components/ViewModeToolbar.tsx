@@ -6,6 +6,7 @@ const modes: { value: ViewAs; label: string }[] = [
   { value: 'admin', label: 'Skoleadmin' },
   { value: 'staff', label: 'Medarbejder' },
   { value: 'parent', label: 'Forælder' },
+  { value: 'board', label: 'Bestyrelsesmedlem' },
 ]
 
 export default function ViewModeToolbar() {
@@ -24,6 +25,8 @@ export default function ViewModeToolbar() {
       navigate('/foraeldrevisning/skema')
     } else if (mode === 'admin') {
       navigate('/dashboard')
+    } else if (mode === 'board') {
+      navigate('/bestyrelse/oversigt')
     } else {
       navigate('/mig/skema')
     }

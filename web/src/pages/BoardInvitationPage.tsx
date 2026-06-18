@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
+import {
+  getApiV1BoardInvitationsPreview,
+  postApiV1BoardInvitationsByTokenAccept,
+} from '../api/generated/sdk.gen'
 
 interface InvitationPreview {
   boardMemberName: string
@@ -24,12 +28,11 @@ export default function BoardInvitationPage() {
       setError('Ugyldigt invitationslink')
       return
     }
-    fetch(`/api/v1/board-invitations/preview?token=${encodeURIComponent(token)}`)
+    getApiV1BoardInvitationsPreview({ query: { token } })
       .then((res) => {
-        if (!res.ok) throw new Error('Ugyldigt eller udløbet link')
-        return res.json() as Promise<InvitationPreview>
+        if (res.error) throw new Error('Ugyldigt eller udløbet link')
+        setPreview((res.data as InvitationPreview) ?? null)
       })
-      .then(setPreview)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false))
   }, [token])
@@ -39,10 +42,8 @@ export default function BoardInvitationPage() {
     setAccepting(true)
     setError(null)
     try {
-      const res = await fetch(`/api/v1/board-invitations/${encodeURIComponent(token)}/accept`, {
-        method: 'POST',
-      })
-      if (!res.ok) throw new Error('Invitation kunne ikke accepteres')
+      const res = await postApiV1BoardInvitationsByTokenAccept({ path: { token } })
+      if (res.error) throw new Error('Invitation kunne ikke accepteres')
       setAccepted(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Der opstod en fejl')

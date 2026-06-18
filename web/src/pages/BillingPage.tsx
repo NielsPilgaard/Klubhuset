@@ -168,7 +168,7 @@ export default function BillingPage() {
           <ModuleCard
             name="Bestyrelsesmodul"
             description="Giv bestyrelsesmedlemmer en dedikeret adgang med aggregerede statistikker og bestyrelsesdokumenter. Admin styrer adgangsniveau pr. bestyrelsesmedlem."
-            price="299 kr/md"
+            price="199 kr/md"
             isActive={activeModules.includes('BoardModule')}
             canToggle={data?.isActive ?? false}
             isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
