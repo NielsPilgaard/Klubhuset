@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Skoleoverblikket.Api.Tenancy;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Skoleoverblikket.Api.Services;
 
@@ -23,7 +24,7 @@ public static class ServicesExtensions
 
 		services.AddProblemDetails();
 
-		services.AddControllers()
+		services.AddControllers(options => options.Filters.AddService<SubscriptionAccessFilter>())
 			.AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 		return services;

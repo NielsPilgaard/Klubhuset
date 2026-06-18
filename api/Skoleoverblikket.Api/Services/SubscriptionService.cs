@@ -147,6 +147,7 @@ public sealed class SubscriptionService(
 
 	/// <summary>
 	/// Returns the active module names for the given school's subscription.
+	/// During a valid trial, all modules are returned so schools can evaluate every feature.
 	/// </summary>
 	public async Task<IReadOnlyList<string>> GetActiveModulesAsync(Guid schoolId, CancellationToken cancellationToken = default)
 	{
@@ -157,6 +158,12 @@ public sealed class SubscriptionService(
 		if (sub is null)
 		{
 			return [];
+		}
+
+		var isTrialing = sub.Status == SubscriptionStatus.Trialing && sub.TrialEnd > DateTimeOffset.UtcNow;
+		if (isTrialing)
+		{
+			return Enum.GetNames<SubscriptionModule>();
 		}
 
 		return sub.ActiveModules

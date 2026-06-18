@@ -24,6 +24,12 @@ export default function LandingPage() {
               Log ind
             </a>
             <a
+              href="/kontakt"
+              className="hidden sm:inline text-sm text-brand-700 hover:text-brand-800 transition-colors whitespace-nowrap font-medium"
+            >
+              Book demo
+            </a>
+            <a
               href="/signup"
               className="text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium whitespace-nowrap"
             >
@@ -50,10 +56,10 @@ export default function LandingPage() {
               Kom i gang gratis — på 2 minutter
             </a>
             <a
-              href="#priser"
+              href="/kontakt"
               className="px-6 py-3 bg-white text-brand-700 text-base font-medium rounded-lg border border-brand-200 hover:bg-brand-50 transition-colors"
             >
-              Se priser
+              Book en demo
             </a>
           </div>
           <p className="mt-5 text-sm text-gray-400">
@@ -192,8 +198,44 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Feature screenshots */}
+      <section className="py-20 px-6 bg-brand-50 border-t border-brand-100">
+        <div className="max-w-6xl mx-auto space-y-24">
+          <FeatureShowcase
+            eyebrow="Skemabygger"
+            title="Træk og slip — konflikter opdages med det samme"
+            description="Byg hele ugeskemaet visuelt. Systemet viser øjeblikkeligt om en lærer eller et lokale er dobbeltbooket — ingen manuel kontrol."
+            imageSrc="/media/schema_1a.png"
+            imageAlt="Skemabygger med ugeoversigt"
+            imageRight
+          />
+          <FeatureShowcase
+            eyebrow="Konfliktkontrol"
+            title="Ingen overraskelser når skemaet er sat"
+            description="Konfliktpanelet viser præcis hvilke lektioner der kolliderer og hvorfor. Ret dem direkte — uden at starte forfra."
+            imageSrc="/media/schema_1a_conflict.png"
+            imageAlt="Konfliktoverblik"
+          />
+          <FeatureShowcase
+            eyebrow="Forældremodul"
+            title="Forældre med i loopet — uden ekstra arbejde"
+            description="Forældre inviteres med ét klik og ser klassens skema, kalender og ugeplan. Kontaktbog, gruppebesked og fraværsindberetning er inkluderet."
+            imageSrc="/media/forældre.png"
+            imageAlt="Forældreoversigt"
+            imageRight
+          />
+          <FeatureShowcase
+            eyebrow="Stå mål med"
+            title="Hold styr på minimumstimetallet"
+            description="Se på ét skærmbillede om alle klasser opfylder UVM's vejledende timetal pr. fag. Rød, gul, grøn — opdateres automatisk."
+            imageSrc="/media/staa-maal-med.png"
+            imageAlt="Stå mål med-overblik"
+          />
+        </div>
+      </section>
+
       {/* Audience */}
-      <section className="py-16 px-6 bg-brand-50 border-t border-brand-100">
+      <section className="py-16 px-6 bg-white border-t border-gray-100">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold text-brand-900 mb-4">
             Hvem er Skoleoverblikket til?
@@ -307,10 +349,7 @@ export default function LandingPage() {
               <ModuleCard
                 title="Bestyrelsesmodul"
                 price="299"
-                features={[
-                  'Dokumentdeling med bestyrelsen',
-                  'Overblik over "stå mål med"-dækning',
-                ]}
+                features={['Dokumentdeling med bestyrelsen', 'Overblik over "stå mål med"-dækning']}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">
                 Kræver Basis · Samles på én faktura
@@ -481,6 +520,49 @@ function ModuleCard({
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function FeatureShowcase({
+  eyebrow,
+  title,
+  description,
+  imageSrc,
+  imageAlt,
+  imageRight,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+  imageSrc: string
+  imageAlt: string
+  imageRight?: boolean
+}) {
+  const text = (
+    <div className="lg:w-5/12 flex flex-col justify-center">
+      <p className="text-xs font-semibold uppercase tracking-widest text-brand-600 mb-3">
+        {eyebrow}
+      </p>
+      <h3 className="font-display text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
+        {title}
+      </h3>
+      <p className="text-gray-600 leading-relaxed">{description}</p>
+    </div>
+  )
+  const image = (
+    <div className="lg:w-7/12">
+      <div className="rounded-xl overflow-hidden shadow-xl border border-gray-100">
+        <img src={imageSrc} alt={imageAlt} className="w-full block" loading="lazy" />
+      </div>
+    </div>
+  )
+  return (
+    <div
+      className={`flex flex-col lg:flex-row items-center gap-12 ${imageRight ? '' : 'lg:flex-row-reverse'}`}
+    >
+      {text}
+      {image}
     </div>
   )
 }
