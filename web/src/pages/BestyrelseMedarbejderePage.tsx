@@ -4,7 +4,7 @@ import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function BestyrelseMedarbejderePage() {
   usePageTitle('Medarbejdere')
-  const { data: staff, isLoading } = useQuery(getApiV1StaffOptions())
+  const { data: staff, isLoading, error } = useQuery(getApiV1StaffOptions())
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-8">
@@ -21,6 +21,8 @@ export default function BestyrelseMedarbejderePage() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
           {(staff ?? []).map((member) => (

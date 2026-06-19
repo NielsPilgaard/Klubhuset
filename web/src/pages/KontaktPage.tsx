@@ -68,6 +68,8 @@ function DemoForm() {
       }
 
       setSubmitted(true)
+    } catch {
+      setError('Noget gik galt. Prøv igen eller ring til os.')
     } finally {
       setLoading(false)
     }

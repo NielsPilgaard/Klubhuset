@@ -42,13 +42,14 @@ public sealed class BoardMemberInvitationService(
 		await db.SaveChangesAsync(cancellationToken);
 
 		string? temporaryPassword = null;
+		string? pendingKeycloakSubject = null;
 		if (string.IsNullOrWhiteSpace(member.KeycloakSubject))
 		{
 			try
 			{
 				temporaryPassword = GenerateTemporaryPassword();
 				var nameParts = member.Name.Split(' ', 2);
-				var keycloakSubject = await keycloakAdmin.CreateUserAsync(
+				pendingKeycloakSubject = await keycloakAdmin.CreateUserAsync(
 					member.Email,
 					nameParts[0],
 					nameParts.Length > 1 ? nameParts[1] : string.Empty,
@@ -57,8 +58,6 @@ public sealed class BoardMemberInvitationService(
 					realmRole: Roles.Board,
 					forcePasswordReset: true,
 					cancellationToken);
-				member.KeycloakSubject = keycloakSubject;
-				await db.SaveChangesAsync(cancellationToken);
 			}
 			catch (KeycloakException ex)
 			{
@@ -81,6 +80,13 @@ public sealed class BoardMemberInvitationService(
 			HtmlBody: BuildHtmlEmail(member.Name, school, link, temporaryPassword),
 			PlainTextBody: BuildPlainEmail(member.Name, school, link, temporaryPassword)
 		), cancellationToken);
+
+		// Only persist KeycloakSubject after email is successfully sent so retries can regenerate the password
+		if (pendingKeycloakSubject is not null)
+		{
+			member.KeycloakSubject = pendingKeycloakSubject;
+			await db.SaveChangesAsync(cancellationToken);
+		}
 
 		return invitation;
 	}

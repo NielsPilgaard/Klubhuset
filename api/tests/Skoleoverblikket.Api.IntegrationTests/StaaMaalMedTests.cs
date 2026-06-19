@@ -211,7 +211,7 @@ public sealed class StaaMaalMedTests
         var weekdays = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
         for (var i = 0; i < 8; i++)
         {
-            var start = new TimeOnly(8, 0).AddHours(i % 5 == 0 ? 0 : i % 5);
+            var start = new TimeOnly(8, 0).AddHours(i);
             var end = start.AddHours(1);
             var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
                 _factory.Services, TestTenantContext.DefaultTenantId, start, end, sortOrder: 100 + i);

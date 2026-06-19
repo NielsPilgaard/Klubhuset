@@ -25,34 +25,22 @@ export interface BoardUploadOptions {
   onProgress?: (pct: number) => void
 }
 
-/**
- * Uploads a file using the presigned URL flow:
- * 1. POST /files/presign  → get S3 upload URL + confirm token
- * 2. PUT directly to S3   → progress events fire here
- * 3. POST /files/confirm  → register the file in the DB
- */
-export async function uploadFile({
-  file,
-  fileName,
-  courseId,
-  folderId,
-  onProgress,
-}: UploadOptions): Promise<UploadedFile> {
+async function presignConfirmUpload(
+  file: File,
+  presignUrl: string,
+  confirmUrl: string,
+  presignBody: Record<string, unknown>,
+  onProgress?: (pct: number) => void,
+): Promise<UploadedFile> {
   await keycloak.updateToken(30).catch(() => keycloak.login())
 
-  // Step 1: get presigned URL
-  const presignRes = await fetch(`${API_BASE}/files/presign`, {
+  const presignRes = await fetch(presignUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
     },
-    body: JSON.stringify({
-      fileName: fileName ?? file.name,
-      fileSizeBytes: file.size,
-      courseId: courseId || null,
-      folderId: folderId || null,
-    }),
+    body: JSON.stringify(presignBody),
   })
 
   if (!presignRes.ok) {
@@ -66,7 +54,7 @@ export async function uploadFile({
     confirmToken: string
   }
 
-  // Step 2: upload directly to S3 via XHR so we get progress events
+  // Upload directly to S3 via XHR so we get progress events
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('PUT', uploadUrl)
@@ -92,9 +80,8 @@ export async function uploadFile({
 
   onProgress?.(95)
 
-  // Step 3: confirm with the API
   await keycloak.updateToken(30).catch(() => keycloak.login())
-  const confirmRes = await fetch(`${API_BASE}/files/confirm`, {
+  const confirmRes = await fetch(confirmUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -112,78 +99,37 @@ export async function uploadFile({
   return confirmRes.json() as Promise<UploadedFile>
 }
 
-export async function uploadBoardFile({
-  file,
-  fileName,
-  folderId,
-  onProgress,
-}: BoardUploadOptions): Promise<UploadedFile> {
-  await keycloak.updateToken(30).catch(() => keycloak.login())
-
-  const presignRes = await fetch(`${API_BASE}/board-files/presign`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
+/**
+ * Uploads a file using the presigned URL flow:
+ * 1. POST /files/presign  → get S3 upload URL + confirm token
+ * 2. PUT directly to S3   → progress events fire here
+ * 3. POST /files/confirm  → register the file in the DB
+ */
+export async function uploadFile({ file, fileName, courseId, folderId, onProgress }: UploadOptions): Promise<UploadedFile> {
+  return presignConfirmUpload(
+    file,
+    `${API_BASE}/files/presign`,
+    `${API_BASE}/files/confirm`,
+    {
+      fileName: fileName ?? file.name,
+      fileSizeBytes: file.size,
+      courseId: courseId || null,
+      folderId: folderId || null,
     },
-    body: JSON.stringify({
+    onProgress,
+  )
+}
+
+export async function uploadBoardFile({ file, fileName, folderId, onProgress }: BoardUploadOptions): Promise<UploadedFile> {
+  return presignConfirmUpload(
+    file,
+    `${API_BASE}/board-files/presign`,
+    `${API_BASE}/board-files/confirm`,
+    {
       fileName: fileName ?? file.name,
       fileSizeBytes: file.size,
       folderId: folderId || null,
-    }),
-  })
-
-  if (!presignRes.ok) {
-    const text = await presignRes.text().catch(() => presignRes.statusText)
-    throw new ApiError(presignRes.status, text)
-  }
-
-  const { uploadUrl, confirmToken } = (await presignRes.json()) as {
-    fileId: string
-    uploadUrl: string
-    confirmToken: string
-  }
-
-  await new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('PUT', uploadUrl)
-    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 90))
-      }
-    }
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve()
-      } else {
-        reject(new Error(`S3 upload fejlede: ${xhr.status} ${xhr.statusText}`))
-      }
-    }
-
-    xhr.onerror = () => reject(new Error('Netværksfejl under upload til S3.'))
-    xhr.send(file)
-  })
-
-  onProgress?.(95)
-
-  await keycloak.updateToken(30).catch(() => keycloak.login())
-  const confirmRes = await fetch(`${API_BASE}/board-files/confirm`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
     },
-    body: JSON.stringify({ confirmToken }),
-  })
-
-  if (!confirmRes.ok) {
-    const text = await confirmRes.text().catch(() => confirmRes.statusText)
-    throw new ApiError(confirmRes.status, text)
-  }
-
-  onProgress?.(100)
-  return confirmRes.json() as Promise<UploadedFile>
+    onProgress,
+  )
 }

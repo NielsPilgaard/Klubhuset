@@ -101,7 +101,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 					continue;
 				}
 
-				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, 0.0, "missing"));
+				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, Math.Round(vejledende * 40, 0), "missing"));
 			}
 
 			if (subjects.Count > 0)

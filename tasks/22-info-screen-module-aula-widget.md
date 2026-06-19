@@ -25,9 +25,11 @@ Docs: [T0150 Widget Guide](https://aulainfo.dk/media/cabl3kdt/t0150-widget-guide
 
 ## Data model
 
-### `TenantSettings` extension (or separate field on `Tenant`)
+### `Tenant` entity extension
 
-Add `AulaInstitutionCode` (`string?`) — admin enters this in `/indstillinger`. Used to map an inbound Aula JWT (`sub` claim = institution code) to a `TenantId`.
+Add `AulaInstitutionCode` (`string?`) to the `Tenant` entity — not `TenantSettings`. Rationale: this is core identity data used to authenticate inbound Aula JWTs (mapping `sub` → `TenantId`), not a UI preference. It must be queryable without loading settings, and must have a unique index for fast lookup.
+
+Admin enters this value in `/indstillinger`. Used to map an inbound Aula JWT (`sub` claim = institution code) to a `TenantId`.
 
 ```csharp
 public string? AulaInstitutionCode { get; set; }
@@ -63,7 +65,11 @@ public string? AulaInstitutionCode { get; set; }
 
 JWT validation uses a dedicated validator — **not** the Keycloak auth middleware. Register as a named auth scheme or validate manually in the controller action.
 
+**CORS**: Add a dedicated CORS policy for this endpoint allowing `https://aula.dk` as origin. Do not reuse the global CORS policy (which targets `localhost` / the main app). Register the policy in `Program.cs` and apply it to `WidgetController` via `[EnableCors("AulaWidget")]`.
+
 Store Aula's public certificate as a config value (`Aula:PublicCertificate`), obtained after KOMBIT approval.
+
+**Development bootstrap**: Aula's production certificate is only available post-KOMBIT-approval. For local development and the pre-approval test environment, KOMBIT provides access to **Aula External Test 2** with a separate test certificate. Obtain the test certificate from the KOMBIT toolkit portal during the approval process and set it as `Aula:PublicCertificate` in `appsettings.Development.json`. Replace with the production certificate once KOMBIT approval is granted. Document which certificate is active in a code comment on the config binding.
 
 ---
 
@@ -71,19 +77,25 @@ Store Aula's public certificate as a config value (`Aula:PublicCertificate`), ob
 
 Separate minimal React app hosted at `widget.skoleoverblikket.dk` (or a route on the main app). No auth UI, no sidebar.
 
+Load allowed origins from the Vite environment (`import.meta.env.VITE_ALLOWED_ORIGINS`, comma-separated). Set in `.env.development` and `.env.production` so local dev and production differ without code changes.
+
 ```typescript
 // On mount
 window.parent.postMessage({ request: 'setIframeHeight', metadata: { height: 800 } }, '*');
 window.parent.postMessage({ request: 'getAulaToken' }, '*');
 
+const allowedOrigins = import.meta.env.VITE_ALLOWED_ORIGINS?.split(',') ?? ['https://aula.dk'];
+
 window.addEventListener('message', (event) => {
-  const allowed = ['https://aula.dk', 'http://localhost:5173', 'https://localhost:8080'];
-  if (!allowed.includes(event.origin)) return;
+  if (!allowedOrigins.includes(event.origin)) return;
   if (event.data.type === 'token') {
     setAulaToken(event.data.data.token);
   }
 });
 ```
+
+`.env.development`: `VITE_ALLOWED_ORIGINS=http://localhost:5173,https://localhost:8080`  
+`.env.production`: `VITE_ALLOWED_ORIGINS=https://aula.dk`
 
 Props available from Aula (via postMessage `getProps`):
 - `currentWeekNumber` — format `"2026-W25"` — use to page the schema

@@ -192,7 +192,7 @@ export default function LandingPage() {
                 </svg>
               }
               title="Bestyrelsesmodul"
-              description="Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over &ldquo;stå mål med&rdquo;-dækning."
+              description="Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over “stå mål med”-dækning."
             />
           </div>
         </div>

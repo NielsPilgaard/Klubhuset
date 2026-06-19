@@ -4,7 +4,7 @@ import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function BestyrelseDashboardPage() {
   usePageTitle('Bestyrelsesoversigt')
-  const { data, isLoading } = useQuery(getApiV1StatsDashboardOptions())
+  const { data, isLoading, error } = useQuery(getApiV1StatsDashboardOptions())
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-8">
@@ -22,6 +22,8 @@ export default function BestyrelseDashboardPage() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
       ) : data ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard label="Klasser" value={data.classCount ?? 0} />

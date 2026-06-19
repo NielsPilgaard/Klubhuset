@@ -247,6 +247,8 @@ public sealed class BoardFilesController(
 			return NotFound();
 		}
 
+		await storage.DeleteAsync(file.StorageKey, cancellationToken);
+
 		db.BoardFiles.Remove(file);
 		await db.SaveChangesAsync(cancellationToken);
 		return NoContent();
@@ -309,9 +311,11 @@ public sealed class BoardFilesController(
 
 	public record RenameFolderRequest([Required, StringLength(200, MinimumLength = 1)] string Name);
 
+	public record DeleteFolderResponse(List<string> Warnings);
+
 	[HttpDelete("folders/{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> DeleteFolder(Guid id, CancellationToken cancellationToken)
+	public async Task<ActionResult<DeleteFolderResponse>> DeleteFolder(Guid id, CancellationToken cancellationToken)
 	{
 		var folder = await db.BoardFileFolders.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
 		if (folder is null)
@@ -319,9 +323,29 @@ public sealed class BoardFilesController(
 			return NotFound();
 		}
 
+		var warnings = new List<string>();
+
+		var files = await db.BoardFiles
+			.Where(f => f.FolderId == id)
+			.ToListAsync(cancellationToken);
+
+		foreach (var file in files)
+		{
+			try
+			{
+				await storage.DeleteAsync(file.StorageKey, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				warnings.Add($"Filen '{file.FileName}' kunne ikke slettes fra lageret: {ex.Message}");
+			}
+		}
+
+		// DB cascade (BoardFileFolder → children + BoardFile.FolderId → SetNull) handles the rest
 		db.BoardFileFolders.Remove(folder);
 		await db.SaveChangesAsync(cancellationToken);
-		return NoContent();
+
+		return Ok(new DeleteFolderResponse(warnings));
 	}
 
 	private record ConfirmTokenPayload(

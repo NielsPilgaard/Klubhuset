@@ -76,6 +76,14 @@ Hierarchical folder structure for board documents. Same parent/children pattern 
 - Board member's JWT must carry `tenant_id` claim. Use `CreateUserAsync` general method (see task 17 — same generalization).
 - **Production:** add `board` role manually via Keycloak Admin UI → Realm roles → Create role (description: "Bestyrelsesmedlem — adgang til bestyrelsesmodul"). No `[Authorize(Roles = "board")]` guard works until this exists in the target realm.
 
+**Post-deployment smoke test checklist** (verify before considering deployment complete):
+- [ ] Invite a board member via admin UI → invitation email received
+- [ ] Accept invitation link → login succeeds
+- [ ] Decode the resulting JWT (e.g. jwt.io) → confirm `realm_access.roles` contains `"board"` and `tenant_id` claim is present
+- [ ] GET `/api/v1/board-members` with board JWT → 403 (board members cannot list other members — admin only)
+- [ ] GET `/api/v1/stats/dashboard` with board JWT → 200
+- [ ] GET `/api/v1/board-files` with board JWT → 200
+
 ---
 
 ## Backend

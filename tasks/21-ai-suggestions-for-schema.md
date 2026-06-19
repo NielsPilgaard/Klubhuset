@@ -76,7 +76,7 @@ Steps:
 2. Load UVM timetal for class grade via `UvmTimetableService`
 3. Build structured prompt (see below)
 4. Call Alexandra platform API
-5. Deserialize + **validate all IDs** — reject any ID not present in loaded context
+5. Deserialize + **validate all IDs** — reject any ID not present in loaded context AND not owned by the current tenant. Since all context is loaded per-tenant via `ITenantContext`, both presence and tenant ownership are verified together — an ID absent from the loaded context set is implicitly cross-tenant or fabricated.
 6. Run conflict detection on returned slots. If conflicts exist, retry with conflicts appended to prompt:
    ```
    Disse konflikter opstod — ret dem:
@@ -141,9 +141,28 @@ NuGets:
 - `Microsoft.Extensions.AI` — `IChatClient` abstraction + `GetResponseAsync<T>` structured output
 - `Microsoft.Extensions.AI.OpenAI` — `.AsIChatClient()` adapter
 
-Register `IChatClient` with Polly rate-limit pipeline:
+Register `IChatClient` with per-tenant rate-limit pipeline:
+
+> **Per-tenant keying**: `UseRateLimiting` accepts a `RateLimiter` factory. Use `PartitionedRateLimiter.Create` with `TenantId` as the partition key so each tenant has an independent quota. The `TenantId` is extracted inside `SchemaAiSuggestionService` from `ITenantContext` and passed as a key when acquiring a lease — not at `AddChatClient` registration time, since DI scope is per-request there.
+>
+> Concretely: `SchemaAiSuggestionService` holds an `IPartitionedRateLimiter<Guid>` (injected as singleton), acquires a lease keyed by `tenant.TenantId`, and throws `RateLimitRejectedException` (or returns 429) if the lease is denied.
 
 ```csharp
+// Register partitioned rate limiter as singleton
+builder.Services.AddSingleton<IPartitionedRateLimiter<Guid>>(sp =>
+{
+    var opts = sp.GetRequiredService<IOptions<AlexandraAiOptions>>().Value;
+    return PartitionedRateLimiter.Create<Guid, Guid>(tenantId =>
+        RateLimitPartition.GetSlidingWindowLimiter(tenantId, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 1,
+            Window = TimeSpan.FromSeconds(opts.RateLimitSeconds),
+            SegmentsPerWindow = 1,
+            QueueProcessingOrder = QueueProcessingOrder.NewestFirst,
+            QueueLimit = 0
+        }));
+});
+
 builder.Services.AddChatClient(sp =>
 {
     var opts = sp.GetRequiredService<IOptions<AlexandraAiOptions>>().Value;
@@ -153,17 +172,7 @@ builder.Services.AddChatClient(sp =>
 
     return openAIClient
         .GetChatClient(opts.Model)
-        .AsIChatClient()
-        .AsBuilder()
-        .UseRateLimiting(new SlidingWindowRateLimiter(new SlidingWindowRateLimiterOptions
-        {
-            PermitLimit = 1,
-            Window = TimeSpan.FromSeconds(opts.RateLimitSeconds),
-            SegmentsPerWindow = 1,
-            QueueProcessingOrder = QueueProcessingOrder.NewestFirst,
-            QueueLimit = 0
-        }))
-        .Build(sp);
+        .AsIChatClient();
 });
 ```
 
@@ -292,6 +301,10 @@ public int RateLimitSeconds { get; init; } = 60;
 ## Open questions
 
 1. Alexandra platform: exact base URL, model name, auth format — check after login
-2. ~~Does class entity have `GradeLevel`?~~ Confirmed: `Class.GradeLevel` is `int?` (0=børnehaveklasse, 1–10). Handle `null` → omit UVM timetal from prompt, add warning.
+2. ~~Does class entity have `GradeLevel`?~~ Confirmed: `Class.GradeLevel` is `int?` (0=børnehaveklasse, 1–10). Handle `null` as follows:
+   - Omit UVM timetal block from the prompt entirely
+   - Add `"UVM timetal ikke tilgængeligt — klassen mangler klassetrin"` to `SchemaSuggestionResponse.warnings`
+   - Show warning inline above ghost slots in the UI (same amber banner, different text)
+   - Do **not** reject the request — proceed with reduced guidance; suggestions are still useful for teacher/room assignment even without UVM hours
 3. Token limits: 20 staff + 15 courses + 30 slots ≈ small — no chunking needed
 4. If Alexandra platform enforces its own rate limits, add `Polly` retry on 429 from upstream (separate from our per-tenant gate)

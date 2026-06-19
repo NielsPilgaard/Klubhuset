@@ -4,11 +4,9 @@
 
 ### Context
 
-The privacy policy (Privatlivspolitik) states that school data is retained for 90 days after subscription cancellation, then permanently deleted. This is currently not implemented — deletion is manual.
+The privacy policy (Privatlivspolitik) states that school data is retained for 180 days after subscription cancellation, then permanently deleted. This is currently not implemented — deletion is manual.
 
 This task implements the automated cleanup so the stated policy is actually enforced.
-
-Let's change this to 180 days, if there's no compliance constraint there
 
 ### What to build
 
@@ -31,7 +29,7 @@ The existing Stripe webhook handler should set this field when the subscription 
 Add a background service (`IHostedService` or Hangfire recurring job — match whatever background job pattern is already in use in the API) that:
 
 - Runs once daily (e.g. 02:00 UTC)
-- Queries for tenants where `SubscriptionCancelledAt` is not null and `SubscriptionCancelledAt <= now - 90 days`
+- Queries for tenants where `SubscriptionCancelledAt` is not null and `SubscriptionCancelledAt <= now - 180 days`
 - For each matching tenant, performs a hard delete in this order:
   1. Delete all uploaded files from OVHcloud storage for that tenant
   2. Delete all tenant data from the database (cascades via EF Core, or explicit ordered deletes — whichever is already the pattern)
@@ -45,7 +43,7 @@ Before a tenant's data is deleted, they should be able to export it. Check wheth
 
 #### 4. Notify before deletion
 
-Send a warning email to the school's admin account 7 days before the 90-day window expires (i.e. at day 83 post-cancellation). Email should:
+Send a warning email to the school's admin account 7 days before the 180-day window expires (i.e. at day 173 post-cancellation). Email should:
 
 - Be in Danish
 - State clearly that data will be deleted in 7 days
@@ -59,8 +57,8 @@ Use whatever transactional email provider is already in use. If none exists, add
 - New EF Core migration required — do not modify existing ones
 - Tenant scoping must be maintained throughout — never delete across tenant boundaries in a single query
 - All deletion must be permanent (hard delete) — no soft-delete tombstones
-- The 90-day period is measured from `SubscriptionCancelledAt`, not from the last login or any other signal
-- Write an integration test that verifies: a tenant with `SubscriptionCancelledAt = 91 days ago` is deleted, and a tenant with `SubscriptionCancelledAt = 89 days ago` is not
+- The 180-day period is measured from `SubscriptionCancelledAt`, not from the last login or any other signal
+- Write an integration test that verifies: a tenant with `SubscriptionCancelledAt = 181 days ago` is deleted, and a tenant with `SubscriptionCancelledAt = 179 days ago` is not
 
 ### Out of scope
 

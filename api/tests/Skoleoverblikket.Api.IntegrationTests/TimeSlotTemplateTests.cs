@@ -197,8 +197,8 @@ public sealed class TimeSlotTemplateTests
 	[Test]
 	public async Task UpsertTemplate_BreakAtExactDayEndBoundary_Returns200()
 	{
-		// Day 08:00–10:15, 45-min lessons → 2 modules end at 09:30
-		// Break at 09:30 = exact boundary, still valid
+		// Day 08:00–10:15, 45-min lessons → 3 full modules: 08:00–08:45, 08:45–09:30, 09:30–10:15
+		// Break at 09:30 = exact end of second module boundary, still valid
 		var req = new TimeSlotsController.UpsertTemplateRequest(
 			LessonDurationMinutes: 45,
 			DayStartTime: new TimeOnly(8, 0),

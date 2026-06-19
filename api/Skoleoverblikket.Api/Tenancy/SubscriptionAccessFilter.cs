@@ -48,7 +48,7 @@ public sealed class SubscriptionAccessFilter(AppDbContext db, ITenantContext ten
 		{
 			schoolId = tenantContext.TenantId;
 		}
-		catch
+		catch (MissingTenantClaimException)
 		{
 			// No tenant claim — let auth handle it.
 			await next();

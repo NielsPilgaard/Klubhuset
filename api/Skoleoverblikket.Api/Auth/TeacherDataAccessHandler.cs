@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Auth;
 
 public sealed class TeacherDataAccessRequirement : IAuthorizationRequirement { }
 
-public sealed class TeacherDataAccessHandler(AppDbContext db) : AuthorizationHandler<TeacherDataAccessRequirement>
+public sealed class TeacherDataAccessHandler(AppDbContext db, ITenantContext tenant) : AuthorizationHandler<TeacherDataAccessRequirement>
 {
 	protected override async Task HandleRequirementAsync(
 		AuthorizationHandlerContext context,
@@ -31,10 +32,10 @@ public sealed class TeacherDataAccessHandler(AppDbContext db) : AuthorizationHan
 			return;
 		}
 
+		// Use tenant-scoped query (no IgnoreQueryFilters) to prevent cross-tenant access
 		var member = await db.BoardMembers
-			.IgnoreQueryFilters()
 			.AsNoTracking()
-			.FirstOrDefaultAsync(m => m.KeycloakSubject == sub);
+			.FirstOrDefaultAsync(m => m.KeycloakSubject == sub && m.TenantId == tenant.TenantId);
 
 		if (member?.CanAccessTeacherData == true)
 		{

@@ -44,11 +44,12 @@ Column order is not fixed — user pastes column by column into a predefined gri
 - No upsert key on students — name+class as identity
 
 ### Parents
-- **Upsert by `(TenantId, Email)`** — update name/phone/address if changed
+- **Upsert by `(TenantId, Email)`** — on email collision: overwrite `Name`, `Phone`, `Address`, `PostalCode`, `City` with new values. `AddressProtected` and `ShareContactInfo` are **not** overwritten on re-import (admin-controlled flags, preserve existing value). `KeycloakSubject` is never overwritten — set only on first invite acceptance.
+- Existing `ParentStudent` links for the matched parent are preserved; new links from the current import row are added if not already present.
 - Rows without email and without name: skip
 - Rows with email but without name: accept (name is nullable on Parent model)
-- `AddressProtected` always set to `false` on import — admin toggles manually afterwards
-- `ShareContactInfo` set to `false` (default)
+- `AddressProtected` always set to `false` on **first create** — admin toggles manually afterwards; not touched on update
+- `ShareContactInfo` set to `false` on **first create** (default); not touched on update
 
 ### ParentStudent links
 - Create link if not already exists
@@ -56,7 +57,13 @@ Column order is not fixed — user pastes column by column into a predefined gri
 
 ### Invitations
 - Import does **not** send invitation emails automatically during the import itself
-- After import, a "Send invitations" step is shown in the same flow: admin sees list of all parents without KeycloakSubject (i.e., unactivated accounts), can select all/some, and sends bulk invitation with one click
+- After import, a "Send invitations" step is shown in the same flow: admin sees list of all parents without `KeycloakSubject` (i.e., unactivated accounts). UI details:
+  - Each parent row has a checkbox; a "Vælg alle" toggle selects/deselects all
+  - List is filterable by name or email (client-side, no extra API call)
+  - A summary line above the list shows "X forældre vil modtage en invitation" updating as selection changes
+  - "Send invitationer" button triggers bulk send; disabled until at least one parent is selected
+  - Confirmation dialog before send: "Er du sikker? X forældre modtager en invitation." with Cancel / Confirm
+  - After send: success toast with count; list re-fetches and hides now-invited parents
 
 ### Duplicate handling on re-import
 - Parents: overwrite with new data (upsert by email)

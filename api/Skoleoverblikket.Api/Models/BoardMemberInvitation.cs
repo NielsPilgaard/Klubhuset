@@ -21,7 +21,7 @@ public sealed class BoardMemberInvitation : ITenantScoped, IEntityTypeConfigurat
 
 	public DateTimeOffset ExpiresAt { get; set; }
 	public DateTimeOffset? AcceptedAt { get; set; }
-	public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+	public DateTimeOffset CreatedAt { get; init; }
 
 	[Timestamp]
 	public byte[]? RowVersion { get; set; }
@@ -33,6 +33,7 @@ public sealed class BoardMemberInvitation : ITenantScoped, IEntityTypeConfigurat
 
 	public void Configure(EntityTypeBuilder<BoardMemberInvitation> builder)
 	{
+		builder.Property(i => i.CreatedAt).HasDefaultValueSql("now()");
 		builder.HasIndex(i => i.Token).IsUnique();
 		builder.HasOne(i => i.BoardMember)
 			   .WithMany()

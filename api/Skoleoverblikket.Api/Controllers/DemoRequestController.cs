@@ -40,9 +40,11 @@ public sealed class DemoRequestController(IEmailSender emailSender) : Controller
 		var plainText = string.Join("\n", lines);
 		var htmlBody = "<pre>" + System.Net.WebUtility.HtmlEncode(plainText) + "</pre>";
 
+		var safeSchoolName = dto.Skole.ReplaceLineEndings(" ").Replace("\r", " ").Replace("\n", " ");
+
 		await emailSender.SendAsync(new EmailMessage(
 			To: "kontakt@skoleoverblikket.dk",
-			Subject: $"Demo-forespørgsel fra {dto.Skole}",
+			Subject: $"Demo-forespørgsel fra {safeSchoolName}",
 			HtmlBody: htmlBody,
 			PlainTextBody: plainText),
 			cancellationToken);

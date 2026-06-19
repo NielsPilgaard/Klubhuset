@@ -50,10 +50,10 @@ The `SubjectCategory` C# enum maps to JSON keys:
 ```
 Dansk, Matematik, Engelsk, Naturfag, Historie, Musik, Idraet,
 Kristendomskundskab, Billedkunst, HaandvaerkOgDesign, Tysk, Fransk,
-Geografi, Biologi, FysikKemi, Samfundsfag, Fri
+Geografi, Biologi, FysikKemi, Samfundsfag, Fri, Madkundskab
 ```
 
-`Fri` is excluded from all timetal calculations. `Madkundskab` appears in the JSON but is not in the enum — if UVM adds it, add it to `SubjectCategory` first, then update the JSON key to match.
+`Fri` is excluded from all timetal calculations. 
 
 ## If user asks for current values without fetching
 

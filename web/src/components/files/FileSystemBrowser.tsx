@@ -6,16 +6,18 @@ import {
   getApiV1FilesOptions,
   getApiV1FilesQueryKey,
   deleteApiV1FilesByIdMutation,
-  postApiV1FilesFoldersMutation,
   deleteApiV1FilesFoldersByIdMutation,
   patchApiV1FilesFoldersByIdMutation,
   getApiV1BoardFilesOptions,
   getApiV1BoardFilesQueryKey,
   deleteApiV1BoardFilesByIdMutation,
-  postApiV1BoardFilesFoldersMutation,
   deleteApiV1BoardFilesFoldersByIdMutation,
   patchApiV1BoardFilesFoldersByIdMutation,
 } from '../../api/generated/@tanstack/react-query.gen'
+import {
+  postApiV1BoardFilesFolders,
+  postApiV1FilesFolders,
+} from '../../api/generated'
 import { uploadFile, uploadBoardFile } from '../../api/upload'
 import type { CourseDto, FolderDto } from '../../api/client'
 import type { BoardFilesControllerBoardFolderDto } from '../../api/generated/types.gen'
@@ -517,17 +519,15 @@ function CreateFolderModal({
   const filesQueryKey = variant === 'board' ? getApiV1BoardFilesQueryKey() : getApiV1FilesQueryKey()
   const qc = useQueryClient()
 
-  const { mutationFn: createStaffFolderFn } = postApiV1FilesFoldersMutation()
-  const { mutationFn: createBoardFolderFn } = postApiV1BoardFilesFoldersMutation()
-
   const mutation = useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: (args: { name: string; parentId?: string; courseId?: string }) =>
       variant === 'board'
-        ? (createBoardFolderFn as any)({ body: { name: args.name, parentId: args.parentId } })
-        : (createStaffFolderFn as any)({
+        ? postApiV1BoardFilesFolders({ body: { name: args.name, parentId: args.parentId } }).then(
+            (r) => r.data,
+          )
+        : postApiV1FilesFolders({
             body: { name: args.name, parentId: args.parentId, courseId: args.courseId },
-          }),
+          }).then((r) => r.data),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: filesQueryKey })
       if (data) onCreated(data as FolderDto | BoardFilesControllerBoardFolderDto)
