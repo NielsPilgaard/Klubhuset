@@ -525,7 +525,9 @@ function CreateFolderModal({
     mutationFn: (args: { name: string; parentId?: string; courseId?: string }) =>
       variant === 'board'
         ? (createBoardFolderFn as any)({ body: { name: args.name, parentId: args.parentId } })
-        : (createStaffFolderFn as any)({ body: { name: args.name, parentId: args.parentId, courseId: args.courseId } }),
+        : (createStaffFolderFn as any)({
+            body: { name: args.name, parentId: args.parentId, courseId: args.courseId },
+          }),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: filesQueryKey })
       if (data) onCreated(data as FolderDto | BoardFilesControllerBoardFolderDto)
@@ -705,7 +707,10 @@ export interface FileSystemBrowserProps {
   variant?: Variant
 }
 
-export function FileSystemBrowser({ showHeader = true, variant = 'staff' }: FileSystemBrowserProps) {
+export function FileSystemBrowser({
+  showHeader = true,
+  variant = 'staff',
+}: FileSystemBrowserProps) {
   const qc = useQueryClient()
   const isAdmin = keycloak.hasRealmRole('admin')
 
@@ -750,7 +755,9 @@ export function FileSystemBrowser({ showHeader = true, variant = 'staff' }: File
   const deleteMutation = useMutation({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: (id: string) =>
-      variant === 'board' ? (deleteBoardFileFn as any)({ path: { id } }) : (deleteStaffFileFn as any)({ path: { id } }),
+      variant === 'board'
+        ? (deleteBoardFileFn as any)({ path: { id } })
+        : (deleteStaffFileFn as any)({ path: { id } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: filesQueryKey }),
   })
 
@@ -759,7 +766,9 @@ export function FileSystemBrowser({ showHeader = true, variant = 'staff' }: File
   const deleteFolderMutation = useMutation({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: (id: string) =>
-      variant === 'board' ? (deleteBoardFolderFn as any)({ path: { id } }) : (deleteStaffFolderFn as any)({ path: { id } }),
+      variant === 'board'
+        ? (deleteBoardFolderFn as any)({ path: { id } })
+        : (deleteStaffFolderFn as any)({ path: { id } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: filesQueryKey }),
   })
 

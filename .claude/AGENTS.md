@@ -80,7 +80,7 @@ See [docs/TESTING.md](../docs/TESTING.md) for the full strategy. For testing Str
 After finishing any feature or fix, run **all of the following** before declaring done:
 
 1. **TypeScript build**: `cd web && npm run build` — catches type errors that tsc would reject in CI.
-2. **dotnet format**: `dotnet format api/Skoleoverblikket.Api/Skoleoverblikket.Api.csproj --verify-no-changes` — CI enforces this; fix any violations before committing.
+2. **dotnet format**: auto-fixes by default via `verify.ps1`. Use `-NoFix` only to inspect violations without changing files.
 3. **API integration tests**: `dotnet test`
 4. **Playwright e2e**: `cd web && npx playwright test --reporter=line` — starts Aspire stack automatically. Pass `SKIP_ASPIRE=1` if already running.
 

@@ -24,9 +24,9 @@ The script runs all steps and **collects all errors before exiting** — you see
 
 ## Steps
 
-1. **ESLint** — `cd web && npm run lint`
+1. **Biome** — `cd web && npx biome check src/`
 2. **TypeScript build** — `cd web && npm run build`
-3. **dotnet format** — `--verify-no-changes` (or auto-fix with `-Fix`)
+3. **dotnet format** — auto-fixes by default; output suppressed. Use `-NoFix` to inspect violations.
 4. **dotnet build** — Release, `-p:CI=true`
 5. **API integration tests** — tUnit + Testcontainers (skipped with `-SkipTests`; needs Docker)
 
@@ -37,6 +37,7 @@ Playwright is not part of `verify.ps1` — use the `/test` skill for that.
 ## Rules
 
 - Run `verify.ps1` after every code change, before committing or declaring done
-- Auto-fix runs by default; use `-NoFix` only when you want to inspect violations without changing files
+- Default is auto-fix; never pass `-NoFix` unless you want to see violations without changing files
 - If Docker is not running, integration tests fail with a container error — say so explicitly rather than treating it as a code bug
 - Do not report work as done until the script exits 0
+- Script collects all failures before exiting — read the summary, not intermediate output
