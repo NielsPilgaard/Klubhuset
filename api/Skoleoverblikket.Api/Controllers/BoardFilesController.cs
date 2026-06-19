@@ -325,8 +325,14 @@ public sealed class BoardFilesController(
 
 		var warnings = new List<string>();
 
+		// Collect all descendant folder IDs so we can delete their files from storage too.
+		// DB cascade deletes the subfolders; SetNull on BoardFile.FolderId would orphan the files
+		// in storage, so we must delete them explicitly first.
+		var allFolderIds = await CollectDescendantFolderIdsAsync(id, cancellationToken);
+		allFolderIds.Add(id);
+
 		var files = await db.BoardFiles
-			.Where(f => f.FolderId == id)
+			.Where(f => f.FolderId != null && allFolderIds.Contains(f.FolderId.Value))
 			.ToListAsync(cancellationToken);
 
 		foreach (var file in files)
@@ -341,11 +347,28 @@ public sealed class BoardFilesController(
 			}
 		}
 
-		// DB cascade (BoardFileFolder → children + BoardFile.FolderId → SetNull) handles the rest
+		db.BoardFiles.RemoveRange(files);
 		db.BoardFileFolders.Remove(folder);
 		await db.SaveChangesAsync(cancellationToken);
 
 		return Ok(new DeleteFolderResponse(warnings));
+	}
+
+	private async Task<List<Guid>> CollectDescendantFolderIdsAsync(Guid parentId, CancellationToken cancellationToken)
+	{
+		var result = new List<Guid>();
+		var children = await db.BoardFileFolders
+			.Where(f => f.ParentId == parentId)
+			.Select(f => f.Id)
+			.ToListAsync(cancellationToken);
+
+		foreach (var childId in children)
+		{
+			result.Add(childId);
+			result.AddRange(await CollectDescendantFolderIdsAsync(childId, cancellationToken));
+		}
+
+		return result;
 	}
 
 	private record ConfirmTokenPayload(

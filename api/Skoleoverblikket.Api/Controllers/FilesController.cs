@@ -389,9 +389,11 @@ public sealed class FilesController(
 
 	public record RenameFolderRequest([Required, StringLength(200, MinimumLength = 1)] string Name);
 
+	public record DeleteFolderResponse(List<string> Warnings);
+
 	[HttpDelete("folders/{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> DeleteFolder(Guid id, CancellationToken cancellationToken)
+	public async Task<ActionResult<DeleteFolderResponse>> DeleteFolder(Guid id, CancellationToken cancellationToken)
 	{
 		var folder = await db.SchoolFileFolders.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
 		if (folder is null)
@@ -399,9 +401,49 @@ public sealed class FilesController(
 			return NotFound();
 		}
 
+		var warnings = new List<string>();
+
+		var allFolderIds = await CollectDescendantFolderIdsAsync(id, cancellationToken);
+		allFolderIds.Add(id);
+
+		var files = await db.SchoolFiles
+			.Where(f => f.FolderId != null && allFolderIds.Contains(f.FolderId.Value))
+			.ToListAsync(cancellationToken);
+
+		foreach (var file in files)
+		{
+			try
+			{
+				await storage.DeleteAsync(file.StorageKey, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				warnings.Add($"Filen '{file.FileName}' kunne ikke slettes fra lageret: {ex.Message}");
+			}
+		}
+
+		db.SchoolFiles.RemoveRange(files);
 		db.SchoolFileFolders.Remove(folder);
 		await db.SaveChangesAsync(cancellationToken);
-		return NoContent();
+
+		return Ok(new DeleteFolderResponse(warnings));
+	}
+
+	private async Task<List<Guid>> CollectDescendantFolderIdsAsync(Guid parentId, CancellationToken cancellationToken)
+	{
+		var result = new List<Guid>();
+		var children = await db.SchoolFileFolders
+			.Where(f => f.ParentId == parentId)
+			.Select(f => f.Id)
+			.ToListAsync(cancellationToken);
+
+		foreach (var childId in children)
+		{
+			result.Add(childId);
+			result.AddRange(await CollectDescendantFolderIdsAsync(childId, cancellationToken));
+		}
+
+		return result;
 	}
 
 	private record ConfirmTokenPayload(

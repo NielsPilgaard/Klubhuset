@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.HttpLogging;
+using Skoleoverblikket.Api;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Cache;
 using Skoleoverblikket.Api.Data;
@@ -32,12 +33,14 @@ builder.Services.AddEmail();
 builder.Services.AddObjectStorage();
 builder.Services.AddStripe(builder.Configuration);
 builder.Services.AddDomainServices();
+builder.Services.AddApiRateLimiting();
 
 var app = builder.Build();
 
 app.UseSwaggerInDevelopment();
 app.UseHttpLogging();
 app.UseExceptionHandler();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Skoleoverblikket.Api.Email;
 using System.ComponentModel.DataAnnotations;
 
@@ -18,6 +19,7 @@ public sealed class DemoRequestController(IEmailSender emailSender) : Controller
 		[MaxLength(2000)] string? Besked);
 
 	[HttpPost]
+	[EnableRateLimiting("demo-request")]
 	public async Task<IActionResult> Submit([FromBody] DemoRequestDto dto, CancellationToken cancellationToken)
 	{
 		var lines = new List<string>
