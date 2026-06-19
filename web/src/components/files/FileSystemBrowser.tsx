@@ -466,7 +466,7 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
               ) : (
                 <iframe
                   srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;font-size:14px;line-height:1.6;color:#1f2937;padding:0;margin:0}p{margin:0 0 0.75em}table{border-collapse:collapse;width:100%}td,th{border:1px solid #e5e7eb;padding:4px 8px}</style></head><body>${docxHtml}</body></html>`}
-                  className="flex-1 w-full border-0"
+                  className="flex-1 w-full h-full border-0"
                   sandbox="allow-same-origin"
                   title={fileName}
                 />
