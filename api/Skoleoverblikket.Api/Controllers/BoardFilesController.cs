@@ -30,51 +30,7 @@ public sealed class BoardFilesController(
 	private const long MaxFileSizeBytes = 500L * 1024 * 1024; // 500 MB per file
 	private static readonly TimeSpan PresignExpiry = TimeSpan.FromMinutes(60);
 
-	private static readonly HashSet<string> AllowedExtensions =
-	[
-        // Documents
-        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf", ".csv", ".md", ".zip",
-        // Images
-        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tiff", ".svg",
-        // Video
-        ".mp4", ".webm", ".mov", ".avi", ".mkv",
-        // Audio
-        ".mp3", ".m4a", ".wav", ".ogg", ".aac",
-	];
-
-	private static readonly Dictionary<string, string> ExtensionMimeTypes = new(StringComparer.OrdinalIgnoreCase)
-	{
-		[".pdf"] = "application/pdf",
-		[".doc"] = "application/msword",
-		[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		[".xls"] = "application/vnd.ms-excel",
-		[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		[".ppt"] = "application/vnd.ms-powerpoint",
-		[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		[".txt"] = "text/plain",
-		[".rtf"] = "application/rtf",
-		[".csv"] = "text/csv",
-		[".md"] = "text/markdown",
-		[".zip"] = "application/zip",
-		[".png"] = "image/png",
-		[".jpg"] = "image/jpeg",
-		[".jpeg"] = "image/jpeg",
-		[".webp"] = "image/webp",
-		[".gif"] = "image/gif",
-		[".bmp"] = "image/bmp",
-		[".tiff"] = "image/tiff",
-		[".svg"] = "image/svg+xml",
-		[".mp4"] = "video/mp4",
-		[".webm"] = "video/webm",
-		[".mov"] = "video/quicktime",
-		[".avi"] = "video/x-msvideo",
-		[".mkv"] = "video/x-matroska",
-		[".mp3"] = "audio/mpeg",
-		[".m4a"] = "audio/mp4",
-		[".wav"] = "audio/wav",
-		[".ogg"] = "audio/ogg",
-		[".aac"] = "audio/aac",
-	};
+	private static IReadOnlyDictionary<string, string> ExtensionMimeTypes => FileExtensions.MimeTypes;
 
 	public record BoardFileDto(
 		Guid Id,
@@ -180,13 +136,6 @@ public sealed class BoardFilesController(
 		}
 
 		var ext = Path.GetExtension(req.FileName).ToLowerInvariant();
-		if (!AllowedExtensions.Contains(ext))
-		{
-			return ValidationProblem(new ValidationProblemDetails
-			{
-				Errors = { ["file"] = [$"Filtypen '{ext}' er ikke tilladt."] }
-			});
-		}
 
 		var usedBytes = await db.BoardFiles.SumAsync(f => (long?)f.SizeBytes ?? 0, cancellationToken);
 		if (usedBytes + req.FileSizeBytes > QuotaBytes)

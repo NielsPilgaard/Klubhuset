@@ -156,9 +156,7 @@ function DemoForm() {
           className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
         />
       </div>
-      {error && (
-        <p className="text-sm text-red-600 text-center">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600 text-center">{error}</p>}
       <button
         type="submit"
         disabled={loading}

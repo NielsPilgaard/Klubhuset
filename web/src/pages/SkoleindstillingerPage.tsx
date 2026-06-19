@@ -227,12 +227,7 @@ function BestyrelsesmedlemmerCard() {
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviting, setInviting] = useState(false)
 
-  const {
-    data: members,
-    isLoading,
-    isError,
-    error,
-  } = useQuery(getApiV1BoardMembersOptions())
+  const { data: members, isLoading, isError, error } = useQuery(getApiV1BoardMembersOptions())
 
   const toggleMutation = useMutation({
     ...patchApiV1BoardMembersByIdTeacherDataAccessMutation(),
@@ -252,7 +247,7 @@ function BestyrelsesmedlemmerCard() {
       setInviteName('')
       setInviteEmail('')
     },
-    onError: (err: unknown) => {
+    onError: (err) => {
       const detail = (err as { detail?: string; title?: string })?.detail
       const title = (err as { detail?: string; title?: string })?.title
       setInviteError(detail ?? title ?? 'Invitation mislykkedes')
@@ -337,14 +332,17 @@ function BestyrelsesmedlemmerCard() {
                   type="checkbox"
                   checked={member.canAccessTeacherData}
                   onChange={(e) =>
-                    toggleMutation.mutate({ path: { id: member.id }, body: { canAccessTeacherData: e.target.checked } })
+                    toggleMutation.mutate({
+                      path: { id: member.id! },
+                      body: { canAccessTeacherData: e.target.checked },
+                    })
                   }
                   className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 />
                 Læreradgang
               </label>
               <button
-                onClick={() => deleteMutation.mutate({ path: { id: member.id } })}
+                onClick={() => deleteMutation.mutate({ path: { id: member.id! } })}
                 disabled={deleteMutation.isPending}
                 className="shrink-0 p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
                 title="Fjern bestyrelsesmedlem"

@@ -39,9 +39,7 @@ function StatusDot({ subject }: { subject: StaaMaalMedControllerSubjectCoverageD
   }
 
   const hoursSuffix =
-    status !== 'missing'
-      ? ` · ${subject.annualHours}t / ${subject.vejledendeAnnualHours}t`
-      : ''
+    status !== 'missing' ? ` · ${subject.annualHours}t / ${subject.vejledendeAnnualHours}t` : ''
 
   return (
     <span
@@ -57,7 +55,9 @@ export default function StaaMaalMedPage() {
   const { data, isLoading, isError } = useQuery(getApiV1StaaMaalMedCoverageOptions())
 
   const allCategories = [
-    ...new Set((data?.classes ?? []).flatMap((c) => c.subjects.map((s) => s.category))),
+    ...new Set(
+      (data?.classes ?? []).flatMap((c) => (c.subjects ?? []).map((s) => s.category ?? ''))
+    ),
   ].sort()
 
   return (
@@ -94,7 +94,7 @@ export default function StaaMaalMedPage() {
         <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
           Kunne ikke hente data. Prøv at genindlæse siden.
         </div>
-      ) : data?.classes.length === 0 ? (
+      ) : (data?.classes ?? []).length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           <p>Ingen klasser med klassetrin og aktive skemaer fundet</p>
         </div>
@@ -118,7 +118,9 @@ export default function StaaMaalMedPage() {
             </thead>
             <tbody>
               {(data?.classes ?? []).map((cls) => {
-                const subjectMap = Object.fromEntries(cls.subjects.map((s) => [s.category, s]))
+                const subjectMap = Object.fromEntries(
+                  (cls.subjects ?? []).map((s) => [s.category ?? '', s])
+                )
                 return (
                   <tr key={cls.classId} className="hover:bg-gray-50">
                     <td className="sticky left-0 bg-white px-4 py-2.5 font-medium text-gray-900 border-b border-gray-100 whitespace-nowrap">

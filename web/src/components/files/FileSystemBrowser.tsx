@@ -9,9 +9,16 @@ import {
   postApiV1FilesFoldersMutation,
   deleteApiV1FilesFoldersByIdMutation,
   patchApiV1FilesFoldersByIdMutation,
+  getApiV1BoardFilesOptions,
+  getApiV1BoardFilesQueryKey,
+  deleteApiV1BoardFilesByIdMutation,
+  postApiV1BoardFilesFoldersMutation,
+  deleteApiV1BoardFilesFoldersByIdMutation,
+  patchApiV1BoardFilesFoldersByIdMutation,
 } from '../../api/generated/@tanstack/react-query.gen'
-import { uploadFile } from '../../api/upload'
+import { uploadFile, uploadBoardFile } from '../../api/upload'
 import type { CourseDto, FolderDto } from '../../api/client'
+import type { BoardFilesControllerBoardFolderDto } from '../../api/generated/types.gen'
 import keycloak from '../../auth/keycloak'
 import {
   FileIcon,
@@ -26,9 +33,33 @@ import {
 } from './fileIcons'
 import { formatBytes, formatDate } from './fileHelpers'
 
+type Variant = 'staff' | 'board'
+
+// Normalised shapes shared between variants
+interface FileRow {
+  id?: string
+  fileName?: string | null
+  contentType?: string | null
+  sizeBytes?: number
+  url?: string | null
+  folderId?: string | null
+  uploadedBy?: string | null
+  uploadedAt?: string
+  courseName?: string | null
+}
+
+interface FolderRow {
+  id?: string
+  name?: string | null
+  parentId?: string | null
+  createdAt?: string
+  courseName?: string | null
+}
+
 // ─── Upload modal ─────────────────────────────────────────────────────────────
 
 interface UploadModalProps {
+  variant: Variant
   courses: CourseDto[] | undefined
   currentFolderId: string | null
   defaultCourseId?: string
@@ -37,6 +68,7 @@ interface UploadModalProps {
 }
 
 function UploadModal({
+  variant,
   courses,
   currentFolderId,
   defaultCourseId,
@@ -53,9 +85,19 @@ function UploadModal({
   const dragRef = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
 
+  const filesQueryKey = variant === 'board' ? getApiV1BoardFilesQueryKey() : getApiV1FilesQueryKey()
+
   const mutation = useMutation({
     mutationFn: async ({ file }: { file: File }) => {
       const ext = file.name.includes('.') ? `.${file.name.split('.').pop()!}` : ''
+      if (variant === 'board') {
+        return uploadBoardFile({
+          file,
+          fileName: editedName + ext,
+          folderId: currentFolderId || undefined,
+          onProgress: setProgress,
+        })
+      }
       return uploadFile({
         file,
         fileName: editedName + ext,
@@ -65,7 +107,7 @@ function UploadModal({
       })
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
+      qc.invalidateQueries({ queryKey: filesQueryKey })
       onUploaded(courseId)
     },
     onError: () => {
@@ -178,24 +220,26 @@ function UploadModal({
           </div>
         )}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tilknyt fag (valgfrit)
-          </label>
-          <select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            disabled={isPending}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
-          >
-            <option value="">Intet fag</option>
-            {courses?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {variant === 'staff' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tilknyt fag (valgfrit)
+            </label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              disabled={isPending}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
+            >
+              <option value="">Intet fag</option>
+              {courses?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
@@ -230,12 +274,31 @@ interface FilePreviewModalProps {
   onClose: () => void
 }
 
+type SheetData = { name: string; rows: string[][] }[]
+
 function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewModalProps) {
   const isImage = contentType.startsWith('image/')
   const isPdf = contentType.includes('pdf')
+  const isCsv = contentType.includes('csv') || /\.csv$/i.test(fileName)
+  const isExcel =
+    !isCsv &&
+    (contentType.includes('spreadsheet') ||
+      contentType.includes('ms-excel') ||
+      /\.(xlsx|xls)$/i.test(fileName))
+  const isDocx =
+    contentType.includes('wordprocessingml') ||
+    contentType.includes('msword') ||
+    /\.(docx|doc)$/i.test(fileName)
   const isText =
-    contentType.startsWith('text/') || /\.(txt|csv|log|md|json|xml|yaml|yml)$/i.test(fileName)
+    !isCsv &&
+    !isDocx &&
+    (contentType.startsWith('text/') || /\.(txt|log|md|json|xml|yaml|yml)$/i.test(fileName))
+
   const [textContent, setTextContent] = useState<string | null>(null)
+  const [sheetData, setSheetData] = useState<SheetData | null>(null)
+  const [activeSheet, setActiveSheet] = useState(0)
+  const [docxHtml, setDocxHtml] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isText) return
@@ -244,6 +307,36 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
       .then(setTextContent)
       .catch(() => setTextContent('Kunne ikke indlæse fil.'))
   }, [url, isText])
+
+  useEffect(() => {
+    if (!isExcel && !isCsv) return
+    fetch(url)
+      .then((r) => r.arrayBuffer())
+      .then(async (buf) => {
+        const XLSX = await import('xlsx')
+        const wb = XLSX.read(buf, { type: 'array' })
+        const sheets: SheetData = wb.SheetNames.map((name) => {
+          const ws = wb.Sheets[name]
+          const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: '' })
+          return { name, rows }
+        })
+        setSheetData(sheets)
+        setActiveSheet(0)
+      })
+      .catch(() => setLoadError('Kunne ikke indlæse filen.'))
+  }, [url, isExcel, isCsv])
+
+  useEffect(() => {
+    if (!isDocx) return
+    fetch(url)
+      .then((r) => r.arrayBuffer())
+      .then(async (buf) => {
+        const mammoth = await import('mammoth')
+        const result = await mammoth.convertToHtml({ arrayBuffer: buf })
+        setDocxHtml(result.value)
+      })
+      .catch(() => setLoadError('Kunne ikke indlæse dokumentet.'))
+  }, [url, isDocx])
 
   if (isPdf) {
     window.open(url, '_blank', 'noopener,noreferrer')
@@ -262,6 +355,8 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
         URL.revokeObjectURL(a.href)
       })
   }
+
+  const activeSheetRows = sheetData?.[activeSheet]?.rows ?? null
 
   return (
     <button
@@ -308,7 +403,77 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
               )}
             </div>
           )}
-          {!isImage && !isText && (
+          {(isExcel || isCsv) && (
+            <div className="flex-1 flex flex-col min-h-0">
+              {loadError ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-sm text-red-500">{loadError}</p>
+                </div>
+              ) : sheetData === null ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-sm text-gray-400">Indlæser…</p>
+                </div>
+              ) : (
+                <>
+                  {sheetData.length > 1 && (
+                    <div className="flex gap-1 px-4 pt-3 pb-0 shrink-0 border-b border-gray-100 overflow-x-auto">
+                      {sheetData.map((sheet, i) => (
+                        <button
+                          key={sheet.name}
+                          onClick={() => setActiveSheet(i)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-t-md whitespace-nowrap transition-colors ${
+                            i === activeSheet
+                              ? 'bg-white border border-b-white border-gray-200 text-gray-900 -mb-px'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {sheet.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex-1 overflow-auto">
+                    <table className="text-xs border-collapse w-full">
+                      <tbody>
+                        {(activeSheetRows ?? []).map((row, ri) => (
+                          <tr key={ri} className={ri === 0 ? 'bg-gray-50' : 'hover:bg-gray-50/50'}>
+                            {row.map((cell, ci) => {
+                              const Tag = ri === 0 ? 'th' : 'td'
+                              return (
+                                <Tag
+                                  key={ci}
+                                  className="border border-gray-200 px-2 py-1 text-left text-gray-800 whitespace-nowrap max-w-[240px] overflow-hidden text-ellipsis"
+                                >
+                                  {String(cell)}
+                                </Tag>
+                              )
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {isDocx && (
+            <div className="flex-1 overflow-auto p-6 min-h-0">
+              {loadError ? (
+                <p className="text-sm text-red-500">{loadError}</p>
+              ) : docxHtml === null ? (
+                <p className="text-sm text-gray-400">Indlæser…</p>
+              ) : (
+                <iframe
+                  srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;font-size:14px;line-height:1.6;color:#1f2937;padding:0;margin:0}p{margin:0 0 0.75em}table{border-collapse:collapse;width:100%}td,th{border:1px solid #e5e7eb;padding:4px 8px}</style></head><body>${docxHtml}</body></html>`}
+                  className="flex-1 w-full border-0"
+                  sandbox="allow-same-origin"
+                  title={fileName}
+                />
+              )}
+            </div>
+          )}
+          {!isImage && !isText && !isExcel && !isCsv && !isDocx && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
               <p className="text-gray-700 font-medium">{fileName}</p>
               <p className="text-sm text-gray-400">{contentType || 'Ukendt filtype'}</p>
@@ -329,14 +494,16 @@ function FilePreviewModal({ fileName, contentType, url, onClose }: FilePreviewMo
 // ─── Create folder modal ──────────────────────────────────────────────────────
 
 interface CreateFolderModalProps {
+  variant: Variant
   parentId: string | null
   courses: CourseDto[] | undefined
   defaultCourseId?: string
   onClose: () => void
-  onCreated: (folder: FolderDto) => void
+  onCreated: (folder: FolderDto | BoardFilesControllerBoardFolderDto) => void
 }
 
 function CreateFolderModal({
+  variant,
   parentId,
   courses,
   defaultCourseId,
@@ -347,11 +514,21 @@ function CreateFolderModal({
   const [courseId, setCourseId] = useState<string>(defaultCourseId ?? '')
   const [error, setError] = useState<string | null>(null)
 
-  const { mutationFn } = postApiV1FilesFoldersMutation()
+  const filesQueryKey = variant === 'board' ? getApiV1BoardFilesQueryKey() : getApiV1FilesQueryKey()
+  const qc = useQueryClient()
+
+  const { mutationFn: createStaffFolderFn } = postApiV1FilesFoldersMutation()
+  const { mutationFn: createBoardFolderFn } = postApiV1BoardFilesFoldersMutation()
+
   const mutation = useMutation({
-    mutationFn,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: (args: { name: string; parentId?: string; courseId?: string }) =>
+      variant === 'board'
+        ? (createBoardFolderFn as any)({ body: { name: args.name, parentId: args.parentId } })
+        : (createStaffFolderFn as any)({ body: { name: args.name, parentId: args.parentId, courseId: args.courseId } }),
     onSuccess: (data) => {
-      if (data) onCreated(data)
+      qc.invalidateQueries({ queryKey: filesQueryKey })
+      if (data) onCreated(data as FolderDto | BoardFilesControllerBoardFolderDto)
     },
     onError: () => setError('Kunne ikke oprette mappen. Prøv igen.'),
   })
@@ -364,7 +541,9 @@ function CreateFolderModal({
     }
     setError(null)
     mutation.mutate({
-      body: { name: trimmed, parentId: parentId || undefined, courseId: courseId || undefined },
+      name: trimmed,
+      parentId: parentId || undefined,
+      courseId: courseId || undefined,
     })
   }
 
@@ -385,24 +564,26 @@ function CreateFolderModal({
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
         />
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tilknyt fag (valgfrit)
-          </label>
-          <select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            disabled={mutation.isPending}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
-          >
-            <option value="">Intet fag</option>
-            {courses?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {variant === 'staff' && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tilknyt fag (valgfrit)
+            </label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              disabled={mutation.isPending}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
+            >
+              <option value="">Intet fag</option>
+              {courses?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
         <button
@@ -427,18 +608,27 @@ function CreateFolderModal({
 // ─── Inline folder rename ─────────────────────────────────────────────────────
 
 interface InlineRenameProps {
-  folder: FolderDto
+  variant: Variant
+  folder: FolderRow
   onDone: () => void
 }
 
-function InlineRename({ folder, onDone }: InlineRenameProps) {
+function InlineRename({ variant, folder, onDone }: InlineRenameProps) {
   const qc = useQueryClient()
   const [value, setValue] = useState(folder.name ?? '')
-  const { mutationFn } = patchApiV1FilesFoldersByIdMutation()
+
+  const filesQueryKey = variant === 'board' ? getApiV1BoardFilesQueryKey() : getApiV1FilesQueryKey()
+  const { mutationFn: renameStaffFn } = patchApiV1FilesFoldersByIdMutation()
+  const { mutationFn: renameBoardFn } = patchApiV1BoardFilesFoldersByIdMutation()
+
   const mutation = useMutation({
-    mutationFn,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: (args: { id: string; name: string }) =>
+      variant === 'board'
+        ? (renameBoardFn as any)({ path: { id: args.id }, body: { name: args.name } })
+        : (renameStaffFn as any)({ path: { id: args.id }, body: { name: args.name } }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
+      qc.invalidateQueries({ queryKey: filesQueryKey })
       onDone()
     },
   })
@@ -449,7 +639,7 @@ function InlineRename({ folder, onDone }: InlineRenameProps) {
       onDone()
       return
     }
-    mutation.mutate({ path: { id: folder.id! }, body: { name: trimmed } })
+    mutation.mutate({ id: folder.id!, name: trimmed })
   }
 
   return (
@@ -473,11 +663,12 @@ function InlineRename({ folder, onDone }: InlineRenameProps) {
 // ─── Breadcrumb ───────────────────────────────────────────────────────────────
 
 interface BreadcrumbProps {
+  rootLabel: string
   trail: { id: string; name: string }[]
   onNavigate: (folderId: string | null) => void
 }
 
-function Breadcrumb({ trail, onNavigate }: BreadcrumbProps) {
+function Breadcrumb({ rootLabel, trail, onNavigate }: BreadcrumbProps) {
   return (
     <nav className="flex items-center gap-1 text-sm flex-wrap">
       <button
@@ -485,7 +676,7 @@ function Breadcrumb({ trail, onNavigate }: BreadcrumbProps) {
         className="text-brand-600 hover:text-brand-800 font-medium transition-colors"
         data-testid="breadcrumb-root"
       >
-        Filer
+        {rootLabel}
       </button>
       {trail.map((crumb) => (
         <span key={crumb.id} className="flex items-center gap-1">
@@ -510,9 +701,11 @@ function Breadcrumb({ trail, onNavigate }: BreadcrumbProps) {
 export interface FileSystemBrowserProps {
   /** Show full page header with title, upload button, and folder controls. Default: true */
   showHeader?: boolean
+  /** 'staff' uses the /files endpoints with course support; 'board' uses /board-files. Default: 'staff' */
+  variant?: Variant
 }
 
-export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps) {
+export function FileSystemBrowser({ showHeader = true, variant = 'staff' }: FileSystemBrowserProps) {
   const qc = useQueryClient()
   const isAdmin = keycloak.hasRealmRole('admin')
 
@@ -529,9 +722,9 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
 
   const currentFolderId = folderTrail.length > 0 ? folderTrail[folderTrail.length - 1].id : null
 
-  const { data: courses } = useQuery(getApiV1CoursesOptions())
+  const { data: courses } = useQuery({ ...getApiV1CoursesOptions(), enabled: variant === 'staff' })
 
-  const { data, isLoading, isError, refetch } = useQuery(
+  const staffQuery = useQuery(
     getApiV1FilesOptions({
       query: {
         ...(filterCourseId ? { courseId: filterCourseId } : {}),
@@ -540,23 +733,48 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
     })
   )
 
-  const { mutationFn: deleteFileMutationFn } = deleteApiV1FilesByIdMutation()
+  const boardQuery = useQuery(
+    getApiV1BoardFilesOptions({
+      query: {
+        ...(currentFolderId ? { folderId: currentFolderId } : {}),
+      },
+    })
+  )
+
+  const { data, isLoading, isError, refetch } = variant === 'board' ? boardQuery : staffQuery
+
+  const filesQueryKey = variant === 'board' ? getApiV1BoardFilesQueryKey() : getApiV1FilesQueryKey()
+
+  const { mutationFn: deleteStaffFileFn } = deleteApiV1FilesByIdMutation()
+  const { mutationFn: deleteBoardFileFn } = deleteApiV1BoardFilesByIdMutation()
   const deleteMutation = useMutation({
-    mutationFn: deleteFileMutationFn,
-    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: (id: string) =>
+      variant === 'board' ? (deleteBoardFileFn as any)({ path: { id } }) : (deleteStaffFileFn as any)({ path: { id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: filesQueryKey }),
   })
 
-  const { mutationFn: deleteFolderMutationFn } = deleteApiV1FilesFoldersByIdMutation()
+  const { mutationFn: deleteStaffFolderFn } = deleteApiV1FilesFoldersByIdMutation()
+  const { mutationFn: deleteBoardFolderFn } = deleteApiV1BoardFilesFoldersByIdMutation()
   const deleteFolderMutation = useMutation({
-    mutationFn: deleteFolderMutationFn,
-    onSuccess: () => qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: (id: string) =>
+      variant === 'board' ? (deleteBoardFolderFn as any)({ path: { id } }) : (deleteStaffFolderFn as any)({ path: { id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: filesQueryKey }),
   })
 
-  const files = data?.files ?? []
-  const folders = data?.folders ?? []
+  const files: FileRow[] = data?.files ?? []
+  const folders: FolderRow[] = data?.folders ?? []
   const isEmpty = !isLoading && files.length === 0 && folders.length === 0
 
-  function navigateInto(folder: FolderDto) {
+  const rootLabel = variant === 'board' ? 'Bestyrelsesdokumenter' : 'Filer'
+  const headerTitle = variant === 'board' ? 'Bestyrelsesdokumenter' : 'Filer'
+  const headerDesc =
+    variant === 'board'
+      ? 'Dokumenter og filer til bestyrelsen'
+      : 'Filer og mapper tilknyttet skolen og dens fag'
+
+  function navigateInto(folder: FolderRow) {
     setFolderTrail((prev) => [...prev, { id: folder.id!, name: folder.name! }])
   }
 
@@ -570,13 +788,13 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
   }
 
   function handleFolderCreated() {
-    qc.invalidateQueries({ queryKey: getApiV1FilesQueryKey() })
+    qc.invalidateQueries({ queryKey: filesQueryKey })
     setShowCreateFolder(false)
   }
 
-  function handleDeleteFolder(folder: FolderDto) {
+  function handleDeleteFolder(folder: FolderRow) {
     if (confirm(`Slet mappen "${folder.name ?? 'mappe'}"? Indholdet i mappen slettes også.`)) {
-      deleteFolderMutation.mutate({ path: { id: folder.id! } })
+      deleteFolderMutation.mutate(folder.id!)
     }
   }
 
@@ -585,10 +803,8 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
       {showHeader && (
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="min-w-0">
-            <h1 className="font-display text-2xl font-semibold text-gray-900">Filer</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Filer og mapper tilknyttet skolen og dens fag
-            </p>
+            <h1 className="font-display text-2xl font-semibold text-gray-900">{headerTitle}</h1>
+            <p className="mt-1 text-sm text-gray-500">{headerDesc}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {isAdmin && (
@@ -612,31 +828,35 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
         </div>
       )}
 
-      {folderTrail.length > 0 && <Breadcrumb trail={folderTrail} onNavigate={navigateTo} />}
+      {folderTrail.length > 0 && (
+        <Breadcrumb rootLabel={rootLabel} trail={folderTrail} onNavigate={navigateTo} />
+      )}
 
-      <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-600">Filtrer efter fag:</label>
-        <select
-          value={filterCourseId}
-          onChange={(e) => setFilterCourseId(e.target.value)}
-          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-        >
-          <option value="">Alle fag</option>
-          {courses?.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        {filterCourseId && (
-          <button
-            onClick={() => setFilterCourseId('')}
-            className="text-xs text-brand-600 hover:text-brand-800"
+      {variant === 'staff' && (
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Filtrer efter fag:</label>
+          <select
+            value={filterCourseId}
+            onChange={(e) => setFilterCourseId(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           >
-            Ryd filter
-          </button>
-        )}
-      </div>
+            <option value="">Alle fag</option>
+            {courses?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {filterCourseId && (
+            <button
+              onClick={() => setFilterCourseId('')}
+              className="text-xs text-brand-600 hover:text-brand-800"
+            >
+              Ryd filter
+            </button>
+          )}
+        </div>
+      )}
 
       {isError && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-center justify-between">
@@ -657,9 +877,11 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Navn
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">
-                Fag
-              </th>
+              {variant === 'staff' && (
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">
+                  Fag
+                </th>
+              )}
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">
                 Dato
               </th>
@@ -678,9 +900,11 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                   <td className="px-5 py-3">
                     <div className="h-4 w-40 bg-gray-200 rounded" />
                   </td>
-                  <td className="px-5 py-3 hidden md:table-cell">
-                    <div className="h-4 w-24 bg-gray-100 rounded" />
-                  </td>
+                  {variant === 'staff' && (
+                    <td className="px-5 py-3 hidden md:table-cell">
+                      <div className="h-4 w-24 bg-gray-100 rounded" />
+                    </td>
+                  )}
                   <td className="px-5 py-3 hidden sm:table-cell">
                     <div className="h-4 w-20 bg-gray-100 rounded" />
                   </td>
@@ -705,16 +929,22 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                     </span>
                     <div className="min-w-0 flex items-center gap-2">
                       {renamingFolderId === folder.id ? (
-                        <InlineRename folder={folder} onDone={() => setRenamingFolderId(null)} />
+                        <InlineRename
+                          variant={variant}
+                          folder={folder}
+                          onDone={() => setRenamingFolderId(null)}
+                        />
                       ) : (
                         <span className="font-medium text-gray-900 truncate">{folder.name}</span>
                       )}
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-3 text-gray-500 hidden md:table-cell">
-                  {folder.courseName ?? <span className="text-gray-300">—</span>}
-                </td>
+                {variant === 'staff' && (
+                  <td className="px-5 py-3 text-gray-500 hidden md:table-cell">
+                    {folder.courseName ?? <span className="text-gray-300">—</span>}
+                  </td>
+                )}
                 <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
                   {folder.createdAt ? formatDate(folder.createdAt) : '—'}
                 </td>
@@ -778,9 +1008,11 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-3 text-gray-500 hidden md:table-cell">
-                  {f.courseName ?? <span className="text-gray-300">—</span>}
-                </td>
+                {variant === 'staff' && (
+                  <td className="px-5 py-3 text-gray-500 hidden md:table-cell">
+                    {f.courseName ?? <span className="text-gray-300">—</span>}
+                  </td>
+                )}
                 <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
                   {formatDate(f.uploadedAt ?? new Date().toISOString())}
                 </td>
@@ -828,7 +1060,7 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
                         data-testid={`delete-${f.id}`}
                         onClick={() => {
                           if (f.id && confirm(`Slet filen "${f.fileName ?? 'fil'}"?`)) {
-                            deleteMutation.mutate({ path: { id: f.id } })
+                            deleteMutation.mutate(f.id)
                           }
                         }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
@@ -844,7 +1076,7 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
 
             {isEmpty && (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center">
+                <td colSpan={variant === 'staff' ? 5 : 4} className="px-5 py-12 text-center">
                   <p className="text-gray-400 text-sm">
                     {currentFolderId ? 'Mappen er tom' : 'Ingen filer her endnu'}
                   </p>
@@ -864,19 +1096,21 @@ export function FileSystemBrowser({ showHeader = true }: FileSystemBrowserProps)
 
       {showUpload && (
         <UploadModal
+          variant={variant}
           courses={courses ?? []}
           currentFolderId={currentFolderId}
           defaultCourseId={filterCourseId || undefined}
           onClose={() => setShowUpload(false)}
           onUploaded={(courseId) => {
             setShowUpload(false)
-            setFilterCourseId(courseId)
+            if (variant === 'staff') setFilterCourseId(courseId)
           }}
         />
       )}
 
       {showCreateFolder && (
         <CreateFolderModal
+          variant={variant}
           parentId={currentFolderId}
           courses={courses ?? []}
           defaultCourseId={filterCourseId || undefined}
