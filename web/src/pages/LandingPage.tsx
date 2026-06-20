@@ -349,7 +349,7 @@ export default function LandingPage() {
               <ModuleCard
                 title="Bestyrelsesmodul"
                 price="199"
-                features={['Dokumentdeling med bestyrelsen', 'Overblik over "stå mål med"-dækning']}
+                features={['Filhåndtering (100 GB)', 'Overblik over "stå mål med"-dækning']}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">
                 Kræver Basis · Samles på én faktura

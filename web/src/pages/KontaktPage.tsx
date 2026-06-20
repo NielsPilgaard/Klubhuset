@@ -2,7 +2,6 @@ import Logo from '../components/Logo'
 import Footer from '../components/Footer'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useState } from 'react'
-import { postApiV1DemoRequest } from '../api/generated/sdk.gen'
 
 export default function KontaktPage() {
   usePageTitle('Book en demo')
@@ -22,15 +21,6 @@ export default function KontaktPage() {
           </div>
 
           <DemoForm />
-
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              Du kan også ringe til os på{' '}
-              <a href="tel:+4543310612" className="font-medium text-brand-700 hover:underline">
-                43 31 06 12
-              </a>
-            </p>
-          </div>
         </div>
       </main>
 
@@ -52,17 +42,21 @@ function DemoForm() {
     const data = new FormData(form)
 
     try {
-      const res = await postApiV1DemoRequest({
-        body: {
+      // Plain fetch — the generated client always calls keycloak.login() when no token exists,
+      // which would redirect unauthenticated visitors to the login page.
+      const res = await fetch('/api/v1/demo-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           navn: data.get('navn') as string,
           skole: data.get('skole') as string,
           email: data.get('email') as string,
           telefon: (data.get('telefon') as string) || null,
           besked: (data.get('besked') as string) || null,
-        },
+        }),
       })
 
-      if (res.error) {
+      if (!res.ok) {
         setError('Noget gik galt. Prøv igen eller ring til os.')
         return
       }
