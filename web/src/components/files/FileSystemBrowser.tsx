@@ -14,10 +14,7 @@ import {
   deleteApiV1BoardFilesFoldersByIdMutation,
   patchApiV1BoardFilesFoldersByIdMutation,
 } from '../../api/generated/@tanstack/react-query.gen'
-import {
-  postApiV1BoardFilesFolders,
-  postApiV1FilesFolders,
-} from '../../api/generated'
+import { postApiV1BoardFilesFolders, postApiV1FilesFolders } from '../../api/generated'
 import { uploadFile, uploadBoardFile } from '../../api/upload'
 import type { CourseDto, FolderDto } from '../../api/client'
 import type { BoardFilesControllerBoardFolderDto } from '../../api/generated/types.gen'
@@ -523,7 +520,7 @@ function CreateFolderModal({
     mutationFn: (args: { name: string; parentId?: string; courseId?: string }) =>
       variant === 'board'
         ? postApiV1BoardFilesFolders({ body: { name: args.name, parentId: args.parentId } }).then(
-            (r) => r.data,
+            (r) => r.data
           )
         : postApiV1FilesFolders({
             body: { name: args.name, parentId: args.parentId, courseId: args.courseId },

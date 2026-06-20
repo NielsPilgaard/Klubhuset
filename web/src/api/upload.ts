@@ -30,7 +30,7 @@ async function presignConfirmUpload(
   presignUrl: string,
   confirmUrl: string,
   presignBody: Record<string, unknown>,
-  onProgress?: (pct: number) => void,
+  onProgress?: (pct: number) => void
 ): Promise<UploadedFile> {
   await keycloak.updateToken(30).catch(() => keycloak.login())
 
@@ -105,7 +105,13 @@ async function presignConfirmUpload(
  * 2. PUT directly to S3   → progress events fire here
  * 3. POST /files/confirm  → register the file in the DB
  */
-export async function uploadFile({ file, fileName, courseId, folderId, onProgress }: UploadOptions): Promise<UploadedFile> {
+export async function uploadFile({
+  file,
+  fileName,
+  courseId,
+  folderId,
+  onProgress,
+}: UploadOptions): Promise<UploadedFile> {
   return presignConfirmUpload(
     file,
     `${API_BASE}/files/presign`,
@@ -116,11 +122,16 @@ export async function uploadFile({ file, fileName, courseId, folderId, onProgres
       courseId: courseId || null,
       folderId: folderId || null,
     },
-    onProgress,
+    onProgress
   )
 }
 
-export async function uploadBoardFile({ file, fileName, folderId, onProgress }: BoardUploadOptions): Promise<UploadedFile> {
+export async function uploadBoardFile({
+  file,
+  fileName,
+  folderId,
+  onProgress,
+}: BoardUploadOptions): Promise<UploadedFile> {
   return presignConfirmUpload(
     file,
     `${API_BASE}/board-files/presign`,
@@ -130,6 +141,6 @@ export async function uploadBoardFile({ file, fileName, folderId, onProgress }: 
       fileSizeBytes: file.size,
       folderId: folderId || null,
     },
-    onProgress,
+    onProgress
   )
 }

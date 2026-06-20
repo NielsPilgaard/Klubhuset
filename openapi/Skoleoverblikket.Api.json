@@ -706,7 +706,24 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardFilesController_DeleteFolderResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardFilesController_DeleteFolderResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardFilesController_DeleteFolderResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2413,7 +2430,24 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesController_DeleteFolderResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesController_DeleteFolderResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesController_DeleteFolderResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7449,6 +7483,19 @@
         },
         "additionalProperties": false
       },
+      "BoardFilesController_DeleteFolderResponse": {
+        "type": "object",
+        "properties": {
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "BoardFilesController_PresignRequest": {
         "type": "object",
         "properties": {
@@ -8101,6 +8148,19 @@
           "courseId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FilesController_DeleteFolderResponse": {
+        "type": "object",
+        "properties": {
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           }
         },

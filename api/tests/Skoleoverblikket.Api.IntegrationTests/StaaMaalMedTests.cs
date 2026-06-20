@@ -202,14 +202,14 @@ public sealed class StaaMaalMedTests
     [Test]
     public async Task GetCoverage_FullHoursForSubject_ReturnsGreenStatus()
     {
-        // Grade 1 Dansk vejledende = 7 h/week. Give >7h/week → green.
+        // Grade 1 Dansk vejledende = 8.25 h/week. Give >8.25h/week → green.
         var (klass, schema) = await CreateGradedClassWithActiveSchemaAsync(1, "1.green-test");
         var danskCourse = await CreateCourseWithCategoryAsync(SubjectCategory.Dansk, "Dansk grøn");
         var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
 
-        // 8 × 1-hour slots on different weekdays (Mon–Fri, then wrap) → 8 h/week
+        // 9 × 1-hour slots on different weekdays (Mon–Fri, then wrap) → 9 h/week
         var weekdays = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
-        for (var i = 0; i < 8; i++)
+        for (var i = 0; i < 9; i++)
         {
             var start = new TimeOnly(8, 0).AddHours(i);
             var end = start.AddHours(1);

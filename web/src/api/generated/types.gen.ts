@@ -79,6 +79,10 @@ export type BoardFilesControllerCreateFolderRequest = {
     parentId?: string | null;
 };
 
+export type BoardFilesControllerDeleteFolderResponse = {
+    warnings?: Array<string> | null;
+};
+
 export type BoardFilesControllerPresignRequest = {
     fileName?: string | null;
     fileSizeBytes?: number;
@@ -279,6 +283,10 @@ export type FilesControllerCreateFolderRequest = {
     name?: string | null;
     parentId?: string | null;
     courseId?: string | null;
+};
+
+export type FilesControllerDeleteFolderResponse = {
+    warnings?: Array<string> | null;
 };
 
 export type FilesControllerFileDto = {
@@ -1367,8 +1375,10 @@ export type DeleteApiV1BoardFilesFoldersByIdResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: BoardFilesControllerDeleteFolderResponse;
 };
+
+export type DeleteApiV1BoardFilesFoldersByIdResponse = DeleteApiV1BoardFilesFoldersByIdResponses[keyof DeleteApiV1BoardFilesFoldersByIdResponses];
 
 export type PatchApiV1BoardFilesFoldersByIdData = {
     body?: BoardFilesControllerRenameFolderRequest;
@@ -2099,8 +2109,10 @@ export type DeleteApiV1FilesFoldersByIdResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: FilesControllerDeleteFolderResponse;
 };
+
+export type DeleteApiV1FilesFoldersByIdResponse = DeleteApiV1FilesFoldersByIdResponses[keyof DeleteApiV1FilesFoldersByIdResponses];
 
 export type PatchApiV1FilesFoldersByIdData = {
     body?: FilesControllerRenameFolderRequest;
