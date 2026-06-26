@@ -179,20 +179,54 @@ export default function LandingPage() {
             <FeatureCard
               icon={
                 <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  className="w-6 h-6"
+                  viewBox=”0 0 24 24”
+                  fill=”none”
+                  stroke=”currentColor”
+                  strokeWidth=”1.8”
+                  className=”w-6 h-6”
                 >
-                  <rect x="2" y="7" width="20" height="14" rx="2" />
-                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                  <line x1="12" y1="12" x2="12" y2="16" />
-                  <line x1="10" y1="14" x2="14" y2="14" />
+                  <rect x=”2” y=”7” width=”20” height=”14” rx=”2” />
+                  <path d=”M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2” />
+                  <line x1=”12” y1=”12” x2=”12” y2=”16” />
+                  <line x1=”10” y1=”14” x2=”14” y2=”14” />
                 </svg>
               }
-              title="Bestyrelsesmodul"
-              description="Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over “stå mål med”-dækning."
+              title=”Bestyrelsesmodul”
+              description={'Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over “stå mål med”-dækning.'}
+            />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox=”0 0 24 24”
+                  fill=”none”
+                  stroke=”currentColor”
+                  strokeWidth=”1.8”
+                  className=”w-6 h-6”
+                >
+                  <rect x=”3” y=”4” width=”18” height=”18” rx=”2” />
+                  <path d=”M16 2v4M8 2v4M3 10h18” />
+                  <path d=”M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01” />
+                </svg>
+              }
+              title=”SFO ugeplan”
+              description=”Byg og udskriv SFO's ugeoverblik med ét klik. Printvenligt format — klar til opslagstavlen.”
+            />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox=”0 0 24 24”
+                  fill=”none”
+                  stroke=”currentColor”
+                  strokeWidth=”1.8”
+                  className=”w-6 h-6”
+                >
+                  <path d=”M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2” />
+                  <rect x=”9” y=”3” width=”6” height=”4” rx=”1” />
+                  <polyline points=”9 12 11 14 15 10” />
+                </svg>
+              }
+              title=”Ferieindmelding”
+              description=”Forældre melder ind om barnet har behov for pasning i ferien. Overblik over tilmeldte, og eksport til CSV med ét klik.”
             />
           </div>
         </div>

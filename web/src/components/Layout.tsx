@@ -15,13 +15,13 @@ function SubscriptionBanner() {
   if (!isAdmin || !data || data.hasAccess) return null
 
   return (
-    <div className="bg-red-600 text-white px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
+    <div className="bg-red-50 border-b border-red-200 text-red-800 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
       <p className="text-sm font-medium">
-        Skolens adgang er udløbet — skemaet er nu skrivebeskyttet.
+        Abonnement udløbet — abonner for at foretage ændringer.
       </p>
       <Link
         to="/abonnement"
-        className="shrink-0 px-3 py-1 text-xs font-semibold bg-white text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+        className="shrink-0 px-3 py-1 text-xs font-semibold bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors"
       >
         Forny abonnement
       </Link>
