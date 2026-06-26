@@ -16,9 +16,7 @@ function SubscriptionBanner() {
 
   return (
     <div className="bg-red-50 border-b border-red-200 text-red-800 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
-      <p className="text-sm font-medium">
-        Abonnement udløbet — abonner for at foretage ændringer.
-      </p>
+      <p className="text-sm font-medium">Abonnement udløbet — abonner for at foretage ændringer.</p>
       <Link
         to="/abonnement"
         className="shrink-0 px-3 py-1 text-xs font-semibold bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors"
