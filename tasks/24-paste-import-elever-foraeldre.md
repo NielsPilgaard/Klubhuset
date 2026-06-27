@@ -30,6 +30,7 @@ Each entity type gets its own tab in the import flow. Tabs: **Elever & forældre
 |---|---|---|
 | Class | `Class.Name` | Yes |
 | Student name | `Student.Name` | Yes |
+| Student ID | `Student.ExternalId` | No (strengthens dedup identity when present) |
 | Parent 1 name | `Parent.Name` | No |
 | Parent 1 email | `Parent.Email` | No |
 | Parent 1 phone | `Parent.Phone` | No |
@@ -49,8 +50,10 @@ Each entity type gets its own tab in the import flow. Tabs: **Elever & forældre
 - Upsert by `(TenantId, Name)` — create if not found, otherwise use existing
 
 #### Students
-- Skip if `(TenantId, Name, ClassId)` already exists
-- No upsert key on students — name+class as identity
+- Skip if `(TenantId, Name, ClassId)` already exists **and** no external identifier is present
+- If an optional external identifier column is provided (e.g. `StudentId` / `Elevnummer`), use `(TenantId, ExternalId)` as the primary match key instead; fall back to `(TenantId, Name, ClassId)` only when `ExternalId` is blank
+- When a row is skipped due to name+class match, emit a warning entry: `{ "row": N, "message": "Elev 'Navn' i klasse 'X' blev sprunget over — findes allerede (navn+klasse)" }` so admin can review potential false positives
+- No upsert on students — identity match only (create or skip)
 
 #### Parents
 - **Upsert by `(TenantId, Email)`** — on email collision: overwrite `Name`, `Phone`, `Address`, `PostalCode`, `City` with new values. `AddressProtected` and `ShareContactInfo` are **not** overwritten on re-import (admin-controlled flags, preserve existing value). `KeycloakSubject` is never overwritten — set only on first invite acceptance.
