@@ -5,9 +5,9 @@ namespace Skoleoverblikket.Api.Services;
 
 public sealed class UvmTimetableService(IWebHostEnvironment env, ILogger<UvmTimetableService> logger)
 {
-	private Dictionary<string, Dictionary<int, double>>? _timetal;
+	private static Dictionary<string, Dictionary<int, double>>? _timetal;
 	private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-	private readonly Lock _lock = new();
+	private static readonly Lock _lock = new();
 
 	public Dictionary<string, Dictionary<int, double>> Load()
 	{
@@ -25,10 +25,10 @@ public sealed class UvmTimetableService(IWebHostEnvironment env, ILogger<UvmTime
 
 			try
 			{
-				var dataPath = Path.Combine(env.ContentRootPath, "data", "uvm-timetal");
+				var dataPath = Path.Combine(env.ContentRootPath, "Data", "uvm-timetal");
 				if (!Directory.Exists(dataPath))
 				{
-					dataPath = Path.Combine(AppContext.BaseDirectory, "data", "uvm-timetal");
+					dataPath = Path.Combine(AppContext.BaseDirectory, "Data", "uvm-timetal");
 				}
 
 				var files = Directory.GetFiles(dataPath, "*.json").OrderDescending().ToArray();
