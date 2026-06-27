@@ -305,6 +305,8 @@ public sealed class FilesController(
 
 		db.SchoolFiles.Remove(file);
 		await db.SaveChangesAsync(cancellationToken);
+
+		await storage.DeleteAsync(file.StorageKey, cancellationToken);
 		return NoContent();
 	}
 

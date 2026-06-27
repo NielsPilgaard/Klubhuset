@@ -247,10 +247,10 @@ public sealed class BoardFilesController(
 			return NotFound();
 		}
 
-		await storage.DeleteAsync(file.StorageKey, cancellationToken);
-
 		db.BoardFiles.Remove(file);
 		await db.SaveChangesAsync(cancellationToken);
+
+		await storage.DeleteAsync(file.StorageKey, cancellationToken);
 		return NoContent();
 	}
 
