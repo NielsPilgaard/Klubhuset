@@ -35,7 +35,7 @@ public sealed class UvmTimetableService(IWebHostEnvironment env, ILogger<UvmTime
 				if (files.Length == 0)
 				{
 					logger.LogWarning("No UVM timetal JSON files found in {Path}", dataPath);
-					return _timetal = [];
+					return [];
 				}
 
 				var now = DateTime.UtcNow;
@@ -46,17 +46,24 @@ public sealed class UvmTimetableService(IWebHostEnvironment env, ILogger<UvmTime
 				if (!File.Exists(match))
 				{
 					logger.LogWarning("UVM timetal file not found: {File}", match);
-					return _timetal = [];
+					return [];
 				}
 
 				var json = File.ReadAllText(match);
-				_timetal = JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, double>>>(json, JsonOptions) ?? [];
+				var loaded = JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, double>>>(json, JsonOptions);
+				if (loaded is null)
+				{
+					logger.LogWarning("UVM timetal file deserialized to null: {File}", match);
+					return [];
+				}
+
+				_timetal = loaded;
 				return _timetal;
 			}
 			catch (Exception ex)
 			{
 				logger.LogError(ex, "Failed to load UVM timetal data");
-				return _timetal = [];
+				return [];
 			}
 		}
 	}
