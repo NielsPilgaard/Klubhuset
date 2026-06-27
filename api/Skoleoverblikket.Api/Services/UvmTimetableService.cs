@@ -5,9 +5,9 @@ namespace Skoleoverblikket.Api.Services;
 
 public sealed class UvmTimetableService(IWebHostEnvironment env, ILogger<UvmTimetableService> logger)
 {
-	private static Dictionary<string, Dictionary<int, double>>? _timetal;
+	private Dictionary<string, Dictionary<int, double>>? _timetal;
 	private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-	private static readonly Lock _lock = new();
+	private readonly Lock _lock = new();
 
 	public Dictionary<string, Dictionary<int, double>> Load()
 	{
