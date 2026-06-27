@@ -100,7 +100,8 @@ Response:
   "parentsUpdated": 8,
   "parentStudentLinksCreated": 89,
   "warnings": [
-    { "row": 12, "message": "Parent 1 email missing — parent created without login capability" }
+    { "row": 12, "message": "Parent 1 email missing — parent created without login capability" },
+    { "row": 7, "message": "Elev 'Anders Hansen' i klasse '3A' blev sprunget over — findes allerede (navn+klasse)" }
   ]
 }
 ```
