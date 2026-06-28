@@ -31,8 +31,7 @@ interface InvitableRecord {
 const STUDENT_COLUMNS: ColumnDef[] = [
   { key: 'className', label: 'Klasse', required: true, placeholder: '2A' },
   { key: 'studentName', label: 'Elevnavn', required: true, placeholder: 'Fuldt navn' },
-  { key: 'externalId', label: 'Elevnummer', placeholder: '12345' },
-  { key: 'parent1Name', label: 'Forælder 1 navn', placeholder: 'Fuldt navn' },
+{ key: 'parent1Name', label: 'Forælder 1 navn', placeholder: 'Fuldt navn' },
   {
     key: 'parent1Email',
     label: 'Forælder 1 e-mail',
