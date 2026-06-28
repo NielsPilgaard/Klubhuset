@@ -18,11 +18,15 @@ public sealed class BoardInvitationsController(
 	public async Task<ActionResult> Preview([FromQuery] string token, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrEmpty(token))
+		{
 			return BadRequest(new ProblemDetails { Title = "Token mangler" });
+		}
 
 		var invitation = await invitationService.FindValidAsync(token, cancellationToken);
 		if (invitation is null)
+		{
 			return Problem(title: "Ugyldig eller udløbet invitation", statusCode: 404);
+		}
 
 		var school = await db.Schools
 			.IgnoreQueryFilters()
@@ -45,7 +49,9 @@ public sealed class BoardInvitationsController(
 	{
 		var invitation = await invitationService.FindValidAsync(token, cancellationToken);
 		if (invitation is null)
+		{
 			return Problem(title: "Ugyldig eller udløbet invitation", statusCode: 400);
+		}
 
 		await invitationService.MarkAcceptedAsync(invitation, cancellationToken);
 		return NoContent();

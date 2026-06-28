@@ -125,7 +125,11 @@ public sealed class BoardMemberInvitationService(
 		chars[1] = lower[rng[1] % lower.Length];
 		chars[2] = digits[rng[2] % digits.Length];
 		chars[3] = special[rng[3] % special.Length];
-		for (var i = 4; i < 12; i++) chars[i] = all[rng[i] % all.Length];
+		for (var i = 4; i < 12; i++)
+		{
+			chars[i] = all[rng[i] % all.Length];
+		}
+
 		RandomNumberGenerator.Shuffle(chars.AsSpan());
 		return new string(chars);
 	}

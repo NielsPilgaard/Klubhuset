@@ -2452,6 +2452,198 @@
         }
       }
     },
+    "/api/v1/imports/students-and-parents": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/staff": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStaffRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStaffRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStaffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStaffResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStaffResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStaffResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/rooms": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportRoomsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportRoomsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportRoomsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportRoomsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportRoomsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportRoomsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/board-members": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportBoardMembersRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportBoardMembersRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportBoardMembersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportBoardMembersResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportBoardMembersResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportBoardMembersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/kontakt": {
       "get": {
         "tags": [
@@ -8322,6 +8514,296 @@
         },
         "additionalProperties": false
       },
+      "ImportsController_ImportBoardMemberRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "canAccessTeacherData": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportBoardMembersRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportBoardMemberRow"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportBoardMembersResponse": {
+        "type": "object",
+        "properties": {
+          "boardMembersCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boardMembersUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boardMembersSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportParentRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportRoomRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "capacity": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportRoomsRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportRoomRow"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportRoomsResponse": {
+        "type": "object",
+        "properties": {
+          "roomsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roomsUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roomsSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStaffRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportStaffRow"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStaffResponse": {
+        "type": "object",
+        "properties": {
+          "staffCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "staffUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "staffSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStaffRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "administrator": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStudentRow": {
+        "type": "object",
+        "properties": {
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parent1": {
+            "$ref": "#/components/schemas/ImportsController_ImportParentRow"
+          },
+          "parent2": {
+            "$ref": "#/components/schemas/ImportsController_ImportParentRow"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStudentsAndParentsRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportStudentRow"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStudentsAndParentsResponse": {
+        "type": "object",
+        "properties": {
+          "classesCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentsSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentsUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentStudentLinksCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportWarning": {
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "KontaktController_KontaktParentDto": {
         "type": "object",
         "properties": {
@@ -10934,6 +11416,9 @@
     },
     {
       "name": "Files"
+    },
+    {
+      "name": "Imports"
     },
     {
       "name": "Kontakt"

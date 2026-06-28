@@ -69,7 +69,10 @@ public sealed class NotificationService(AppDbContext db, ITenantContext tenantCo
 		CancellationToken cancellationToken)
 	{
 		var list = requests.ToList();
-		if (list.Count == 0) return;
+		if (list.Count == 0)
+		{
+			return;
+		}
 
 		var types = list.Select(r => r.Type).Distinct().ToList();
 		var recipientIds = list.Select(r => r.RecipientId).Distinct().ToList();
@@ -134,13 +137,19 @@ public sealed class NotificationService(AppDbContext db, ITenantContext tenantCo
 			foreach (var req in list)
 			{
 				prefLookup.TryGetValue((req.RecipientId, req.RecipientType, req.Type), out var pref);
-				if (!(pref?.Email ?? true)) continue;
+				if (!(pref?.Email ?? true))
+				{
+					continue;
+				}
 
 				var recipientEmail = req.RecipientType == RecipientType.Parent
 					? parentEmails.GetValueOrDefault(req.RecipientId)
 					: staffEmails.GetValueOrDefault(req.RecipientId);
 
-				if (string.IsNullOrEmpty(recipientEmail)) continue;
+				if (string.IsNullOrEmpty(recipientEmail))
+				{
+					continue;
+				}
 
 				await email.SendAsync(new EmailMessage(
 					To: recipientEmail,
