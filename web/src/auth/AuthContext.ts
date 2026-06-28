@@ -1,12 +1,13 @@
 import { createContext } from 'react'
 import type { StaffRole } from '../api/generated/types.gen'
 
-export type ViewAs = 'default' | 'parent' | 'admin' | 'staff'
+export type ViewAs = 'default' | 'parent' | 'admin' | 'staff' | 'board'
 
 export interface AuthContextValue {
   authenticated: boolean
   isAdmin: boolean
   isParent: boolean
+  isBoard: boolean
   isSuperAdmin: boolean
   staffRole: StaffRole | null
   staffId: string | null

@@ -1,7 +1,10 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
+using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
 
 namespace Skoleoverblikket.Api.Controllers;
@@ -9,7 +12,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [ApiController]
 [Route("api/v1/reports")]
 [Authorize(Roles = Roles.Admin)]
-public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
+public sealed class ReportsController(ExcelReportBuilder excel, UvmTimetableService timetable, AppDbContext db) : ControllerBase
 {
 	/// <summary>GET /api/v1/reports/hours/staff.xlsx</summary>
 	[HttpGet("hours/staff.xlsx")]
@@ -128,5 +131,70 @@ public sealed class ReportsController(ExcelReportBuilder excel) : ControllerBase
 
 		ws.Columns().AdjustToContents();
 		return ExcelReportBuilder.ToXlsx(wb, "skema.xlsx");
+	}
+
+	/// <summary>GET /api/v1/reports/uvm-minimumstimetal.xlsx</summary>
+	[HttpGet("uvm-minimumstimetal.xlsx")]
+	public async Task<IActionResult> GetUvmMinimumstimetalXlsx(CancellationToken cancellationToken)
+	{
+		var timetal = timetable.Load();
+
+		var activeSlots = await excel.GetActiveSlotsAsync(cancellationToken);
+
+		var holidays = await db.CalendarEntries
+			.AsNoTracking()
+			.Where(e => e.Type == CalendarEntryType.Ferie || e.Type == CalendarEntryType.Lukkedag)
+			.ToListAsync(cancellationToken);
+
+		var rows = activeSlots
+			.Where(s =>
+				s.Schema.Class.GradeLevel.HasValue &&
+				s.Course.Category.HasValue &&
+				s.Course.Category != SubjectCategory.Fri)
+			.GroupBy(s => (
+				ClassName: s.Schema.Class.Name,
+				GradeLevel: s.Schema.Class.GradeLevel!.Value,
+				Subject: s.Course.Category!.Value.ToString(),
+				 s.Schema.StartDate,
+				 s.Schema.EndDate))
+			.Select(g =>
+			{
+				var weekCount = SchoolWeekCalculator.CountSchoolWeeks(g.Key.StartDate, g.Key.EndDate, holidays);
+				var weeklyHours = Math.Round(g.Sum(s => (s.TimeSlot.EndTime - s.TimeSlot.StartTime).TotalHours), 2);
+				var annualHours = Math.Round(weeklyHours * weekCount, 0);
+				var vejledende = timetal.TryGetValue(g.Key.Subject, out var gradeMap) && gradeMap.TryGetValue(g.Key.GradeLevel, out var wh) ? wh : 0.0;
+				var minimum = Math.Round(vejledende * weekCount, 0);
+				var status = minimum == 0 ? "Ikke relevant"
+					: annualHours >= minimum ? "Opfyldt"
+					: $"Mangler {minimum - annualHours:0} timer";
+				return (g.Key.ClassName, g.Key.GradeLevel, g.Key.Subject, weeklyHours, annualHours, minimum, status);
+			})
+			.OrderBy(r => r.GradeLevel).ThenBy(r => r.ClassName).ThenBy(r => r.Subject)
+			.ToList();
+
+		using var wb = new XLWorkbook();
+		var ws = wb.AddWorksheet("UVM minimumstimetal");
+		ws.Cell(1, 1).Value = "Klasse";
+		ws.Cell(1, 2).Value = "Klassetrin";
+		ws.Cell(1, 3).Value = "Fag";
+		ws.Cell(1, 4).Value = "Planlagte timer (uge)";
+		ws.Cell(1, 5).Value = "Estimerede årstimer";
+		ws.Cell(1, 6).Value = "Minimumstimetal";
+		ws.Cell(1, 7).Value = "Status";
+		ExcelReportBuilder.StyleHeader(ws.Row(1));
+
+		for (var i = 0; i < rows.Count; i++)
+		{
+			ws.Cell(i + 2, 1).Value = rows[i].ClassName;
+			ws.Cell(i + 2, 2).Value = rows[i].GradeLevel;
+			ws.Cell(i + 2, 3).Value = rows[i].Subject;
+			ws.Cell(i + 2, 4).Value = rows[i].weeklyHours;
+			ws.Cell(i + 2, 5).Value = rows[i].annualHours;
+			ws.Cell(i + 2, 6).Value = rows[i].minimum;
+			ws.Cell(i + 2, 7).Value = rows[i].status;
+		}
+
+		ws.Columns().AdjustToContents();
+		return ExcelReportBuilder.ToXlsx(wb, "uvm-minimumstimetal.xlsx");
 	}
 }

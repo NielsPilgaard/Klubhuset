@@ -36,6 +36,8 @@ export default function SignupPage() {
     setPending(true)
 
     try {
+      // Raw fetch intentional: response includes non-spec fields (accessToken, refreshToken) used
+      // to seed Keycloak state immediately after signup, before any auth session exists.
       const res = await fetch('/api/v1/tenants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

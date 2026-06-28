@@ -47,6 +47,77 @@ export type BillingControllerSubscriptionDto = {
     activeModules?: Array<string> | null;
 };
 
+export type BoardFilesControllerBoardFileDto = {
+    id?: string;
+    fileName?: string | null;
+    contentType?: string | null;
+    sizeBytes?: number;
+    url?: string | null;
+    folderId?: string | null;
+    uploadedBy?: string | null;
+    uploadedAt?: string;
+};
+
+export type BoardFilesControllerBoardFilesResponseDto = {
+    files?: Array<BoardFilesControllerBoardFileDto> | null;
+    folders?: Array<BoardFilesControllerBoardFolderDto> | null;
+};
+
+export type BoardFilesControllerBoardFolderDto = {
+    id?: string;
+    name?: string | null;
+    parentId?: string | null;
+    createdAt?: string;
+};
+
+export type BoardFilesControllerConfirmRequest = {
+    confirmToken?: string | null;
+};
+
+export type BoardFilesControllerCreateFolderRequest = {
+    name?: string | null;
+    parentId?: string | null;
+};
+
+export type BoardFilesControllerDeleteFolderResponse = {
+    warnings?: Array<string> | null;
+};
+
+export type BoardFilesControllerPresignRequest = {
+    fileName?: string | null;
+    fileSizeBytes?: number;
+    folderId?: string | null;
+};
+
+export type BoardFilesControllerPresignResponse = {
+    fileId?: string;
+    uploadUrl?: string | null;
+    confirmToken?: string | null;
+    contentType?: string | null;
+};
+
+export type BoardFilesControllerRenameFolderRequest = {
+    name?: string | null;
+};
+
+export type BoardMembersControllerBoardMemberDto = {
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+    canAccessTeacherData?: boolean;
+    hasAccount?: boolean;
+    createdAt?: string;
+};
+
+export type BoardMembersControllerInviteBoardMemberRequest = {
+    name?: string | null;
+    email?: string | null;
+};
+
+export type BoardMembersControllerToggleTeacherDataRequest = {
+    canAccessTeacherData?: boolean;
+};
+
 export type BroadcastAudience = 'AllParents' | 'ClassParents' | 'SfoParents' | 'AllStaff' | 'StaffByRole';
 
 export type CalendarControllerCalendarEntryDto = {
@@ -196,6 +267,14 @@ export type CoursesControllerUpsertCourseRequest = {
 
 export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 
+export type DemoRequestControllerDemoRequestDto = {
+    navn?: string | null;
+    skole?: string | null;
+    email?: string | null;
+    telefon?: string | null;
+    besked?: string | null;
+};
+
 export type FilesControllerConfirmRequest = {
     confirmToken?: string | null;
 };
@@ -204,6 +283,10 @@ export type FilesControllerCreateFolderRequest = {
     name?: string | null;
     parentId?: string | null;
     courseId?: string | null;
+};
+
+export type FilesControllerDeleteFolderResponse = {
+    warnings?: Array<string> | null;
 };
 
 export type FilesControllerFileDto = {
@@ -609,6 +692,26 @@ export type SfoWeekPlanControllerUpsertSfoWeekPlanShiftRequest = {
     beskrivelse?: string | null;
 };
 
+export type StaaMaalMedControllerClassCoverageDto = {
+    classId?: string;
+    className?: string | null;
+    gradeLevel?: number;
+    subjects?: Array<StaaMaalMedControllerSubjectCoverageDto> | null;
+};
+
+export type StaaMaalMedControllerCoverageResponseDto = {
+    classes?: Array<StaaMaalMedControllerClassCoverageDto> | null;
+};
+
+export type StaaMaalMedControllerSubjectCoverageDto = {
+    category?: string | null;
+    weeklyHours?: number;
+    vejledendeWeeklyHours?: number;
+    annualHours?: number;
+    vejledendeAnnualHours?: number;
+    status?: string | null;
+};
+
 export type StaffControllerPatchAdminPermissionRequest = {
     isAdmin?: boolean;
 };
@@ -726,7 +829,7 @@ export type StudentsControllerUpsertStudentRequest = {
     isEnrolledInSfo?: boolean;
 };
 
-export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri';
+export type SubjectCategory = 'Dansk' | 'Matematik' | 'Engelsk' | 'Naturfag' | 'Historie' | 'Musik' | 'Idraet' | 'Kristendomskundskab' | 'Billedkunst' | 'HaandvaerkOgDesign' | 'Tysk' | 'Fransk' | 'Geografi' | 'Biologi' | 'FysikKemi' | 'Samfundsfag' | 'Fri' | 'Madkundskab';
 
 export type SubscriptionModule = 'ParentModule' | 'BoardModule';
 
@@ -1175,6 +1278,257 @@ export type PostApiV1BillingPortalResponses = {
 };
 
 export type PostApiV1BillingPortalResponse = PostApiV1BillingPortalResponses[keyof PostApiV1BillingPortalResponses];
+
+export type GetApiV1BoardFilesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        folderId?: string;
+        search?: string;
+    };
+    url: '/api/v1/board-files';
+};
+
+export type GetApiV1BoardFilesResponses = {
+    /**
+     * OK
+     */
+    200: BoardFilesControllerBoardFilesResponseDto;
+};
+
+export type GetApiV1BoardFilesResponse = GetApiV1BoardFilesResponses[keyof GetApiV1BoardFilesResponses];
+
+export type PostApiV1BoardFilesPresignData = {
+    body?: BoardFilesControllerPresignRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/board-files/presign';
+};
+
+export type PostApiV1BoardFilesPresignResponses = {
+    /**
+     * OK
+     */
+    200: BoardFilesControllerPresignResponse;
+};
+
+export type PostApiV1BoardFilesPresignResponse = PostApiV1BoardFilesPresignResponses[keyof PostApiV1BoardFilesPresignResponses];
+
+export type PostApiV1BoardFilesConfirmData = {
+    body?: BoardFilesControllerConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/board-files/confirm';
+};
+
+export type PostApiV1BoardFilesConfirmResponses = {
+    /**
+     * OK
+     */
+    200: BoardFilesControllerBoardFileDto;
+};
+
+export type PostApiV1BoardFilesConfirmResponse = PostApiV1BoardFilesConfirmResponses[keyof PostApiV1BoardFilesConfirmResponses];
+
+export type DeleteApiV1BoardFilesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/board-files/{id}';
+};
+
+export type DeleteApiV1BoardFilesByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1BoardFilesFoldersData = {
+    body?: BoardFilesControllerCreateFolderRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/board-files/folders';
+};
+
+export type PostApiV1BoardFilesFoldersResponses = {
+    /**
+     * OK
+     */
+    200: BoardFilesControllerBoardFolderDto;
+};
+
+export type PostApiV1BoardFilesFoldersResponse = PostApiV1BoardFilesFoldersResponses[keyof PostApiV1BoardFilesFoldersResponses];
+
+export type DeleteApiV1BoardFilesFoldersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/board-files/folders/{id}';
+};
+
+export type DeleteApiV1BoardFilesFoldersByIdResponses = {
+    /**
+     * OK
+     */
+    200: BoardFilesControllerDeleteFolderResponse;
+};
+
+export type DeleteApiV1BoardFilesFoldersByIdResponse = DeleteApiV1BoardFilesFoldersByIdResponses[keyof DeleteApiV1BoardFilesFoldersByIdResponses];
+
+export type PatchApiV1BoardFilesFoldersByIdData = {
+    body?: BoardFilesControllerRenameFolderRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/board-files/folders/{id}';
+};
+
+export type PatchApiV1BoardFilesFoldersByIdResponses = {
+    /**
+     * OK
+     */
+    200: BoardFilesControllerBoardFolderDto;
+};
+
+export type PatchApiV1BoardFilesFoldersByIdResponse = PatchApiV1BoardFilesFoldersByIdResponses[keyof PatchApiV1BoardFilesFoldersByIdResponses];
+
+export type GetApiV1BoardInvitationsPreviewData = {
+    body?: never;
+    path?: never;
+    query?: {
+        token?: string;
+    };
+    url: '/api/v1/board-invitations/preview';
+};
+
+export type GetApiV1BoardInvitationsPreviewResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1BoardInvitationsByTokenAcceptData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: '/api/v1/board-invitations/{token}/accept';
+};
+
+export type PostApiV1BoardInvitationsByTokenAcceptResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1BoardMembersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/board-members';
+};
+
+export type GetApiV1BoardMembersResponses = {
+    /**
+     * OK
+     */
+    200: Array<BoardMembersControllerBoardMemberDto>;
+};
+
+export type GetApiV1BoardMembersResponse = GetApiV1BoardMembersResponses[keyof GetApiV1BoardMembersResponses];
+
+export type DeleteApiV1BoardMembersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/board-members/{id}';
+};
+
+export type DeleteApiV1BoardMembersByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1BoardMembersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/board-members/{id}';
+};
+
+export type GetApiV1BoardMembersByIdResponses = {
+    /**
+     * OK
+     */
+    200: BoardMembersControllerBoardMemberDto;
+};
+
+export type GetApiV1BoardMembersByIdResponse = GetApiV1BoardMembersByIdResponses[keyof GetApiV1BoardMembersByIdResponses];
+
+export type GetApiV1BoardMembersMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/board-members/me';
+};
+
+export type GetApiV1BoardMembersMeResponses = {
+    /**
+     * OK
+     */
+    200: BoardMembersControllerBoardMemberDto;
+};
+
+export type GetApiV1BoardMembersMeResponse = GetApiV1BoardMembersMeResponses[keyof GetApiV1BoardMembersMeResponses];
+
+export type PostApiV1BoardMembersInviteData = {
+    body?: BoardMembersControllerInviteBoardMemberRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/board-members/invite';
+};
+
+export type PostApiV1BoardMembersInviteResponses = {
+    /**
+     * OK
+     */
+    200: BoardMembersControllerBoardMemberDto;
+};
+
+export type PostApiV1BoardMembersInviteResponse = PostApiV1BoardMembersInviteResponses[keyof PostApiV1BoardMembersInviteResponses];
+
+export type PatchApiV1BoardMembersByIdTeacherDataAccessData = {
+    body?: BoardMembersControllerToggleTeacherDataRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/board-members/{id}/teacher-data-access';
+};
+
+export type PatchApiV1BoardMembersByIdTeacherDataAccessResponses = {
+    /**
+     * OK
+     */
+    200: BoardMembersControllerBoardMemberDto;
+};
+
+export type PatchApiV1BoardMembersByIdTeacherDataAccessResponse = PatchApiV1BoardMembersByIdTeacherDataAccessResponses[keyof PatchApiV1BoardMembersByIdTeacherDataAccessResponses];
 
 export type GetApiV1CalendarData = {
     body?: never;
@@ -1644,6 +1998,20 @@ export type PutApiV1CoursesByIdResponses = {
 
 export type PutApiV1CoursesByIdResponse = PutApiV1CoursesByIdResponses[keyof PutApiV1CoursesByIdResponses];
 
+export type PostApiV1DemoRequestData = {
+    body?: DemoRequestControllerDemoRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/v1/demo-request';
+};
+
+export type PostApiV1DemoRequestResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiV1FilesData = {
     body?: never;
     path?: never;
@@ -1741,8 +2109,10 @@ export type DeleteApiV1FilesFoldersByIdResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: FilesControllerDeleteFolderResponse;
 };
+
+export type DeleteApiV1FilesFoldersByIdResponse = DeleteApiV1FilesFoldersByIdResponses[keyof DeleteApiV1FilesFoldersByIdResponses];
 
 export type PatchApiV1FilesFoldersByIdData = {
     body?: FilesControllerRenameFolderRequest;
@@ -2224,6 +2594,20 @@ export type GetApiV1ReportsSchemaXlsxData = {
 };
 
 export type GetApiV1ReportsSchemaXlsxResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1ReportsUvmMinimumstimetalXlsxData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/reports/uvm-minimumstimetal.xlsx';
+};
+
+export type GetApiV1ReportsUvmMinimumstimetalXlsxResponses = {
     /**
      * OK
      */
@@ -3175,6 +3559,22 @@ export type PostApiV1StudentsByIdAvatarConfirmResponses = {
      */
     200: unknown;
 };
+
+export type GetApiV1StaaMaalMedCoverageData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staa-maal-med/coverage';
+};
+
+export type GetApiV1StaaMaalMedCoverageResponses = {
+    /**
+     * OK
+     */
+    200: StaaMaalMedControllerCoverageResponseDto;
+};
+
+export type GetApiV1StaaMaalMedCoverageResponse = GetApiV1StaaMaalMedCoverageResponses[keyof GetApiV1StaaMaalMedCoverageResponses];
 
 export type GetApiV1ModulesData = {
     body?: never;

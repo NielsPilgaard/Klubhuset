@@ -24,4 +24,5 @@ public enum SubjectCategory
 	FysikKemi = 14,
 	Samfundsfag = 15,
 	Fri = 16,
+	Madkundskab = 17,
 }

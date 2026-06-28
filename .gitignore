@@ -359,8 +359,7 @@ MigrationBackup/
 # Docker environment files
 .env
 
-media/**/*.png
-media/
+media/CONTACTS.md
 .vscode/settings.json
 test-results/
 .claude/settings.json

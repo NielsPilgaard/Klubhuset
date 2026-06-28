@@ -29,7 +29,7 @@ public sealed class StatsController(AppDbContext db) : ControllerBase
 	public record UnassignedClass(Guid ClassId, string ClassName, int EmptySlots, bool HasSchema);
 
 	[HttpGet("dashboard")]
-	[Authorize(Roles = Roles.Admin)]
+	[Authorize(Roles = $"{Roles.Admin},{Roles.Board}")]
 	public async Task<ActionResult<DashboardStats>> GetDashboard(CancellationToken cancellationToken)
 	{
 		var classCount = await db.Classes.CountAsync(cancellationToken);

@@ -4,6 +4,28 @@ import Sidebar from './Sidebar'
 import Logo from './Logo'
 import ErrorBoundary from './ErrorBoundary'
 import NotificationBell from './NotificationBell'
+import { useQuery } from '@tanstack/react-query'
+import { getApiV1BillingSubscriptionOptions } from '../api/generated/@tanstack/react-query.gen'
+import { useAuth } from '../auth/useAuth'
+
+function SubscriptionBanner() {
+  const { isAdmin } = useAuth()
+  const { data } = useQuery({ ...getApiV1BillingSubscriptionOptions(), enabled: isAdmin })
+
+  if (!isAdmin || !data || data.hasAccess) return null
+
+  return (
+    <div className="bg-red-50 border-b border-red-200 text-red-800 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
+      <p className="text-sm font-medium">Abonnement udløbet — abonner for at foretage ændringer.</p>
+      <Link
+        to="/abonnement"
+        className="shrink-0 px-3 py-1 text-xs font-semibold bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors"
+      >
+        Forny abonnement
+      </Link>
+    </div>
+  )
+}
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -13,6 +35,8 @@ export default function Layout() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <SubscriptionBanner />
+
         {/* Mobile top bar */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shrink-0">
           <button

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import keycloak, { getInitPromise } from './keycloak'
 import { AuthContext, type ViewAs } from './AuthContext'
 import type { StaffRole } from '../api/generated/types.gen'
+import { getApiV1StaffMe } from '../api/generated/sdk.gen'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false)
@@ -47,16 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!authenticated || !keycloak.token) return
+    if (!authenticated) return
 
-    fetch('/api/v1/staff/me', {
-      headers: { Authorization: `Bearer ${keycloak.token}` },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { id?: string; role?: StaffRole } | null) => {
-        if (data) {
-          setStaffRole(data.role ?? null)
-          setStaffId(data.id ?? null)
+    getApiV1StaffMe()
+      .then((res) => {
+        if (res.data) {
+          setStaffRole(res.data.role ?? null)
+          setStaffId(res.data.id ?? null)
         }
       })
       .catch(() => {
@@ -93,6 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     effectiveViewAs === 'admin' || (effectiveViewAs === 'default' && roles.includes('admin'))
   const isParent =
     effectiveViewAs === 'parent' || (effectiveViewAs === 'default' && roles.includes('parent'))
+  const isBoard =
+    effectiveViewAs === 'board' || (effectiveViewAs === 'default' && roles.includes('board'))
 
   return (
     <AuthContext.Provider
@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authenticated,
         isAdmin,
         isParent,
+        isBoard,
         isSuperAdmin,
         staffRole,
         staffId,

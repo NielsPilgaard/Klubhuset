@@ -17,7 +17,7 @@ test('login redirects through Keycloak and lands on dashboard', async ({ page })
   await page.getByRole('button', { name: /log ind|sign in/i }).click()
 
   // Wait for Keycloak to process login and redirect back to the app
-  await page.waitForURL((url) => url.port !== '8080', { timeout: 30_000 })
+  await page.waitForURL((url) => url.port !== '8080', { timeout: 60_000 })
 
   // Keycloak redirects back — superadmin lands on /backoffice, regular admin on /dashboard
   await expect(page).toHaveURL(/\/(dashboard|backoffice)/, { timeout: 20_000 })

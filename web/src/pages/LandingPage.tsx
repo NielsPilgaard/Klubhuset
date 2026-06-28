@@ -24,6 +24,12 @@ export default function LandingPage() {
               Log ind
             </a>
             <a
+              href="/kontakt"
+              className="hidden sm:inline text-sm text-brand-700 hover:text-brand-800 transition-colors whitespace-nowrap font-medium"
+            >
+              Book demo
+            </a>
+            <a
               href="/signup"
               className="text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium whitespace-nowrap"
             >
@@ -40,8 +46,7 @@ export default function LandingPage() {
             Spar tid på det kedelige — brug den på børnene
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto">
-            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen demo, ingen oplæring
-            nødvendig.
+            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen oplæring nødvendig.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
@@ -51,10 +56,10 @@ export default function LandingPage() {
               Kom i gang gratis — på 2 minutter
             </a>
             <a
-              href="#priser"
+              href="/kontakt"
               className="px-6 py-3 bg-white text-brand-700 text-base font-medium rounded-lg border border-brand-200 hover:bg-brand-50 transition-colors"
             >
-              Se priser
+              Book en demo
             </a>
           </div>
           <p className="mt-5 text-sm text-gray-400">
@@ -152,12 +157,121 @@ export default function LandingPage() {
               title="Filhåndtering"
               description="Upload og del filer pr. fag. Let tilgængeligt for alle medarbejdere."
             />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="w-6 h-6"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  <path d="M3 13h4M9 13h4" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              }
+              title="Forældremodul"
+              description="Forældre får adgang til klassens skema, kalender og ugeplan. Kontaktbog, beskeder og kontaktbibliotek inkluderet."
+            />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="w-6 h-6"
+                >
+                  <rect x="2" y="7" width="20" height="14" rx="2" />
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                  <line x1="12" y1="12" x2="12" y2="16" />
+                  <line x1="10" y1="14" x2="14" y2="14" />
+                </svg>
+              }
+              title="Bestyrelsesmodul"
+              description={
+                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over "stå mål med"-dækning.'
+              }
+            />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="w-6 h-6"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                  <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+                </svg>
+              }
+              title="SFO ugeplan"
+              description="Byg og udskriv SFO's ugeoverblik med ét klik. Printvenligt format — klar til opslagstavlen."
+            />
+            <FeatureCard
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="w-6 h-6"
+                >
+                  <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="1" />
+                  <polyline points="9 12 11 14 15 10" />
+                </svg>
+              }
+              title="Ferieindmelding"
+              description="Forældre melder ind om barnet har behov for pasning i ferien. Overblik over tilmeldte, og eksport til CSV med ét klik."
+            />
           </div>
         </div>
       </section>
 
+      {/* Feature screenshots */}
+      <section className="py-20 px-6 bg-brand-50 border-t border-brand-100">
+        <div className="max-w-6xl mx-auto space-y-24">
+          <FeatureShowcase
+            eyebrow="Skemabygger"
+            title="Træk og slip — konflikter opdages med det samme"
+            description="Byg hele ugeskemaet visuelt. Systemet viser øjeblikkeligt om en lærer eller et lokale er dobbeltbooket — ingen manuel kontrol."
+            imageSrc="/media/schema_1a.png"
+            imageAlt="Skemabygger med ugeoversigt"
+            imageRight
+          />
+          <FeatureShowcase
+            eyebrow="Konfliktkontrol"
+            title="Ingen overraskelser når skemaet er sat"
+            description="Konfliktpanelet viser præcis hvilke lektioner der kolliderer og hvorfor. Ret dem direkte — uden at starte forfra."
+            imageSrc="/media/schema_1a_conflict.png"
+            imageAlt="Konfliktoverblik"
+          />
+          <FeatureShowcase
+            eyebrow="Forældremodul"
+            title="Forældre med i loopet — uden ekstra arbejde"
+            description="Forældre inviteres med ét klik og ser klassens skema, kalender og ugeplan. Kontaktbog, gruppebesked og fraværsindberetning er inkluderet."
+            imageSrc="/media/forældre.png"
+            imageAlt="Forældreoversigt"
+            imageRight
+          />
+          <FeatureShowcase
+            eyebrow="Stå mål med"
+            title="Hold styr på minimumstimetallet"
+            description="Se på ét skærmbillede om alle klasser opfylder UVM's vejledende timetal pr. fag. Rød, gul, grøn — opdateres automatisk."
+            imageSrc="/media/staa-maal-med.png"
+            imageAlt="Stå mål med-overblik"
+          />
+        </div>
+      </section>
+
       {/* Audience */}
-      <section className="py-16 px-6 bg-brand-50 border-t border-brand-100">
+      <section className="py-16 px-6 bg-white border-t border-gray-100">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold text-brand-900 mb-4">
             Hvem er Skoleoverblikket til?
@@ -192,10 +306,11 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold mb-3">Enkel og gennemsigtig pris</h2>
           <p className="text-brand-200 mb-12">Enkel pris — udvid efter behov.</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start max-w-3xl mx-auto">
+          {/* Layout: Basis left, modules stacked right */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto">
             {/* Basis card */}
-            <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-visible">
-              <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100">
+            <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-visible w-full lg:w-auto lg:flex-1">
+              <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100 rounded-t-2xl">
                 <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
                 <div className="mt-2 flex items-end gap-1 justify-center">
                   <span className="font-display text-5xl font-semibold text-brand-900">499</span>
@@ -252,32 +367,29 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Add-on modules teaser card */}
-            <div className="bg-gray-50 text-gray-900 rounded-2xl border border-dashed border-gray-300 overflow-hidden text-left">
-              <div className="px-8 pt-8 pb-6 border-b border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                    Tillægsmoduler
-                  </p>
-                  <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full font-medium">
-                    Kommer snart
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Udvid Basis med moduler tilpasset din skole — betal kun for det, I bruger.
-                </p>
+            {/* Add-on modules — separate cards stacked */}
+            <div className="w-full lg:w-auto lg:flex-1 flex flex-col gap-3">
+              <div className="text-center text-xs text-brand-200 uppercase tracking-wide font-medium pb-1">
+                Valgfrie tillægsmoduler
               </div>
-              <div className="px-8 py-6 space-y-4">
-                <ComingSoonItem
-                  title="Forældremodul"
-                  description="Ugeplaner, kontaktbog, kontakter og kalenderadgang"
-                />
-                <ComingSoonItem
-                  title="Bestyrelsesmodul"
-                  description={'Dokumentdeling og "stå mål med"-assistent'}
-                />
-                <p className="text-xs text-gray-400 pt-2">Samles på én månedlig faktura.</p>
-              </div>
+              <ModuleCard
+                title="Forældremodul"
+                price="499"
+                features={[
+                  'Ugeplaner og kalenderadgang',
+                  'Kontaktbog og beskeder',
+                  'Kontaktbibliotek',
+                  'Fraværsindberetning',
+                ]}
+              />
+              <ModuleCard
+                title="Bestyrelsesmodul"
+                price="199"
+                features={['Filhåndtering (100 GB)', 'Overblik over "stå mål med"-dækning']}
+              />
+              <p className="text-xs text-brand-200/70 text-center pt-1">
+                Kræver Basis · Samles på én faktura
+              </p>
             </div>
           </div>
         </div>
@@ -408,23 +520,85 @@ function AudienceItem({ title, description }: { title: string; description: stri
   )
 }
 
-function ComingSoonItem({ title, description }: { title: string; description: string }) {
+function ModuleCard({
+  title,
+  price,
+  features,
+}: {
+  title: string
+  price: string
+  features: string[]
+}) {
   return (
-    <div className="flex items-start gap-3">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        className="w-4 h-4 text-gray-400 shrink-0 mt-0.5"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-      <div>
-        <span className="text-sm font-medium text-gray-500">{title}</span>
-        <p className="text-xs text-gray-400">{description}</p>
+    <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
+      <div className="px-6 pt-6 pb-4 bg-brand-50 border-b border-brand-100 text-center">
+        <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">{title}</p>
+        <div className="mt-2 flex items-end gap-1 justify-center">
+          <span className="text-lg text-gray-500 mb-2">+</span>
+          <span className="font-display text-5xl font-semibold text-brand-900">{price}</span>
+          <span className="text-lg text-gray-500 mb-2">kr/md</span>
+        </div>
+        <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
       </div>
+      <div className="px-6 py-4 space-y-2">
+        {features.map((f) => (
+          <div key={f} className="flex items-center gap-3 text-sm">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="w-4 h-4 text-brand-600 shrink-0"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span>{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FeatureShowcase({
+  eyebrow,
+  title,
+  description,
+  imageSrc,
+  imageAlt,
+  imageRight,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+  imageSrc: string
+  imageAlt: string
+  imageRight?: boolean
+}) {
+  const text = (
+    <div className="lg:w-5/12 flex flex-col justify-center">
+      <p className="text-xs font-semibold uppercase tracking-widest text-brand-600 mb-3">
+        {eyebrow}
+      </p>
+      <h3 className="font-display text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
+        {title}
+      </h3>
+      <p className="text-gray-600 leading-relaxed">{description}</p>
+    </div>
+  )
+  const image = (
+    <div className="lg:w-7/12">
+      <div className="rounded-xl overflow-hidden shadow-xl border border-gray-100">
+        <img src={imageSrc} alt={imageAlt} className="w-full block" loading="lazy" />
+      </div>
+    </div>
+  )
+  return (
+    <div
+      className={`flex flex-col lg:flex-row items-center gap-12 ${imageRight ? '' : 'lg:flex-row-reverse'}`}
+    >
+      {text}
+      {image}
     </div>
   )
 }

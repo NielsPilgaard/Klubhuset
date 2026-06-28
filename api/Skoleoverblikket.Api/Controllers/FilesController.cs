@@ -30,51 +30,7 @@ public sealed class FilesController(
 	private const long MaxFileSizeBytes = 500L * 1024 * 1024; // 500 MB per file
 	private static readonly TimeSpan PresignExpiry = TimeSpan.FromMinutes(60);
 
-	private static readonly HashSet<string> AllowedExtensions =
-	[
-        // Documents
-        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf", ".csv", ".md", ".zip",
-        // Images
-        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tiff", ".svg",
-        // Video
-        ".mp4", ".webm", ".mov", ".avi", ".mkv",
-        // Audio
-        ".mp3", ".m4a", ".wav", ".ogg", ".aac",
-	];
-
-	private static readonly Dictionary<string, string> ExtensionMimeTypes = new(StringComparer.OrdinalIgnoreCase)
-	{
-		[".pdf"] = "application/pdf",
-		[".doc"] = "application/msword",
-		[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		[".xls"] = "application/vnd.ms-excel",
-		[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		[".ppt"] = "application/vnd.ms-powerpoint",
-		[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		[".txt"] = "text/plain",
-		[".rtf"] = "application/rtf",
-		[".csv"] = "text/csv",
-		[".md"] = "text/markdown",
-		[".zip"] = "application/zip",
-		[".png"] = "image/png",
-		[".jpg"] = "image/jpeg",
-		[".jpeg"] = "image/jpeg",
-		[".webp"] = "image/webp",
-		[".gif"] = "image/gif",
-		[".bmp"] = "image/bmp",
-		[".tiff"] = "image/tiff",
-		[".svg"] = "image/svg+xml",
-		[".mp4"] = "video/mp4",
-		[".webm"] = "video/webm",
-		[".mov"] = "video/quicktime",
-		[".avi"] = "video/x-msvideo",
-		[".mkv"] = "video/x-matroska",
-		[".mp3"] = "audio/mpeg",
-		[".m4a"] = "audio/mp4",
-		[".wav"] = "audio/wav",
-		[".ogg"] = "audio/ogg",
-		[".aac"] = "audio/aac",
-	};
+	private static IReadOnlyDictionary<string, string> ExtensionMimeTypes => FileExtensions.MimeTypes;
 
 	public record FileDto(
 		Guid Id,
@@ -202,13 +158,6 @@ public sealed class FilesController(
 		}
 
 		var ext = Path.GetExtension(req.FileName).ToLowerInvariant();
-		if (!AllowedExtensions.Contains(ext))
-		{
-			return ValidationProblem(new ValidationProblemDetails
-			{
-				Errors = { ["file"] = [$"Filtypen '{ext}' er ikke tilladt."] }
-			});
-		}
 
 		var usedBytes = await db.SchoolFiles.SumAsync(f => (long?)f.SizeBytes ?? 0, cancellationToken);
 		if (usedBytes + req.FileSizeBytes > QuotaBytes)
@@ -356,6 +305,8 @@ public sealed class FilesController(
 
 		db.SchoolFiles.Remove(file);
 		await db.SaveChangesAsync(cancellationToken);
+
+		await storage.DeleteAsync(file.StorageKey, cancellationToken);
 		return NoContent();
 	}
 
@@ -440,9 +391,11 @@ public sealed class FilesController(
 
 	public record RenameFolderRequest([Required, StringLength(200, MinimumLength = 1)] string Name);
 
+	public record DeleteFolderResponse(List<string> Warnings);
+
 	[HttpDelete("folders/{id:guid}")]
 	[Authorize(Roles = Roles.Admin)]
-	public async Task<ActionResult> DeleteFolder(Guid id, CancellationToken cancellationToken)
+	public async Task<ActionResult<DeleteFolderResponse>> DeleteFolder(Guid id, CancellationToken cancellationToken)
 	{
 		var folder = await db.SchoolFileFolders.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
 		if (folder is null)
@@ -450,9 +403,49 @@ public sealed class FilesController(
 			return NotFound();
 		}
 
+		var warnings = new List<string>();
+
+		var allFolderIds = await CollectDescendantFolderIdsAsync(id, cancellationToken);
+		allFolderIds.Add(id);
+
+		var files = await db.SchoolFiles
+			.Where(f => f.FolderId != null && allFolderIds.Contains(f.FolderId.Value))
+			.ToListAsync(cancellationToken);
+
+		foreach (var file in files)
+		{
+			try
+			{
+				await storage.DeleteAsync(file.StorageKey, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				warnings.Add($"Filen '{file.FileName}' kunne ikke slettes fra lageret: {ex.Message}");
+			}
+		}
+
+		db.SchoolFiles.RemoveRange(files);
 		db.SchoolFileFolders.Remove(folder);
 		await db.SaveChangesAsync(cancellationToken);
-		return NoContent();
+
+		return Ok(new DeleteFolderResponse(warnings));
+	}
+
+	private async Task<List<Guid>> CollectDescendantFolderIdsAsync(Guid parentId, CancellationToken cancellationToken)
+	{
+		var result = new List<Guid>();
+		var children = await db.SchoolFileFolders
+			.Where(f => f.ParentId == parentId)
+			.Select(f => f.Id)
+			.ToListAsync(cancellationToken);
+
+		foreach (var childId in children)
+		{
+			result.Add(childId);
+			result.AddRange(await CollectDescendantFolderIdsAsync(childId, cancellationToken));
+		}
+
+		return result;
 	}
 
 	private record ConfirmTokenPayload(
