@@ -14,7 +14,7 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize(Roles = Roles.Admin)]
 public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : ControllerBase
 {
-	public record ImportWarning(int Row, string Message);
+	public record ImportWarning([Required] int Row, [Required] string Message);
 
 	public record ImportParentRow(
 		string? Name,
@@ -34,13 +34,13 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		[Required] IReadOnlyList<ImportStudentRow> Rows);
 
 	public record ImportStudentsAndParentsResponse(
-		int ClassesCreated,
-		int StudentsCreated,
-		int StudentsSkipped,
-		int ParentsCreated,
-		int ParentsUpdated,
-		int ParentStudentLinksCreated,
-		IReadOnlyList<ImportWarning> Warnings);
+		[Required] int ClassesCreated,
+		[Required] int StudentsCreated,
+		[Required] int StudentsSkipped,
+		[Required] int ParentsCreated,
+		[Required] int ParentsUpdated,
+		[Required] int ParentStudentLinksCreated,
+		[Required] IReadOnlyList<ImportWarning> Warnings);
 
 	[HttpPost("students-and-parents")]
 	public async Task<ActionResult<ImportStudentsAndParentsResponse>> ImportStudentsAndParents(
@@ -62,12 +62,14 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 			.Select(s => new { s.Id, s.Name, s.ClassId })
 			.ToListAsync(cancellationToken);
 
-		// Pre-load existing parents by email
+		// Pre-load existing parents by email — skip ambiguous duplicates rather than throwing
 		var parentByEmail = (await db.Parents
 			.Include(p => p.Students)
 			.ToListAsync(cancellationToken))
 			.Where(p => !string.IsNullOrWhiteSpace(p.Email))
-			.ToDictionary(p => p.Email!.Trim().ToLowerInvariant());
+			.GroupBy(p => p.Email!.Trim().ToLowerInvariant())
+			.Where(g => g.Count() == 1)
+			.ToDictionary(g => g.Key, g => g.First());
 
 		int rowNum = 0;
 		foreach (var row in req.Rows)
@@ -147,9 +149,14 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 					warnings.Add(new ImportWarning(rowNum,
 						$"Forælder {slot} har ugyldig e-mail '{parentRow.Email!.Trim()}' — forælder oprettet uden loginkonto"));
 					hasEmail = false;
+
+					if (!hasName)
+					{
+						continue; // invalid email and no name — nothing to create
+					}
 				}
 
-				if (!hasEmail)
+				if (!hasEmail && hasName)
 				{
 					warnings.Add(new ImportWarning(rowNum,
 						$"Forælder {slot} mangler e-mail — forælder oprettet uden loginkonto"));
@@ -259,10 +266,10 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		[Required] IReadOnlyList<ImportStaffRow> Rows);
 
 	public record ImportStaffResponse(
-		int StaffCreated,
-		int StaffUpdated,
-		int StaffSkipped,
-		IReadOnlyList<ImportWarning> Warnings);
+		[Required] int StaffCreated,
+		[Required] int StaffUpdated,
+		[Required] int StaffSkipped,
+		[Required] IReadOnlyList<ImportWarning> Warnings);
 
 	[HttpPost("staff")]
 	public async Task<ActionResult<ImportStaffResponse>> ImportStaff(
@@ -443,10 +450,10 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		[Required] IReadOnlyList<ImportRoomRow> Rows);
 
 	public record ImportRoomsResponse(
-		int RoomsCreated,
-		int RoomsUpdated,
-		int RoomsSkipped,
-		IReadOnlyList<ImportWarning> Warnings);
+		[Required] int RoomsCreated,
+		[Required] int RoomsUpdated,
+		[Required] int RoomsSkipped,
+		[Required] IReadOnlyList<ImportWarning> Warnings);
 
 	[HttpPost("rooms")]
 	public async Task<ActionResult<ImportRoomsResponse>> ImportRooms(
@@ -529,10 +536,10 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		[Required] IReadOnlyList<ImportBoardMemberRow> Rows);
 
 	public record ImportBoardMembersResponse(
-		int BoardMembersCreated,
-		int BoardMembersUpdated,
-		int BoardMembersSkipped,
-		IReadOnlyList<ImportWarning> Warnings);
+		[Required] int BoardMembersCreated,
+		[Required] int BoardMembersUpdated,
+		[Required] int BoardMembersSkipped,
+		[Required] IReadOnlyList<ImportWarning> Warnings);
 
 	[HttpPost("board-members")]
 	public async Task<ActionResult<ImportBoardMembersResponse>> ImportBoardMembers(
