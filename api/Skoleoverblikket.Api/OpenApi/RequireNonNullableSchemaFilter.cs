@@ -4,8 +4,9 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace Skoleoverblikket.Api.OpenApi;
 
 /// <summary>
-/// Marks every non-nullable property as required in the OpenAPI schema so
-/// generated TypeScript clients produce non-optional fields instead of `T | undefined`.
+/// Marks non-nullable primitive properties (int, bool, etc.) as required so generated
+/// TypeScript clients produce `number` instead of `number | undefined`.
+/// Reference-type properties ($ref / arrays of $ref) are left to SupportNonNullableReferenceTypes.
 /// </summary>
 public sealed class RequireNonNullableSchemaFilter : ISchemaFilter
 {
@@ -18,12 +19,17 @@ public sealed class RequireNonNullableSchemaFilter : ISchemaFilter
 
         foreach (var (name, property) in schema.Properties)
         {
+            // Only promote properties that have an explicit primitive type (no $ref, no array-of-$ref)
+            bool hasPrimitiveType = property.Type is not null
+                && property is not OpenApiSchemaReference
+                && property.Items is null;
+
             bool isNullable = property.Type is not null
                 && (property.Type.Value & JsonSchemaType.Null) != 0;
 
-            if (!isNullable)
+            if (hasPrimitiveType && !isNullable)
             {
-                concreteSchema.Required.Add(name);
+                concreteSchema.Required?.Add(name);
             }
         }
     }

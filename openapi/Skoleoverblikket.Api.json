@@ -7434,6 +7434,13 @@
   "components": {
     "schemas": {
       "AbsenceController_AbsenceReportDto": {
+        "required": [
+          "createdAt",
+          "date",
+          "id",
+          "studentId",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7471,6 +7478,10 @@
         "additionalProperties": false
       },
       "AbsenceController_ReportAbsenceRequest": {
+        "required": [
+          "date",
+          "studentId"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -7511,6 +7522,9 @@
         "additionalProperties": false
       },
       "BillingController_CheckoutResponse": {
+        "required": [
+          "url"
+        ],
         "type": "object",
         "properties": {
           "url": {
@@ -7529,6 +7543,13 @@
         "additionalProperties": false
       },
       "BillingController_SubscriptionDto": {
+        "required": [
+          "hasAccess",
+          "isActive",
+          "isTrialing",
+          "trialDaysLeft",
+          "trialEnd"
+        ],
         "type": "object",
         "properties": {
           "status": {
@@ -7566,6 +7587,15 @@
         "additionalProperties": false
       },
       "BoardFilesController_BoardFileDto": {
+        "required": [
+          "contentType",
+          "fileName",
+          "id",
+          "sizeBytes",
+          "uploadedAt",
+          "uploadedBy",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7619,6 +7649,11 @@
         "additionalProperties": false
       },
       "BoardFilesController_BoardFolderDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7641,6 +7676,9 @@
         "additionalProperties": false
       },
       "BoardFilesController_ConfirmRequest": {
+        "required": [
+          "confirmToken"
+        ],
         "type": "object",
         "properties": {
           "confirmToken": {
@@ -7650,6 +7688,9 @@
         "additionalProperties": false
       },
       "BoardFilesController_CreateFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -7676,6 +7717,10 @@
         "additionalProperties": false
       },
       "BoardFilesController_PresignRequest": {
+        "required": [
+          "fileName",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "fileName": {
@@ -7694,6 +7739,12 @@
         "additionalProperties": false
       },
       "BoardFilesController_PresignResponse": {
+        "required": [
+          "confirmToken",
+          "contentType",
+          "fileId",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "fileId": {
@@ -7713,6 +7764,9 @@
         "additionalProperties": false
       },
       "BoardFilesController_RenameFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -7722,6 +7776,14 @@
         "additionalProperties": false
       },
       "BoardMembersController_BoardMemberDto": {
+        "required": [
+          "canAccessTeacherData",
+          "createdAt",
+          "email",
+          "hasAccount",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7748,6 +7810,10 @@
         "additionalProperties": false
       },
       "BoardMembersController_InviteBoardMemberRequest": {
+        "required": [
+          "email",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -7760,6 +7826,9 @@
         "additionalProperties": false
       },
       "BoardMembersController_ToggleTeacherDataRequest": {
+        "required": [
+          "canAccessTeacherData"
+        ],
         "type": "object",
         "properties": {
           "canAccessTeacherData": {
@@ -7779,6 +7848,12 @@
         "type": "string"
       },
       "CalendarController_CalendarEntryDto": {
+        "required": [
+          "endDate",
+          "id",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7816,6 +7891,11 @@
         "additionalProperties": false
       },
       "CalendarController_CreateCalendarEntryRequest": {
+        "required": [
+          "endDate",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
@@ -7845,6 +7925,11 @@
         "additionalProperties": false
       },
       "CalendarController_DefaultHolidayDto": {
+        "required": [
+          "endDate",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
@@ -7865,6 +7950,11 @@
         "additionalProperties": false
       },
       "CalendarController_UpdateCalendarEntryRequest": {
+        "required": [
+          "endDate",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
@@ -7903,6 +7993,11 @@
         "type": "string"
       },
       "ClassPermissionsController_ClassPermissionDto": {
+        "required": [
+          "grantedAt",
+          "staffId",
+          "staffName"
+        ],
         "type": "object",
         "properties": {
           "staffId": {
@@ -7920,6 +8015,9 @@
         "additionalProperties": false
       },
       "ClassPermissionsController_GrantPermissionRequest": {
+        "required": [
+          "staffId"
+        ],
         "type": "object",
         "properties": {
           "staffId": {
@@ -7930,6 +8028,11 @@
         "additionalProperties": false
       },
       "ClassesController_ClassDto": {
+        "required": [
+          "id",
+          "isAccessibleToCurrentUser",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7955,6 +8058,9 @@
         "additionalProperties": false
       },
       "ClassesController_UpsertClassRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -7973,6 +8079,9 @@
         "additionalProperties": false
       },
       "ClassesController_YearRollCreateEntry": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -7982,6 +8091,10 @@
         "additionalProperties": false
       },
       "ClassesController_YearRollRenameEntry": {
+        "required": [
+          "classId",
+          "newName"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -8020,6 +8133,18 @@
         "additionalProperties": false
       },
       "ConflictInfo": {
+        "required": [
+          "endTime",
+          "resourceId",
+          "resourceName",
+          "slotAClassName",
+          "slotACourseName",
+          "slotAId",
+          "slotBClassName",
+          "slotBCourseName",
+          "slotBId",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -8076,6 +8201,9 @@
         "type": "string"
       },
       "ContactThreadsController_AddMessageRequest": {
+        "required": [
+          "body"
+        ],
         "type": "object",
         "properties": {
           "body": {
@@ -8085,6 +8213,13 @@
         "additionalProperties": false
       },
       "ContactThreadsController_ContactMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "senderId",
+          "senderName",
+          "sentAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8117,6 +8252,12 @@
         "additionalProperties": false
       },
       "ContactThreadsController_ContactThreadDto": {
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "unreadCount"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8150,6 +8291,10 @@
         "additionalProperties": false
       },
       "ContactThreadsController_FindOrCreateThreadRequest": {
+        "required": [
+          "body",
+          "studentId"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -8163,6 +8308,11 @@
         "additionalProperties": false
       },
       "ContactThreadsController_PagedResult`1": {
+        "required": [
+          "page",
+          "pageSize",
+          "total"
+        ],
         "type": "object",
         "properties": {
           "items": {
@@ -8187,6 +8337,10 @@
         "additionalProperties": false
       },
       "CoursesController_CourseDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8211,6 +8365,9 @@
         "additionalProperties": false
       },
       "CoursesController_UpsertCourseRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -8243,6 +8400,11 @@
         "type": "string"
       },
       "DemoRequestController_DemoRequestDto": {
+        "required": [
+          "email",
+          "navn",
+          "skole"
+        ],
         "type": "object",
         "properties": {
           "navn": {
@@ -8266,6 +8428,9 @@
         "additionalProperties": false
       },
       "FilesController_ConfirmRequest": {
+        "required": [
+          "confirmToken"
+        ],
         "type": "object",
         "properties": {
           "confirmToken": {
@@ -8275,6 +8440,9 @@
         "additionalProperties": false
       },
       "FilesController_CreateFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -8306,6 +8474,15 @@
         "additionalProperties": false
       },
       "FilesController_FileDto": {
+        "required": [
+          "contentType",
+          "fileName",
+          "id",
+          "sizeBytes",
+          "uploadedAt",
+          "uploadedBy",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8368,6 +8545,11 @@
         "additionalProperties": false
       },
       "FilesController_FolderDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8399,6 +8581,10 @@
         "additionalProperties": false
       },
       "FilesController_PresignRequest": {
+        "required": [
+          "fileName",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "fileName": {
@@ -8422,6 +8608,12 @@
         "additionalProperties": false
       },
       "FilesController_PresignResponse": {
+        "required": [
+          "confirmToken",
+          "contentType",
+          "fileId",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "fileId": {
@@ -8441,6 +8633,9 @@
         "additionalProperties": false
       },
       "FilesController_RenameFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -8480,6 +8675,11 @@
         "additionalProperties": false
       },
       "ImportsController_ImportBoardMembersResponse": {
+        "required": [
+          "boardMembersCreated",
+          "boardMembersSkipped",
+          "boardMembersUpdated"
+        ],
         "type": "object",
         "properties": {
           "boardMembersCreated": {
@@ -8564,6 +8764,11 @@
         "additionalProperties": false
       },
       "ImportsController_ImportRoomsResponse": {
+        "required": [
+          "roomsCreated",
+          "roomsSkipped",
+          "roomsUpdated"
+        ],
         "type": "object",
         "properties": {
           "roomsCreated": {
@@ -8600,6 +8805,11 @@
         "additionalProperties": false
       },
       "ImportsController_ImportStaffResponse": {
+        "required": [
+          "staffCreated",
+          "staffSkipped",
+          "staffUpdated"
+        ],
         "type": "object",
         "properties": {
           "staffCreated": {
@@ -8650,6 +8860,10 @@
         "additionalProperties": false
       },
       "ImportsController_ImportStudentRow": {
+        "required": [
+          "className",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "className": {
@@ -8680,6 +8894,14 @@
         "additionalProperties": false
       },
       "ImportsController_ImportStudentsAndParentsResponse": {
+        "required": [
+          "classesCreated",
+          "parentsCreated",
+          "parentStudentLinksCreated",
+          "parentsUpdated",
+          "studentsCreated",
+          "studentsSkipped"
+        ],
         "type": "object",
         "properties": {
           "classesCreated": {
@@ -8716,6 +8938,10 @@
         "additionalProperties": false
       },
       "ImportsController_ImportWarning": {
+        "required": [
+          "message",
+          "row"
+        ],
         "type": "object",
         "properties": {
           "row": {
@@ -8729,6 +8955,10 @@
         "additionalProperties": false
       },
       "KontaktController_KontaktParentDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8768,6 +8998,9 @@
         "additionalProperties": false
       },
       "MessagesController_GroupPreviewDto": {
+        "required": [
+          "recipientCount"
+        ],
         "type": "object",
         "properties": {
           "recipientCount": {
@@ -8867,6 +9100,14 @@
         "additionalProperties": false
       },
       "MessagesController_InboxMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "senderId",
+          "senderName",
+          "sentAt",
+          "subject"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8902,6 +9143,10 @@
         "additionalProperties": false
       },
       "MessagesController_RecipientDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9051,6 +9296,11 @@
         "additionalProperties": false
       },
       "MessagesController_SendMessageRequest": {
+        "required": [
+          "body",
+          "recipientId",
+          "subject"
+        ],
         "type": "object",
         "properties": {
           "recipientId": {
@@ -9070,6 +9320,15 @@
         "additionalProperties": false
       },
       "MessagesController_SentMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "isGroup",
+          "recipientId",
+          "recipientName",
+          "sentAt",
+          "subject"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9117,6 +9376,9 @@
         "additionalProperties": false
       },
       "ModuleItemDto": {
+        "required": [
+          "isAdminOverride"
+        ],
         "type": "object",
         "properties": {
           "module": {
@@ -9133,6 +9395,10 @@
         "additionalProperties": false
       },
       "NotificationPreferencesController_NotificationPreferenceDto": {
+        "required": [
+          "email",
+          "inApp"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -9148,6 +9414,10 @@
         "additionalProperties": false
       },
       "NotificationPreferencesController_UpsertPreferenceItem": {
+        "required": [
+          "email",
+          "inApp"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -9175,6 +9445,11 @@
         "type": "string"
       },
       "NotificationsController_NotificationDto": {
+        "required": [
+          "body",
+          "createdAt",
+          "id"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9205,6 +9480,9 @@
         "additionalProperties": false
       },
       "ParentMeController_AvatarConfirmRequest": {
+        "required": [
+          "objectKey"
+        ],
         "type": "object",
         "properties": {
           "objectKey": {
@@ -9214,6 +9492,10 @@
         "additionalProperties": false
       },
       "ParentMeController_AvatarPresignRequest": {
+        "required": [
+          "contentType",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "contentType": {
@@ -9227,6 +9509,10 @@
         "additionalProperties": false
       },
       "ParentMeController_AvatarPresignResponse": {
+        "required": [
+          "objectKey",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "uploadUrl": {
@@ -9239,6 +9525,10 @@
         "additionalProperties": false
       },
       "ParentMeController_ParentClassDto": {
+        "required": [
+          "classId",
+          "className"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -9252,6 +9542,10 @@
         "additionalProperties": false
       },
       "ParentMeController_ParentMeDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9281,6 +9575,11 @@
         "additionalProperties": false
       },
       "ParentMeController_ParentStudentDto": {
+        "required": [
+          "classId",
+          "studentId",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -9298,6 +9597,9 @@
         "additionalProperties": false
       },
       "ParentMeController_UpdateContactRequest": {
+        "required": [
+          "shareContactInfo"
+        ],
         "type": "object",
         "properties": {
           "phone": {
@@ -9323,6 +9625,9 @@
         "additionalProperties": false
       },
       "ParentsController_AdresseBeskyttelseRequest": {
+        "required": [
+          "adresseBeskyttet"
+        ],
         "type": "object",
         "properties": {
           "adresseBeskyttet": {
@@ -9332,6 +9637,10 @@
         "additionalProperties": false
       },
       "ParentsController_InviteParentRequest": {
+        "required": [
+          "email",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9351,6 +9660,14 @@
         "additionalProperties": false
       },
       "ParentsController_ParentDto": {
+        "required": [
+          "adresseBeskyttet",
+          "createdAt",
+          "email",
+          "hasAccount",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9387,6 +9704,12 @@
         "additionalProperties": false
       },
       "ParentsController_StudentRefDto": {
+        "required": [
+          "classId",
+          "className",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9415,6 +9738,10 @@
         "type": "string"
       },
       "RoomsController_RoomDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9437,6 +9764,9 @@
         "additionalProperties": false
       },
       "RoomsController_UpsertRoomRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9455,6 +9785,14 @@
         "additionalProperties": false
       },
       "SchedulesController_ScheduleSlotDto": {
+        "required": [
+          "classId",
+          "className",
+          "courseName",
+          "endTime",
+          "schemaId",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "weekday": {
@@ -9515,6 +9853,9 @@
         "additionalProperties": false
       },
       "SchemasController_CopySchemaRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9524,6 +9865,9 @@
         "additionalProperties": false
       },
       "SchemasController_CreateSchemaRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9538,6 +9882,9 @@
         "additionalProperties": false
       },
       "SchemasController_RenameSchemaRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9568,6 +9915,11 @@
         "additionalProperties": false
       },
       "SchemasController_SchemaDto": {
+        "required": [
+          "classId",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9611,6 +9963,14 @@
         "additionalProperties": false
       },
       "SchemasController_SlotDto": {
+        "required": [
+          "courseId",
+          "courseName",
+          "id",
+          "teacherId",
+          "teacherName",
+          "timeSlotId"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9678,6 +10038,11 @@
         "additionalProperties": false
       },
       "SchemasController_UpsertSlotRequest": {
+        "required": [
+          "courseId",
+          "teacherId",
+          "timeSlotId"
+        ],
         "type": "object",
         "properties": {
           "timeSlotId": {
@@ -9709,6 +10074,15 @@
         "additionalProperties": false
       },
       "SchoolsController_OnboardingStatusDto": {
+        "required": [
+          "classCount",
+          "courseCount",
+          "hasLogo",
+          "roomCount",
+          "staffCount",
+          "stepsCompleted",
+          "stepsTotal"
+        ],
         "type": "object",
         "properties": {
           "hasLogo": {
@@ -9742,6 +10116,9 @@
         "additionalProperties": false
       },
       "SchoolsController_SchoolSettingsDto": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9763,6 +10140,9 @@
         "additionalProperties": false
       },
       "SchoolsController_UpdateSchoolSettingsRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -9787,6 +10167,12 @@
         "type": "string"
       },
       "SfoController_SfoShiftDto": {
+        "required": [
+          "dayOfWeek",
+          "endTime",
+          "id",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9817,6 +10203,10 @@
         "additionalProperties": false
       },
       "SfoController_StaffRefDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9830,6 +10220,11 @@
         "additionalProperties": false
       },
       "SfoController_UpsertSfoShiftRequest": {
+        "required": [
+          "dayOfWeek",
+          "endTime",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "dayOfWeek": {
@@ -9850,6 +10245,10 @@
         "additionalProperties": false
       },
       "SfoWeekPlanController_SfoStaffRefDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9863,6 +10262,11 @@
         "additionalProperties": false
       },
       "SfoWeekPlanController_SfoWeekPlanDto": {
+        "required": [
+          "id",
+          "isoWeek",
+          "isoYear"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9887,6 +10291,13 @@
         "additionalProperties": false
       },
       "SfoWeekPlanController_SfoWeekPlanShiftDto": {
+        "required": [
+          "dayOfWeek",
+          "endTime",
+          "id",
+          "sfoShiftId",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9925,6 +10336,11 @@
         "additionalProperties": false
       },
       "SfoWeekPlanController_UpsertSfoWeekPlanShiftRequest": {
+        "required": [
+          "isoWeek",
+          "isoYear",
+          "sfoShiftId"
+        ],
         "type": "object",
         "properties": {
           "isoYear": {
@@ -9947,6 +10363,11 @@
         "additionalProperties": false
       },
       "StaaMaalMedController_ClassCoverageDto": {
+        "required": [
+          "classId",
+          "className",
+          "gradeLevel"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -9982,6 +10403,14 @@
         "additionalProperties": false
       },
       "StaaMaalMedController_SubjectCoverageDto": {
+        "required": [
+          "annualHours",
+          "category",
+          "status",
+          "vejledendeAnnualHours",
+          "vejledendeWeeklyHours",
+          "weeklyHours"
+        ],
         "type": "object",
         "properties": {
           "category": {
@@ -10010,6 +10439,9 @@
         "additionalProperties": false
       },
       "StaffController_PatchAdminPermissionRequest": {
+        "required": [
+          "isAdmin"
+        ],
         "type": "object",
         "properties": {
           "isAdmin": {
@@ -10019,6 +10451,11 @@
         "additionalProperties": false
       },
       "StaffController_StaffDto": {
+        "required": [
+          "id",
+          "isAdmin",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10050,6 +10487,10 @@
         "additionalProperties": false
       },
       "StaffController_UpsertStaffRequest": {
+        "required": [
+          "isAdmin",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -10073,6 +10514,10 @@
         "additionalProperties": false
       },
       "StaffInvitationsController_AcceptInvitationRequest": {
+        "required": [
+          "keycloakSubject",
+          "token"
+        ],
         "type": "object",
         "properties": {
           "token": {
@@ -10085,6 +10530,15 @@
         "additionalProperties": false
       },
       "StaffInvitationsController_InvitationDto": {
+        "required": [
+          "createdAt",
+          "email",
+          "expiresAt",
+          "id",
+          "staffId",
+          "staffName",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10121,6 +10575,9 @@
         "additionalProperties": false
       },
       "StaffMeController_AvatarConfirmRequest": {
+        "required": [
+          "objectKey"
+        ],
         "type": "object",
         "properties": {
           "objectKey": {
@@ -10130,6 +10587,10 @@
         "additionalProperties": false
       },
       "StaffMeController_AvatarPresignRequest": {
+        "required": [
+          "contentType",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "contentType": {
@@ -10143,6 +10604,10 @@
         "additionalProperties": false
       },
       "StaffMeController_AvatarPresignResponse": {
+        "required": [
+          "objectKey",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "uploadUrl": {
@@ -10163,6 +10628,14 @@
         "type": "string"
       },
       "StatsController_DashboardStats": {
+        "required": [
+          "classCount",
+          "courseCount",
+          "roomCount",
+          "schemasComplete",
+          "schemasTotal",
+          "staffCount"
+        ],
         "type": "object",
         "properties": {
           "classCount": {
@@ -10211,6 +10684,13 @@
         "additionalProperties": false
       },
       "StatsController_HoursPerCourse": {
+        "required": [
+          "classId",
+          "className",
+          "courseId",
+          "courseName",
+          "hours"
+        ],
         "type": "object",
         "properties": {
           "courseId": {
@@ -10235,6 +10715,11 @@
         "additionalProperties": false
       },
       "StatsController_HoursPerStaff": {
+        "required": [
+          "hours",
+          "staffId",
+          "staffName"
+        ],
         "type": "object",
         "properties": {
           "staffId": {
@@ -10255,6 +10740,12 @@
         "additionalProperties": false
       },
       "StatsController_UnassignedClass": {
+        "required": [
+          "classId",
+          "className",
+          "emptySlots",
+          "hasSchema"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -10275,6 +10766,9 @@
         "additionalProperties": false
       },
       "StudentsController_AvatarConfirmRequest": {
+        "required": [
+          "objectKey"
+        ],
         "type": "object",
         "properties": {
           "objectKey": {
@@ -10284,6 +10778,10 @@
         "additionalProperties": false
       },
       "StudentsController_AvatarPresignRequest": {
+        "required": [
+          "contentType",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "contentType": {
@@ -10297,6 +10795,10 @@
         "additionalProperties": false
       },
       "StudentsController_AvatarPresignResponse": {
+        "required": [
+          "objectKey",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "uploadUrl": {
@@ -10309,6 +10811,14 @@
         "additionalProperties": false
       },
       "StudentsController_StudentDto": {
+        "required": [
+          "classId",
+          "className",
+          "createdAt",
+          "id",
+          "isEnrolledInSfo",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10336,6 +10846,11 @@
         "additionalProperties": false
       },
       "StudentsController_UpsertStudentRequest": {
+        "required": [
+          "classId",
+          "isEnrolledInSfo",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -10392,6 +10907,12 @@
         "type": "string"
       },
       "TenantDetailDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "name",
+          "trialEnd"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10443,6 +10964,13 @@
         "additionalProperties": false
       },
       "TenantListItemDto": {
+        "required": [
+          "activeModuleCount",
+          "createdAt",
+          "id",
+          "name",
+          "trialEnd"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10480,6 +11008,13 @@
         "additionalProperties": false
       },
       "TenantsController_CreateTenantRequest": {
+        "required": [
+          "adminEmail",
+          "adminFirstName",
+          "adminLastName",
+          "adminPassword",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -10501,6 +11036,13 @@
         "additionalProperties": false
       },
       "TenantsController_TenantCreatedDto": {
+        "required": [
+          "accessToken",
+          "adminEmail",
+          "expiresIn",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10528,6 +11070,11 @@
         "additionalProperties": false
       },
       "TimeSlotsController_BreakDto": {
+        "required": [
+          "durationMinutes",
+          "id",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10546,6 +11093,13 @@
         "additionalProperties": false
       },
       "TimeSlotsController_TemplateDto": {
+        "required": [
+          "activeDays",
+          "dayEndTime",
+          "dayStartTime",
+          "id",
+          "lessonDurationMinutes"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10577,6 +11131,13 @@
         "additionalProperties": false
       },
       "TimeSlotsController_TimeSlotDto": {
+        "required": [
+          "endTime",
+          "id",
+          "isBreak",
+          "sortOrder",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10611,6 +11172,10 @@
         "additionalProperties": false
       },
       "TimeSlotsController_UpsertBreakRequest": {
+        "required": [
+          "durationMinutes",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "startTime": {
@@ -10625,6 +11190,12 @@
         "additionalProperties": false
       },
       "TimeSlotsController_UpsertTemplateRequest": {
+        "required": [
+          "activeDays",
+          "dayEndTime",
+          "dayStartTime",
+          "lessonDurationMinutes"
+        ],
         "type": "object",
         "properties": {
           "lessonDurationMinutes": {
@@ -10652,6 +11223,12 @@
         "additionalProperties": false
       },
       "TimeSlotsController_UpsertTimeSlotRequest": {
+        "required": [
+          "endTime",
+          "isBreak",
+          "sortOrder",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "sortOrder": {
@@ -10677,6 +11254,13 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_CreateWindowRequest": {
+        "required": [
+          "careEndDate",
+          "careStartDate",
+          "isOpen",
+          "registrationDeadline",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
@@ -10704,6 +11288,16 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_EntryDto": {
+        "required": [
+          "className",
+          "id",
+          "studentId",
+          "studentName",
+          "submittedAt",
+          "submittedByParentId",
+          "submittedByParentName",
+          "updatedAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10749,6 +11343,10 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_MyEntryDto": {
+        "required": [
+          "studentId",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -10777,6 +11375,13 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_UpdateWindowRequest": {
+        "required": [
+          "careEndDate",
+          "careStartDate",
+          "isOpen",
+          "registrationDeadline",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
@@ -10820,6 +11425,16 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_WindowDto": {
+        "required": [
+          "careEndDate",
+          "careStartDate",
+          "createdAt",
+          "entryCount",
+          "id",
+          "isOpen",
+          "registrationDeadline",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10882,6 +11497,10 @@
         "additionalProperties": false
       },
       "VikarController_AvailableStaffDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10898,6 +11517,11 @@
         "additionalProperties": false
       },
       "VikarController_BusyStaffDto": {
+        "required": [
+          "conflictDescription",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10935,6 +11559,9 @@
         "additionalProperties": false
       },
       "WeekPlanController_AddFileToSlotRequest": {
+        "required": [
+          "schoolFileId"
+        ],
         "type": "object",
         "properties": {
           "schoolFileId": {
@@ -10945,6 +11572,12 @@
         "additionalProperties": false
       },
       "WeekPlanController_BreakTimeSlotDto": {
+        "required": [
+          "endTime",
+          "startTime",
+          "timeSlotId",
+          "timeSlotLabel"
+        ],
         "type": "object",
         "properties": {
           "timeSlotId": {
@@ -10966,6 +11599,9 @@
         "additionalProperties": false
       },
       "WeekPlanController_HolidayDayDto": {
+        "required": [
+          "title"
+        ],
         "type": "object",
         "properties": {
           "weekday": {
@@ -10978,6 +11614,9 @@
         "additionalProperties": false
       },
       "WeekPlanController_UpsertWeekPlanSlotRequest": {
+        "required": [
+          "schemaSlotId"
+        ],
         "type": "object",
         "properties": {
           "schemaSlotId": {
@@ -11001,6 +11640,15 @@
         "additionalProperties": false
       },
       "WeekPlanController_WeekPlanDto": {
+        "required": [
+          "classId",
+          "id",
+          "isHolidayWeek",
+          "isoWeek",
+          "isoYear",
+          "weekEndDate",
+          "weekStartDate"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -11056,6 +11704,17 @@
         "additionalProperties": false
       },
       "WeekPlanController_WeekPlanSlotDto": {
+        "required": [
+          "courseId",
+          "courseName",
+          "endTime",
+          "id",
+          "schemaSlotId",
+          "startTime",
+          "timeSlotId",
+          "timeSlotLabel",
+          "weekPlanId"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -11140,6 +11799,12 @@
         "additionalProperties": false
       },
       "WeekPlanController_WeekPlanSlotFileDto": {
+        "required": [
+          "fileName",
+          "id",
+          "schoolFileId",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "id": {

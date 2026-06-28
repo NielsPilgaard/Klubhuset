@@ -663,7 +663,10 @@ function CellModal({
   const comboboxRef = useRef<HTMLDivElement>(null)
   const assignedIds = new Set((shift.staff ?? []).map((s) => s.id))
   const filteredUnassigned = staff.filter(
-    (s) => !assignedIds.has(s.id) && (s.name ?? '').toLowerCase().includes(staffQuery.toLowerCase())
+    (s) =>
+      s.id &&
+      !assignedIds.has(s.id) &&
+      (s.name ?? '').toLowerCase().includes(staffQuery.toLowerCase())
   )
 
   useEffect(() => {
