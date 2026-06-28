@@ -44,9 +44,16 @@ function Step([string]$name, [scriptblock]$body) {
 Push-Location $RepoRoot
 
 if (-not $SkipFrontend) {
-    Step "Biome" {
-        Set-Location "$RepoRoot/web"
-        npx biome check src/
+    if ($NoFix) {
+        Step "Biome" {
+            Set-Location "$RepoRoot/web"
+            npx biome check src/
+        }
+    } else {
+        Step "Biome (auto-fix)" {
+            Set-Location "$RepoRoot/web"
+            npx biome check --write src/
+        }
     }
 
     Step "TypeScript build" {
