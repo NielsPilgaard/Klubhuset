@@ -5,27 +5,20 @@ using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
-public sealed class SfoTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class SfoTests(ApiFactory factory)
 {
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
 
-	[Before(Test)]
+	[Before(Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	[Test]
@@ -42,6 +35,7 @@ public sealed class SfoTests
 	public async Task GetShifts_Returns403_ForNonAdmin()
 	{
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "teacher");
 
 		var response = await client.GetAsync("/api/v1/sfo/shifts");
@@ -73,7 +67,7 @@ public sealed class SfoTests
 	public async Task AssignStaff_Returns204()
 	{
 		// Seed a staff member and a shift
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 
 		var createRes = await _adminClient.PostAsJsonAsync("/api/v1/sfo/shifts",
 			new SfoController.UpsertSfoShiftRequest(1, "13:00", "17:00", null));
@@ -88,7 +82,7 @@ public sealed class SfoTests
 	[Test]
 	public async Task UnassignStaff_Returns204()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 
 		var createRes = await _adminClient.PostAsJsonAsync("/api/v1/sfo/shifts",
 			new SfoController.UpsertSfoShiftRequest(2, "13:00", "17:00", null));

@@ -18,7 +18,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// and DB persistence. Keycloak sync failures are tested by seeding staff with a KeycloakSubject
 /// that would trigger the sync path, but the TestAuthHandler bypasses the real Keycloak client.
 /// </summary>
-public sealed class StaffAdminPermissionTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class StaffAdminPermissionTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -26,24 +27,16 @@ public sealed class StaffAdminPermissionTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
 
-	[Before(Test)]
+	[Before(Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	[Test]
@@ -73,7 +66,7 @@ public sealed class StaffAdminPermissionTests
 	[Test]
 	public async Task GetAll_ReturnsIsAdminField()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId, isAdmin: true);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, isAdmin: true);
 
 		var response = await _client.GetAsync("/api/v1/staff");
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -87,7 +80,7 @@ public sealed class StaffAdminPermissionTests
 	[Test]
 	public async Task Patch_AdminPermission_Returns409_WhenKeycloakSubjectIsNull()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 
 		var response = await _client.PatchAsJsonAsync(
 			$"/api/v1/staff/{staff.Id}/admin-permission",
@@ -99,7 +92,7 @@ public sealed class StaffAdminPermissionTests
 	[Test]
 	public async Task Patch_AdminPermission_GrantsAdmin_WhenKeycloakSubjectSet()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			keycloakSubject: "some-kc-user-id");
 
 		var response = await _client.PatchAsJsonAsync(
@@ -128,7 +121,7 @@ public sealed class StaffAdminPermissionTests
 	public async Task Patch_RemoveAdmin_Returns409_WhenLastAdmin()
 	{
 		// Seed a staff member as the only admin with a KeycloakSubject
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: true, keycloakSubject: "only-admin-id");
 
 		var response = await _client.PatchAsJsonAsync(
@@ -142,11 +135,11 @@ public sealed class StaffAdminPermissionTests
 	public async Task Patch_RemoveAdmin_Returns409_WhenRemovingOwnPermission()
 	{
 		// Seed two admins so the "last admin" guard won't fire
-		await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: true, keycloakSubject: "other-admin-id");
 
 		// The TestAuthHandler returns ClaimTypes.NameIdentifier = "test-user-id"
-		var self = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var self = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: true, keycloakSubject: "test-user-id");
 
 		var response = await _client.PatchAsJsonAsync(
@@ -159,7 +152,7 @@ public sealed class StaffAdminPermissionTests
 	[Test]
 	public async Task GetById_ReturnsIsAdminAndKeycloakSubject()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: true, keycloakSubject: "kc-123");
 
 		var response = await _client.GetAsync($"/api/v1/staff/{staff.Id}");

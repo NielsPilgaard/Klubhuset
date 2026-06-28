@@ -15,7 +15,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// These tests guard the API contract: the endpoint must always return a valid (possibly
 /// empty) list, never an error or unexpected null structure.
 /// </summary>
-public sealed class RoomScheduleTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class RoomScheduleTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -23,26 +24,17 @@ public sealed class RoomScheduleTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
-	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
-	[Before(Test)]
+	[Before(Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	[Test]
@@ -77,6 +69,7 @@ public sealed class RoomScheduleTests
 
 		// Place the schema slot in this room via the API (admin client)
 		using var adminClient = _factory.CreateClient();
+		adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
 		var upsertResp = await adminClient.PutAsJsonAsync(
 			$"/api/v1/classes/{klass.Id}/schemas/{schema.Id}/slots",

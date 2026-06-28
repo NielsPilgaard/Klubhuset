@@ -18,7 +18,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///     parent→parent without consent (403), no sender record (403).
 ///   - GET /api/v1/messages/inbox: staff inbox with data (200), parent empty inbox (200).
 /// </summary>
-public sealed class MessagesTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class MessagesTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -26,26 +27,18 @@ public sealed class MessagesTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(Test)]
+    [Before(Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "admin-subject");
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────────
@@ -53,6 +46,7 @@ public sealed class MessagesTests
     private HttpClient CreateStaffClient(string subject, bool isAdmin = false)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", isAdmin ? "admin" : "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -61,6 +55,7 @@ public sealed class MessagesTests
     private HttpClient CreateParentClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -76,7 +71,7 @@ public sealed class MessagesTests
         var parent = new Parent
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Email = $"{keycloakSubject}@test.dk",
             KeycloakSubject = keycloakSubject,
@@ -100,7 +95,7 @@ public sealed class MessagesTests
         var message = new Message
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             SenderId = senderId,
             SenderType = senderType,
             RecipientId = recipientId,
@@ -120,7 +115,7 @@ public sealed class MessagesTests
     public async Task SendMessage_StaffToParent_Returns201()
     {
         const string senderSubject = "msg-staff-sender";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             name: "Lars Lærer", keycloakSubject: senderSubject);
         var recipient = await CreateParentAsync("msg-staff-to-parent-recipient", name: "Britta Forælder");
 
@@ -199,10 +194,10 @@ public sealed class MessagesTests
     public async Task GetInbox_Staff_Returns200()
     {
         const string recipientSubject = "msg-inbox-staff-recipient";
-        var recipient = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        var recipient = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             name: "Frede Modtager", keycloakSubject: recipientSubject);
 
-        var sender = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        var sender = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             name: "Gitte Afsender", keycloakSubject: "msg-inbox-staff-sender");
 
         await CreateMessageAsync(

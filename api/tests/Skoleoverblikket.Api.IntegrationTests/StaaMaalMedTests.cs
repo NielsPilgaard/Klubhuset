@@ -19,7 +19,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - Slots with SubjectCategory.Fri are excluded from coverage.
 ///   - Only admin/board roles can access the endpoint.
 /// </summary>
-public sealed class StaaMaalMedTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class StaaMaalMedTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -27,26 +28,18 @@ public sealed class StaaMaalMedTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(Test)]
+    [Before(Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "staamaal-admin-subject");
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────────
@@ -59,7 +52,7 @@ public sealed class StaaMaalMedTests
         var klass = new Class
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             GradeLevel = gradeLevel,
         };
@@ -68,7 +61,7 @@ public sealed class StaaMaalMedTests
         var schema = new Schema
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             ClassId = klass.Id,
             Name = $"Skema {name}",
             StartDate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-1),
@@ -87,7 +80,7 @@ public sealed class StaaMaalMedTests
         var course = new Course
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Category = category,
         };
@@ -102,6 +95,7 @@ public sealed class StaaMaalMedTests
     public async Task GetCoverage_NonAdmin_Returns403()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", "nonadmin-staamaal");
 
@@ -114,6 +108,7 @@ public sealed class StaaMaalMedTests
     public async Task GetCoverage_BoardRole_Returns200()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "board");
         client.DefaultRequestHeaders.Add("X-Test-Subject", "board-staamaal");
 
@@ -131,7 +126,7 @@ public sealed class StaaMaalMedTests
         var klass = new Class
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = "0.a-noschema",
             GradeLevel = 0,
         };
@@ -158,7 +153,7 @@ public sealed class StaaMaalMedTests
         var klass = new Class
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = "no-grade-class",
             GradeLevel = null,
         };
@@ -179,12 +174,12 @@ public sealed class StaaMaalMedTests
         // Slots with SubjectCategory.Fri must not count toward any UVM subject
         var (klass, schema) = await CreateGradedClassWithActiveSchemaAsync(3, "3.fri-test");
         var friCourse = await CreateCourseWithCategoryAsync(SubjectCategory.Fri, "Fri leg");
-        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
         var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             new TimeOnly(8, 0), new TimeOnly(9, 0));
         await TestDataBuilder.CreateSchemaSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             schema.Id, timeSlot.Id, friCourse.Id, staff.Id);
 
         var response = await _adminClient.GetAsync("/api/v1/staa-maal-med/coverage");
@@ -205,7 +200,7 @@ public sealed class StaaMaalMedTests
         // Grade 1 Dansk vejledende = 8.25 h/week. Give >8.25h/week → green.
         var (klass, schema) = await CreateGradedClassWithActiveSchemaAsync(1, "1.green-test");
         var danskCourse = await CreateCourseWithCategoryAsync(SubjectCategory.Dansk, "Dansk grøn");
-        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 
         // 9 × 1-hour slots on different weekdays (Mon–Fri, then wrap) → 9 h/week
         var weekdays = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
@@ -214,9 +209,9 @@ public sealed class StaaMaalMedTests
             var start = new TimeOnly(8, 0).AddHours(i);
             var end = start.AddHours(1);
             var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-                _factory.Services, TestTenantContext.DefaultTenantId, start, end, sortOrder: 100 + i);
+                _factory.Services, _tenantId, start, end, sortOrder: 100 + i);
             await TestDataBuilder.CreateSchemaSlotAsync(
-                _factory.Services, TestTenantContext.DefaultTenantId,
+                _factory.Services, _tenantId,
                 schema.Id, timeSlot.Id, danskCourse.Id, staff.Id,
                 weekdays[i % weekdays.Length]);
         }
@@ -240,7 +235,7 @@ public sealed class StaaMaalMedTests
         // Grade 1 Dansk vejledende = 7 h/week. Give <75% (< 5.25h) → red.
         var (klass, schema) = await CreateGradedClassWithActiveSchemaAsync(1, "1.red-test");
         var danskCourse = await CreateCourseWithCategoryAsync(SubjectCategory.Dansk, "Dansk rød");
-        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 
         // 2 × 1-hour slots → 2 h/week (< 75% of 7)
         for (var i = 0; i < 2; i++)
@@ -248,9 +243,9 @@ public sealed class StaaMaalMedTests
             var start = new TimeOnly(10, 0).AddHours(i);
             var end = start.AddHours(1);
             var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-                _factory.Services, TestTenantContext.DefaultTenantId, start, end, sortOrder: 200 + i);
+                _factory.Services, _tenantId, start, end, sortOrder: 200 + i);
             await TestDataBuilder.CreateSchemaSlotAsync(
-                _factory.Services, TestTenantContext.DefaultTenantId,
+                _factory.Services, _tenantId,
                 schema.Id, timeSlot.Id, danskCourse.Id, staff.Id,
                 i == 0 ? DayOfWeek.Monday : DayOfWeek.Tuesday);
         }

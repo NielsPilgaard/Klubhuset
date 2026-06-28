@@ -15,7 +15,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Covers class schedule and staff schedule endpoints, including active/inactive
 /// schema filtering and 404 behaviour for unknown resources.
 /// </summary>
-public sealed class SchedulesTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class SchedulesTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -23,24 +24,16 @@ public sealed class SchedulesTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _client = null!;
 
-    [Before(Test)]
+    [Before(Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _client = _factory.CreateClient();
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _client.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
+        _client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
     }
 
     // ── GET /api/v1/classes/{classId}/schedule ────────────────────────────────────
@@ -50,20 +43,20 @@ public sealed class SchedulesTests
     {
         // Arrange — class with an active schema (StartDate = today-1m, EndDate = today+11m)
         var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "1.a");
+            _factory.Services, _tenantId, "1.a");
 
         var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             new TimeOnly(8, 0), new TimeOnly(8, 45), sortOrder: 1);
 
         var course = await TestDataBuilder.CreateCourseAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Matematik");
+            _factory.Services, _tenantId, "Matematik");
 
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Lone Lærer");
+            _factory.Services, _tenantId, "Lone Lærer");
 
         await TestDataBuilder.CreateSchemaSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             schema.Id, timeSlot.Id, course.Id, staff.Id,
             weekday: DayOfWeek.Monday);
 
@@ -108,7 +101,7 @@ public sealed class SchedulesTests
         var klass = new Class
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = "2.b",
         };
         db.Classes.Add(klass);
@@ -117,7 +110,7 @@ public sealed class SchedulesTests
         var schema = new Schema
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             ClassId = klass.Id,
             Name = "Gammelt skema",
             StartDate = today.AddMonths(-6),
@@ -143,20 +136,20 @@ public sealed class SchedulesTests
     {
         // Arrange — staff is the teacher in an active schema slot
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Peter Lærer");
+            _factory.Services, _tenantId, "Peter Lærer");
 
         var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "3.a");
+            _factory.Services, _tenantId, "3.a");
 
         var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             new TimeOnly(9, 0), new TimeOnly(9, 45), sortOrder: 2);
 
         var course = await TestDataBuilder.CreateCourseAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Dansk");
+            _factory.Services, _tenantId, "Dansk");
 
         await TestDataBuilder.CreateSchemaSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             schema.Id, timeSlot.Id, course.Id, staff.Id,
             weekday: DayOfWeek.Tuesday);
 

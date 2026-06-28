@@ -12,20 +12,20 @@ using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Storage;
-using Skoleoverblikket.Api.Tenancy;
 using Testcontainers.LocalStack;
 using Testcontainers.PostgreSql;
 using TUnit.AspNetCore;
+using TUnit.Core.Interfaces;
 
 namespace Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Spins up a real PostgreSQL container and a LocalStack S3 container (via Testcontainers)
-/// alongside the full ASP.NET Core pipeline. Auth is replaced by a configurable
-/// <see cref="TestTenantContext"/> and a simple test-only JWT scheme so
-/// tests can control which tenant they're operating as.
+/// alongside the full ASP.NET Core pipeline. Auth is replaced by <see cref="TestAuthHandler"/>
+/// which reads X-Test-TenantId / X-Test-Roles / X-Test-Subject headers so each HttpClient
+/// can carry its own tenant identity without shared mutable state.
 /// </summary>
-public sealed class ApiFactory : TestWebApplicationFactory<Program>
+public sealed class ApiFactory : TestWebApplicationFactory<Program>, IAsyncInitializer
 {
 	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
 		.WithDatabase("skoleoverblikket_test")
@@ -35,9 +35,7 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>
 
 	private readonly LocalStackContainer _localStack = new LocalStackBuilder("localstack/localstack:4").Build();
 
-	public TestTenantContext TenantContext { get; } = new();
-
-	public async Task StartAsync()
+	public async Task InitializeAsync()
 	{
 		await Task.WhenAll(_postgres.StartAsync(), _localStack.StartAsync());
 
@@ -79,11 +77,9 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>
 			services.AddDbContext<AppDbContext>(options =>
 				options.UseNpgsql(_postgres.GetConnectionString()));
 
-			// Replace tenant context — tests control TenantId directly
-			services.RemoveAll<ITenantContext>();
-			services.AddScoped<ITenantContext>(_ => TenantContext);
-
-			// Replace JWT auth with a no-op test scheme so [Authorize] passes
+			// Replace JWT auth with a header-driven test scheme.
+			// Tenant identity comes from the tenant_id claim set by TestAuthHandler
+			// reading X-Test-TenantId — the real HttpTenantContext reads that claim.
 			services.AddAuthentication(TestAuthHandler.SchemeName)
 					.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
 						TestAuthHandler.SchemeName, _ => { });
@@ -103,9 +99,9 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>
 		});
 	}
 
-	public async Task StopAsync()
+	public override async ValueTask DisposeAsync()
 	{
-		await DisposeAsync();
+		await base.DisposeAsync();
 		await Task.WhenAll(_postgres.DisposeAsync().AsTask(), _localStack.DisposeAsync().AsTask());
 	}
 }

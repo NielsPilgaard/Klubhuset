@@ -11,7 +11,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Verifies that GET /api/v1/classes returns classes in numeric-aware order.
 /// Lexicographic sort produces "0.a, 10.a, 1.a, 2.a" — the correct order is "0.a, 1.a, 2.a, 10.a".
 /// </summary>
-public sealed class ClassesSortingTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ClassesSortingTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -19,25 +20,17 @@ public sealed class ClassesSortingTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
 
-	[Before(Test)]
+	[Before(Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	[Test]
@@ -47,7 +40,7 @@ public sealed class ClassesSortingTests
 		foreach (var name in new[] { "10.a", "2.a", "0.a", "1.a" })
 		{
 			await TestDataBuilder.CreateClassWithSchemaAsync(
-				_factory.Services, TestTenantContext.DefaultTenantId, name);
+				_factory.Services, _tenantId, name);
 		}
 
 		var response = await _adminClient.GetAsync("/api/v1/classes");
@@ -71,15 +64,16 @@ public sealed class ClassesSortingTests
 	{
 		const string subject = "teacher-sort-test";
 		await TestDataBuilder.CreateStaffAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+			_factory.Services, _tenantId, keycloakSubject: subject);
 
 		foreach (var name in new[] { "10.b", "2.b", "0.b", "1.b" })
 		{
 			await TestDataBuilder.CreateClassWithSchemaAsync(
-				_factory.Services, TestTenantContext.DefaultTenantId, name);
+				_factory.Services, _tenantId, name);
 		}
 
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
 

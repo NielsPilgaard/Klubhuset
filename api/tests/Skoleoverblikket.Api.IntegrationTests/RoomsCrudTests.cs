@@ -9,26 +9,19 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Rooms are a simple resource with no cross-entity dependencies,
 /// making them a good smoke-test for the HTTP pipeline + DB integration.
 /// </summary>
-public sealed class RoomsCrudTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class RoomsCrudTests(ApiFactory factory)
 {
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
 
-	[Before(Test)]
+	[Before(Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	[Test]

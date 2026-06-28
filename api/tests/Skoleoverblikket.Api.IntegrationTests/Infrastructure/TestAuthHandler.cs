@@ -30,12 +30,17 @@ public sealed class TestAuthHandler(
 		// X-Test-Subject: keycloak subject for /me lookups; defaults to "test-user-id"
 		var subject = Request.Headers["X-Test-Subject"].FirstOrDefault() ?? "test-user-id";
 
+		var tenantIdHeader = Request.Headers["X-Test-TenantId"].FirstOrDefault();
+		var tenantId = string.IsNullOrWhiteSpace(tenantIdHeader)
+			? TestTenantContext.DefaultTenantId.ToString()
+			: tenantIdHeader;
+
 		var claims = new List<Claim>
 		{
 			new(ClaimTypes.Name, "Test User"),
 			new(ClaimTypes.NameIdentifier, subject),
 			new("sub", subject),
-			new("tenant_id", TestTenantContext.DefaultTenantId.ToString()),
+			new("tenant_id", tenantId),
 		};
 		claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 

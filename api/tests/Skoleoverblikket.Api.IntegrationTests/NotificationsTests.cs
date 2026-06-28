@@ -15,7 +15,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Integration tests for NotificationsController (/api/v1/notifications)
 /// and NotificationPreferencesController (/api/v1/notification-preferences).
 /// </summary>
-public sealed class NotificationsTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class NotificationsTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -23,24 +24,16 @@ public sealed class NotificationsTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _client = null!;
 
-    [Before(Test)]
+    [Before(Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _client = _factory.CreateClient();
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _client.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
+        _client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -48,6 +41,7 @@ public sealed class NotificationsTests
     private HttpClient CreateStaffClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
     }
@@ -59,7 +53,7 @@ public sealed class NotificationsTests
         var notification = new Notification
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             RecipientId = staffId,
             RecipientType = RecipientType.Staff,
             Type = NotificationType.NewMessage,
@@ -79,7 +73,7 @@ public sealed class NotificationsTests
         // Arrange
         const string subject = "get-notif-staff";
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+            _factory.Services, _tenantId, keycloakSubject: subject);
         var seeded = await SeedNotificationAsync(staff.Id);
 
         using var client = CreateStaffClient(subject);
@@ -120,7 +114,7 @@ public sealed class NotificationsTests
         // Arrange
         const string subject = "mark-read-staff";
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+            _factory.Services, _tenantId, keycloakSubject: subject);
         var notification = await SeedNotificationAsync(staff.Id);
 
         using var client = CreateStaffClient(subject);
@@ -142,7 +136,7 @@ public sealed class NotificationsTests
         // Arrange
         const string subject = "mark-all-read-staff";
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+            _factory.Services, _tenantId, keycloakSubject: subject);
         await SeedNotificationAsync(staff.Id);
 
         using var client = CreateStaffClient(subject);
@@ -164,7 +158,7 @@ public sealed class NotificationsTests
         // Arrange
         const string subject = "upsert-prefs-staff";
         await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+            _factory.Services, _tenantId, keycloakSubject: subject);
 
         var items = new[]
         {
@@ -187,7 +181,7 @@ public sealed class NotificationsTests
         // Arrange
         const string subject = "upsert-prefs-dup";
         await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+            _factory.Services, _tenantId, keycloakSubject: subject);
 
         // Both items use the same NotificationType → duplicate
         var items = new[]
@@ -211,7 +205,7 @@ public sealed class NotificationsTests
         // Arrange
         const string subject = "get-prefs-after-upsert";
         await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, keycloakSubject: subject);
+            _factory.Services, _tenantId, keycloakSubject: subject);
 
         var items = new[]
         {

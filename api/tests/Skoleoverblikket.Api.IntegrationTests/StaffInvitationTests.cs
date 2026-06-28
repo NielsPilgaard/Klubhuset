@@ -15,7 +15,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Covers the token preview and accept flow without touching Keycloak or email sending.
 /// Admin list and by-staff lookup are also covered.
 /// </summary>
-public sealed class StaffInvitationTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class StaffInvitationTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -23,26 +24,18 @@ public sealed class StaffInvitationTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(Test)]
+    [Before(Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "admin-subject");
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -53,7 +46,7 @@ public sealed class StaffInvitationTests
     {
         var staff = await TestDataBuilder.CreateStaffAsync(
             _factory.Services,
-            TestTenantContext.DefaultTenantId,
+            _tenantId,
             name: staffName,
             keycloakSubject: null);
 
@@ -63,7 +56,7 @@ public sealed class StaffInvitationTests
         var invitation = new StaffInvitation
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             StaffId = staff.Id,
             Email = "bo@testskole.dk",
             Token = "staff-token-" + Guid.NewGuid().ToString("N"),
@@ -124,6 +117,7 @@ public sealed class StaffInvitationTests
         var (staff, invitation) = await SeedInvitationAsync("Finn Testlærer");
 
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", acceptingSubject);
 
@@ -150,6 +144,7 @@ public sealed class StaffInvitationTests
         var (_, invitation) = await SeedInvitationAsync(expired: true);
 
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", acceptingSubject);
 

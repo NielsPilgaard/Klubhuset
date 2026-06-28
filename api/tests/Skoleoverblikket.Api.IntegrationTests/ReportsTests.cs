@@ -16,28 +16,21 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - Course hours report groups by class + course correctly.
 ///   - Schema report returns rows ordered by class, day, time.
 /// </summary>
-public sealed class ReportsTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ReportsTests(ApiFactory factory)
 {
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(Test)]
+    [Before(Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "reports-admin-subject");
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     private const string XlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -48,6 +41,7 @@ public sealed class ReportsTests
     public async Task StaffHoursXlsx_NonAdmin_Returns403()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", "nonadmin-reports");
 
@@ -60,6 +54,7 @@ public sealed class ReportsTests
     public async Task CourseHoursXlsx_NonAdmin_Returns403()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", "nonadmin-reports-courses");
 
@@ -72,6 +67,7 @@ public sealed class ReportsTests
     public async Task SchemaXlsx_NonAdmin_Returns403()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", "nonadmin-reports-schema");
 
@@ -84,6 +80,7 @@ public sealed class ReportsTests
     public async Task UvmMinimumstimetalXlsx_NonAdmin_Returns403()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", "nonadmin-reports-uvm");
 
@@ -137,16 +134,16 @@ public sealed class ReportsTests
     {
         // Set up one teacher with one active schema slot
         var (_, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "5.rpt-staff");
+            _factory.Services, _tenantId, "5.rpt-staff");
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Rapportlærer");
+            _factory.Services, _tenantId, "Rapportlærer");
         var course = await TestDataBuilder.CreateCourseAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Matematik-rpt");
+            _factory.Services, _tenantId, "Matematik-rpt");
         var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             new TimeOnly(8, 0), new TimeOnly(9, 0), sortOrder: 500);
         await TestDataBuilder.CreateSchemaSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             schema.Id, timeSlot.Id, course.Id, staff.Id);
 
         var response = await _adminClient.GetAsync("/api/v1/reports/hours/staff.xlsx");
@@ -161,16 +158,16 @@ public sealed class ReportsTests
     public async Task CourseHoursXlsx_WithActiveSlot_ReturnsNonEmptyFile()
     {
         var (_, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "5.rpt-courses");
+            _factory.Services, _tenantId, "5.rpt-courses");
         var staff = await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Kursuslærer");
+            _factory.Services, _tenantId, "Kursuslærer");
         var course = await TestDataBuilder.CreateCourseAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "Dansk-rpt-courses");
+            _factory.Services, _tenantId, "Dansk-rpt-courses");
         var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             new TimeOnly(9, 0), new TimeOnly(10, 0), sortOrder: 501);
         await TestDataBuilder.CreateSchemaSlotAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             schema.Id, timeSlot.Id, course.Id, staff.Id);
 
         var response = await _adminClient.GetAsync("/api/v1/reports/hours/courses.xlsx");

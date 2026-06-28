@@ -8,7 +8,8 @@ using Skoleoverblikket.Api.Models;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
-public sealed class ViewModeTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ViewModeTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -16,29 +17,22 @@ public sealed class ViewModeTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
 
-	[Before(Test)]
+	[Before(Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	private HttpClient CreateClientWithRoles(params string[] roles)
 	{
 		var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", string.Join(",", roles));
 		return client;
 	}
@@ -46,6 +40,7 @@ public sealed class ViewModeTests
 	private HttpClient CreateClientWithSubject(string subject, params string[] roles)
 	{
 		var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
 		if (roles.Length > 0)
 		{
@@ -60,7 +55,7 @@ public sealed class ViewModeTests
 	{
 		const string subject = "teacher-kc-subject";
 		var staff = await TestDataBuilder.CreateStaffAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId,
+			_factory.Services, _tenantId,
 			name: "Mette Lærer", role: StaffRole.Teacher,
 			keycloakSubject: subject);
 
