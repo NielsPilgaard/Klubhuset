@@ -18,6 +18,7 @@ import type {
   ImportsControllerImportRoomsResponse,
   ImportsControllerImportStaffResponse,
   ImportsControllerImportStudentsAndParentsResponse,
+  ImportsControllerImportWarning,
 } from '../api/generated/types.gen'
 
 interface InvitableRecord {
@@ -84,7 +85,7 @@ function rowToParent(row: GridRow, prefix: '1' | '2') {
   const address = row[`parent${prefix}Address`]?.trim() || undefined
   const postalCode = row[`parent${prefix}PostalCode`]?.trim() || undefined
   const city = row[`parent${prefix}City`]?.trim() || undefined
-  if (!name && !email && !phone && !address && !postalCode && !city) return null
+  if (!name && !email && !phone && !address && !postalCode && !city) return undefined
   return { name, email, phone, address, postalCode, city }
 }
 
@@ -106,7 +107,7 @@ function countBoardRows(rows: GridRow[]) {
 
 // ── Shared components ──────────────────────────────────────────────────────────
 
-function WarningList({ warnings }: { warnings: ImportWarning[] }) {
+function WarningList({ warnings }: { warnings: ImportsControllerImportWarning[] }) {
   if (!warnings.length) return null
   return (
     <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
@@ -410,17 +411,17 @@ function StudentsTab() {
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
                 <li>{result.classesCreated} klasse(r) oprettet</li>
                 <li>{result.studentsCreated} elev(er) oprettet</li>
-                {result.studentsSkipped > 0 && (
+                {(result.studentsSkipped ?? 0) > 0 && (
                   <li>{result.studentsSkipped} elev(er) sprunget over (fandtes allerede)</li>
                 )}
                 <li>{result.parentsCreated} forælder(e) oprettet</li>
-                {result.parentsUpdated > 0 && (
+                {(result.parentsUpdated ?? 0) > 0 && (
                   <li>{result.parentsUpdated} forælder(e) opdateret</li>
                 )}
                 <li>{result.parentStudentLinksCreated} forælder-elev-forbindelser oprettet</li>
               </ul>
             )}
-            {result && <WarningList warnings={result.warnings} />}
+            {result && <WarningList warnings={result.warnings ?? []} />}
           </div>
 
           <div className="border border-gray-200 rounded-xl p-4 space-y-3">
@@ -479,16 +480,16 @@ function StudentsTab() {
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
                 <li>{result.classesCreated} klasse(r) oprettet</li>
                 <li>{result.studentsCreated} elev(er) oprettet</li>
-                {result.studentsSkipped > 0 && (
+                {(result.studentsSkipped ?? 0) > 0 && (
                   <li>{result.studentsSkipped} elev(er) sprunget over (fandtes allerede)</li>
                 )}
                 <li>{result.parentsCreated} forælder(e) oprettet</li>
-                {result.parentsUpdated > 0 && (
+                {(result.parentsUpdated ?? 0) > 0 && (
                   <li>{result.parentsUpdated} forælder(e) opdateret</li>
                 )}
                 <li>{result.parentStudentLinksCreated} forælder-elev-forbindelser oprettet</li>
               </ul>
-              <WarningList warnings={result.warnings} />
+              <WarningList warnings={result.warnings ?? []} />
             </div>
           )}
         </>
@@ -568,13 +569,15 @@ function StaffTab() {
             {result && (
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
                 <li>{result.staffCreated} medarbejder(e) oprettet</li>
-                {result.staffUpdated > 0 && <li>{result.staffUpdated} medarbejder(e) opdateret</li>}
-                {result.staffSkipped > 0 && (
+                {(result.staffUpdated ?? 0) > 0 && (
+                  <li>{result.staffUpdated} medarbejder(e) opdateret</li>
+                )}
+                {(result.staffSkipped ?? 0) > 0 && (
                   <li>{result.staffSkipped} medarbejder(e) sprunget over</li>
                 )}
               </ul>
             )}
-            {result && <WarningList warnings={result.warnings} />}
+            {result && <WarningList warnings={result.warnings ?? []} />}
           </div>
 
           <div className="border border-gray-200 rounded-xl p-4 space-y-3">
@@ -634,12 +637,14 @@ function StaffTab() {
               <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
                 <li>{result.staffCreated} medarbejder(e) oprettet</li>
-                {result.staffUpdated > 0 && <li>{result.staffUpdated} medarbejder(e) opdateret</li>}
-                {result.staffSkipped > 0 && (
+                {(result.staffUpdated ?? 0) > 0 && (
+                  <li>{result.staffUpdated} medarbejder(e) opdateret</li>
+                )}
+                {(result.staffSkipped ?? 0) > 0 && (
                   <li>{result.staffSkipped} medarbejder(e) sprunget over</li>
                 )}
               </ul>
-              <WarningList warnings={result.warnings} />
+              <WarningList warnings={result.warnings ?? []} />
             </div>
           )}
         </>
@@ -720,10 +725,12 @@ function RoomsTab() {
           <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
           <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
             <li>{result.roomsCreated} lokale(r) oprettet</li>
-            {result.roomsUpdated > 0 && <li>{result.roomsUpdated} lokale(r) opdateret</li>}
-            {result.roomsSkipped > 0 && <li>{result.roomsSkipped} lokale(r) sprunget over</li>}
+            {(result.roomsUpdated ?? 0) > 0 && <li>{result.roomsUpdated} lokale(r) opdateret</li>}
+            {(result.roomsSkipped ?? 0) > 0 && (
+              <li>{result.roomsSkipped} lokale(r) sprunget over</li>
+            )}
           </ul>
-          <WarningList warnings={result.warnings} />
+          <WarningList warnings={result.warnings ?? []} />
         </div>
       )}
     </div>
@@ -794,15 +801,15 @@ function BoardMembersTab() {
             {result && (
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
                 <li>{result.boardMembersCreated} bestyrelsesmedlem(mer) oprettet</li>
-                {result.boardMembersUpdated > 0 && (
+                {(result.boardMembersUpdated ?? 0) > 0 && (
                   <li>{result.boardMembersUpdated} bestyrelsesmedlem(mer) opdateret</li>
                 )}
-                {result.boardMembersSkipped > 0 && (
+                {(result.boardMembersSkipped ?? 0) > 0 && (
                   <li>{result.boardMembersSkipped} rækker sprunget over</li>
                 )}
               </ul>
             )}
-            {result && <WarningList warnings={result.warnings} />}
+            {result && <WarningList warnings={result.warnings ?? []} />}
           </div>
 
           <div className="border border-gray-200 rounded-xl p-4 space-y-3">
@@ -864,14 +871,14 @@ function BoardMembersTab() {
               <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
                 <li>{result.boardMembersCreated} bestyrelsesmedlem(mer) oprettet</li>
-                {result.boardMembersUpdated > 0 && (
+                {(result.boardMembersUpdated ?? 0) > 0 && (
                   <li>{result.boardMembersUpdated} bestyrelsesmedlem(mer) opdateret</li>
                 )}
-                {result.boardMembersSkipped > 0 && (
+                {(result.boardMembersSkipped ?? 0) > 0 && (
                   <li>{result.boardMembersSkipped} rækker sprunget over</li>
                 )}
               </ul>
-              <WarningList warnings={result.warnings} />
+              <WarningList warnings={result.warnings ?? []} />
             </div>
           )}
         </>
