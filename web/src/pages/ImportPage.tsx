@@ -1,45 +1,24 @@
 import { useState, useMemo, useCallback } from 'react'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PasteGrid, { type ColumnDef, type GridRow } from '../components/PasteGrid'
-import { api } from '../api/client'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface ImportWarning {
-  row: number
-  message: string
-}
-
-interface ImportStudentsResult {
-  classesCreated: number
-  studentsCreated: number
-  studentsSkipped: number
-  parentsCreated: number
-  parentsUpdated: number
-  parentStudentLinksCreated: number
-  warnings: ImportWarning[]
-}
-
-interface ImportStaffResult {
-  staffCreated: number
-  staffUpdated: number
-  staffSkipped: number
-  warnings: ImportWarning[]
-}
-
-interface ImportRoomsResult {
-  roomsCreated: number
-  roomsUpdated: number
-  roomsSkipped: number
-  warnings: ImportWarning[]
-}
-
-interface ImportBoardMembersResult {
-  boardMembersCreated: number
-  boardMembersUpdated: number
-  boardMembersSkipped: number
-  warnings: ImportWarning[]
-}
+import {
+  getApiV1BoardMembers,
+  getApiV1Parents,
+  getApiV1Staff,
+  postApiV1ImportsBoardMembers,
+  postApiV1ImportsRooms,
+  postApiV1ImportsStaff,
+  postApiV1ImportsStudentsAndParents,
+  postApiV1BoardMembersInvite,
+  postApiV1ParentInvitationsByParentIdResend,
+  postApiV1StaffInvitationsInviteByStaffId,
+} from '../api/generated/sdk.gen'
+import type {
+  ImportsControllerImportBoardMembersResponse,
+  ImportsControllerImportRoomsResponse,
+  ImportsControllerImportStaffResponse,
+  ImportsControllerImportStudentsAndParentsResponse,
+} from '../api/generated/types.gen'
 
 interface InvitableRecord {
   id: string
@@ -361,17 +340,10 @@ function InvitationStep({
 
 // ── Tab 1: Elever & forældre ──────────────────────────────────────────────────
 
-interface ParentListItem {
-  id: string
-  name: string
-  email: string
-  hasAccount: boolean
-}
-
 function StudentsTab() {
   const [rows, setRows] = useState<GridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState<ImportStudentsResult | null>(null)
+  const [result, setResult] = useState<ImportsControllerImportStudentsAndParentsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uninvitedParents, setUninvitedParents] = useState<InvitableRecord[] | null>(null)
 
@@ -383,7 +355,6 @@ function StudentsTab() {
       .map((r) => ({
         className: r.className.trim(),
         studentName: r.studentName.trim(),
-        externalId: r.externalId?.trim() || null,
         parent1: rowToParent(r, '1'),
         parent2: rowToParent(r, '2'),
       }))
@@ -394,22 +365,20 @@ function StudentsTab() {
     setResult(null)
     setUninvitedParents(null)
     try {
-      const res = await api.post<ImportStudentsResult>('/imports/students-and-parents', {
-        rows: payload,
-      })
-      setResult(res)
+      const res = await postApiV1ImportsStudentsAndParents({ body: { rows: payload } })
+      setResult(res.data!)
 
-      if (res.parentsCreated > 0 || res.parentsUpdated > 0) {
+      if ((res.data!.parentsCreated ?? 0) > 0 || (res.data!.parentsUpdated ?? 0) > 0) {
         const importedEmails = new Set(
           payload
             .flatMap((r) => [r.parent1?.email, r.parent2?.email])
             .filter((e): e is string => !!e)
-            .map((e) => e.toLowerCase()),
+            .map((e) => e.toLowerCase())
         )
-        const parents = await api.get<ParentListItem[]>('/parents')
-        const uninvited = parents
+        const parentsRes = await getApiV1Parents()
+        const uninvited = (parentsRes.data ?? [])
           .filter((p) => !p.hasAccount && p.email && importedEmails.has(p.email.toLowerCase()))
-          .map((p) => ({ id: p.id, name: p.name, email: p.email }))
+          .map((p) => ({ id: p.id!, name: p.name!, email: p.email! }))
         if (uninvited.length > 0) {
           setUninvitedParents(uninvited)
         }
@@ -422,7 +391,7 @@ function StudentsTab() {
   }
 
   const sendParentInvite = useCallback(async (record: InvitableRecord) => {
-    await api.post(`/parent-invitations/${record.id}/resend`, {})
+    await postApiV1ParentInvitationsByParentIdResend({ path: { parentId: record.id } })
   }, [])
 
   return (
@@ -529,17 +498,10 @@ function StudentsTab() {
 
 // ── Tab 2: Personale ──────────────────────────────────────────────────────────
 
-interface StaffListItem {
-  id: string
-  name: string
-  email: string | null
-  keycloakSubject: string | null
-}
-
 function StaffTab() {
   const [rows, setRows] = useState<GridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState<ImportStaffResult | null>(null)
+  const [result, setResult] = useState<ImportsControllerImportStaffResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uninvitedStaff, setUninvitedStaff] = useState<InvitableRecord[] | null>(null)
 
@@ -562,22 +524,20 @@ function StaffTab() {
     setResult(null)
     setUninvitedStaff(null)
     try {
-      const res = await api.post<ImportStaffResult>('/imports/staff', { rows: payload })
-      setResult(res)
+      const res = await postApiV1ImportsStaff({ body: { rows: payload } })
+      setResult(res.data!)
 
-      if (res.staffCreated > 0 || res.staffUpdated > 0) {
+      if ((res.data!.staffCreated ?? 0) > 0 || (res.data!.staffUpdated ?? 0) > 0) {
         const importedEmails = new Set(
           payload
             .map((r) => r.email)
             .filter((e): e is string => !!e)
-            .map((e) => e.toLowerCase()),
+            .map((e) => e.toLowerCase())
         )
-        const staff = await api.get<StaffListItem[]>('/staff')
-        const uninvited = staff
-          .filter(
-            (s) => !s.keycloakSubject && s.email && importedEmails.has(s.email.toLowerCase()),
-          )
-          .map((s) => ({ id: s.id, name: s.name, email: s.email! }))
+        const staffRes = await getApiV1Staff()
+        const uninvited = (staffRes.data ?? [])
+          .filter((s) => !s.keycloakSubject && s.email && importedEmails.has(s.email.toLowerCase()))
+          .map((s) => ({ id: s.id!, name: s.name!, email: s.email! }))
         if (uninvited.length > 0) {
           setUninvitedStaff(uninvited)
         }
@@ -590,7 +550,7 @@ function StaffTab() {
   }
 
   const sendStaffInvite = useCallback(async (record: InvitableRecord) => {
-    await api.post(`/staff-invitations/invite/${record.id}`, {})
+    await postApiV1StaffInvitationsInviteByStaffId({ path: { staffId: record.id } })
   }, [])
 
   return (
@@ -692,7 +652,7 @@ function StaffTab() {
 function RoomsTab() {
   const [rows, setRows] = useState<GridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState<ImportRoomsResult | null>(null)
+  const [result, setResult] = useState<ImportsControllerImportRoomsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const validCount = useMemo(() => countRoomRows(rows), [rows])
@@ -711,8 +671,8 @@ function RoomsTab() {
     setError(null)
     setResult(null)
     try {
-      const res = await api.post<ImportRoomsResult>('/imports/rooms', { rows: payload })
-      setResult(res)
+      const res = await postApiV1ImportsRooms({ body: { rows: payload } })
+      setResult(res.data!)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Der opstod en fejl')
     } finally {
@@ -771,17 +731,10 @@ function RoomsTab() {
 
 // ── Tab 4: Bestyrelsesmedlemmer ───────────────────────────────────────────────
 
-interface BoardMemberListItem {
-  id: string
-  name: string
-  email: string
-  hasAccount: boolean
-}
-
 function BoardMembersTab() {
   const [rows, setRows] = useState<GridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState<ImportBoardMembersResult | null>(null)
+  const [result, setResult] = useState<ImportsControllerImportBoardMembersResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uninvitedMembers, setUninvitedMembers] = useState<InvitableRecord[] | null>(null)
 
@@ -802,19 +755,15 @@ function BoardMembersTab() {
     setResult(null)
     setUninvitedMembers(null)
     try {
-      const res = await api.post<ImportBoardMembersResult>('/imports/board-members', {
-        rows: payload,
-      })
-      setResult(res)
+      const res = await postApiV1ImportsBoardMembers({ body: { rows: payload } })
+      setResult(res.data!)
 
-      if (res.boardMembersCreated > 0 || res.boardMembersUpdated > 0) {
-        const importedEmails = new Set(
-          payload.map((r) => r.email.toLowerCase()),
-        )
-        const members = await api.get<BoardMemberListItem[]>('/board-members')
-        const uninvited = members
-          .filter((m) => !m.hasAccount && importedEmails.has(m.email.toLowerCase()))
-          .map((m) => ({ id: m.id, name: m.name, email: m.email }))
+      if ((res.data!.boardMembersCreated ?? 0) > 0 || (res.data!.boardMembersUpdated ?? 0) > 0) {
+        const importedEmails = new Set(payload.map((r) => r.email.toLowerCase()))
+        const membersRes = await getApiV1BoardMembers()
+        const uninvited = (membersRes.data ?? [])
+          .filter((m) => !m.hasAccount && m.email && importedEmails.has(m.email.toLowerCase()))
+          .map((m) => ({ id: m.id!, name: m.name!, email: m.email! }))
         if (uninvited.length > 0) {
           setUninvitedMembers(uninvited)
         }
@@ -827,7 +776,7 @@ function BoardMembersTab() {
   }
 
   const sendBoardInvite = useCallback(async (record: InvitableRecord) => {
-    await api.post('/board-members/invite', { name: record.name, email: record.email })
+    await postApiV1BoardMembersInvite({ body: { name: record.name, email: record.email } })
   }, [])
 
   return (

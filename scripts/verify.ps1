@@ -23,6 +23,9 @@ $RepoRoot = Split-Path $PSScriptRoot -Parent
 $Errors = @()
 $StepResults = @()
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 function Step([string]$name, [scriptblock]$body) {
     Write-Host "`n==> $name" -ForegroundColor Cyan
     $output = & $body 2>&1

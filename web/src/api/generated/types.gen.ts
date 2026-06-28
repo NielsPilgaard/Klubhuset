@@ -334,6 +334,94 @@ export type FilesControllerRenameFolderRequest = {
     name?: string | null;
 };
 
+export type ImportsControllerImportBoardMemberRow = {
+    name?: string | null;
+    email?: string | null;
+    canAccessTeacherData?: string | null;
+};
+
+export type ImportsControllerImportBoardMembersRequest = {
+    rows?: Array<ImportsControllerImportBoardMemberRow> | null;
+};
+
+export type ImportsControllerImportBoardMembersResponse = {
+    boardMembersCreated?: number;
+    boardMembersUpdated?: number;
+    boardMembersSkipped?: number;
+    warnings?: Array<ImportsControllerImportWarning> | null;
+};
+
+export type ImportsControllerImportParentRow = {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+};
+
+export type ImportsControllerImportRoomRow = {
+    name?: string | null;
+    description?: string | null;
+    capacity?: string | null;
+};
+
+export type ImportsControllerImportRoomsRequest = {
+    rows?: Array<ImportsControllerImportRoomRow> | null;
+};
+
+export type ImportsControllerImportRoomsResponse = {
+    roomsCreated?: number;
+    roomsUpdated?: number;
+    roomsSkipped?: number;
+    warnings?: Array<ImportsControllerImportWarning> | null;
+};
+
+export type ImportsControllerImportStaffRequest = {
+    rows?: Array<ImportsControllerImportStaffRow> | null;
+};
+
+export type ImportsControllerImportStaffResponse = {
+    staffCreated?: number;
+    staffUpdated?: number;
+    staffSkipped?: number;
+    warnings?: Array<ImportsControllerImportWarning> | null;
+};
+
+export type ImportsControllerImportStaffRow = {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    role?: string | null;
+    administrator?: string | null;
+};
+
+export type ImportsControllerImportStudentRow = {
+    className?: string | null;
+    studentName?: string | null;
+    parent1?: ImportsControllerImportParentRow;
+    parent2?: ImportsControllerImportParentRow;
+};
+
+export type ImportsControllerImportStudentsAndParentsRequest = {
+    rows?: Array<ImportsControllerImportStudentRow> | null;
+};
+
+export type ImportsControllerImportStudentsAndParentsResponse = {
+    classesCreated?: number;
+    studentsCreated?: number;
+    studentsSkipped?: number;
+    parentsCreated?: number;
+    parentsUpdated?: number;
+    parentStudentLinksCreated?: number;
+    warnings?: Array<ImportsControllerImportWarning> | null;
+};
+
+export type ImportsControllerImportWarning = {
+    row?: number;
+    message?: string | null;
+};
+
 export type KontaktControllerKontaktParentDto = {
     id?: string;
     name?: string | null;
@@ -2131,6 +2219,70 @@ export type PatchApiV1FilesFoldersByIdResponses = {
 };
 
 export type PatchApiV1FilesFoldersByIdResponse = PatchApiV1FilesFoldersByIdResponses[keyof PatchApiV1FilesFoldersByIdResponses];
+
+export type PostApiV1ImportsStudentsAndParentsData = {
+    body?: ImportsControllerImportStudentsAndParentsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/imports/students-and-parents';
+};
+
+export type PostApiV1ImportsStudentsAndParentsResponses = {
+    /**
+     * OK
+     */
+    200: ImportsControllerImportStudentsAndParentsResponse;
+};
+
+export type PostApiV1ImportsStudentsAndParentsResponse = PostApiV1ImportsStudentsAndParentsResponses[keyof PostApiV1ImportsStudentsAndParentsResponses];
+
+export type PostApiV1ImportsStaffData = {
+    body?: ImportsControllerImportStaffRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/imports/staff';
+};
+
+export type PostApiV1ImportsStaffResponses = {
+    /**
+     * OK
+     */
+    200: ImportsControllerImportStaffResponse;
+};
+
+export type PostApiV1ImportsStaffResponse = PostApiV1ImportsStaffResponses[keyof PostApiV1ImportsStaffResponses];
+
+export type PostApiV1ImportsRoomsData = {
+    body?: ImportsControllerImportRoomsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/imports/rooms';
+};
+
+export type PostApiV1ImportsRoomsResponses = {
+    /**
+     * OK
+     */
+    200: ImportsControllerImportRoomsResponse;
+};
+
+export type PostApiV1ImportsRoomsResponse = PostApiV1ImportsRoomsResponses[keyof PostApiV1ImportsRoomsResponses];
+
+export type PostApiV1ImportsBoardMembersData = {
+    body?: ImportsControllerImportBoardMembersRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/imports/board-members';
+};
+
+export type PostApiV1ImportsBoardMembersResponses = {
+    /**
+     * OK
+     */
+    200: ImportsControllerImportBoardMembersResponse;
+};
+
+export type PostApiV1ImportsBoardMembersResponse = PostApiV1ImportsBoardMembersResponses[keyof PostApiV1ImportsBoardMembersResponses];
 
 export type GetApiV1KontaktData = {
     body?: never;
