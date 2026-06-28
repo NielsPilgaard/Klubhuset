@@ -35,6 +35,8 @@ public static class SwaggerExtensions
 			{ [new OpenApiSecuritySchemeReference(schemeId, document)] = [] });
 
 			options.SchemaFilter<GroupMessageSchemaFilter>();
+			options.SchemaFilter<RequireNonNullableSchemaFilter>();
+			options.SupportNonNullableReferenceTypes();
 		});
 
 		return services;

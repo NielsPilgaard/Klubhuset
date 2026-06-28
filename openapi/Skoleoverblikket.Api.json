@@ -7445,8 +7445,7 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "date": {
             "type": "string",
@@ -7515,8 +7514,7 @@
         "type": "object",
         "properties": {
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7562,8 +7560,7 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -7576,20 +7573,17 @@
             "format": "uuid"
           },
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sizeBytes": {
             "type": "integer",
             "format": "int64"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "folderId": {
             "type": "string",
@@ -7597,8 +7591,7 @@
             "nullable": true
           },
           "uploadedBy": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "uploadedAt": {
             "type": "string",
@@ -7614,15 +7607,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BoardFilesController_BoardFileDto"
-            },
-            "nullable": true
+            }
           },
           "folders": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BoardFilesController_BoardFolderDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -7635,8 +7626,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -7654,8 +7644,7 @@
         "type": "object",
         "properties": {
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7664,8 +7653,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -7682,8 +7670,7 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -7692,8 +7679,7 @@
         "type": "object",
         "properties": {
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -7715,16 +7701,13 @@
             "format": "uuid"
           },
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7733,8 +7716,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7747,12 +7729,10 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "canAccessTeacherData": {
             "type": "boolean"
@@ -7771,12 +7751,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7811,8 +7789,7 @@
             "$ref": "#/components/schemas/CalendarEntryType"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startDate": {
             "type": "string",
@@ -7842,8 +7819,7 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/CalendarEntryType"
@@ -7872,8 +7848,7 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/CalendarEntryType"
@@ -7893,8 +7868,7 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/CalendarEntryType"
@@ -7936,8 +7910,7 @@
             "format": "uuid"
           },
           "staffName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "grantedAt": {
             "type": "string",
@@ -7964,8 +7937,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -7986,8 +7958,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -8005,8 +7976,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8019,8 +7989,7 @@
             "format": "uuid"
           },
           "newName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8032,23 +8001,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ClassesController_YearRollRenameEntry"
-            },
-            "nullable": true
+            }
           },
           "archive": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
-            },
-            "nullable": true
+            }
           },
           "create": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ClassesController_YearRollCreateEntry"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8072,8 +8038,7 @@
             "format": "uuid"
           },
           "resourceName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "weekday": {
             "$ref": "#/components/schemas/DayOfWeek"
@@ -8087,20 +8052,16 @@
             "format": "time"
           },
           "slotACourseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "slotBCourseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "slotAClassName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "slotBClassName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8118,8 +8079,7 @@
         "type": "object",
         "properties": {
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8139,12 +8099,10 @@
             "format": "uuid"
           },
           "senderName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sentAt": {
             "type": "string",
@@ -8170,8 +8128,7 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "lastMessageBody": {
             "type": "string",
@@ -8200,8 +8157,7 @@
             "format": "uuid"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8213,8 +8169,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ContactThreadsController_ContactMessageDto"
-            },
-            "nullable": true
+            }
           },
           "total": {
             "type": "integer",
@@ -8239,8 +8194,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -8260,8 +8214,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -8293,16 +8246,13 @@
         "type": "object",
         "properties": {
           "navn": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "skole": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "telefon": {
             "type": "string",
@@ -8319,8 +8269,7 @@
         "type": "object",
         "properties": {
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8329,8 +8278,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -8352,8 +8300,7 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8366,20 +8313,17 @@
             "format": "uuid"
           },
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sizeBytes": {
             "type": "integer",
             "format": "int64"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "courseId": {
             "type": "string",
@@ -8396,8 +8340,7 @@
             "nullable": true
           },
           "uploadedBy": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "uploadedAt": {
             "type": "string",
@@ -8413,15 +8356,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FilesController_FileDto"
-            },
-            "nullable": true
+            }
           },
           "folders": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FilesController_FolderDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8434,8 +8375,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -8462,8 +8402,7 @@
         "type": "object",
         "properties": {
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -8490,16 +8429,13 @@
             "format": "uuid"
           },
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8508,8 +8444,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8539,8 +8474,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportBoardMemberRow"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8564,8 +8498,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportWarning"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8625,8 +8558,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportRoomRow"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8650,8 +8582,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportWarning"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8663,8 +8594,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportStaffRow"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8688,8 +8618,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportWarning"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8724,12 +8653,10 @@
         "type": "object",
         "properties": {
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parent1": {
             "$ref": "#/components/schemas/ImportsController_ImportParentRow"
@@ -8747,8 +8674,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportStudentRow"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8784,8 +8710,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportWarning"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8798,8 +8723,7 @@
             "format": "int32"
           },
           "message": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8812,8 +8736,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "phone": {
             "type": "string",
@@ -8839,8 +8762,7 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -8959,16 +8881,13 @@
             "$ref": "#/components/schemas/RecipientType"
           },
           "senderName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sentAt": {
             "type": "string",
@@ -8990,8 +8909,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/RecipientType"
@@ -9143,12 +9061,10 @@
             "$ref": "#/components/schemas/RecipientType"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9168,16 +9084,13 @@
             "$ref": "#/components/schemas/RecipientType"
           },
           "recipientName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sentAt": {
             "type": "string",
@@ -9272,8 +9185,7 @@
             "$ref": "#/components/schemas/NotificationType"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -9296,8 +9208,7 @@
         "type": "object",
         "properties": {
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9306,8 +9217,7 @@
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -9320,12 +9230,10 @@
         "type": "object",
         "properties": {
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9338,8 +9246,7 @@
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9352,8 +9259,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "avatarUrl": {
             "type": "string",
@@ -9363,15 +9269,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ParentMeController_ParentClassDto"
-            },
-            "nullable": true
+            }
           },
           "students": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ParentMeController_ParentStudentDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -9384,8 +9288,7 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
@@ -9432,20 +9335,17 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "studentIds": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -9458,12 +9358,10 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "phone": {
             "type": "string",
@@ -9473,8 +9371,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ParentsController_StudentRefDto"
-            },
-            "nullable": true
+            }
           },
           "hasAccount": {
             "type": "boolean"
@@ -9497,16 +9394,14 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9527,8 +9422,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "capacity": {
             "type": "integer",
@@ -9546,8 +9440,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "capacity": {
             "type": "integer",
@@ -9568,24 +9461,20 @@
             "$ref": "#/components/schemas/DayOfWeek"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "courseColor": {
             "type": "string",
             "nullable": true
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
@@ -9629,8 +9518,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9639,8 +9527,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "copyTimeSlotsFromSchemaId": {
             "type": "string",
@@ -9654,8 +9541,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9670,15 +9556,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SchemasController_SlotDto"
-            },
-            "nullable": true
+            }
           },
           "conflicts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConflictInfo"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -9695,8 +9579,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startDate": {
             "type": "string",
@@ -9746,16 +9629,14 @@
             "format": "uuid"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "teacherId": {
             "type": "string",
             "format": "uuid"
           },
           "teacherName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "roomId": {
             "type": "string",
@@ -9785,15 +9666,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SchemasController_SlotDto"
-            },
-            "nullable": true
+            }
           },
           "conflicts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConflictInfo"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -9866,8 +9745,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -9888,8 +9766,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -9921,12 +9798,10 @@
             "format": "int32"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "label": {
             "type": "string",
@@ -9936,8 +9811,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SfoController_StaffRefDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -9950,8 +9824,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9964,12 +9837,10 @@
             "format": "int32"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "label": {
             "type": "string",
@@ -9986,8 +9857,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10011,8 +9881,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SfoWeekPlanController_SfoWeekPlanShiftDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10033,12 +9902,10 @@
             "format": "int32"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "label": {
             "type": "string",
@@ -10048,8 +9915,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SfoWeekPlanController_SfoStaffRefDto"
-            },
-            "nullable": true
+            }
           },
           "beskrivelse": {
             "type": "string",
@@ -10088,8 +9954,7 @@
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "gradeLevel": {
             "type": "integer",
@@ -10099,8 +9964,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_SubjectCoverageDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10112,8 +9976,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_ClassCoverageDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10122,8 +9985,7 @@
         "type": "object",
         "properties": {
           "category": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "weeklyHours": {
             "type": "number",
@@ -10142,8 +10004,7 @@
             "format": "double"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10165,8 +10026,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
             "type": "string",
@@ -10193,8 +10053,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
             "type": "string",
@@ -10217,12 +10076,10 @@
         "type": "object",
         "properties": {
           "token": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "keycloakSubject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10239,16 +10096,13 @@
             "format": "uuid"
           },
           "staffName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "expiresAt": {
             "type": "string",
@@ -10270,8 +10124,7 @@
         "type": "object",
         "properties": {
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10280,8 +10133,7 @@
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -10294,12 +10146,10 @@
         "type": "object",
         "properties": {
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10343,22 +10193,19 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatsController_HoursPerCourse"
-            },
-            "nullable": true
+            }
           },
           "hoursPerStaff": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatsController_HoursPerStaff"
-            },
-            "nullable": true
+            }
           },
           "unassignedClasses": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatsController_UnassignedClass"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10371,16 +10218,14 @@
             "format": "uuid"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "hours": {
             "type": "number",
@@ -10397,8 +10242,7 @@
             "format": "uuid"
           },
           "staffName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
@@ -10418,8 +10262,7 @@
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "emptySlots": {
             "type": "integer",
@@ -10435,8 +10278,7 @@
         "type": "object",
         "properties": {
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10445,8 +10287,7 @@
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -10459,12 +10300,10 @@
         "type": "object",
         "properties": {
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10477,16 +10316,14 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "isEnrolledInSfo": {
             "type": "boolean"
@@ -10502,8 +10339,7 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
@@ -10563,8 +10399,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -10602,8 +10437,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ModuleItemDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10616,8 +10450,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -10650,24 +10483,19 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminFirstName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminLastName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminPassword": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10680,16 +10508,13 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "accessToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "refreshToken": {
             "type": "string",
@@ -10740,15 +10565,13 @@
             "format": "time"
           },
           "activeDays": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "breaks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TimeSlotsController_BreakDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10817,15 +10640,13 @@
             "format": "time"
           },
           "activeDays": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "breaks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TimeSlotsController_UpsertBreakRequest"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -10859,8 +10680,7 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "registrationDeadline": {
             "type": "string",
@@ -10895,27 +10715,23 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "submittedByParentId": {
             "type": "string",
             "format": "uuid"
           },
           "submittedByParentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "selectedDates": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "note": {
             "type": "string",
@@ -10940,15 +10756,13 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "selectedDates": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "note": {
             "type": "string",
@@ -10966,8 +10780,7 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "registrationDeadline": {
             "type": "string",
@@ -10997,8 +10810,7 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "note": {
             "type": "string",
@@ -11015,8 +10827,7 @@
             "format": "uuid"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "registrationDeadline": {
             "type": "string",
@@ -11078,8 +10889,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
@@ -11095,15 +10905,13 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
           },
           "conflictDescription": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -11115,15 +10923,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/VikarController_AvailableStaffDto"
-            },
-            "nullable": true
+            }
           },
           "busy": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/VikarController_BusyStaffDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -11146,8 +10952,7 @@
             "format": "uuid"
           },
           "timeSlotLabel": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startTime": {
             "type": "string",
@@ -11167,8 +10972,7 @@
             "$ref": "#/components/schemas/DayOfWeek"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -11234,22 +11038,19 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_HolidayDayDto"
-            },
-            "nullable": true
+            }
           },
           "breakSlots": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_BreakTimeSlotDto"
-            },
-            "nullable": true
+            }
           },
           "slots": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_WeekPlanSlotDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -11273,8 +11074,7 @@
             "format": "uuid"
           },
           "timeSlotLabel": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startTime": {
             "type": "string",
@@ -11289,8 +11089,7 @@
             "format": "uuid"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "originalCourseId": {
             "type": "string",
@@ -11313,8 +11112,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_WeekPlanSlotFileDto"
-            },
-            "nullable": true
+            }
           },
           "substituteTeacherId": {
             "type": "string",
@@ -11353,12 +11151,10 @@
             "format": "uuid"
           },
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false

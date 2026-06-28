@@ -7,7 +7,7 @@ export type ClientOptions = {
 export type AbsenceControllerAbsenceReportDto = {
     id?: string;
     studentId?: string;
-    studentName?: string | null;
+    studentName?: string;
     date?: string;
     endDate?: string | null;
     reason?: string | null;
@@ -29,7 +29,7 @@ export type AdminControllerModuleOverrideRequest = {
 };
 
 export type BillingControllerCheckoutResponse = {
-    url?: string | null;
+    url?: string;
 };
 
 export type BillingControllerModuleRequest = {
@@ -44,74 +44,74 @@ export type BillingControllerSubscriptionDto = {
     isActive?: boolean;
     hasAccess?: boolean;
     trialDaysLeft?: number;
-    activeModules?: Array<string> | null;
+    activeModules?: Array<string>;
 };
 
 export type BoardFilesControllerBoardFileDto = {
     id?: string;
-    fileName?: string | null;
-    contentType?: string | null;
+    fileName?: string;
+    contentType?: string;
     sizeBytes?: number;
-    url?: string | null;
+    url?: string;
     folderId?: string | null;
-    uploadedBy?: string | null;
+    uploadedBy?: string;
     uploadedAt?: string;
 };
 
 export type BoardFilesControllerBoardFilesResponseDto = {
-    files?: Array<BoardFilesControllerBoardFileDto> | null;
-    folders?: Array<BoardFilesControllerBoardFolderDto> | null;
+    files?: Array<BoardFilesControllerBoardFileDto>;
+    folders?: Array<BoardFilesControllerBoardFolderDto>;
 };
 
 export type BoardFilesControllerBoardFolderDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     parentId?: string | null;
     createdAt?: string;
 };
 
 export type BoardFilesControllerConfirmRequest = {
-    confirmToken?: string | null;
+    confirmToken?: string;
 };
 
 export type BoardFilesControllerCreateFolderRequest = {
-    name?: string | null;
+    name?: string;
     parentId?: string | null;
 };
 
 export type BoardFilesControllerDeleteFolderResponse = {
-    warnings?: Array<string> | null;
+    warnings?: Array<string>;
 };
 
 export type BoardFilesControllerPresignRequest = {
-    fileName?: string | null;
+    fileName?: string;
     fileSizeBytes?: number;
     folderId?: string | null;
 };
 
 export type BoardFilesControllerPresignResponse = {
     fileId?: string;
-    uploadUrl?: string | null;
-    confirmToken?: string | null;
-    contentType?: string | null;
+    uploadUrl?: string;
+    confirmToken?: string;
+    contentType?: string;
 };
 
 export type BoardFilesControllerRenameFolderRequest = {
-    name?: string | null;
+    name?: string;
 };
 
 export type BoardMembersControllerBoardMemberDto = {
     id?: string;
-    name?: string | null;
-    email?: string | null;
+    name?: string;
+    email?: string;
     canAccessTeacherData?: boolean;
     hasAccount?: boolean;
     createdAt?: string;
 };
 
 export type BoardMembersControllerInviteBoardMemberRequest = {
-    name?: string | null;
-    email?: string | null;
+    name?: string;
+    email?: string;
 };
 
 export type BoardMembersControllerToggleTeacherDataRequest = {
@@ -123,7 +123,7 @@ export type BroadcastAudience = 'AllParents' | 'ClassParents' | 'SfoParents' | '
 export type CalendarControllerCalendarEntryDto = {
     id?: string;
     type?: CalendarEntryType;
-    title?: string | null;
+    title?: string;
     startDate?: string;
     endDate?: string;
     recurrenceRule?: string | null;
@@ -132,7 +132,7 @@ export type CalendarControllerCalendarEntryDto = {
 };
 
 export type CalendarControllerCreateCalendarEntryRequest = {
-    title?: string | null;
+    title?: string;
     type?: CalendarEntryType;
     startDate?: string;
     endDate?: string;
@@ -141,14 +141,14 @@ export type CalendarControllerCreateCalendarEntryRequest = {
 };
 
 export type CalendarControllerDefaultHolidayDto = {
-    title?: string | null;
+    title?: string;
     type?: CalendarEntryType;
     startDate?: string;
     endDate?: string;
 };
 
 export type CalendarControllerUpdateCalendarEntryRequest = {
-    title?: string | null;
+    title?: string;
     type?: CalendarEntryType;
     startDate?: string;
     endDate?: string;
@@ -160,7 +160,7 @@ export type CalendarEntryType = 'Ferie' | 'Lukkedag' | 'Arbejdsdag' | 'Begivenhe
 
 export type ClassPermissionsControllerClassPermissionDto = {
     staffId?: string;
-    staffName?: string | null;
+    staffName?: string;
     grantedAt?: string;
 };
 
@@ -170,31 +170,31 @@ export type ClassPermissionsControllerGrantPermissionRequest = {
 
 export type ClassesControllerClassDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     description?: string | null;
     gradeLevel?: number | null;
     isAccessibleToCurrentUser?: boolean;
 };
 
 export type ClassesControllerUpsertClassRequest = {
-    name?: string | null;
+    name?: string;
     description?: string | null;
     gradeLevel?: number | null;
 };
 
 export type ClassesControllerYearRollCreateEntry = {
-    name?: string | null;
+    name?: string;
 };
 
 export type ClassesControllerYearRollRenameEntry = {
     classId?: string;
-    newName?: string | null;
+    newName?: string;
 };
 
 export type ClassesControllerYearRollRequest = {
-    renames?: Array<ClassesControllerYearRollRenameEntry> | null;
-    archive?: Array<string> | null;
-    create?: Array<ClassesControllerYearRollCreateEntry> | null;
+    renames?: Array<ClassesControllerYearRollRenameEntry>;
+    archive?: Array<string>;
+    create?: Array<ClassesControllerYearRollCreateEntry>;
 };
 
 export type ConflictInfo = {
@@ -202,28 +202,28 @@ export type ConflictInfo = {
     slotAId?: string;
     slotBId?: string;
     resourceId?: string;
-    resourceName?: string | null;
+    resourceName?: string;
     weekday?: DayOfWeek;
     startTime?: string;
     endTime?: string;
-    slotACourseName?: string | null;
-    slotBCourseName?: string | null;
-    slotAClassName?: string | null;
-    slotBClassName?: string | null;
+    slotACourseName?: string;
+    slotBCourseName?: string;
+    slotAClassName?: string;
+    slotBClassName?: string;
 };
 
 export type ConflictType = 'TeacherDoubleBooked' | 'RoomDoubleBooked' | 'AideDoubleBooked' | 'SubstituteDoubleBooked';
 
 export type ContactThreadsControllerAddMessageRequest = {
-    body?: string | null;
+    body?: string;
 };
 
 export type ContactThreadsControllerContactMessageDto = {
     id?: string;
     senderType?: SenderType;
     senderId?: string;
-    senderName?: string | null;
-    body?: string | null;
+    senderName?: string;
+    body?: string;
     sentAt?: string;
     readAt?: string | null;
 };
@@ -231,7 +231,7 @@ export type ContactThreadsControllerContactMessageDto = {
 export type ContactThreadsControllerContactThreadDto = {
     id?: string;
     studentId?: string;
-    studentName?: string | null;
+    studentName?: string;
     lastMessageBody?: string | null;
     lastMessageSentAt?: string | null;
     lastMessageSenderType?: SenderType;
@@ -240,11 +240,11 @@ export type ContactThreadsControllerContactThreadDto = {
 
 export type ContactThreadsControllerFindOrCreateThreadRequest = {
     studentId?: string;
-    body?: string | null;
+    body?: string;
 };
 
 export type ContactThreadsControllerPagedResult1 = {
-    items?: Array<ContactThreadsControllerContactMessageDto> | null;
+    items?: Array<ContactThreadsControllerContactMessageDto>;
     total?: number;
     page?: number;
     pageSize?: number;
@@ -252,14 +252,14 @@ export type ContactThreadsControllerPagedResult1 = {
 
 export type CoursesControllerCourseDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     description?: string | null;
     color?: string | null;
     category?: SubjectCategory;
 };
 
 export type CoursesControllerUpsertCourseRequest = {
-    name?: string | null;
+    name?: string;
     description?: string | null;
     color?: string | null;
     category?: SubjectCategory;
@@ -268,48 +268,48 @@ export type CoursesControllerUpsertCourseRequest = {
 export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 
 export type DemoRequestControllerDemoRequestDto = {
-    navn?: string | null;
-    skole?: string | null;
-    email?: string | null;
+    navn?: string;
+    skole?: string;
+    email?: string;
     telefon?: string | null;
     besked?: string | null;
 };
 
 export type FilesControllerConfirmRequest = {
-    confirmToken?: string | null;
+    confirmToken?: string;
 };
 
 export type FilesControllerCreateFolderRequest = {
-    name?: string | null;
+    name?: string;
     parentId?: string | null;
     courseId?: string | null;
 };
 
 export type FilesControllerDeleteFolderResponse = {
-    warnings?: Array<string> | null;
+    warnings?: Array<string>;
 };
 
 export type FilesControllerFileDto = {
     id?: string;
-    fileName?: string | null;
-    contentType?: string | null;
+    fileName?: string;
+    contentType?: string;
     sizeBytes?: number;
-    url?: string | null;
+    url?: string;
     courseId?: string | null;
     courseName?: string | null;
     folderId?: string | null;
-    uploadedBy?: string | null;
+    uploadedBy?: string;
     uploadedAt?: string;
 };
 
 export type FilesControllerFilesResponseDto = {
-    files?: Array<FilesControllerFileDto> | null;
-    folders?: Array<FilesControllerFolderDto> | null;
+    files?: Array<FilesControllerFileDto>;
+    folders?: Array<FilesControllerFolderDto>;
 };
 
 export type FilesControllerFolderDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     parentId?: string | null;
     courseId?: string | null;
     courseName?: string | null;
@@ -317,7 +317,7 @@ export type FilesControllerFolderDto = {
 };
 
 export type FilesControllerPresignRequest = {
-    fileName?: string | null;
+    fileName?: string;
     fileSizeBytes?: number;
     courseId?: string | null;
     folderId?: string | null;
@@ -325,13 +325,13 @@ export type FilesControllerPresignRequest = {
 
 export type FilesControllerPresignResponse = {
     fileId?: string;
-    uploadUrl?: string | null;
-    confirmToken?: string | null;
-    contentType?: string | null;
+    uploadUrl?: string;
+    confirmToken?: string;
+    contentType?: string;
 };
 
 export type FilesControllerRenameFolderRequest = {
-    name?: string | null;
+    name?: string;
 };
 
 export type ImportsControllerImportBoardMemberRow = {
@@ -341,14 +341,14 @@ export type ImportsControllerImportBoardMemberRow = {
 };
 
 export type ImportsControllerImportBoardMembersRequest = {
-    rows?: Array<ImportsControllerImportBoardMemberRow> | null;
+    rows?: Array<ImportsControllerImportBoardMemberRow>;
 };
 
 export type ImportsControllerImportBoardMembersResponse = {
     boardMembersCreated?: number;
     boardMembersUpdated?: number;
     boardMembersSkipped?: number;
-    warnings?: Array<ImportsControllerImportWarning> | null;
+    warnings?: Array<ImportsControllerImportWarning>;
 };
 
 export type ImportsControllerImportParentRow = {
@@ -367,25 +367,25 @@ export type ImportsControllerImportRoomRow = {
 };
 
 export type ImportsControllerImportRoomsRequest = {
-    rows?: Array<ImportsControllerImportRoomRow> | null;
+    rows?: Array<ImportsControllerImportRoomRow>;
 };
 
 export type ImportsControllerImportRoomsResponse = {
     roomsCreated?: number;
     roomsUpdated?: number;
     roomsSkipped?: number;
-    warnings?: Array<ImportsControllerImportWarning> | null;
+    warnings?: Array<ImportsControllerImportWarning>;
 };
 
 export type ImportsControllerImportStaffRequest = {
-    rows?: Array<ImportsControllerImportStaffRow> | null;
+    rows?: Array<ImportsControllerImportStaffRow>;
 };
 
 export type ImportsControllerImportStaffResponse = {
     staffCreated?: number;
     staffUpdated?: number;
     staffSkipped?: number;
-    warnings?: Array<ImportsControllerImportWarning> | null;
+    warnings?: Array<ImportsControllerImportWarning>;
 };
 
 export type ImportsControllerImportStaffRow = {
@@ -397,14 +397,14 @@ export type ImportsControllerImportStaffRow = {
 };
 
 export type ImportsControllerImportStudentRow = {
-    className?: string | null;
-    studentName?: string | null;
+    className?: string;
+    studentName?: string;
     parent1?: ImportsControllerImportParentRow;
     parent2?: ImportsControllerImportParentRow;
 };
 
 export type ImportsControllerImportStudentsAndParentsRequest = {
-    rows?: Array<ImportsControllerImportStudentRow> | null;
+    rows?: Array<ImportsControllerImportStudentRow>;
 };
 
 export type ImportsControllerImportStudentsAndParentsResponse = {
@@ -414,23 +414,23 @@ export type ImportsControllerImportStudentsAndParentsResponse = {
     parentsCreated?: number;
     parentsUpdated?: number;
     parentStudentLinksCreated?: number;
-    warnings?: Array<ImportsControllerImportWarning> | null;
+    warnings?: Array<ImportsControllerImportWarning>;
 };
 
 export type ImportsControllerImportWarning = {
     row?: number;
-    message?: string | null;
+    message?: string;
 };
 
 export type KontaktControllerKontaktParentDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     phone?: string | null;
     address?: string | null;
     postalCode?: string | null;
     city?: string | null;
     avatarUrl?: string | null;
-    studentNames?: Array<string> | null;
+    studentNames?: Array<string>;
 };
 
 export type MessagesControllerGroupPreviewDto = {
@@ -455,16 +455,16 @@ export type MessagesControllerInboxMessageDto = {
     id?: string;
     senderId?: string;
     senderType?: RecipientType;
-    senderName?: string | null;
-    subject?: string | null;
-    body?: string | null;
+    senderName?: string;
+    subject?: string;
+    body?: string;
     sentAt?: string;
     readAt?: string | null;
 };
 
 export type MessagesControllerRecipientDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     type?: RecipientType;
     avatarUrl?: string | null;
 };
@@ -496,17 +496,17 @@ export type MessagesControllerSendGroupMessageRequest = {
 export type MessagesControllerSendMessageRequest = {
     recipientId?: string;
     recipientType?: RecipientType;
-    subject?: string | null;
-    body?: string | null;
+    subject?: string;
+    body?: string;
 };
 
 export type MessagesControllerSentMessageDto = {
     id?: string;
     recipientId?: string;
     recipientType?: RecipientType;
-    recipientName?: string | null;
-    subject?: string | null;
-    body?: string | null;
+    recipientName?: string;
+    subject?: string;
+    body?: string;
     sentAt?: string;
     readAt?: string | null;
     isGroup?: boolean;
@@ -537,42 +537,42 @@ export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanCha
 export type NotificationsControllerNotificationDto = {
     id?: string;
     type?: NotificationType;
-    body?: string | null;
+    body?: string;
     createdAt?: string;
     readAt?: string | null;
     referenceId?: string | null;
 };
 
 export type ParentMeControllerAvatarConfirmRequest = {
-    objectKey?: string | null;
+    objectKey?: string;
 };
 
 export type ParentMeControllerAvatarPresignRequest = {
-    contentType?: string | null;
+    contentType?: string;
     fileSizeBytes?: number;
 };
 
 export type ParentMeControllerAvatarPresignResponse = {
-    uploadUrl?: string | null;
-    objectKey?: string | null;
+    uploadUrl?: string;
+    objectKey?: string;
 };
 
 export type ParentMeControllerParentClassDto = {
     classId?: string;
-    className?: string | null;
+    className?: string;
 };
 
 export type ParentMeControllerParentMeDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     avatarUrl?: string | null;
-    classes?: Array<ParentMeControllerParentClassDto> | null;
-    students?: Array<ParentMeControllerParentStudentDto> | null;
+    classes?: Array<ParentMeControllerParentClassDto>;
+    students?: Array<ParentMeControllerParentStudentDto>;
 };
 
 export type ParentMeControllerParentStudentDto = {
     studentId?: string;
-    studentName?: string | null;
+    studentName?: string;
     classId?: string;
 };
 
@@ -589,17 +589,17 @@ export type ParentsControllerAdresseBeskyttelseRequest = {
 };
 
 export type ParentsControllerInviteParentRequest = {
-    name?: string | null;
-    email?: string | null;
-    studentIds?: Array<string> | null;
+    name?: string;
+    email?: string;
+    studentIds?: Array<string>;
 };
 
 export type ParentsControllerParentDto = {
     id?: string;
-    name?: string | null;
-    email?: string | null;
+    name?: string;
+    email?: string;
     phone?: string | null;
-    students?: Array<ParentsControllerStudentRefDto> | null;
+    students?: Array<ParentsControllerStudentRefDto>;
     hasAccount?: boolean;
     createdAt?: string;
     adresseBeskyttet?: boolean;
@@ -607,33 +607,33 @@ export type ParentsControllerParentDto = {
 
 export type ParentsControllerStudentRefDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     classId?: string;
-    className?: string | null;
+    className?: string;
 };
 
 export type RecipientType = 'Parent' | 'Staff' | 'Board';
 
 export type RoomsControllerRoomDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     capacity?: number | null;
     description?: string | null;
 };
 
 export type RoomsControllerUpsertRoomRequest = {
-    name?: string | null;
+    name?: string;
     capacity?: number | null;
     description?: string | null;
 };
 
 export type SchedulesControllerScheduleSlotDto = {
     weekday?: DayOfWeek;
-    startTime?: string | null;
-    endTime?: string | null;
-    courseName?: string | null;
+    startTime?: string;
+    endTime?: string;
+    courseName?: string;
     courseColor?: string | null;
-    className?: string | null;
+    className?: string;
     classId?: string;
     schemaId?: string;
     roomId?: string | null;
@@ -645,28 +645,28 @@ export type SchedulesControllerScheduleSlotDto = {
 };
 
 export type SchemasControllerCopySchemaRequest = {
-    name?: string | null;
+    name?: string;
 };
 
 export type SchemasControllerCreateSchemaRequest = {
-    name?: string | null;
+    name?: string;
     copyTimeSlotsFromSchemaId?: string | null;
 };
 
 export type SchemasControllerRenameSchemaRequest = {
-    name?: string | null;
+    name?: string;
 };
 
 export type SchemasControllerSchemaDetailDto = {
     schema?: SchemasControllerSchemaDto;
-    slots?: Array<SchemasControllerSlotDto> | null;
-    conflicts?: Array<ConflictInfo> | null;
+    slots?: Array<SchemasControllerSlotDto>;
+    conflicts?: Array<ConflictInfo>;
 };
 
 export type SchemasControllerSchemaDto = {
     id?: string;
     classId?: string;
-    name?: string | null;
+    name?: string;
     startDate?: string | null;
     endDate?: string | null;
 };
@@ -681,9 +681,9 @@ export type SchemasControllerSlotDto = {
     timeSlotId?: string;
     weekday?: DayOfWeek;
     courseId?: string;
-    courseName?: string | null;
+    courseName?: string;
     teacherId?: string;
-    teacherName?: string | null;
+    teacherName?: string;
     roomId?: string | null;
     roomName?: string | null;
     aideId?: string | null;
@@ -691,8 +691,8 @@ export type SchemasControllerSlotDto = {
 };
 
 export type SchemasControllerSlotsAndConflictsDto = {
-    slots?: Array<SchemasControllerSlotDto> | null;
-    conflicts?: Array<ConflictInfo> | null;
+    slots?: Array<SchemasControllerSlotDto>;
+    conflicts?: Array<ConflictInfo>;
 };
 
 export type SchemasControllerUpsertSlotRequest = {
@@ -715,14 +715,14 @@ export type SchoolsControllerOnboardingStatusDto = {
 };
 
 export type SchoolsControllerSchoolSettingsDto = {
-    name?: string | null;
+    name?: string;
     contactEmail?: string | null;
     contactPhone?: string | null;
     logoUrl?: string | null;
 };
 
 export type SchoolsControllerUpdateSchoolSettingsRequest = {
-    name?: string | null;
+    name?: string;
     contactEmail?: string | null;
     contactPhone?: string | null;
 };
@@ -732,44 +732,44 @@ export type SenderType = 'Parent' | 'Staff';
 export type SfoControllerSfoShiftDto = {
     id?: string;
     dayOfWeek?: number;
-    startTime?: string | null;
-    endTime?: string | null;
+    startTime?: string;
+    endTime?: string;
     label?: string | null;
-    staff?: Array<SfoControllerStaffRefDto> | null;
+    staff?: Array<SfoControllerStaffRefDto>;
 };
 
 export type SfoControllerStaffRefDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
 };
 
 export type SfoControllerUpsertSfoShiftRequest = {
     dayOfWeek?: number;
-    startTime?: string | null;
-    endTime?: string | null;
+    startTime?: string;
+    endTime?: string;
     label?: string | null;
 };
 
 export type SfoWeekPlanControllerSfoStaffRefDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
 };
 
 export type SfoWeekPlanControllerSfoWeekPlanDto = {
     id?: string;
     isoYear?: number;
     isoWeek?: number;
-    shifts?: Array<SfoWeekPlanControllerSfoWeekPlanShiftDto> | null;
+    shifts?: Array<SfoWeekPlanControllerSfoWeekPlanShiftDto>;
 };
 
 export type SfoWeekPlanControllerSfoWeekPlanShiftDto = {
     id?: string;
     sfoShiftId?: string;
     dayOfWeek?: number;
-    startTime?: string | null;
-    endTime?: string | null;
+    startTime?: string;
+    endTime?: string;
     label?: string | null;
-    staff?: Array<SfoWeekPlanControllerSfoStaffRefDto> | null;
+    staff?: Array<SfoWeekPlanControllerSfoStaffRefDto>;
     beskrivelse?: string | null;
 };
 
@@ -782,22 +782,22 @@ export type SfoWeekPlanControllerUpsertSfoWeekPlanShiftRequest = {
 
 export type StaaMaalMedControllerClassCoverageDto = {
     classId?: string;
-    className?: string | null;
+    className?: string;
     gradeLevel?: number;
-    subjects?: Array<StaaMaalMedControllerSubjectCoverageDto> | null;
+    subjects?: Array<StaaMaalMedControllerSubjectCoverageDto>;
 };
 
 export type StaaMaalMedControllerCoverageResponseDto = {
-    classes?: Array<StaaMaalMedControllerClassCoverageDto> | null;
+    classes?: Array<StaaMaalMedControllerClassCoverageDto>;
 };
 
 export type StaaMaalMedControllerSubjectCoverageDto = {
-    category?: string | null;
+    category?: string;
     weeklyHours?: number;
     vejledendeWeeklyHours?: number;
     annualHours?: number;
     vejledendeAnnualHours?: number;
-    status?: string | null;
+    status?: string;
 };
 
 export type StaffControllerPatchAdminPermissionRequest = {
@@ -806,7 +806,7 @@ export type StaffControllerPatchAdminPermissionRequest = {
 
 export type StaffControllerStaffDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     email?: string | null;
     phone?: string | null;
     role?: StaffRole;
@@ -815,7 +815,7 @@ export type StaffControllerStaffDto = {
 };
 
 export type StaffControllerUpsertStaffRequest = {
-    name?: string | null;
+    name?: string;
     email?: string | null;
     phone?: string | null;
     role?: StaffRole;
@@ -823,33 +823,33 @@ export type StaffControllerUpsertStaffRequest = {
 };
 
 export type StaffInvitationsControllerAcceptInvitationRequest = {
-    token?: string | null;
-    keycloakSubject?: string | null;
+    token?: string;
+    keycloakSubject?: string;
 };
 
 export type StaffInvitationsControllerInvitationDto = {
     id?: string;
     staffId?: string;
-    staffName?: string | null;
-    email?: string | null;
-    status?: string | null;
+    staffName?: string;
+    email?: string;
+    status?: string;
     expiresAt?: string;
     acceptedAt?: string | null;
     createdAt?: string;
 };
 
 export type StaffMeControllerAvatarConfirmRequest = {
-    objectKey?: string | null;
+    objectKey?: string;
 };
 
 export type StaffMeControllerAvatarPresignRequest = {
-    contentType?: string | null;
+    contentType?: string;
     fileSizeBytes?: number;
 };
 
 export type StaffMeControllerAvatarPresignResponse = {
-    uploadUrl?: string | null;
-    objectKey?: string | null;
+    uploadUrl?: string;
+    objectKey?: string;
 };
 
 export type StaffRole = 'Teacher' | 'Aide' | 'Substitute';
@@ -861,58 +861,58 @@ export type StatsControllerDashboardStats = {
     roomCount?: number;
     schemasComplete?: number;
     schemasTotal?: number;
-    hoursPerCourse?: Array<StatsControllerHoursPerCourse> | null;
-    hoursPerStaff?: Array<StatsControllerHoursPerStaff> | null;
-    unassignedClasses?: Array<StatsControllerUnassignedClass> | null;
+    hoursPerCourse?: Array<StatsControllerHoursPerCourse>;
+    hoursPerStaff?: Array<StatsControllerHoursPerStaff>;
+    unassignedClasses?: Array<StatsControllerUnassignedClass>;
 };
 
 export type StatsControllerHoursPerCourse = {
     courseId?: string;
-    courseName?: string | null;
+    courseName?: string;
     classId?: string;
-    className?: string | null;
+    className?: string;
     hours?: number;
 };
 
 export type StatsControllerHoursPerStaff = {
     staffId?: string;
-    staffName?: string | null;
+    staffName?: string;
     role?: StaffRole;
     hours?: number;
 };
 
 export type StatsControllerUnassignedClass = {
     classId?: string;
-    className?: string | null;
+    className?: string;
     emptySlots?: number;
     hasSchema?: boolean;
 };
 
 export type StudentsControllerAvatarConfirmRequest = {
-    objectKey?: string | null;
+    objectKey?: string;
 };
 
 export type StudentsControllerAvatarPresignRequest = {
-    contentType?: string | null;
+    contentType?: string;
     fileSizeBytes?: number;
 };
 
 export type StudentsControllerAvatarPresignResponse = {
-    uploadUrl?: string | null;
-    objectKey?: string | null;
+    uploadUrl?: string;
+    objectKey?: string;
 };
 
 export type StudentsControllerStudentDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     classId?: string;
-    className?: string | null;
+    className?: string;
     isEnrolledInSfo?: boolean;
     createdAt?: string;
 };
 
 export type StudentsControllerUpsertStudentRequest = {
-    name?: string | null;
+    name?: string;
     classId?: string;
     isEnrolledInSfo?: boolean;
 };
@@ -925,7 +925,7 @@ export type SubscriptionStatus = 'Trialing' | 'Active' | 'PastDue' | 'Canceled' 
 
 export type TenantDetailDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     contactEmail?: string | null;
     contactPhone?: string | null;
     createdAt?: string;
@@ -934,12 +934,12 @@ export type TenantDetailDto = {
     stripeSubscriptionId?: string | null;
     trialEnd?: string;
     currentPeriodEnd?: string | null;
-    modules?: Array<ModuleItemDto> | null;
+    modules?: Array<ModuleItemDto>;
 };
 
 export type TenantListItemDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     contactEmail?: string | null;
     createdAt?: string;
     subscriptionStatus?: SubscriptionStatus;
@@ -949,18 +949,18 @@ export type TenantListItemDto = {
 };
 
 export type TenantsControllerCreateTenantRequest = {
-    name?: string | null;
-    adminEmail?: string | null;
-    adminFirstName?: string | null;
-    adminLastName?: string | null;
-    adminPassword?: string | null;
+    name?: string;
+    adminEmail?: string;
+    adminFirstName?: string;
+    adminLastName?: string;
+    adminPassword?: string;
 };
 
 export type TenantsControllerTenantCreatedDto = {
     id?: string;
-    name?: string | null;
-    adminEmail?: string | null;
-    accessToken?: string | null;
+    name?: string;
+    adminEmail?: string;
+    accessToken?: string;
     refreshToken?: string | null;
     expiresIn?: number;
 };
@@ -976,8 +976,8 @@ export type TimeSlotsControllerTemplateDto = {
     lessonDurationMinutes?: number;
     dayStartTime?: string;
     dayEndTime?: string;
-    activeDays?: string | null;
-    breaks?: Array<TimeSlotsControllerBreakDto> | null;
+    activeDays?: string;
+    breaks?: Array<TimeSlotsControllerBreakDto>;
 };
 
 export type TimeSlotsControllerTimeSlotDto = {
@@ -999,8 +999,8 @@ export type TimeSlotsControllerUpsertTemplateRequest = {
     lessonDurationMinutes?: number;
     dayStartTime?: string;
     dayEndTime?: string;
-    activeDays?: string | null;
-    breaks?: Array<TimeSlotsControllerUpsertBreakRequest> | null;
+    activeDays?: string;
+    breaks?: Array<TimeSlotsControllerUpsertBreakRequest>;
 };
 
 export type TimeSlotsControllerUpsertTimeSlotRequest = {
@@ -1012,7 +1012,7 @@ export type TimeSlotsControllerUpsertTimeSlotRequest = {
 };
 
 export type VacationRegistrationControllerCreateWindowRequest = {
-    title?: string | null;
+    title?: string;
     registrationDeadline?: string;
     careStartDate?: string;
     careEndDate?: string;
@@ -1023,11 +1023,11 @@ export type VacationRegistrationControllerCreateWindowRequest = {
 export type VacationRegistrationControllerEntryDto = {
     id?: string;
     studentId?: string;
-    studentName?: string | null;
-    className?: string | null;
+    studentName?: string;
+    className?: string;
     submittedByParentId?: string;
-    submittedByParentName?: string | null;
-    selectedDates?: Array<string> | null;
+    submittedByParentName?: string;
+    selectedDates?: Array<string>;
     note?: string | null;
     submittedAt?: string;
     updatedAt?: string;
@@ -1035,14 +1035,14 @@ export type VacationRegistrationControllerEntryDto = {
 
 export type VacationRegistrationControllerMyEntryDto = {
     studentId?: string;
-    studentName?: string | null;
-    selectedDates?: Array<string> | null;
+    studentName?: string;
+    selectedDates?: Array<string>;
     note?: string | null;
     submittedAt?: string | null;
 };
 
 export type VacationRegistrationControllerUpdateWindowRequest = {
-    title?: string | null;
+    title?: string;
     registrationDeadline?: string;
     careStartDate?: string;
     careEndDate?: string;
@@ -1051,13 +1051,13 @@ export type VacationRegistrationControllerUpdateWindowRequest = {
 };
 
 export type VacationRegistrationControllerUpsertEntryRequest = {
-    selectedDates?: Array<string> | null;
+    selectedDates?: Array<string>;
     note?: string | null;
 };
 
 export type VacationRegistrationControllerWindowDto = {
     id?: string;
-    title?: string | null;
+    title?: string;
     registrationDeadline?: string;
     careStartDate?: string;
     careEndDate?: string;
@@ -1076,20 +1076,20 @@ export type VikarControllerAssignSubstituteRequest = {
 
 export type VikarControllerAvailableStaffDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     role?: StaffRole;
 };
 
 export type VikarControllerBusyStaffDto = {
     id?: string;
-    name?: string | null;
+    name?: string;
     role?: StaffRole;
-    conflictDescription?: string | null;
+    conflictDescription?: string;
 };
 
 export type VikarControllerStaffAvailabilityDto = {
-    available?: Array<VikarControllerAvailableStaffDto> | null;
-    busy?: Array<VikarControllerBusyStaffDto> | null;
+    available?: Array<VikarControllerAvailableStaffDto>;
+    busy?: Array<VikarControllerBusyStaffDto>;
 };
 
 export type WeekPlanControllerAddFileToSlotRequest = {
@@ -1098,14 +1098,14 @@ export type WeekPlanControllerAddFileToSlotRequest = {
 
 export type WeekPlanControllerBreakTimeSlotDto = {
     timeSlotId?: string;
-    timeSlotLabel?: string | null;
+    timeSlotLabel?: string;
     startTime?: string;
     endTime?: string;
 };
 
 export type WeekPlanControllerHolidayDayDto = {
     weekday?: DayOfWeek;
-    title?: string | null;
+    title?: string;
 };
 
 export type WeekPlanControllerUpsertWeekPlanSlotRequest = {
@@ -1124,9 +1124,9 @@ export type WeekPlanControllerWeekPlanDto = {
     weekEndDate?: string;
     isHolidayWeek?: boolean;
     holidayTitle?: string | null;
-    holidayDays?: Array<WeekPlanControllerHolidayDayDto> | null;
-    breakSlots?: Array<WeekPlanControllerBreakTimeSlotDto> | null;
-    slots?: Array<WeekPlanControllerWeekPlanSlotDto> | null;
+    holidayDays?: Array<WeekPlanControllerHolidayDayDto>;
+    breakSlots?: Array<WeekPlanControllerBreakTimeSlotDto>;
+    slots?: Array<WeekPlanControllerWeekPlanSlotDto>;
 };
 
 export type WeekPlanControllerWeekPlanSlotDto = {
@@ -1134,16 +1134,16 @@ export type WeekPlanControllerWeekPlanSlotDto = {
     schemaSlotId?: string;
     weekday?: DayOfWeek;
     timeSlotId?: string;
-    timeSlotLabel?: string | null;
+    timeSlotLabel?: string;
     startTime?: string;
     endTime?: string;
     courseId?: string;
-    courseName?: string | null;
+    courseName?: string;
     originalCourseId?: string | null;
     originalCourseName?: string | null;
     beskrivelse?: string | null;
     lektier?: string | null;
-    files?: Array<WeekPlanControllerWeekPlanSlotFileDto> | null;
+    files?: Array<WeekPlanControllerWeekPlanSlotFileDto>;
     substituteTeacherId?: string | null;
     substituteTeacherName?: string | null;
     substituteAideId?: string | null;
@@ -1154,8 +1154,8 @@ export type WeekPlanControllerWeekPlanSlotDto = {
 export type WeekPlanControllerWeekPlanSlotFileDto = {
     id?: string;
     schoolFileId?: string;
-    fileName?: string | null;
-    url?: string | null;
+    fileName?: string;
+    url?: string;
 };
 
 export type GetApiV1AbsenceData = {
