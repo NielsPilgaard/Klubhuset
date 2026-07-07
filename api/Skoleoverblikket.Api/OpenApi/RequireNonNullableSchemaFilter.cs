@@ -10,27 +10,27 @@ namespace Skoleoverblikket.Api.OpenApi;
 /// </summary>
 public sealed class RequireNonNullableSchemaFilter : ISchemaFilter
 {
-    public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
-    {
-        if (schema is not OpenApiSchema concreteSchema || schema.Properties is not { Count: > 0 })
-        {
-            return;
-        }
+	public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
+	{
+		if (schema is not OpenApiSchema concreteSchema || schema.Properties is not { Count: > 0 })
+		{
+			return;
+		}
 
-        foreach (var (name, property) in schema.Properties)
-        {
-            // Only promote properties that have an explicit primitive type (no $ref, no array-of-$ref)
-            bool hasPrimitiveType = property.Type is not null
-                && property is not OpenApiSchemaReference
-                && property.Items is null;
+		foreach (var (name, property) in schema.Properties)
+		{
+			// Only promote properties that have an explicit primitive type (no $ref, no array-of-$ref)
+			bool hasPrimitiveType = property.Type is not null
+				&& property is not OpenApiSchemaReference
+				&& property.Items is null;
 
-            bool isNullable = property.Type is not null
-                && (property.Type.Value & JsonSchemaType.Null) != 0;
+			bool isNullable = property.Type is not null
+				&& (property.Type.Value & JsonSchemaType.Null) != 0;
 
-            if (hasPrimitiveType && !isNullable)
-            {
-                concreteSchema.Required?.Add(name);
-            }
-        }
-    }
+			if (hasPrimitiveType && !isNullable)
+			{
+				concreteSchema.Required?.Add(name);
+			}
+		}
+	}
 }

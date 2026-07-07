@@ -26,7 +26,7 @@ public sealed class VikarTests(ApiFactory factory)
 	private const int TestYear = 2025;
 	private const int TestWeek = 10;
 
-	[Before(Class)]
+	[Before(HookType.Class)]
 	public async Task SetUp()
 	{
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);

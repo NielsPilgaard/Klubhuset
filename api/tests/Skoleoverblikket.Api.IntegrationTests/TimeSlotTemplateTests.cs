@@ -26,7 +26,7 @@ public sealed class TimeSlotTemplateTests(ApiFactory factory)
 	private HttpClient _client = null!;
 	private Guid _classId;
 
-	[Before(Class)]
+	[Before(HookType.Class)]
 	public async Task SetUp()
 	{
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);

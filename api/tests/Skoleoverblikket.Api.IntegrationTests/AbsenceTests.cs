@@ -17,7 +17,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - GET /: admin list with optional class filter.
 ///   - DELETE: parent cancels own Reported absence; cannot cancel already-confirmed.
 /// </summary>
-public sealed class AbsenceTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class AbsenceTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -25,26 +26,18 @@ public sealed class AbsenceTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(Test)]
+    [Before(HookType.Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "admin-subject");
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────────
@@ -52,6 +45,7 @@ public sealed class AbsenceTests
     private HttpClient CreateStaffClient(string subject, bool isAdmin = false)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", isAdmin ? "admin" : "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -60,6 +54,7 @@ public sealed class AbsenceTests
     private HttpClient CreateParentClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -72,7 +67,7 @@ public sealed class AbsenceTests
         var student = new Student
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             ClassId = classId,
         };
@@ -89,13 +84,12 @@ public sealed class AbsenceTests
         var parent = new Parent
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Email = $"{keycloakSubject}@test.dk",
             KeycloakSubject = keycloakSubject,
         };
 
-        // Link parent → student via the join table
         var studentRef = await db.Students.FindAsync(studentId);
         if (studentRef is not null)
         {
@@ -116,7 +110,7 @@ public sealed class AbsenceTests
         var report = new AbsenceReport
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             StudentId = studentId,
             ReportedByParentId = parentId,
             Date = date ?? DateOnly.FromDateTime(DateTime.UtcNow),
@@ -134,7 +128,7 @@ public sealed class AbsenceTests
         var perm = new ClassPermission
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             ClassId = classId,
             StaffId = staffId,
         };
@@ -149,9 +143,9 @@ public sealed class AbsenceTests
     public async Task ConfirmAbsence_AdminStaff_Returns204()
     {
         const string subject = "confirm-admin-staff";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: true, keycloakSubject: subject);
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "1.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "1.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync("confirm-admin-parent", student.Id);
         var report = await CreateAbsenceReportAsync(student.Id, parent.Id);
@@ -167,9 +161,9 @@ public sealed class AbsenceTests
     {
         // Non-admin staff + class has no ClassPermission rows → open access → 204
         const string subject = "confirm-nonadmin-open";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: false, keycloakSubject: subject);
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "2.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "2.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync("confirm-open-parent", student.Id);
         var report = await CreateAbsenceReportAsync(student.Id, parent.Id);
@@ -185,9 +179,9 @@ public sealed class AbsenceTests
     {
         // Non-admin staff + class has permissions + staff has one → 204
         const string subject = "confirm-nonadmin-with-perm";
-        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: false, keycloakSubject: subject);
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "3.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "3.a");
         await CreateClassPermissionAsync(klass.Id, staff.Id);
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync("confirm-perm-parent", student.Id);
@@ -204,12 +198,12 @@ public sealed class AbsenceTests
     {
         // Class has permission rows, but not for this staff member → 403
         const string subject = "confirm-nonadmin-no-perm";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: false, keycloakSubject: subject);
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "4.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "4.a");
 
         // Lock class to a different staff member to enable restricted mode
-        var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
         await CreateClassPermissionAsync(klass.Id, otherStaff.Id);
 
         var student = await CreateStudentAsync(klass.Id);
@@ -227,7 +221,7 @@ public sealed class AbsenceTests
     {
         // Authenticated user whose sub has no Staff row in DB → 403
         const string subject = "confirm-no-staff-record";
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "5.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "5.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync("confirm-no-staff-parent", student.Id);
         var report = await CreateAbsenceReportAsync(student.Id, parent.Id);
@@ -243,7 +237,7 @@ public sealed class AbsenceTests
     public async Task ConfirmAbsence_NotFound_Returns404()
     {
         const string subject = "confirm-notfound-staff";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: true, keycloakSubject: subject);
 
         using var client = CreateStaffClient(subject, isAdmin: true);
@@ -258,9 +252,9 @@ public sealed class AbsenceTests
     public async Task DismissAbsence_AdminStaff_Returns204()
     {
         const string subject = "dismiss-admin-staff";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: true, keycloakSubject: subject);
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "6.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "6.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync("dismiss-admin-parent", student.Id);
         var report = await CreateAbsenceReportAsync(student.Id, parent.Id);
@@ -276,11 +270,11 @@ public sealed class AbsenceTests
     {
         // Class has permission rows, but not for this staff member → 403
         const string subject = "dismiss-nonadmin-no-perm";
-        await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+        await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
             isAdmin: false, keycloakSubject: subject);
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "7.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "7.a");
 
-        var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
         await CreateClassPermissionAsync(klass.Id, otherStaff.Id);
 
         var student = await CreateStudentAsync(klass.Id);
@@ -298,7 +292,7 @@ public sealed class AbsenceTests
     [Test]
     public async Task GetAbsences_Admin_Returns200()
     {
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "8.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "8.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync("get-absences-parent", student.Id);
         await CreateAbsenceReportAsync(student.Id, parent.Id);
@@ -314,8 +308,8 @@ public sealed class AbsenceTests
     [Test]
     public async Task GetAbsences_FilterByClass_ReturnsOnlyMatchingStudents()
     {
-        var (targetClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "9.a");
-        var (otherClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "9.b");
+        var (targetClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "9.a");
+        var (otherClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "9.b");
 
         var targetStudent = await CreateStudentAsync(targetClass.Id, "Targeted Elev");
         var otherStudent = await CreateStudentAsync(otherClass.Id, "Other Elev");
@@ -341,7 +335,7 @@ public sealed class AbsenceTests
     public async Task CancelAbsence_OwnerInReportedStatus_Returns204()
     {
         const string parentSubject = "cancel-owner-parent";
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "10.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "10.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync(parentSubject, student.Id);
         var report = await CreateAbsenceReportAsync(student.Id, parent.Id, AbsenceStatus.Reported);
@@ -356,7 +350,7 @@ public sealed class AbsenceTests
     public async Task CancelAbsence_AlreadyConfirmed_Returns400()
     {
         const string parentSubject = "cancel-confirmed-parent";
-        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId, "11.a");
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId, "11.a");
         var student = await CreateStudentAsync(klass.Id);
         var parent = await CreateParentAsync(parentSubject, student.Id);
         var report = await CreateAbsenceReportAsync(student.Id, parent.Id, AbsenceStatus.Confirmed);

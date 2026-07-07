@@ -23,7 +23,7 @@ public sealed class KontaktTests(ApiFactory factory)
     private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(Class)]
+    [Before(HookType.Class)]
     public async Task SetUp()
     {
         await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);

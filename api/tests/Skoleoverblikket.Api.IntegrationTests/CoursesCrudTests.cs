@@ -13,7 +13,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Covers standard CRUD, admin-only authorization, 404 handling, name ordering,
 /// and cross-tenant isolation via the EF Core global query filter.
 /// </summary>
-public sealed class CoursesCrudTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class CoursesCrudTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -21,24 +22,17 @@ public sealed class CoursesCrudTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _client = null!;
 
-    [Before(Test)]
+    [Before(HookType.Class)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _client = _factory.CreateClient();
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _client.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
+        _client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+        _client.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
     }
 
     // -------------------------------------------------------------------------
@@ -250,13 +244,12 @@ public sealed class CoursesCrudTests
         // Arrange — create a course as the default tenant
         var created = await CreateCourseAsync("Fysik/kemi");
 
-        // Act — spin up a second factory with a different tenant
-        await using var factory2 = new ApiFactory();
-        await factory2.StartAsync();
-        var secondTenantId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-        await TestDataBuilder.CreateSchoolAsync(factory2.Services, secondTenantId, "Anden skole");
-        factory2.TenantContext.TenantId = secondTenantId;
-        using var client2 = factory2.CreateClient();
+        // Act — use shared factory with a different X-Test-TenantId header
+        var secondTenantId = Guid.NewGuid();
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, secondTenantId, "Anden skole");
+        using var client2 = _factory.CreateClient();
+        client2.DefaultRequestHeaders.Add("X-Test-TenantId", secondTenantId.ToString());
+        client2.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
 
         var listResponse = await client2.GetAsync("/api/v1/courses");
         await Assert.That(listResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);

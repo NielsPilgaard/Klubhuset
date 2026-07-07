@@ -10,7 +10,8 @@ using Skoleoverblikket.Api.Models;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
-public sealed class WeekPlanTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class WeekPlanTests(ApiFactory factory)
 {
 	// The API serializes enums as strings; use the same options when deserializing responses.
 	private static readonly JsonSerializerOptions JsonOpts = new()
@@ -19,29 +20,20 @@ public sealed class WeekPlanTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
-	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
 	// A fixed ISO week well away from year boundaries
 	private const int TestYear = 2025;
 	private const int TestWeek = 10;
 
-	[Before(Test)]
+	[Before(HookType.Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	[Test]
@@ -284,13 +276,11 @@ public sealed class WeekPlanTests
 			$"/api/v1/classes/{klass.Id}/ugeplan/slots?isoYear={TestYear}&isoWeek={TestWeek}",
 			new WeekPlanController.UpsertWeekPlanSlotRequest(schemaSlotId, "Tenant A beskrivelse", null, null));
 
-		// Switch to tenant B
-		var secondTenantId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-		await using var factory2 = new ApiFactory();
-		await factory2.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(factory2.Services, secondTenantId, "Anden skole");
-		factory2.TenantContext.TenantId = secondTenantId;
-		using var clientB = factory2.CreateClient();
+		// Switch to tenant B — use shared factory with a different X-Test-TenantId header
+		var secondTenantId = Guid.NewGuid();
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, secondTenantId, "Anden skole");
+		using var clientB = _factory.CreateClient();
+		clientB.DefaultRequestHeaders.Add("X-Test-TenantId", secondTenantId.ToString());
 
 		// Tenant B cannot see tenant A's class
 		var responseTenantB = await clientB.GetAsync($"/api/v1/classes/{klass.Id}/ugeplan?isoYear={TestYear}&isoWeek={TestWeek}");

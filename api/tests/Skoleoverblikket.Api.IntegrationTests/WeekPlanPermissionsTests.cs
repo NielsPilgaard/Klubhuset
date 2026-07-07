@@ -15,7 +15,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   4. ClassPermissions exist and teacher is assigned to the SchemaSlot → allowed.
 ///   5. ClassPermissions exist, teacher not assigned, no permission row → 403.
 /// </summary>
-public sealed class WeekPlanPermissionsTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class WeekPlanPermissionsTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -23,30 +24,21 @@ public sealed class WeekPlanPermissionsTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
-	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
 	private const int TestYear = 2025;
 	private const int TestWeek = 20;
 
-	[Before(Test)]
+	[Before(HookType.Class)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "admin-subject");
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	/// <summary>
@@ -58,6 +50,7 @@ public sealed class WeekPlanPermissionsTests
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId);
 
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", "random-teacher");
 
@@ -89,6 +82,7 @@ public sealed class WeekPlanPermissionsTests
 
 		// No ClassPermission rows → open class
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", teacherSubject);
 
@@ -127,6 +121,7 @@ public sealed class WeekPlanPermissionsTests
 			new { staffId = otherAdmin.Id });
 
 		using var teacherClient = _factory.CreateClient();
+		teacherClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		teacherClient.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		teacherClient.DefaultRequestHeaders.Add("X-Test-Subject", teacherSubject);
 
@@ -165,6 +160,7 @@ public sealed class WeekPlanPermissionsTests
 			new { staffId = teacher.Id });
 
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", teacherSubject);
 
@@ -203,6 +199,7 @@ public sealed class WeekPlanPermissionsTests
 			new { staffId = permittedOther.Id });
 
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", teacherSubject);
 

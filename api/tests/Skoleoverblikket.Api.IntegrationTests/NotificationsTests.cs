@@ -28,7 +28,7 @@ public sealed class NotificationsTests(ApiFactory factory)
     private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _client = null!;
 
-    [Before(Class)]
+    [Before(HookType.Class)]
     public async Task SetUp()
     {
         await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
