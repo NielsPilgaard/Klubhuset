@@ -35,6 +35,7 @@ public sealed class RoomScheduleTests(ApiFactory factory)
 		_client = _factory.CreateClient();
 		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
+		_client.DefaultRequestHeaders.Add("X-Test-Subject", "room-schedule-user");
 	}
 
 	[Test]
@@ -71,6 +72,7 @@ public sealed class RoomScheduleTests(ApiFactory factory)
 		using var adminClient = _factory.CreateClient();
 		adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
+		adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "room-schedule-admin");
 		var upsertResp = await adminClient.PutAsJsonAsync(
 			$"/api/v1/classes/{klass.Id}/schemas/{schema.Id}/slots",
 			new

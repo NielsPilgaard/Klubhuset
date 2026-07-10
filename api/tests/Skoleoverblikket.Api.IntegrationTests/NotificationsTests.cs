@@ -38,10 +38,11 @@ public sealed class NotificationsTests(ApiFactory factory)
 
     // ── Helpers ──────────────────────────────────────────────────────────────────
 
-    private HttpClient CreateStaffClient(string subject)
+    private HttpClient CreateStaffClient(string subject, string role = "user")
     {
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+        client.DefaultRequestHeaders.Add("X-Test-Roles", role);
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
     }
