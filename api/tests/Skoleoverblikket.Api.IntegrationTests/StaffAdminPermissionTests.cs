@@ -31,7 +31,7 @@ public sealed class StaffAdminPermissionTests(ApiFactory factory)
 	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
 
-	[Before(HookType.Class)]
+	[Before(Test)]
 	public async Task SetUp()
 	{
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);

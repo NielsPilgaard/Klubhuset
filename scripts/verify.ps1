@@ -91,7 +91,7 @@ if (-not $SkipDotnet) {
     if (-not $SkipTests) {
         Step "API integration tests" {
             Set-Location $RepoRoot
-            dotnet test --project api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --configuration Release --no-build
+            dotnet test --project api/tests/Skoleoverblikket.Api.IntegrationTests/Skoleoverblikket.Api.IntegrationTests.csproj --configuration Release --no-build -- --timeout 120s
         }
     }
 }

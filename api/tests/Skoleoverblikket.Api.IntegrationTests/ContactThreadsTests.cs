@@ -31,7 +31,7 @@ public sealed class ContactThreadsTests(ApiFactory factory)
     private readonly ApiFactory _factory = factory;
     private readonly Guid _tenantId = Guid.NewGuid();
 
-    [Before(HookType.Class)]
+    [Before(Test)]
     public async Task SetUp()
     {
         await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);

@@ -29,7 +29,8 @@ public sealed class RequireNonNullableSchemaFilter : ISchemaFilter
 
 			if (hasPrimitiveType && !isNullable)
 			{
-				concreteSchema.Required?.Add(name);
+				concreteSchema.Required ??= new HashSet<string>();
+				concreteSchema.Required.Add(name);
 			}
 		}
 	}

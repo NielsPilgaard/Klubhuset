@@ -28,7 +28,7 @@ public sealed class WeekPlanTests(ApiFactory factory)
 	private const int TestYear = 2025;
 	private const int TestWeek = 10;
 
-	[Before(HookType.Class)]
+	[Before(Test)]
 	public async Task SetUp()
 	{
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);

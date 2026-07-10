@@ -56,11 +56,14 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		var classCache = (await db.Classes
 			.Where(c => c.ArchivedAt == null)
 			.ToListAsync(cancellationToken))
-			.ToDictionary(c => c.Name.Trim().ToLowerInvariant());
+			.GroupBy(c => c.Name.Trim().ToLowerInvariant())
+			.ToDictionary(g => g.Key, g => g.First());
 
-		var existingStudents = await db.Students
+		var existingStudentsByClass = (await db.Students
 			.Select(s => new { s.Id, s.Name, s.ClassId })
-			.ToListAsync(cancellationToken);
+			.ToListAsync(cancellationToken))
+			.GroupBy(s => s.ClassId)
+			.ToDictionary(g => g.Key, g => g.ToList());
 
 		// Pre-load existing parents by email — skip ambiguous duplicates rather than throwing
 		var parentByEmail = (await db.Parents
@@ -99,8 +102,13 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 
 			// ── Student dedup ────────────────────────────────────────────
 			var studentName = row.StudentName.Trim();
-			var existingStudentMatch = existingStudents.FirstOrDefault(s =>
-				s.ClassId == klasse.Id &&
+			if (!existingStudentsByClass.TryGetValue(klasse.Id, out var classStudents))
+			{
+				classStudents = [];
+				existingStudentsByClass[klasse.Id] = classStudents;
+			}
+
+			var existingStudentMatch = classStudents.FirstOrDefault(s =>
 				string.Equals(s.Name, studentName, StringComparison.OrdinalIgnoreCase));
 
 			Student student;
@@ -124,7 +132,7 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 					ClassId = klasse.Id,
 				};
 				db.Students.Add(student);
-				existingStudents.Add(new { student.Id, student.Name, student.ClassId });
+				classStudents.Add(new { student.Id, student.Name, student.ClassId });
 				studentsCreated++;
 			}
 
@@ -284,7 +292,9 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		var existingByEmail = (await db.Staff
 			.Where(s => s.Email != null)
 			.ToListAsync(cancellationToken))
-			.ToDictionary(s => s.Email!.Trim().ToLowerInvariant());
+			.GroupBy(s => s.Email!.Trim().ToLowerInvariant())
+			.Where(g => g.Count() == 1)
+			.ToDictionary(g => g.Key, g => g.First());
 
 		// Group by name to detect duplicates — ambiguous matches are skipped with a warning
 		var existingByNameGroups = (await db.Staff.ToListAsync(cancellationToken))
@@ -464,7 +474,9 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		int roomsCreated = 0, roomsUpdated = 0, roomsSkipped = 0;
 
 		var existingByName = (await db.Rooms.ToListAsync(cancellationToken))
-			.ToDictionary(r => r.Name.Trim().ToLowerInvariant());
+			.GroupBy(r => r.Name.Trim().ToLowerInvariant())
+			.Where(g => g.Count() == 1)
+			.ToDictionary(g => g.Key, g => g.First());
 
 		int rowNum = 0;
 		foreach (var row in req.Rows)
@@ -635,9 +647,15 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 
 	private static bool IsValidEmail(string email)
 	{
-		var trimmed = email.Trim();
-		var at = trimmed.IndexOf('@');
-		return at > 0 && at < trimmed.Length - 1 && trimmed.LastIndexOf('.') > at + 1;
+		try
+		{
+			var address = new System.Net.Mail.MailAddress(email.Trim());
+			return address.Address == email.Trim();
+		}
+		catch (FormatException)
+		{
+			return false;
+		}
 	}
 
 	private static StaffRole ParseStaffRole(string? value, out string? warning)

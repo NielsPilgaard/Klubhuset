@@ -29,7 +29,7 @@ public sealed class VacationRegistrationTests(ApiFactory factory)
     private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
-    [Before(HookType.Class)]
+    [Before(Test)]
     public async Task SetUp()
     {
         await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
