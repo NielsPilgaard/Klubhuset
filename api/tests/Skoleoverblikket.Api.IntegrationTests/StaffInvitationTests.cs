@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Controllers;
 using Skoleoverblikket.Api.Data;
@@ -132,7 +133,7 @@ public sealed class StaffInvitationTests(ApiFactory factory)
         // Verify KeycloakSubject was persisted
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var updatedStaff = await db.Staff.FindAsync(staff.Id);
+        var updatedStaff = await db.Staff.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == staff.Id);
         await Assert.That(updatedStaff).IsNotNull();
         await Assert.That(updatedStaff!.KeycloakSubject).IsEqualTo(acceptingSubject);
     }

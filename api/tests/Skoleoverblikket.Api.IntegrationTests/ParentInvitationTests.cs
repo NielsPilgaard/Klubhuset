@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
@@ -132,7 +133,7 @@ public sealed class ParentInvitationTests(ApiFactory factory)
         // Verify KeycloakSubject was persisted on the parent
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var updatedParent = await db.Parents.FindAsync(parent.Id);
+        var updatedParent = await db.Parents.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == parent.Id);
         await Assert.That(updatedParent).IsNotNull();
         await Assert.That(updatedParent!.KeycloakSubject).IsEqualTo(acceptingSubject);
     }

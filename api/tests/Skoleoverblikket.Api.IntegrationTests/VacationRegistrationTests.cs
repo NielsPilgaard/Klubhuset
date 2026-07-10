@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Controllers;
 using Skoleoverblikket.Api.Data;
@@ -95,7 +96,7 @@ public sealed class VacationRegistrationTests(ApiFactory factory)
             KeycloakSubject = keycloakSubject,
         };
 
-        var studentRef = await db.Students.FindAsync(studentId);
+        var studentRef = await db.Students.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == studentId);
         if (studentRef is not null)
         {
             parent.Students.Add(studentRef);
