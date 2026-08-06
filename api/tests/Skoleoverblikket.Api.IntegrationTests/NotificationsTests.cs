@@ -26,14 +26,11 @@ public sealed class NotificationsTests(ApiFactory factory)
 
     private readonly ApiFactory _factory = factory;
     private readonly Guid _tenantId = Guid.NewGuid();
-    private HttpClient _client = null!;
 
     [Before(Test)]
     public async Task SetUp()
     {
         await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
-        _client = _factory.CreateClient();
-        _client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────

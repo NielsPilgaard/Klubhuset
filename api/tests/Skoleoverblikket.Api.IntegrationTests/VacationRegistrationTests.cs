@@ -40,6 +40,12 @@ public sealed class VacationRegistrationTests(ApiFactory factory)
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "vacation-admin-subject");
     }
 
+    [After(Test)]
+    public void TearDown()
+    {
+        _adminClient.Dispose();
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────────
 
     private HttpClient CreateParentClient(string subject)

@@ -561,12 +561,20 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		var warnings = new List<ImportWarning>();
 		int classesCreated = 0, classesUpdated = 0, classesSkipped = 0;
 
-		var existingByName = (await db.Classes
+		var classGroups = (await db.Classes
 			.Where(c => c.ArchivedAt == null)
 			.ToListAsync(cancellationToken))
 			.GroupBy(c => c.Name.Trim().ToLowerInvariant())
+			.ToList();
+
+		var existingByName = classGroups
 			.Where(g => g.Count() == 1)
 			.ToDictionary(g => g.Key, g => g.First());
+
+		var ambiguousNames = classGroups
+			.Where(g => g.Count() > 1)
+			.Select(g => g.Key)
+			.ToHashSet();
 
 		int rowNum = 0;
 		foreach (var row in req.Rows)
@@ -594,7 +602,13 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 			}
 
 			var nameKey = row.Name.Trim().ToLowerInvariant();
-			if (existingByName.TryGetValue(nameKey, out var existing))
+			if (ambiguousNames.Contains(nameKey))
+			{
+				classesSkipped++;
+				warnings.Add(new ImportWarning(rowNum,
+					$"Klasse '{row.Name}' findes flere gange — spring over for at undgå fejlmatch"));
+			}
+			else if (existingByName.TryGetValue(nameKey, out var existing))
 			{
 				if (!string.IsNullOrWhiteSpace(row.Description))
 				{

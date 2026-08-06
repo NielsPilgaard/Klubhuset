@@ -41,17 +41,17 @@ test.describe('ImportPage — spreadsheet paste import', () => {
     const className2 = `E2E-${stamp}B`
 
     // Two tab-separated rows pasted starting at the first "name" cell —
-    // mirrors copying a two-column block out of Excel.
+    // mirrors copying a three-column block out of Excel.
     await pasteIntoGrid(
       page,
       'paste-grid-0-name',
-      `${className1}\t3\nElevrig klasse\n${className2}\t4\tAnden klasse`
+      `${className1}\t3\tElevrig klasse\n${className2}\t4\tAnden klasse`
     )
 
     await expect(page.getByTestId('paste-grid-0-name')).toHaveValue(className1)
     await expect(page.getByTestId('paste-grid-0-gradeLevel')).toHaveValue('3')
-    await expect(page.getByTestId('paste-grid-1-name')).toHaveValue('Elevrig klasse')
-    await expect(page.getByTestId('paste-grid-2-name')).toHaveValue(className2)
+    await expect(page.getByTestId('paste-grid-0-description')).toHaveValue('Elevrig klasse')
+    await expect(page.getByTestId('paste-grid-1-name')).toHaveValue(className2)
 
     await expect(page.getByText(/klar til import/)).toBeVisible()
 

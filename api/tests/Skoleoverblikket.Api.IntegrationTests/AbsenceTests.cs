@@ -41,6 +41,12 @@ public sealed class AbsenceTests(ApiFactory factory)
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "admin-subject");
     }
 
+    [After(Test)]
+    public void TearDown()
+    {
+        _adminClient.Dispose();
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────────
 
     private HttpClient CreateStaffClient(string subject, bool isAdmin = false)
