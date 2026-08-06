@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PasteGrid, { type ColumnDef, type GridRow } from '../components/PasteGrid'
 import {
@@ -6,6 +7,7 @@ import {
   getApiV1Parents,
   getApiV1Staff,
   postApiV1ImportsBoardMembers,
+  postApiV1ImportsClasses,
   postApiV1ImportsRooms,
   postApiV1ImportsStaff,
   postApiV1ImportsStudentsAndParents,
@@ -15,6 +17,7 @@ import {
 } from '../api/generated/sdk.gen'
 import type {
   ImportsControllerImportBoardMembersResponse,
+  ImportsControllerImportClassesResponse,
   ImportsControllerImportRoomsResponse,
   ImportsControllerImportStaffResponse,
   ImportsControllerImportStudentsAndParentsResponse,
@@ -64,6 +67,12 @@ const STAFF_COLUMNS: ColumnDef[] = [
   { key: 'administrator', label: 'Administrator', placeholder: 'ja / nej' },
 ]
 
+const CLASS_COLUMNS: ColumnDef[] = [
+  { key: 'name', label: 'Klasse', required: true, placeholder: '2A' },
+  { key: 'gradeLevel', label: 'Klassetrin', type: 'number', placeholder: '2' },
+  { key: 'description', label: 'Beskrivelse', placeholder: 'Valgfri beskrivelse' },
+]
+
 const ROOM_COLUMNS: ColumnDef[] = [
   { key: 'name', label: 'Navn', required: true, placeholder: 'Lokale 12' },
   { key: 'description', label: 'Beskrivelse', placeholder: 'Valgfri beskrivelse' },
@@ -98,6 +107,10 @@ function countStaffRows(rows: GridRow[]) {
 }
 
 function countRoomRows(rows: GridRow[]) {
+  return rows.filter((r) => r.name?.trim()).length
+}
+
+function countClassRows(rows: GridRow[]) {
   return rows.filter((r) => r.name?.trim()).length
 }
 
@@ -653,6 +666,94 @@ function StaffTab() {
   )
 }
 
+// ── Tab: Klasser ───────────────────────────────────────────────────────────────
+
+function ClassesTab() {
+  const [rows, setRows] = useState<GridRow[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [result, setResult] = useState<ImportsControllerImportClassesResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const validCount = useMemo(() => countClassRows(rows), [rows])
+
+  async function handleImport() {
+    const payload = rows
+      .filter((r) => r.name?.trim())
+      .map((r) => ({
+        name: r.name.trim(),
+        description: r.description?.trim() || null,
+        gradeLevel: r.gradeLevel?.trim() || null,
+      }))
+
+    if (!payload.length) return
+    setIsLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const res = await postApiV1ImportsClasses({ body: { rows: payload } })
+      setResult(res.data!)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Der opstod en fejl')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+        <strong>Kun nødvendigt hvis du ikke importerer elever.</strong> Klasser oprettes automatisk
+        når du importerer elever under "Elever & forældre". Brug kun denne fane hvis du vil oprette
+        klasser, før du har en elevliste klar.
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          {validCount > 0 ? (
+            <span className="font-medium text-gray-900">
+              {validCount} klasse(r) klar til import
+            </span>
+          ) : (
+            'Ingen rækker klar — udfyld mindst klassenavn'
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={handleImport}
+          disabled={!validCount || isLoading}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isLoading ? 'Importerer…' : 'Importér'}
+        </button>
+      </div>
+
+      <PasteGrid columns={CLASS_COLUMNS} rows={rows} onChange={setRows} />
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-1">
+          <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
+          <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
+            <li>{result.classesCreated} klasse(r) oprettet</li>
+            {(result.classesUpdated ?? 0) > 0 && (
+              <li>{result.classesUpdated} klasse(r) opdateret</li>
+            )}
+            {(result.classesSkipped ?? 0) > 0 && (
+              <li>{result.classesSkipped} klasse(r) sprunget over</li>
+            )}
+          </ul>
+          <WarningList warnings={result.warnings ?? []} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Tab 3: Lokaler ────────────────────────────────────────────────────────────
 
 function RoomsTab() {
@@ -889,10 +990,11 @@ function BoardMembersTab() {
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
-type TabKey = 'students' | 'staff' | 'rooms' | 'board'
+type TabKey = 'students' | 'classes' | 'staff' | 'rooms' | 'board'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'students', label: 'Elever & forældre' },
+  { key: 'classes', label: 'Klasser (valgfri)' },
   { key: 'staff', label: 'Personale' },
   { key: 'rooms', label: 'Lokaler' },
   { key: 'board', label: 'Bestyrelsesmedlemmer' },
@@ -901,14 +1003,26 @@ const TABS: { key: TabKey; label: string }[] = [
 export default function ImportPage() {
   usePageTitle('Importer data')
   const [activeTab, setActiveTab] = useState<TabKey>('students')
+  const [searchParams] = useSearchParams()
+  const fraOpsaetning = searchParams.get('fraOpsaetning') === '1'
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-gray-900">Importer data</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Indsæt data fra Excel eller Google Sheets direkte i gitteret
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-gray-900">Importer data</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Indsæt data fra Excel eller Google Sheets direkte i gitteret
+          </p>
+        </div>
+        {fraOpsaetning && (
+          <Link
+            to="/setup"
+            className="shrink-0 px-4 py-2 text-sm font-medium text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors whitespace-nowrap"
+          >
+            Færdig — tilbage til opsætning
+          </Link>
+        )}
       </div>
 
       {/* Tab bar */}
@@ -934,6 +1048,7 @@ export default function ImportPage() {
       {/* Tab content */}
       <div>
         {activeTab === 'students' && <StudentsTab />}
+        {activeTab === 'classes' && <ClassesTab />}
         {activeTab === 'staff' && <StaffTab />}
         {activeTab === 'rooms' && <RoomsTab />}
         {activeTab === 'board' && <BoardMembersTab />}

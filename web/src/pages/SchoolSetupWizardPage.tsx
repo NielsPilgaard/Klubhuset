@@ -26,10 +26,15 @@ interface WizardStep {
 
 const STEPS: WizardStep[] = [
   { id: 1, title: 'Skoledag', description: 'Definér varighed og pauser for en normal skoledag' },
-  { id: 2, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
-  { id: 3, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
-  { id: 4, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
-  { id: 5, title: 'Færdig', description: 'Din skole er klar til brug' },
+  {
+    id: 2,
+    title: 'Hvordan vil du oprette resten?',
+    description: 'Vælg den metode der passer dig bedst',
+  },
+  { id: 3, title: 'Klasser', description: 'Opret dine første klasser, f.eks. 0.a, 1.a' },
+  { id: 4, title: 'Lokaler', description: 'Tilføj lokaler, f.eks. Lokale 1' },
+  { id: 5, title: 'Medarbejdere', description: 'Invitér lærere og pædagoger' },
+  { id: 6, title: 'Færdig', description: 'Din skole er klar til brug' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -241,6 +246,69 @@ function StepTimeSlots({ onNext, onSkip }: { onNext: () => void; onSkip: () => v
           </span>
         )}
       </div>
+    </div>
+  )
+}
+
+function StepChooseMethod({ onManual, onImport }: { onManual: () => void; onImport: () => void }) {
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={onImport}
+        className="w-full flex items-start gap-4 p-4 border-2 border-brand-200 rounded-xl text-left hover:border-brand-500 hover:bg-brand-50 transition-colors"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="shrink-0 text-brand-600 mt-0.5"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span>
+          <span className="block text-sm font-semibold text-gray-900">
+            Jeg har data i et regneark
+          </span>
+          <span className="block mt-0.5 text-sm text-gray-500">
+            Indsæt elever, medarbejdere og lokaler direkte fra Excel eller Google Sheets — hurtigst
+            hvis du allerede har listerne klar.
+          </span>
+        </span>
+      </button>
+      <button
+        onClick={onManual}
+        className="w-full flex items-start gap-4 p-4 border-2 border-gray-200 rounded-xl text-left hover:border-gray-300 hover:bg-gray-50 transition-colors"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="shrink-0 text-gray-500 mt-0.5"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        <span>
+          <span className="block text-sm font-semibold text-gray-900">
+            Jeg opretter det manuelt
+          </span>
+          <span className="block mt-0.5 text-sm text-gray-500">
+            Kom i gang med det samme — tilføj klasser, lokaler og medarbejdere ét ad gangen.
+          </span>
+        </span>
+      </button>
     </div>
   )
 }
@@ -866,9 +934,9 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 
 function firstIncompleteStep(status: OnboardingStatusDto): number {
   if ((status.classCount ?? 0) === 0) return 1
-  if ((status.roomCount ?? 0) === 0) return 3
-  if ((status.staffCount ?? 0) === 0) return 4
-  return 5
+  if ((status.roomCount ?? 0) === 0) return 4
+  if ((status.staffCount ?? 0) === 0) return 5
+  return 6
 }
 
 export default function SchoolSetupWizardPage() {
@@ -940,8 +1008,14 @@ export default function SchoolSetupWizardPage() {
         {/* Step body */}
         <div className="px-8 pb-8 pt-4">
           {step === 1 && <StepTimeSlots onNext={advance} onSkip={skip} />}
-          {step === 2 && <StepCreateClasses onNext={advance} onSkip={skip} />}
-          {step === 3 && (
+          {step === 2 && (
+            <StepChooseMethod
+              onManual={advance}
+              onImport={() => navigate('/import?fraOpsaetning=1')}
+            />
+          )}
+          {step === 3 && <StepCreateClasses onNext={advance} onSkip={skip} />}
+          {step === 4 && (
             <StepCreateItems
               noun="Lokale"
               plural="Lokaler"
@@ -951,8 +1025,8 @@ export default function SchoolSetupWizardPage() {
               onSkip={skip}
             />
           )}
-          {step === 4 && <StepInviteStaff onNext={advance} onSkip={skip} />}
-          {step === 5 && <StepDone onFinish={finish} />}
+          {step === 5 && <StepInviteStaff onNext={advance} onSkip={skip} />}
+          {step === 6 && <StepDone onFinish={finish} />}
         </div>
 
         {/* Step dots */}
