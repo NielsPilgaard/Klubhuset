@@ -16,7 +16,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - Granting/revoking permissions reflects immediately on subsequent requests.
 ///   - Non-admin cannot call permission management endpoints.
 /// </summary>
-public sealed class ClassPermissionsTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ClassPermissionsTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -24,29 +25,21 @@ public sealed class ClassPermissionsTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = CreateAdminClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	private HttpClient CreateAdminClient(string subject = "test-user-id")
 	{
 		var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
 		return client;
@@ -55,6 +48,7 @@ public sealed class ClassPermissionsTests
 	private HttpClient CreateNonAdminClient()
 	{
 		var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		return client;
 	}
@@ -65,7 +59,7 @@ public sealed class ClassPermissionsTests
 	public async Task Superadmin_CanCreateSchema_WhenNoPermissionRowsExist()
 	{
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		var response = await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{klass.Id}/schemas",
@@ -78,13 +72,13 @@ public sealed class ClassPermissionsTests
 	public async Task Superadmin_CanUpsertSlot_WhenNoPermissionRowsExist()
 	{
 		var (klass, schema) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
-		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, TestTenantContext.DefaultTenantId);
-		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId);
+		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: true, keycloakSubject: "test-user-id");
 		var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId,
+			_factory.Services, _tenantId,
 			new TimeOnly(8, 0), new TimeOnly(9, 0));
 
 		var response = await _adminClient.PutAsJsonAsync(
@@ -100,13 +94,13 @@ public sealed class ClassPermissionsTests
 	public async Task RestrictedAdmin_CanCreateSchema_OnAssignedClass()
 	{
 		const string subject = "restricted-admin-subject";
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: false, keycloakSubject: subject);
 
 		var (assignedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "3.a");
+			_factory.Services, _tenantId, "3.a");
 		var (otherClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "4.b");
+			_factory.Services, _tenantId, "4.b");
 
 		// Grant permission on assignedClass only (this creates a permission row, enabling restricted mode)
 		await _adminClient.PostAsJsonAsync(
@@ -126,13 +120,13 @@ public sealed class ClassPermissionsTests
 	public async Task RestrictedAdmin_Gets403_OnClassLockedToOtherStaff()
 	{
 		const string subject = "restricted-admin-subject-2";
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: false, keycloakSubject: subject);
 
 		var (assignedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "5.a");
+			_factory.Services, _tenantId, "5.a");
 		var (lockedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "6.b");
+			_factory.Services, _tenantId, "6.b");
 
 		// Grant permission on assignedClass only
 		await _adminClient.PostAsJsonAsync(
@@ -140,7 +134,7 @@ public sealed class ClassPermissionsTests
 			new { staffId = staff.Id });
 
 		// Lock lockedClass to a different staff member — this class now has permission rows that exclude our subject
-		var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var otherStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{lockedClass.Id}/permissions",
 			new { staffId = otherStaff.Id });
@@ -159,9 +153,9 @@ public sealed class ClassPermissionsTests
 	[Test]
 	public async Task GrantPermission_AppearsInGetList()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{klass.Id}/permissions",
@@ -177,9 +171,9 @@ public sealed class ClassPermissionsTests
 	[Test]
 	public async Task GrantPermission_Returns409_WhenAlreadyGranted()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{klass.Id}/permissions",
@@ -196,10 +190,10 @@ public sealed class ClassPermissionsTests
 	public async Task RevokePermission_RemovesFromList_AndRestoresAccess()
 	{
 		const string subject = "revoke-test-subject";
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			isAdmin: true, keycloakSubject: subject);
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		// Grant — enters restricted mode
 		await _adminClient.PostAsJsonAsync(
@@ -224,7 +218,7 @@ public sealed class ClassPermissionsTests
 	public async Task RevokePermission_Returns404_ForUnknownStaff()
 	{
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		var response = await _adminClient.DeleteAsync(
 			$"/api/v1/classes/{klass.Id}/permissions/{Guid.NewGuid()}");
@@ -238,7 +232,7 @@ public sealed class ClassPermissionsTests
 	public async Task NonAdmin_Gets403_OnGetPermissions()
 	{
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		using var client = CreateNonAdminClient();
 		var response = await client.GetAsync($"/api/v1/classes/{klass.Id}/permissions");
@@ -249,9 +243,9 @@ public sealed class ClassPermissionsTests
 	[Test]
 	public async Task NonAdmin_Gets403_OnGrantPermission()
 	{
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId);
+			_factory.Services, _tenantId);
 
 		using var client = CreateNonAdminClient();
 		var response = await client.PostAsJsonAsync(
@@ -268,15 +262,16 @@ public sealed class ClassPermissionsTests
 	{
 		// No ClassPermission rows → no restrictions → teacher sees everything
 		const string subject = "teacher-no-restrictions";
-		await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			keycloakSubject: subject);
 
 		var (_, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "1.a");
+			_factory.Services, _tenantId, "1.a");
 		var (_, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "1.b");
+			_factory.Services, _tenantId, "1.b");
 
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
 
@@ -293,15 +288,15 @@ public sealed class ClassPermissionsTests
 		// Classes with permission rows but not for this teacher are hidden.
 		// Classes with no permission rows at all remain visible (unrestricted).
 		const string subject = "teacher-restricted";
-		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId,
+		var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId,
 			keycloakSubject: subject);
 
 		var (permittedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "2.a");
+			_factory.Services, _tenantId, "2.a");
 		var (unrestrictedClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "2.b");
+			_factory.Services, _tenantId, "2.b");
 		var (adminOnlyClass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "2.c");
+			_factory.Services, _tenantId, "2.c");
 
 		// Give teacher perm on permittedClass
 		await _adminClient.PostAsJsonAsync(
@@ -310,7 +305,7 @@ public sealed class ClassPermissionsTests
 
 		// Lock adminOnlyClass to a different admin — teacher should NOT see this
 		var otherAdmin = await TestDataBuilder.CreateStaffAsync(_factory.Services,
-			TestTenantContext.DefaultTenantId, isAdmin: true);
+			_tenantId, isAdmin: true);
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{adminOnlyClass.Id}/permissions",
 			new { staffId = otherAdmin.Id });
@@ -318,6 +313,7 @@ public sealed class ClassPermissionsTests
 		// unrestrictedClass has no permission rows — visible to all (unrestricted)
 
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
 
@@ -337,11 +333,11 @@ public sealed class ClassPermissionsTests
 	{
 		// Admins always get full list
 		var (classA, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "3.a");
+			_factory.Services, _tenantId, "3.a");
 		var (classB, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-			_factory.Services, TestTenantContext.DefaultTenantId, "3.b");
+			_factory.Services, _tenantId, "3.b");
 
-		var someStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var someStaff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
 		// Seed a permission row to enter restricted mode
 		await _adminClient.PostAsJsonAsync(
 			$"/api/v1/classes/{classA.Id}/permissions",

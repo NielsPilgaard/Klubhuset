@@ -23,6 +23,9 @@ $RepoRoot = Split-Path $PSScriptRoot -Parent
 $Errors = @()
 $StepResults = @()
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 function Step([string]$name, [scriptblock]$body) {
     Write-Host "`n==> $name" -ForegroundColor Cyan
     $output = & $body 2>&1
@@ -41,9 +44,16 @@ function Step([string]$name, [scriptblock]$body) {
 Push-Location $RepoRoot
 
 if (-not $SkipFrontend) {
-    Step "Biome" {
-        Set-Location "$RepoRoot/web"
-        npx biome check src/
+    if ($NoFix) {
+        Step "Biome" {
+            Set-Location "$RepoRoot/web"
+            npx biome check src/
+        }
+    } else {
+        Step "Biome (auto-fix)" {
+            Set-Location "$RepoRoot/web"
+            npx biome check --write src/
+        }
     }
 
     Step "TypeScript build" {

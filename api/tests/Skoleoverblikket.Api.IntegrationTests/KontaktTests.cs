@@ -16,28 +16,21 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - Parent sees only co-class parents with ShareContactInfo=true.
 ///   - Parent with no co-class parents that have consent gets an empty list.
 /// </summary>
-public sealed class KontaktTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class KontaktTests(ApiFactory factory)
 {
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
     [Before(Test)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "kontakt-admin-subject");
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────────
@@ -45,6 +38,7 @@ public sealed class KontaktTests
     private HttpClient CreateStaffClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -53,6 +47,7 @@ public sealed class KontaktTests
     private HttpClient CreateParentClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -73,7 +68,7 @@ public sealed class KontaktTests
         var student = new Student
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = $"{name} Junior",
             ClassId = classId,
         };
@@ -82,7 +77,7 @@ public sealed class KontaktTests
         var parent = new Parent
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Email = $"{subject}@test.dk",
             KeycloakSubject = subject,
@@ -109,7 +104,7 @@ public sealed class KontaktTests
         var parent = new Parent
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Email = $"{subject}@test.dk",
             KeycloakSubject = subject,
@@ -128,7 +123,7 @@ public sealed class KontaktTests
     {
         // Arrange: one parent with consent, one without
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "admin-sees-all-1a");
+            _factory.Services, _tenantId, "admin-sees-all-1a");
 
         var consentingParent = await CreateParentWithStudentAsync(
             "admin-test-consenting-parent", klass.Id, shareContactInfo: true, "Annette Ja");
@@ -151,7 +146,7 @@ public sealed class KontaktTests
     {
         // Arrange: one parent with consent, one without
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "staff-consent-filter-2a");
+            _factory.Services, _tenantId, "staff-consent-filter-2a");
 
         var consentingParent = await CreateParentWithStudentAsync(
             "staff-test-consenting-parent", klass.Id, shareContactInfo: true, "Charlotte Ja");
@@ -179,9 +174,9 @@ public sealed class KontaktTests
         //   - co-class parent without consent in class A → should NOT appear
         //   - parent in a different class with consent → should NOT appear
         var (classA, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "parent-coclass-3a");
+            _factory.Services, _tenantId, "parent-coclass-3a");
         var (classB, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "parent-coclass-3b");
+            _factory.Services, _tenantId, "parent-coclass-3b");
 
         // The requesting parent is in class A
         await CreateParentWithStudentAsync(
@@ -217,7 +212,7 @@ public sealed class KontaktTests
     {
         // Arrange: requesting parent in class, one co-class parent but without consent
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "parent-empty-result-4a");
+            _factory.Services, _tenantId, "parent-empty-result-4a");
 
         await CreateParentWithStudentAsync(
             "parent-empty-requester", klass.Id, shareContactInfo: false, "Ida Requester");

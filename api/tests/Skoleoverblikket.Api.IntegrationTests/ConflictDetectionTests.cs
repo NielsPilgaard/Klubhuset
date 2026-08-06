@@ -13,7 +13,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// Conflict detection must catch teacher / room double-bookings
 /// when the same resource is assigned to overlapping time slots.
 /// </summary>
-public sealed class ConflictDetectionTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ConflictDetectionTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -21,41 +22,32 @@ public sealed class ConflictDetectionTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
-	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	[Test]
 	public async Task NoConflicts_WhenTeacherAssignedToNonOverlappingSlots()
 	{
 		var slot1 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(8, 0),
-															  new TimeOnly(8, 45),
-															  sortOrder: 1);
+																  _tenantId,
+																  new TimeOnly(8, 0),
+																  new TimeOnly(8, 45),
+																  sortOrder: 1);
 
 		var slot2 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(9, 0),
-															  new TimeOnly(9, 45),
-															  sortOrder: 2);
+																  _tenantId,
+																  new TimeOnly(9, 0),
+																  new TimeOnly(9, 45),
+																  sortOrder: 2);
 
 		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, "Anders Andersen");
 		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId);
@@ -80,16 +72,16 @@ public sealed class ConflictDetectionTests
 	public async Task TeacherDoubleBooked_WhenAssignedToTwoOverlappingSlots()
 	{
 		var slot1 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(10, 0),
-															  new TimeOnly(10, 45),
-															  sortOrder: 3);
+																  _tenantId,
+																  new TimeOnly(10, 0),
+																  new TimeOnly(10, 45),
+																  sortOrder: 3);
 
 		var slot2 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(10, 0),
-															  new TimeOnly(10, 45),
-															  sortOrder: 4);
+																  _tenantId,
+																  new TimeOnly(10, 0),
+																  new TimeOnly(10, 45),
+																  sortOrder: 4);
 
 		var teacher = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, "Birthe Bjerg");
 		var course = await TestDataBuilder.CreateCourseAsync(_factory.Services, _tenantId, "Matematik");
@@ -118,16 +110,16 @@ public sealed class ConflictDetectionTests
 	public async Task RoomDoubleBooked_WhenSameRoomAssignedToOverlappingSlots()
 	{
 		var slot1 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(11, 0),
-															  new TimeOnly(11, 45),
-															  sortOrder: 5);
+																  _tenantId,
+																  new TimeOnly(11, 0),
+																  new TimeOnly(11, 45),
+																  sortOrder: 5);
 
 		var slot2 = await TestDataBuilder.CreateTimeSlotAsync(_factory.Services,
-															  _tenantId,
-															  new TimeOnly(11, 0),
-															  new TimeOnly(11, 45),
-															  sortOrder: 6);
+																  _tenantId,
+																  new TimeOnly(11, 0),
+																  new TimeOnly(11, 45),
+																  sortOrder: 6);
 
 		var teacher1 = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, "Carl Carlsen");
 		var teacher2 = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId, "Dorte Dam");

@@ -10,7 +10,8 @@ using Skoleoverblikket.Api.Models;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
-public sealed class VikarTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class VikarTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -18,9 +19,9 @@ public sealed class VikarTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
-	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
 	private const int TestYear = 2025;
 	private const int TestWeek = 10;
@@ -28,18 +29,9 @@ public sealed class VikarTests
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	/// <summary>

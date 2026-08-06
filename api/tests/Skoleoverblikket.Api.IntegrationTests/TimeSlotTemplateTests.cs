@@ -12,7 +12,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// that checks breaks land on module boundaries after accounting for earlier
 /// breaks shifting subsequent module start times.
 /// </summary>
-public sealed class TimeSlotTemplateTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class TimeSlotTemplateTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -20,29 +21,21 @@ public sealed class TimeSlotTemplateTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
 	private Guid _classId;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 
 		// Create a class so we can query the school-level slot fallback
-		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(_factory.Services, _tenantId);
 		_classId = klass.Id;
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	private async Task<List<TimeSlotsController.TimeSlotDto>> GetSchoolSlotsAsync()

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Controllers;
 using Skoleoverblikket.Api.Data;
@@ -16,7 +17,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - Admin window CRUD: create, list, update, delete, 403 for non-admin, list entries.
 ///   - Parent operations: list open windows, upsert own student, 403 for other student, 409 for closed window.
 /// </summary>
-public sealed class VacationRegistrationTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class VacationRegistrationTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -24,26 +26,24 @@ public sealed class VacationRegistrationTests
         PropertyNameCaseInsensitive = true,
     };
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
     private HttpClient _adminClient = null!;
 
     [Before(Test)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
         _adminClient = _factory.CreateClient();
+        _adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         _adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
         _adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "vacation-admin-subject");
     }
 
     [After(Test)]
-    public async Task TearDown()
+    public void TearDown()
     {
         _adminClient.Dispose();
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────────
@@ -51,6 +51,7 @@ public sealed class VacationRegistrationTests
     private HttpClient CreateParentClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -59,6 +60,7 @@ public sealed class VacationRegistrationTests
     private HttpClient CreateNonAdminClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -74,7 +76,7 @@ public sealed class VacationRegistrationTests
         var student = new Student
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             ClassId = classId,
         };
@@ -94,13 +96,13 @@ public sealed class VacationRegistrationTests
         var parent = new Parent
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Email = $"{keycloakSubject}@test.dk",
             KeycloakSubject = keycloakSubject,
         };
 
-        var studentRef = await db.Students.FindAsync(studentId);
+        var studentRef = await db.Students.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == studentId);
         if (studentRef is not null)
         {
             parent.Students.Add(studentRef);
@@ -123,7 +125,7 @@ public sealed class VacationRegistrationTests
         var window = new VacationRegistrationWindow
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Title = "Sommerferie tilmelding",
             RegistrationDeadline = today.AddDays(30),
             CareStartDate = today.AddDays(60),
@@ -251,7 +253,7 @@ public sealed class VacationRegistrationTests
     {
         const string subject = "parent-upsert-own-student";
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "UpsertOwnClass");
+            _factory.Services, _tenantId, "UpsertOwnClass");
         var student = await CreateStudentAsync(klass.Id, "Mikkel Upsert");
         await CreateParentAsync(subject, student.Id, "Forælder Upsert");
 
@@ -275,13 +277,13 @@ public sealed class VacationRegistrationTests
         const string otherSubject = "parent-other-student";
 
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "OtherParentClass");
+            _factory.Services, _tenantId, "OtherParentClass");
         var student = await CreateStudentAsync(klass.Id, "Student Andenforældres");
         await CreateParentAsync(ownerSubject, student.Id, "Ejer Forælder");
 
         // otherParent has no students linked — their student link is to a different student
         var (klass2, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "OtherParentClass2");
+            _factory.Services, _tenantId, "OtherParentClass2");
         var otherStudent = await CreateStudentAsync(klass2.Id, "Anden Elev");
         await CreateParentAsync(otherSubject, otherStudent.Id, "Anden Forælder");
 
@@ -304,7 +306,7 @@ public sealed class VacationRegistrationTests
     {
         const string subject = "parent-closed-window";
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "ClosedWindowClass");
+            _factory.Services, _tenantId, "ClosedWindowClass");
         var student = await CreateStudentAsync(klass.Id, "Elev Lukket");
         await CreateParentAsync(subject, student.Id, "Forælder Lukket");
 

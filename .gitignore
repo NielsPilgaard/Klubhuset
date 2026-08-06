@@ -365,3 +365,4 @@ test-results/
 .claude/settings.json
 .playwright-mcp
 *.lscache
+docs/test-data

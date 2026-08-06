@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Controllers;
 using Skoleoverblikket.Api.Data;
@@ -16,7 +17,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// read messages for students they own; attempting to access another parent's
 /// student yields 403.
 /// </summary>
-public sealed class ContactThreadsTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ContactThreadsTests(ApiFactory factory)
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -27,21 +29,13 @@ public sealed class ContactThreadsTests
     // Local DTO matching the anonymous object returned by POST /api/v1/contact-threads
     private record CreateThreadResponse(Guid ThreadId);
 
-    private ApiFactory _factory = null!;
+    private readonly ApiFactory _factory = factory;
+    private readonly Guid _tenantId = Guid.NewGuid();
 
     [Before(Test)]
     public async Task SetUp()
     {
-        _factory = new ApiFactory();
-        await _factory.StartAsync();
-        await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        await _factory.StopAsync();
-        await _factory.DisposeAsync();
+        await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -49,6 +43,7 @@ public sealed class ContactThreadsTests
     private HttpClient CreateParentClient(string subject)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -57,6 +52,7 @@ public sealed class ContactThreadsTests
     private HttpClient CreateStaffClient(string subject, bool isAdmin = false)
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", isAdmin ? "admin" : "user");
         client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
         return client;
@@ -69,7 +65,7 @@ public sealed class ContactThreadsTests
         var student = new Student
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             ClassId = classId,
         };
@@ -86,13 +82,13 @@ public sealed class ContactThreadsTests
         var parent = new Parent
         {
             Id = Guid.NewGuid(),
-            TenantId = TestTenantContext.DefaultTenantId,
+            TenantId = _tenantId,
             Name = name,
             Email = $"{keycloakSubject}@test.dk",
             KeycloakSubject = keycloakSubject,
         };
 
-        var studentRef = await db.Students.FindAsync(studentId);
+        var studentRef = await db.Students.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == studentId);
         if (studentRef is not null)
         {
             parent.Students.Add(studentRef);
@@ -110,7 +106,7 @@ public sealed class ContactThreadsTests
     {
         const string parentSubject = "ct-create-own-parent";
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "1.a");
+            _factory.Services, _tenantId, "1.a");
         var student = await CreateStudentAsync(klass.Id, "Lasse Elev");
         await CreateParentAsync(parentSubject, student.Id, "Karen Forælder");
 
@@ -134,7 +130,7 @@ public sealed class ContactThreadsTests
         const string intruderSubject = "ct-intruder-parent";
 
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "2.a");
+            _factory.Services, _tenantId, "2.a");
         var student = await CreateStudentAsync(klass.Id, "Sofie Elev");
 
         // Owner is linked to the student; intruder has no link
@@ -142,7 +138,7 @@ public sealed class ContactThreadsTests
 
         // Create intruder parent record but link them to a different student
         var (otherKlass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "2.b");
+            _factory.Services, _tenantId, "2.b");
         var otherStudent = await CreateStudentAsync(otherKlass.Id, "Jonas Elev");
         await CreateParentAsync(intruderSubject, otherStudent.Id, "Per Forælder");
 
@@ -161,11 +157,11 @@ public sealed class ContactThreadsTests
     {
         const string staffSubject = "ct-create-staff";
         await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             name: "Birgit Lærer", isAdmin: false, keycloakSubject: staffSubject);
 
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "3.a");
+            _factory.Services, _tenantId, "3.a");
         var student = await CreateStudentAsync(klass.Id, "Emma Elev");
 
         // Create a parent so notifications don't fail on missing parent lookup
@@ -191,7 +187,7 @@ public sealed class ContactThreadsTests
         const string ghostSubject = "ct-ghost-parent";
 
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "4.a");
+            _factory.Services, _tenantId, "4.a");
         var student = await CreateStudentAsync(klass.Id, "Noah Elev");
 
         using var client = CreateParentClient(ghostSubject);
@@ -212,11 +208,11 @@ public sealed class ContactThreadsTests
         const string parentSubject = "ct-getmsg-own-parent";
         const string staffSubject = "ct-getmsg-staff";
         await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             name: "Lars Lærer", isAdmin: true, keycloakSubject: staffSubject);
 
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "5.a");
+            _factory.Services, _tenantId, "5.a");
         var student = await CreateStudentAsync(klass.Id, "Ida Elev");
         await CreateParentAsync(parentSubject, student.Id, "Susanne Forælder");
 
@@ -247,13 +243,13 @@ public sealed class ContactThreadsTests
         const string intruderSubject = "ct-getmsg-intruder-parent";
         const string staffSubject = "ct-getmsg-403-staff";
         await TestDataBuilder.CreateStaffAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId,
+            _factory.Services, _tenantId,
             name: "Mads Lærer", isAdmin: true, keycloakSubject: staffSubject);
 
         var (ownerKlass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "6.a");
+            _factory.Services, _tenantId, "6.a");
         var (intruderKlass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
-            _factory.Services, TestTenantContext.DefaultTenantId, "6.b");
+            _factory.Services, _tenantId, "6.b");
 
         var ownerStudent = await CreateStudentAsync(ownerKlass.Id, "Luna Elev");
         var intruderStudent = await CreateStudentAsync(intruderKlass.Id, "Victor Elev");

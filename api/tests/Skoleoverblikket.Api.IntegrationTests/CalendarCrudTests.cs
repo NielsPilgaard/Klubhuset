@@ -8,31 +8,25 @@ using Skoleoverblikket.Api.Models;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
-public sealed class CalendarCrudTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class CalendarCrudTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
 		Converters = { new JsonStringEnumConverter() },
 		PropertyNameCaseInsensitive = true,
 	};
-	private ApiFactory _factory = null!;
+
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _client = null!;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_client = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_client.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	[Test]
@@ -206,14 +200,11 @@ public sealed class CalendarCrudTests
 		// Create entry for default tenant
 		await CreateEntryAsync("Tenant 1 ferie");
 
-		// Create a second factory with a different tenant
-		await using var factory2 = new ApiFactory();
-		await factory2.StartAsync();
-		var secondTenantId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-		await TestDataBuilder.CreateSchoolAsync(factory2.Services, secondTenantId, "Anden skole");
-		// Seed the entry directly for the second tenant
+		// Seed a second tenant's entry directly into the shared DB
+		var secondTenantId = Guid.NewGuid();
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, secondTenantId, "Anden skole");
 		await TestDataBuilder.CreateCalendarEntryAsync(
-			factory2.Services, secondTenantId,
+			_factory.Services, secondTenantId,
 			CalendarEntryType.Ferie, "Tenant 2 ferie",
 			new DateOnly(2025, 12, 22), new DateOnly(2026, 1, 2));
 

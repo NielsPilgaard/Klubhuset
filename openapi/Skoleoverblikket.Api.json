@@ -2452,6 +2452,246 @@
         }
       }
     },
+    "/api/v1/imports/students-and-parents": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStudentsAndParentsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/staff": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStaffRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStaffRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportStaffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStaffResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStaffResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportStaffResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/rooms": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportRoomsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportRoomsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportRoomsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportRoomsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportRoomsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportRoomsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/classes": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportClassesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportClassesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportClassesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportClassesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportClassesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportClassesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/board-members": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportBoardMembersRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportBoardMembersRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportBoardMembersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportBoardMembersResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportBoardMembersResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportBoardMembersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/kontakt": {
       "get": {
         "tags": [
@@ -7242,6 +7482,13 @@
   "components": {
     "schemas": {
       "AbsenceController_AbsenceReportDto": {
+        "required": [
+          "createdAt",
+          "date",
+          "id",
+          "studentId",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7253,8 +7500,7 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "date": {
             "type": "string",
@@ -7280,6 +7526,10 @@
         "additionalProperties": false
       },
       "AbsenceController_ReportAbsenceRequest": {
+        "required": [
+          "date",
+          "studentId"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -7320,11 +7570,13 @@
         "additionalProperties": false
       },
       "BillingController_CheckoutResponse": {
+        "required": [
+          "url"
+        ],
         "type": "object",
         "properties": {
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7339,6 +7591,13 @@
         "additionalProperties": false
       },
       "BillingController_SubscriptionDto": {
+        "required": [
+          "hasAccess",
+          "isActive",
+          "isTrialing",
+          "trialDaysLeft",
+          "trialEnd"
+        ],
         "type": "object",
         "properties": {
           "status": {
@@ -7370,13 +7629,21 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "BoardFilesController_BoardFileDto": {
+        "required": [
+          "contentType",
+          "fileName",
+          "id",
+          "sizeBytes",
+          "uploadedAt",
+          "uploadedBy",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7384,20 +7651,17 @@
             "format": "uuid"
           },
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sizeBytes": {
             "type": "integer",
             "format": "int64"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "folderId": {
             "type": "string",
@@ -7405,8 +7669,7 @@
             "nullable": true
           },
           "uploadedBy": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "uploadedAt": {
             "type": "string",
@@ -7422,20 +7685,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BoardFilesController_BoardFileDto"
-            },
-            "nullable": true
+            }
           },
           "folders": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BoardFilesController_BoardFolderDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "BoardFilesController_BoardFolderDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7443,8 +7709,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -7459,21 +7724,25 @@
         "additionalProperties": false
       },
       "BoardFilesController_ConfirmRequest": {
+        "required": [
+          "confirmToken"
+        ],
         "type": "object",
         "properties": {
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "BoardFilesController_CreateFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -7490,18 +7759,20 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "BoardFilesController_PresignRequest": {
+        "required": [
+          "fileName",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -7516,6 +7787,12 @@
         "additionalProperties": false
       },
       "BoardFilesController_PresignResponse": {
+        "required": [
+          "confirmToken",
+          "contentType",
+          "fileId",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "fileId": {
@@ -7523,31 +7800,38 @@
             "format": "uuid"
           },
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "BoardFilesController_RenameFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "BoardMembersController_BoardMemberDto": {
+        "required": [
+          "canAccessTeacherData",
+          "createdAt",
+          "email",
+          "hasAccount",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7555,12 +7839,10 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "canAccessTeacherData": {
             "type": "boolean"
@@ -7576,20 +7858,25 @@
         "additionalProperties": false
       },
       "BoardMembersController_InviteBoardMemberRequest": {
+        "required": [
+          "email",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "BoardMembersController_ToggleTeacherDataRequest": {
+        "required": [
+          "canAccessTeacherData"
+        ],
         "type": "object",
         "properties": {
           "canAccessTeacherData": {
@@ -7609,6 +7896,12 @@
         "type": "string"
       },
       "CalendarController_CalendarEntryDto": {
+        "required": [
+          "endDate",
+          "id",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7619,8 +7912,7 @@
             "$ref": "#/components/schemas/CalendarEntryType"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startDate": {
             "type": "string",
@@ -7647,11 +7939,15 @@
         "additionalProperties": false
       },
       "CalendarController_CreateCalendarEntryRequest": {
+        "required": [
+          "endDate",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/CalendarEntryType"
@@ -7677,11 +7973,15 @@
         "additionalProperties": false
       },
       "CalendarController_DefaultHolidayDto": {
+        "required": [
+          "endDate",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/CalendarEntryType"
@@ -7698,11 +7998,15 @@
         "additionalProperties": false
       },
       "CalendarController_UpdateCalendarEntryRequest": {
+        "required": [
+          "endDate",
+          "startDate",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/CalendarEntryType"
@@ -7737,6 +8041,11 @@
         "type": "string"
       },
       "ClassPermissionsController_ClassPermissionDto": {
+        "required": [
+          "grantedAt",
+          "staffId",
+          "staffName"
+        ],
         "type": "object",
         "properties": {
           "staffId": {
@@ -7744,8 +8053,7 @@
             "format": "uuid"
           },
           "staffName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "grantedAt": {
             "type": "string",
@@ -7755,6 +8063,9 @@
         "additionalProperties": false
       },
       "ClassPermissionsController_GrantPermissionRequest": {
+        "required": [
+          "staffId"
+        ],
         "type": "object",
         "properties": {
           "staffId": {
@@ -7765,6 +8076,11 @@
         "additionalProperties": false
       },
       "ClassesController_ClassDto": {
+        "required": [
+          "id",
+          "isAccessibleToCurrentUser",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7772,8 +8088,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -7791,11 +8106,13 @@
         "additionalProperties": false
       },
       "ClassesController_UpsertClassRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -7810,16 +8127,22 @@
         "additionalProperties": false
       },
       "ClassesController_YearRollCreateEntry": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "ClassesController_YearRollRenameEntry": {
+        "required": [
+          "classId",
+          "newName"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -7827,8 +8150,7 @@
             "format": "uuid"
           },
           "newName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7840,28 +8162,37 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ClassesController_YearRollRenameEntry"
-            },
-            "nullable": true
+            }
           },
           "archive": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
-            },
-            "nullable": true
+            }
           },
           "create": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ClassesController_YearRollCreateEntry"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "ConflictInfo": {
+        "required": [
+          "endTime",
+          "resourceId",
+          "resourceName",
+          "slotAClassName",
+          "slotACourseName",
+          "slotAId",
+          "slotBClassName",
+          "slotBCourseName",
+          "slotBId",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -7880,8 +8211,7 @@
             "format": "uuid"
           },
           "resourceName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "weekday": {
             "$ref": "#/components/schemas/DayOfWeek"
@@ -7895,20 +8225,16 @@
             "format": "time"
           },
           "slotACourseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "slotBCourseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "slotAClassName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "slotBClassName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7923,16 +8249,25 @@
         "type": "string"
       },
       "ContactThreadsController_AddMessageRequest": {
+        "required": [
+          "body"
+        ],
         "type": "object",
         "properties": {
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "ContactThreadsController_ContactMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "senderId",
+          "senderName",
+          "sentAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7947,12 +8282,10 @@
             "format": "uuid"
           },
           "senderName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sentAt": {
             "type": "string",
@@ -7967,6 +8300,12 @@
         "additionalProperties": false
       },
       "ContactThreadsController_ContactThreadDto": {
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "unreadCount"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -7978,8 +8317,7 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "lastMessageBody": {
             "type": "string",
@@ -8001,6 +8339,10 @@
         "additionalProperties": false
       },
       "ContactThreadsController_FindOrCreateThreadRequest": {
+        "required": [
+          "body",
+          "studentId"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -8008,21 +8350,24 @@
             "format": "uuid"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "ContactThreadsController_PagedResult`1": {
+        "required": [
+          "page",
+          "pageSize",
+          "total"
+        ],
         "type": "object",
         "properties": {
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ContactThreadsController_ContactMessageDto"
-            },
-            "nullable": true
+            }
           },
           "total": {
             "type": "integer",
@@ -8040,6 +8385,10 @@
         "additionalProperties": false
       },
       "CoursesController_CourseDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8047,8 +8396,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -8065,11 +8413,13 @@
         "additionalProperties": false
       },
       "CoursesController_UpsertCourseRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -8098,19 +8448,21 @@
         "type": "string"
       },
       "DemoRequestController_DemoRequestDto": {
+        "required": [
+          "email",
+          "navn",
+          "skole"
+        ],
         "type": "object",
         "properties": {
           "navn": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "skole": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "telefon": {
             "type": "string",
@@ -8124,21 +8476,25 @@
         "additionalProperties": false
       },
       "FilesController_ConfirmRequest": {
+        "required": [
+          "confirmToken"
+        ],
         "type": "object",
         "properties": {
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "FilesController_CreateFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -8160,13 +8516,21 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "FilesController_FileDto": {
+        "required": [
+          "contentType",
+          "fileName",
+          "id",
+          "sizeBytes",
+          "uploadedAt",
+          "uploadedBy",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8174,20 +8538,17 @@
             "format": "uuid"
           },
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sizeBytes": {
             "type": "integer",
             "format": "int64"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "courseId": {
             "type": "string",
@@ -8204,8 +8565,7 @@
             "nullable": true
           },
           "uploadedBy": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "uploadedAt": {
             "type": "string",
@@ -8221,20 +8581,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FilesController_FileDto"
-            },
-            "nullable": true
+            }
           },
           "folders": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FilesController_FolderDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "FilesController_FolderDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8242,8 +8605,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "parentId": {
             "type": "string",
@@ -8267,11 +8629,14 @@
         "additionalProperties": false
       },
       "FilesController_PresignRequest": {
+        "required": [
+          "fileName",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -8291,6 +8656,12 @@
         "additionalProperties": false
       },
       "FilesController_PresignResponse": {
+        "required": [
+          "confirmToken",
+          "contentType",
+          "fileId",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "fileId": {
@@ -8298,31 +8669,403 @@
             "format": "uuid"
           },
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "confirmToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "FilesController_RenameFolderRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportBoardMemberRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "canAccessTeacherData": {
             "type": "string",
             "nullable": true
           }
         },
         "additionalProperties": false
       },
+      "ImportsController_ImportBoardMembersRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportBoardMemberRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportBoardMembersResponse": {
+        "required": [
+          "boardMembersCreated",
+          "boardMembersSkipped",
+          "boardMembersUpdated"
+        ],
+        "type": "object",
+        "properties": {
+          "boardMembersCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boardMembersUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boardMembersSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportClassRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportClassesRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportClassRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportClassesResponse": {
+        "required": [
+          "classesCreated",
+          "classesSkipped",
+          "classesUpdated"
+        ],
+        "type": "object",
+        "properties": {
+          "classesCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classesUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classesSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportParentRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportRoomRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "capacity": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportRoomsRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportRoomRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportRoomsResponse": {
+        "required": [
+          "roomsCreated",
+          "roomsSkipped",
+          "roomsUpdated"
+        ],
+        "type": "object",
+        "properties": {
+          "roomsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roomsUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roomsSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStaffRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportStaffRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStaffResponse": {
+        "required": [
+          "staffCreated",
+          "staffSkipped",
+          "staffUpdated"
+        ],
+        "type": "object",
+        "properties": {
+          "staffCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "staffUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "staffSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStaffRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "administrator": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStudentRow": {
+        "required": [
+          "className",
+          "studentName"
+        ],
+        "type": "object",
+        "properties": {
+          "className": {
+            "type": "string"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "parent1": {
+            "$ref": "#/components/schemas/ImportsController_ImportParentRow"
+          },
+          "parent2": {
+            "$ref": "#/components/schemas/ImportsController_ImportParentRow"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStudentsAndParentsRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportStudentRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportStudentsAndParentsResponse": {
+        "required": [
+          "classesCreated",
+          "parentsCreated",
+          "parentStudentLinksCreated",
+          "parentsUpdated",
+          "studentsCreated",
+          "studentsSkipped"
+        ],
+        "type": "object",
+        "properties": {
+          "classesCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentsSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentsUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentStudentLinksCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportWarning": {
+        "required": [
+          "message",
+          "row"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "KontaktController_KontaktParentDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8330,8 +9073,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "phone": {
             "type": "string",
@@ -8357,13 +9099,15 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "MessagesController_GroupPreviewDto": {
+        "required": [
+          "recipientCount"
+        ],
         "type": "object",
         "properties": {
           "recipientCount": {
@@ -8463,6 +9207,14 @@
         "additionalProperties": false
       },
       "MessagesController_InboxMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "senderId",
+          "senderName",
+          "sentAt",
+          "subject"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8477,16 +9229,13 @@
             "$ref": "#/components/schemas/RecipientType"
           },
           "senderName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sentAt": {
             "type": "string",
@@ -8501,6 +9250,10 @@
         "additionalProperties": false
       },
       "MessagesController_RecipientDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8508,8 +9261,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/RecipientType"
@@ -8651,6 +9403,11 @@
         "additionalProperties": false
       },
       "MessagesController_SendMessageRequest": {
+        "required": [
+          "body",
+          "recipientId",
+          "subject"
+        ],
         "type": "object",
         "properties": {
           "recipientId": {
@@ -8661,17 +9418,24 @@
             "$ref": "#/components/schemas/RecipientType"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "MessagesController_SentMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "isGroup",
+          "recipientId",
+          "recipientName",
+          "sentAt",
+          "subject"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8686,16 +9450,13 @@
             "$ref": "#/components/schemas/RecipientType"
           },
           "recipientName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "sentAt": {
             "type": "string",
@@ -8722,6 +9483,9 @@
         "additionalProperties": false
       },
       "ModuleItemDto": {
+        "required": [
+          "isAdminOverride"
+        ],
         "type": "object",
         "properties": {
           "module": {
@@ -8738,6 +9502,10 @@
         "additionalProperties": false
       },
       "NotificationPreferencesController_NotificationPreferenceDto": {
+        "required": [
+          "email",
+          "inApp"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -8753,6 +9521,10 @@
         "additionalProperties": false
       },
       "NotificationPreferencesController_UpsertPreferenceItem": {
+        "required": [
+          "email",
+          "inApp"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -8780,6 +9552,11 @@
         "type": "string"
       },
       "NotificationsController_NotificationDto": {
+        "required": [
+          "body",
+          "createdAt",
+          "id"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8790,8 +9567,7 @@
             "$ref": "#/components/schemas/NotificationType"
           },
           "body": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -8811,21 +9587,26 @@
         "additionalProperties": false
       },
       "ParentMeController_AvatarConfirmRequest": {
+        "required": [
+          "objectKey"
+        ],
         "type": "object",
         "properties": {
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "ParentMeController_AvatarPresignRequest": {
+        "required": [
+          "contentType",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -8835,20 +9616,26 @@
         "additionalProperties": false
       },
       "ParentMeController_AvatarPresignResponse": {
+        "required": [
+          "objectKey",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "ParentMeController_ParentClassDto": {
+        "required": [
+          "classId",
+          "className"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -8856,13 +9643,16 @@
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "ParentMeController_ParentMeDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8870,8 +9660,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "avatarUrl": {
             "type": "string",
@@ -8881,20 +9670,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ParentMeController_ParentClassDto"
-            },
-            "nullable": true
+            }
           },
           "students": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ParentMeController_ParentStudentDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "ParentMeController_ParentStudentDto": {
+        "required": [
+          "classId",
+          "studentId",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -8902,8 +9694,7 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
@@ -8913,6 +9704,9 @@
         "additionalProperties": false
       },
       "ParentMeController_UpdateContactRequest": {
+        "required": [
+          "shareContactInfo"
+        ],
         "type": "object",
         "properties": {
           "phone": {
@@ -8938,6 +9732,9 @@
         "additionalProperties": false
       },
       "ParentsController_AdresseBeskyttelseRequest": {
+        "required": [
+          "adresseBeskyttet"
+        ],
         "type": "object",
         "properties": {
           "adresseBeskyttet": {
@@ -8947,28 +9744,37 @@
         "additionalProperties": false
       },
       "ParentsController_InviteParentRequest": {
+        "required": [
+          "email",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "studentIds": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "ParentsController_ParentDto": {
+        "required": [
+          "adresseBeskyttet",
+          "createdAt",
+          "email",
+          "hasAccount",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8976,12 +9782,10 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "phone": {
             "type": "string",
@@ -8991,8 +9795,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ParentsController_StudentRefDto"
-            },
-            "nullable": true
+            }
           },
           "hasAccount": {
             "type": "boolean"
@@ -9008,6 +9811,12 @@
         "additionalProperties": false
       },
       "ParentsController_StudentRefDto": {
+        "required": [
+          "classId",
+          "className",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9015,16 +9824,14 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9038,6 +9845,10 @@
         "type": "string"
       },
       "RoomsController_RoomDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9045,8 +9856,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "capacity": {
             "type": "integer",
@@ -9061,11 +9871,13 @@
         "additionalProperties": false
       },
       "RoomsController_UpsertRoomRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "capacity": {
             "type": "integer",
@@ -9080,30 +9892,34 @@
         "additionalProperties": false
       },
       "SchedulesController_ScheduleSlotDto": {
+        "required": [
+          "classId",
+          "className",
+          "courseName",
+          "endTime",
+          "schemaId",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "weekday": {
             "$ref": "#/components/schemas/DayOfWeek"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "courseColor": {
             "type": "string",
             "nullable": true
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
@@ -9144,21 +9960,25 @@
         "additionalProperties": false
       },
       "SchemasController_CopySchemaRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SchemasController_CreateSchemaRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "copyTimeSlotsFromSchemaId": {
             "type": "string",
@@ -9169,11 +9989,13 @@
         "additionalProperties": false
       },
       "SchemasController_RenameSchemaRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9188,20 +10010,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SchemasController_SlotDto"
-            },
-            "nullable": true
+            }
           },
           "conflicts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConflictInfo"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "SchemasController_SchemaDto": {
+        "required": [
+          "classId",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9213,8 +10038,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startDate": {
             "type": "string",
@@ -9246,6 +10070,14 @@
         "additionalProperties": false
       },
       "SchemasController_SlotDto": {
+        "required": [
+          "courseId",
+          "courseName",
+          "id",
+          "teacherId",
+          "teacherName",
+          "timeSlotId"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9264,16 +10096,14 @@
             "format": "uuid"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "teacherId": {
             "type": "string",
             "format": "uuid"
           },
           "teacherName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "roomId": {
             "type": "string",
@@ -9303,20 +10133,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SchemasController_SlotDto"
-            },
-            "nullable": true
+            }
           },
           "conflicts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConflictInfo"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "SchemasController_UpsertSlotRequest": {
+        "required": [
+          "courseId",
+          "teacherId",
+          "timeSlotId"
+        ],
         "type": "object",
         "properties": {
           "timeSlotId": {
@@ -9348,6 +10181,15 @@
         "additionalProperties": false
       },
       "SchoolsController_OnboardingStatusDto": {
+        "required": [
+          "classCount",
+          "courseCount",
+          "hasLogo",
+          "roomCount",
+          "staffCount",
+          "stepsCompleted",
+          "stepsTotal"
+        ],
         "type": "object",
         "properties": {
           "hasLogo": {
@@ -9381,11 +10223,13 @@
         "additionalProperties": false
       },
       "SchoolsController_SchoolSettingsDto": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -9403,11 +10247,13 @@
         "additionalProperties": false
       },
       "SchoolsController_UpdateSchoolSettingsRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -9428,6 +10274,12 @@
         "type": "string"
       },
       "SfoController_SfoShiftDto": {
+        "required": [
+          "dayOfWeek",
+          "endTime",
+          "id",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9439,12 +10291,10 @@
             "format": "int32"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "label": {
             "type": "string",
@@ -9454,13 +10304,16 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SfoController_StaffRefDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "SfoController_StaffRefDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9468,13 +10321,17 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SfoController_UpsertSfoShiftRequest": {
+        "required": [
+          "dayOfWeek",
+          "endTime",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "dayOfWeek": {
@@ -9482,12 +10339,10 @@
             "format": "int32"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "label": {
             "type": "string",
@@ -9497,6 +10352,10 @@
         "additionalProperties": false
       },
       "SfoWeekPlanController_SfoStaffRefDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9504,13 +10363,17 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SfoWeekPlanController_SfoWeekPlanDto": {
+        "required": [
+          "id",
+          "isoWeek",
+          "isoYear"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9529,13 +10392,19 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SfoWeekPlanController_SfoWeekPlanShiftDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "SfoWeekPlanController_SfoWeekPlanShiftDto": {
+        "required": [
+          "dayOfWeek",
+          "endTime",
+          "id",
+          "sfoShiftId",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9551,12 +10420,10 @@
             "format": "int32"
           },
           "startTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "endTime": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "label": {
             "type": "string",
@@ -9566,8 +10433,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SfoWeekPlanController_SfoStaffRefDto"
-            },
-            "nullable": true
+            }
           },
           "beskrivelse": {
             "type": "string",
@@ -9577,6 +10443,11 @@
         "additionalProperties": false
       },
       "SfoWeekPlanController_UpsertSfoWeekPlanShiftRequest": {
+        "required": [
+          "isoWeek",
+          "isoYear",
+          "sfoShiftId"
+        ],
         "type": "object",
         "properties": {
           "isoYear": {
@@ -9599,6 +10470,11 @@
         "additionalProperties": false
       },
       "StaaMaalMedController_ClassCoverageDto": {
+        "required": [
+          "classId",
+          "className",
+          "gradeLevel"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -9606,8 +10482,7 @@
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "gradeLevel": {
             "type": "integer",
@@ -9617,8 +10492,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_SubjectCoverageDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -9630,18 +10504,24 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_ClassCoverageDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "StaaMaalMedController_SubjectCoverageDto": {
+        "required": [
+          "annualHours",
+          "category",
+          "status",
+          "vejledendeAnnualHours",
+          "vejledendeWeeklyHours",
+          "weeklyHours"
+        ],
         "type": "object",
         "properties": {
           "category": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "weeklyHours": {
             "type": "number",
@@ -9660,13 +10540,15 @@
             "format": "double"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "StaffController_PatchAdminPermissionRequest": {
+        "required": [
+          "isAdmin"
+        ],
         "type": "object",
         "properties": {
           "isAdmin": {
@@ -9676,6 +10558,11 @@
         "additionalProperties": false
       },
       "StaffController_StaffDto": {
+        "required": [
+          "id",
+          "isAdmin",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9683,8 +10570,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
             "type": "string",
@@ -9708,11 +10594,14 @@
         "additionalProperties": false
       },
       "StaffController_UpsertStaffRequest": {
+        "required": [
+          "isAdmin",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
             "type": "string",
@@ -9732,20 +10621,31 @@
         "additionalProperties": false
       },
       "StaffInvitationsController_AcceptInvitationRequest": {
+        "required": [
+          "keycloakSubject",
+          "token"
+        ],
         "type": "object",
         "properties": {
           "token": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "keycloakSubject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "StaffInvitationsController_InvitationDto": {
+        "required": [
+          "createdAt",
+          "email",
+          "expiresAt",
+          "id",
+          "staffId",
+          "staffName",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9757,16 +10657,13 @@
             "format": "uuid"
           },
           "staffName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "expiresAt": {
             "type": "string",
@@ -9785,21 +10682,26 @@
         "additionalProperties": false
       },
       "StaffMeController_AvatarConfirmRequest": {
+        "required": [
+          "objectKey"
+        ],
         "type": "object",
         "properties": {
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "StaffMeController_AvatarPresignRequest": {
+        "required": [
+          "contentType",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -9809,15 +10711,17 @@
         "additionalProperties": false
       },
       "StaffMeController_AvatarPresignResponse": {
+        "required": [
+          "objectKey",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9831,6 +10735,14 @@
         "type": "string"
       },
       "StatsController_DashboardStats": {
+        "required": [
+          "classCount",
+          "courseCount",
+          "roomCount",
+          "schemasComplete",
+          "schemasTotal",
+          "staffCount"
+        ],
         "type": "object",
         "properties": {
           "classCount": {
@@ -9861,27 +10773,31 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatsController_HoursPerCourse"
-            },
-            "nullable": true
+            }
           },
           "hoursPerStaff": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatsController_HoursPerStaff"
-            },
-            "nullable": true
+            }
           },
           "unassignedClasses": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatsController_UnassignedClass"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "StatsController_HoursPerCourse": {
+        "required": [
+          "classId",
+          "className",
+          "courseId",
+          "courseName",
+          "hours"
+        ],
         "type": "object",
         "properties": {
           "courseId": {
@@ -9889,16 +10805,14 @@
             "format": "uuid"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "hours": {
             "type": "number",
@@ -9908,6 +10822,11 @@
         "additionalProperties": false
       },
       "StatsController_HoursPerStaff": {
+        "required": [
+          "hours",
+          "staffId",
+          "staffName"
+        ],
         "type": "object",
         "properties": {
           "staffId": {
@@ -9915,8 +10834,7 @@
             "format": "uuid"
           },
           "staffName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
@@ -9929,6 +10847,12 @@
         "additionalProperties": false
       },
       "StatsController_UnassignedClass": {
+        "required": [
+          "classId",
+          "className",
+          "emptySlots",
+          "hasSchema"
+        ],
         "type": "object",
         "properties": {
           "classId": {
@@ -9936,8 +10860,7 @@
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "emptySlots": {
             "type": "integer",
@@ -9950,21 +10873,26 @@
         "additionalProperties": false
       },
       "StudentsController_AvatarConfirmRequest": {
+        "required": [
+          "objectKey"
+        ],
         "type": "object",
         "properties": {
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "StudentsController_AvatarPresignRequest": {
+        "required": [
+          "contentType",
+          "fileSizeBytes"
+        ],
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fileSizeBytes": {
             "type": "integer",
@@ -9974,20 +10902,30 @@
         "additionalProperties": false
       },
       "StudentsController_AvatarPresignResponse": {
+        "required": [
+          "objectKey",
+          "uploadUrl"
+        ],
         "type": "object",
         "properties": {
           "uploadUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "objectKey": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "StudentsController_StudentDto": {
+        "required": [
+          "classId",
+          "className",
+          "createdAt",
+          "id",
+          "isEnrolledInSfo",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -9995,16 +10933,14 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
             "format": "uuid"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "isEnrolledInSfo": {
             "type": "boolean"
@@ -10017,11 +10953,15 @@
         "additionalProperties": false
       },
       "StudentsController_UpsertStudentRequest": {
+        "required": [
+          "classId",
+          "isEnrolledInSfo",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "classId": {
             "type": "string",
@@ -10074,6 +11014,12 @@
         "type": "string"
       },
       "TenantDetailDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "name",
+          "trialEnd"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10081,8 +11027,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -10120,13 +11065,19 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ModuleItemDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "TenantListItemDto": {
+        "required": [
+          "activeModuleCount",
+          "createdAt",
+          "id",
+          "name",
+          "trialEnd"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10134,8 +11085,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "contactEmail": {
             "type": "string",
@@ -10165,32 +11115,41 @@
         "additionalProperties": false
       },
       "TenantsController_CreateTenantRequest": {
+        "required": [
+          "adminEmail",
+          "adminFirstName",
+          "adminLastName",
+          "adminPassword",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminFirstName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminLastName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminPassword": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "TenantsController_TenantCreatedDto": {
+        "required": [
+          "accessToken",
+          "adminEmail",
+          "expiresIn",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10198,16 +11157,13 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "adminEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "accessToken": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "refreshToken": {
             "type": "string",
@@ -10221,6 +11177,11 @@
         "additionalProperties": false
       },
       "TimeSlotsController_BreakDto": {
+        "required": [
+          "durationMinutes",
+          "id",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10239,6 +11200,13 @@
         "additionalProperties": false
       },
       "TimeSlotsController_TemplateDto": {
+        "required": [
+          "activeDays",
+          "dayEndTime",
+          "dayStartTime",
+          "id",
+          "lessonDurationMinutes"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10258,20 +11226,25 @@
             "format": "time"
           },
           "activeDays": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "breaks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TimeSlotsController_BreakDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "TimeSlotsController_TimeSlotDto": {
+        "required": [
+          "endTime",
+          "id",
+          "isBreak",
+          "sortOrder",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10306,6 +11279,10 @@
         "additionalProperties": false
       },
       "TimeSlotsController_UpsertBreakRequest": {
+        "required": [
+          "durationMinutes",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "startTime": {
@@ -10320,6 +11297,12 @@
         "additionalProperties": false
       },
       "TimeSlotsController_UpsertTemplateRequest": {
+        "required": [
+          "activeDays",
+          "dayEndTime",
+          "dayStartTime",
+          "lessonDurationMinutes"
+        ],
         "type": "object",
         "properties": {
           "lessonDurationMinutes": {
@@ -10335,20 +11318,24 @@
             "format": "time"
           },
           "activeDays": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "breaks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TimeSlotsController_UpsertBreakRequest"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "TimeSlotsController_UpsertTimeSlotRequest": {
+        "required": [
+          "endTime",
+          "isBreak",
+          "sortOrder",
+          "startTime"
+        ],
         "type": "object",
         "properties": {
           "sortOrder": {
@@ -10374,11 +11361,17 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_CreateWindowRequest": {
+        "required": [
+          "careEndDate",
+          "careStartDate",
+          "isOpen",
+          "registrationDeadline",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "registrationDeadline": {
             "type": "string",
@@ -10402,6 +11395,16 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_EntryDto": {
+        "required": [
+          "className",
+          "id",
+          "studentId",
+          "studentName",
+          "submittedAt",
+          "submittedByParentId",
+          "submittedByParentName",
+          "updatedAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10413,27 +11416,23 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "className": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "submittedByParentId": {
             "type": "string",
             "format": "uuid"
           },
           "submittedByParentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "selectedDates": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "note": {
             "type": "string",
@@ -10451,6 +11450,10 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_MyEntryDto": {
+        "required": [
+          "studentId",
+          "studentName"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -10458,15 +11461,13 @@
             "format": "uuid"
           },
           "studentName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "selectedDates": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "note": {
             "type": "string",
@@ -10481,11 +11482,17 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_UpdateWindowRequest": {
+        "required": [
+          "careEndDate",
+          "careStartDate",
+          "isOpen",
+          "registrationDeadline",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "registrationDeadline": {
             "type": "string",
@@ -10515,8 +11522,7 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "note": {
             "type": "string",
@@ -10526,6 +11532,16 @@
         "additionalProperties": false
       },
       "VacationRegistrationController_WindowDto": {
+        "required": [
+          "careEndDate",
+          "careStartDate",
+          "createdAt",
+          "entryCount",
+          "id",
+          "isOpen",
+          "registrationDeadline",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10533,8 +11549,7 @@
             "format": "uuid"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "registrationDeadline": {
             "type": "string",
@@ -10589,6 +11604,10 @@
         "additionalProperties": false
       },
       "VikarController_AvailableStaffDto": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10596,8 +11615,7 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
@@ -10606,6 +11624,11 @@
         "additionalProperties": false
       },
       "VikarController_BusyStaffDto": {
+        "required": [
+          "conflictDescription",
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10613,15 +11636,13 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/StaffRole"
           },
           "conflictDescription": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10633,20 +11654,21 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/VikarController_AvailableStaffDto"
-            },
-            "nullable": true
+            }
           },
           "busy": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/VikarController_BusyStaffDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "WeekPlanController_AddFileToSlotRequest": {
+        "required": [
+          "schoolFileId"
+        ],
         "type": "object",
         "properties": {
           "schoolFileId": {
@@ -10657,6 +11679,12 @@
         "additionalProperties": false
       },
       "WeekPlanController_BreakTimeSlotDto": {
+        "required": [
+          "endTime",
+          "startTime",
+          "timeSlotId",
+          "timeSlotLabel"
+        ],
         "type": "object",
         "properties": {
           "timeSlotId": {
@@ -10664,8 +11692,7 @@
             "format": "uuid"
           },
           "timeSlotLabel": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startTime": {
             "type": "string",
@@ -10679,19 +11706,24 @@
         "additionalProperties": false
       },
       "WeekPlanController_HolidayDayDto": {
+        "required": [
+          "title"
+        ],
         "type": "object",
         "properties": {
           "weekday": {
             "$ref": "#/components/schemas/DayOfWeek"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "WeekPlanController_UpsertWeekPlanSlotRequest": {
+        "required": [
+          "schemaSlotId"
+        ],
         "type": "object",
         "properties": {
           "schemaSlotId": {
@@ -10715,6 +11747,15 @@
         "additionalProperties": false
       },
       "WeekPlanController_WeekPlanDto": {
+        "required": [
+          "classId",
+          "id",
+          "isHolidayWeek",
+          "isoWeek",
+          "isoYear",
+          "weekEndDate",
+          "weekStartDate"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10752,27 +11793,35 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_HolidayDayDto"
-            },
-            "nullable": true
+            }
           },
           "breakSlots": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_BreakTimeSlotDto"
-            },
-            "nullable": true
+            }
           },
           "slots": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_WeekPlanSlotDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "WeekPlanController_WeekPlanSlotDto": {
+        "required": [
+          "courseId",
+          "courseName",
+          "endTime",
+          "id",
+          "schemaSlotId",
+          "startTime",
+          "timeSlotId",
+          "timeSlotLabel",
+          "weekPlanId"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10791,8 +11840,7 @@
             "format": "uuid"
           },
           "timeSlotLabel": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "startTime": {
             "type": "string",
@@ -10807,8 +11855,7 @@
             "format": "uuid"
           },
           "courseName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "originalCourseId": {
             "type": "string",
@@ -10831,8 +11878,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WeekPlanController_WeekPlanSlotFileDto"
-            },
-            "nullable": true
+            }
           },
           "substituteTeacherId": {
             "type": "string",
@@ -10860,6 +11906,12 @@
         "additionalProperties": false
       },
       "WeekPlanController_WeekPlanSlotFileDto": {
+        "required": [
+          "fileName",
+          "id",
+          "schoolFileId",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -10871,12 +11923,10 @@
             "format": "uuid"
           },
           "fileName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10934,6 +11984,9 @@
     },
     {
       "name": "Files"
+    },
+    {
+      "name": "Imports"
     },
     {
       "name": "Kontakt"

@@ -8,27 +8,20 @@ using Skoleoverblikket.Api.Models;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
-public sealed class ParentModuleTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class ParentModuleTests(ApiFactory factory)
 {
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	// -- helper to insert a parent + student directly via DB --
@@ -41,7 +34,7 @@ public sealed class ParentModuleTests
 		var klass = new Class
 		{
 			Id = Guid.NewGuid(),
-			TenantId = TestTenantContext.DefaultTenantId,
+			TenantId = _tenantId,
 			Name = "3.a",
 		};
 		db.Classes.Add(klass);
@@ -49,7 +42,7 @@ public sealed class ParentModuleTests
 		var student = new Student
 		{
 			Id = Guid.NewGuid(),
-			TenantId = TestTenantContext.DefaultTenantId,
+			TenantId = _tenantId,
 			Name = "Lars Larsen",
 			ClassId = klass.Id,
 		};
@@ -58,7 +51,7 @@ public sealed class ParentModuleTests
 		var parent = new Parent
 		{
 			Id = Guid.NewGuid(),
-			TenantId = TestTenantContext.DefaultTenantId,
+			TenantId = _tenantId,
 			Name = "Bente Larsen",
 			Email = "bente@test.dk",
 			KeycloakSubject = keycloakSubject,
@@ -85,6 +78,7 @@ public sealed class ParentModuleTests
 	public async Task GetParents_Returns403_ForNonAdmin()
 	{
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "teacher");
 
 		var response = await client.GetAsync("/api/v1/parents");
@@ -107,6 +101,7 @@ public sealed class ParentModuleTests
 	public async Task GetStudents_Returns403_ForNonAdmin()
 	{
 		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "teacher");
 
 		var response = await client.GetAsync("/api/v1/students");
@@ -121,6 +116,7 @@ public sealed class ParentModuleTests
 		var (_, _, klass) = await SeedParentWithStudentAsync(parentSubject);
 
 		using var parentClient = _factory.CreateClient();
+		parentClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
 		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
 
@@ -139,7 +135,7 @@ public sealed class ParentModuleTests
 		var otherClass = new Class
 		{
 			Id = Guid.NewGuid(),
-			TenantId = TestTenantContext.DefaultTenantId,
+			TenantId = _tenantId,
 			Name = "7.x",
 		};
 		using (var scope = _factory.Services.CreateScope())
@@ -150,6 +146,7 @@ public sealed class ParentModuleTests
 		}
 
 		using var parentClient = _factory.CreateClient();
+		parentClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
 		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
 

@@ -298,6 +298,16 @@ public int RateLimitSeconds { get; init; } = 60;
 
 ---
 
+## Onboarding integration
+
+This feature must be surfaced during onboarding, not just discovered later inside the schema builder. A new school with classes/staff/rooms already set up (whether entered manually or via the [import wizard](25-schema-import.md) or [STIL import](23-stil-userdata-import.md)) has no schema yet — "Forslag fra AI" is the fastest path from empty schema to a usable first draft.
+
+- Once a class has courses/staff/rooms but no schema slots, the dashboard onboarding card and/or the class's empty schema grid should point at "Forslag fra AI" as the suggested next step — not just leave an empty grid.
+- Coordinate with task 25: if the school uploaded an existing schedule file (task 25's import flow), don't also prompt for an AI *suggestion* — that's a suggestion for schools starting from scratch, task 25 is for schools digitizing an existing schedule. Surface exactly one, not both, based on whether an old schedule file exists.
+- Revisit the setup wizard (`SchoolSetupWizardPage.tsx`) once this ships: consider adding a step after class/staff/room creation that offers "Forslag fra AI" per class before sending the user to the dashboard.
+
+---
+
 ## Open questions
 
 1. Alexandra platform: exact base URL, model name, auth format — check after login

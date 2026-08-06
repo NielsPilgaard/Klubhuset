@@ -71,6 +71,7 @@ const BestyrelseSkemaerPage = lazy(() => import('./pages/BestyrelseSkemaerPage')
 const BestyrelseMedarbejderePage = lazy(() => import('./pages/BestyrelseMedarbejderePage'))
 const StaaMaalMedPage = lazy(() => import('./pages/StaaMaalMedPage'))
 const BoardInvitationPage = lazy(() => import('./pages/BoardInvitationPage'))
+const ImportPage = lazy(() => import('./pages/ImportPage'))
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -380,6 +381,14 @@ export default function App() {
                   element={
                     <AdminRoute>
                       <StaaMaalMedPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="import"
+                  element={
+                    <AdminRoute>
+                      <ImportPage />
                     </AdminRoute>
                   }
                 />

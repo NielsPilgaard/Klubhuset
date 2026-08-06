@@ -11,34 +11,27 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///
 /// A class with permission rows locked to other staff must return 403 for non-admin staff.
 /// </summary>
-public sealed class NonAdminSchemaEditTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class NonAdminSchemaEditTests(ApiFactory factory)
 {
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
-	private readonly Guid _tenantId = TestTenantContext.DefaultTenantId;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
 		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Roles", "admin");
 		_adminClient.DefaultRequestHeaders.Add("X-Test-Subject", "admin-subject");
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
 	}
 
 	private HttpClient CreateNonAdminClient(string subject)
 	{
 		var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 		client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
 		return client;

@@ -51,7 +51,11 @@ public sealed class BoardMembersController(
 	public async Task<ActionResult<BoardMemberDto>> GetById(Guid id, CancellationToken cancellationToken)
 	{
 		var member = await db.BoardMembers.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
-		if (member is null) return NotFound();
+		if (member is null)
+		{
+			return NotFound();
+		}
+
 		return Ok(ToDto(member));
 	}
 
@@ -60,14 +64,21 @@ public sealed class BoardMembersController(
 	public async Task<ActionResult<BoardMemberDto>> GetMe(CancellationToken cancellationToken)
 	{
 		var sub = User.FindFirstValue("sub");
-		if (string.IsNullOrEmpty(sub)) return Unauthorized();
+		if (string.IsNullOrEmpty(sub))
+		{
+			return Unauthorized();
+		}
 
 		var member = await db.BoardMembers
 			.AsNoTracking()
 			.IgnoreQueryFilters()
 			.FirstOrDefaultAsync(m => m.KeycloakSubject == sub, cancellationToken);
 
-		if (member is null) return NotFound();
+		if (member is null)
+		{
+			return NotFound();
+		}
+
 		return Ok(ToDto(member));
 	}
 
@@ -119,7 +130,10 @@ public sealed class BoardMembersController(
 	public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
 	{
 		var member = await db.BoardMembers.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
-		if (member is null) return NotFound();
+		if (member is null)
+		{
+			return NotFound();
+		}
 
 		if (!string.IsNullOrEmpty(member.KeycloakSubject))
 		{
@@ -149,7 +163,10 @@ public sealed class BoardMembersController(
 		CancellationToken cancellationToken)
 	{
 		var member = await db.BoardMembers.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
-		if (member is null) return NotFound();
+		if (member is null)
+		{
+			return NotFound();
+		}
 
 		member.CanAccessTeacherData = req.CanAccessTeacherData;
 		await db.SaveChangesAsync(cancellationToken);

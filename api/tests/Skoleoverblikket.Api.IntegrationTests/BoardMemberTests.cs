@@ -17,7 +17,8 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 /// POST /invite and DELETE /{id} are excluded as they call external services
 /// (Keycloak and email) that are not available in the test environment.
 /// </summary>
-public sealed class BoardMemberTests
+[ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
+public sealed class BoardMemberTests(ApiFactory factory)
 {
 	private static readonly JsonSerializerOptions JsonOpts = new()
 	{
@@ -25,24 +26,16 @@ public sealed class BoardMemberTests
 		PropertyNameCaseInsensitive = true,
 	};
 
-	private ApiFactory _factory = null!;
+	private readonly ApiFactory _factory = factory;
+	private readonly Guid _tenantId = Guid.NewGuid();
 	private HttpClient _adminClient = null!;
 
 	[Before(Test)]
 	public async Task SetUp()
 	{
-		_factory = new ApiFactory();
-		await _factory.StartAsync();
-		await TestDataBuilder.CreateSchoolAsync(_factory.Services, TestTenantContext.DefaultTenantId);
+		await TestDataBuilder.CreateSchoolAsync(_factory.Services, _tenantId);
 		_adminClient = _factory.CreateClient();
-	}
-
-	[After(Test)]
-	public async Task TearDown()
-	{
-		_adminClient.Dispose();
-		await _factory.StopAsync();
-		await _factory.DisposeAsync();
+		_adminClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 	}
 
 	// -- helper: seed a BoardMember directly via DbContext --
@@ -58,7 +51,7 @@ public sealed class BoardMemberTests
 		var member = new BoardMember
 		{
 			Id = Guid.NewGuid(),
-			TenantId = TestTenantContext.DefaultTenantId,
+			TenantId = _tenantId,
 			Name = name,
 			Email = email,
 			CanAccessTeacherData = canAccessTeacherData,
@@ -111,6 +104,7 @@ public sealed class BoardMemberTests
 	public async Task GetAll_NonAdmin_Returns403()
 	{
 		using var userClient = _factory.CreateClient();
+		userClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		userClient.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 
 		var response = await userClient.GetAsync("/api/v1/board-members");
@@ -154,6 +148,7 @@ public sealed class BoardMemberTests
 		var member = await SeedBoardMemberAsync();
 
 		using var userClient = _factory.CreateClient();
+		userClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		userClient.DefaultRequestHeaders.Add("X-Test-Roles", "user");
 
 		var response = await userClient.PatchAsJsonAsync(
@@ -173,6 +168,7 @@ public sealed class BoardMemberTests
 			keycloakSubject: boardSubject);
 
 		using var boardClient = _factory.CreateClient();
+		boardClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
 		boardClient.DefaultRequestHeaders.Add("X-Test-Roles", "board");
 		boardClient.DefaultRequestHeaders.Add("X-Test-Subject", boardSubject);
 
