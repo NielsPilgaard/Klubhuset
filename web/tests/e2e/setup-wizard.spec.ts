@@ -44,15 +44,27 @@ test.describe('Setup wizard — new user', () => {
 
     await page.getByRole('button', { name: /gem og fortsæt/i }).click()
 
-    await expect(page.getByRole('heading', { name: /klasser/i })).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: /hvordan vil du oprette resten/i })).toBeVisible({
+      timeout: 10_000,
+    })
     expect(failedRequests, `Unauthorized API calls: ${JSON.stringify(failedRequests)}`).toHaveLength(0)
   })
 
   test('full wizard: skip all steps and reach dashboard', async ({ page }) => {
     await signupAndLandOnWizard(page)
 
-    // Steps 1–4: skip each in sequence
-    const stepHeadings = [/skoledag/i, /klasser/i, /lokaler/i, /medarbejdere/i]
+    // Step 1: skip school day
+    await expect(page.getByRole('heading', { name: /skoledag/i })).toBeVisible({ timeout: 10_000 })
+    await page.getByRole('button', { name: /spring over/i }).click()
+
+    // Step 2: choose manual creation method
+    await expect(
+      page.getByRole('heading', { name: /hvordan vil du oprette resten/i })
+    ).toBeVisible({ timeout: 10_000 })
+    await page.getByText(/jeg opretter det manuelt/i).click()
+
+    // Steps 3–5: skip each in sequence
+    const stepHeadings = [/klasser/i, /lokaler/i, /medarbejdere/i]
     for (const heading of stepHeadings) {
       await expect(page.getByRole('heading', { name: heading })).toBeVisible({ timeout: 10_000 })
       await page.getByRole('button', { name: /spring over/i }).click()
@@ -70,20 +82,26 @@ test.describe('Setup wizard — new user', () => {
     await expect(page.getByRole('heading', { name: /skoledag/i })).toBeVisible({ timeout: 10_000 })
     await page.getByRole('button', { name: /spring over/i }).click()
 
-    // Step 2: create a class
+    // Step 2: choose manual creation method
+    await expect(
+      page.getByRole('heading', { name: /hvordan vil du oprette resten/i })
+    ).toBeVisible({ timeout: 10_000 })
+    await page.getByText(/jeg opretter det manuelt/i).click()
+
+    // Step 3: create a class
     await expect(page.getByRole('heading', { name: /klasser/i })).toBeVisible({ timeout: 10_000 })
     await page.locator('input[placeholder="fx 1.a"]').first().fill('1.a')
     await page.getByRole('button', { name: /opret og fortsæt/i }).click()
 
-    // Step 3: skip rooms
+    // Step 4: skip rooms
     await expect(page.getByRole('heading', { name: /lokaler/i })).toBeVisible({ timeout: 10_000 })
     await page.getByRole('button', { name: /spring over/i }).click()
 
-    // Step 4: skip staff
+    // Step 5: skip staff
     await expect(page.getByRole('heading', { name: /medarbejdere/i })).toBeVisible({ timeout: 10_000 })
     await page.getByRole('button', { name: /spring over/i }).click()
 
-    // Step 5: done
+    // Step 6: done
     await expect(page.getByRole('heading', { name: /din skole er sat op/i })).toBeVisible({ timeout: 10_000 })
     await page.getByRole('button', { name: /gå til oversigt/i }).click()
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
