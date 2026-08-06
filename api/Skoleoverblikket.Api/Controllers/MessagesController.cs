@@ -158,9 +158,16 @@ public sealed class MessagesController(
 
 		var (callerId, _, _) = caller.Value;
 
+		// Group fan-out writes one Message row per recipient, so dedupe by
+		// GroupMessageId (falling back to the row's own Id for non-group
+		// messages) before paging — otherwise a large group send fills the
+		// Take(50) window with its own fan-out rows and crowds out older
+		// individual sent messages.
 		var messages = await db.Messages
 			.AsNoTracking()
 			.Where(m => m.SenderId == callerId)
+			.GroupBy(m => m.GroupMessageId ?? m.Id)
+			.Select(g => g.OrderBy(m => m.Id).First())
 			.OrderByDescending(m => m.SentAt)
 			.Take(50)
 			.ToListAsync(cancellationToken);
