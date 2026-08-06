@@ -178,3 +178,13 @@ No changes — no new services, no new containers.
 5. Accept all → slots appear in schema grid
 6. `/verify` passes
 7. `/test` Playwright: upload → review ghost slots → accept all
+
+---
+
+## Onboarding integration
+
+This is a distinct import branch from the entity import wizard (`ImportPage.tsx` — students/parents, staff, rooms, board members via paste-grid) and from STIL import (task 23 — students/staff/classes/parents via SkoleGrunddata). Those three cover *who/where* (entities); this task covers *when* (the actual weekly schema/slots) — a school can complete every onboarding step (classes, rooms, staff) and still face a blank schema grid per class.
+
+- Onboarding must point schools with an existing paper/Excel/PDF schedule at **this** import, not at the entity import wizard — they solve different problems and neither substitutes for the other. Copy in the setup wizard fork (see `SchoolSetupWizardPage.tsx`) must not conflate "import your data" (entities) with "import your existing schedule" (this task) — offer both as separate, clearly-labeled choices once this ships.
+- After entity onboarding completes (classes/rooms/staff all created, via any of the three entity paths), the dashboard/onboarding flow should ask, per class: "Har du et eksisterende skema for denne klasse?" → this import. If no → task 21's AI suggestion. If neither → empty grid, manual entry.
+- Until this task ships, the setup wizard's import fork only covers entities — do not reference schema import from the wizard yet.
