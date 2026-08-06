@@ -2596,6 +2596,54 @@
         }
       }
     },
+    "/api/v1/imports/classes": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportClassesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportClassesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportsController_ImportClassesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportClassesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportClassesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsController_ImportClassesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/imports/board-members": {
       "post": {
         "tags": [
@@ -8691,6 +8739,65 @@
             "format": "int32"
           },
           "boardMembersSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportWarning"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportClassRow": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportClassesRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_ImportClassRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_ImportClassesResponse": {
+        "required": [
+          "classesCreated",
+          "classesSkipped",
+          "classesUpdated"
+        ],
+        "type": "object",
+        "properties": {
+          "classesCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classesUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classesSkipped": {
             "type": "integer",
             "format": "int32"
           },

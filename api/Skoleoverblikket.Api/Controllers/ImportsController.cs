@@ -539,6 +539,96 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		return Ok(new ImportRoomsResponse(roomsCreated, roomsUpdated, roomsSkipped, warnings));
 	}
 
+	public record ImportClassRow(
+		string? Name,
+		string? Description,
+		string? GradeLevel);
+
+	public record ImportClassesRequest(
+		[Required] IReadOnlyList<ImportClassRow> Rows);
+
+	public record ImportClassesResponse(
+		[Required] int ClassesCreated,
+		[Required] int ClassesUpdated,
+		[Required] int ClassesSkipped,
+		[Required] IReadOnlyList<ImportWarning> Warnings);
+
+	[HttpPost("classes")]
+	public async Task<ActionResult<ImportClassesResponse>> ImportClasses(
+		[FromBody] ImportClassesRequest req,
+		CancellationToken cancellationToken)
+	{
+		var warnings = new List<ImportWarning>();
+		int classesCreated = 0, classesUpdated = 0, classesSkipped = 0;
+
+		var existingByName = (await db.Classes
+			.Where(c => c.ArchivedAt == null)
+			.ToListAsync(cancellationToken))
+			.GroupBy(c => c.Name.Trim().ToLowerInvariant())
+			.Where(g => g.Count() == 1)
+			.ToDictionary(g => g.Key, g => g.First());
+
+		int rowNum = 0;
+		foreach (var row in req.Rows)
+		{
+			rowNum++;
+
+			if (string.IsNullOrWhiteSpace(row.Name))
+			{
+				classesSkipped++;
+				continue;
+			}
+
+			int? gradeLevel = null;
+			if (!string.IsNullOrWhiteSpace(row.GradeLevel))
+			{
+				if (int.TryParse(row.GradeLevel.Trim(), out var grade) && grade is >= 0 and <= 10)
+				{
+					gradeLevel = grade;
+				}
+				else
+				{
+					warnings.Add(new ImportWarning(rowNum,
+						$"Klassetrin '{row.GradeLevel}' er ikke et tal mellem 0 og 10 — felt ignoreret"));
+				}
+			}
+
+			var nameKey = row.Name.Trim().ToLowerInvariant();
+			if (existingByName.TryGetValue(nameKey, out var existing))
+			{
+				if (!string.IsNullOrWhiteSpace(row.Description))
+				{
+					existing.Description = row.Description.Trim();
+				}
+
+				if (gradeLevel.HasValue)
+				{
+					existing.GradeLevel = gradeLevel;
+				}
+
+				classesUpdated++;
+			}
+			else
+			{
+				var klasse = new Class
+				{
+					Id = Guid.NewGuid(),
+					TenantId = tenant.TenantId,
+					Name = row.Name.Trim(),
+					Description = string.IsNullOrWhiteSpace(row.Description) ? null : row.Description.Trim(),
+					GradeLevel = gradeLevel,
+				};
+				db.Classes.Add(klasse);
+				existingByName[nameKey] = klasse;
+				classesCreated++;
+			}
+		}
+
+		await db.SaveChangesAsync(cancellationToken);
+
+		return Ok(new ImportClassesResponse(classesCreated, classesUpdated, classesSkipped, warnings));
+	}
+
 	public record ImportBoardMemberRow(
 		string? Name,
 		string? Email,
