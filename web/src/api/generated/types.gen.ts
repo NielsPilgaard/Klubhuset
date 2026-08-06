@@ -351,6 +351,23 @@ export type ImportsControllerImportBoardMembersResponse = {
     warnings?: Array<ImportsControllerImportWarning>;
 };
 
+export type ImportsControllerImportClassRow = {
+    name?: string | null;
+    description?: string | null;
+    gradeLevel?: string | null;
+};
+
+export type ImportsControllerImportClassesRequest = {
+    rows?: Array<ImportsControllerImportClassRow>;
+};
+
+export type ImportsControllerImportClassesResponse = {
+    classesCreated: number;
+    classesUpdated: number;
+    classesSkipped: number;
+    warnings?: Array<ImportsControllerImportWarning>;
+};
+
 export type ImportsControllerImportParentRow = {
     name?: string | null;
     email?: string | null;
@@ -2267,6 +2284,22 @@ export type PostApiV1ImportsRoomsResponses = {
 };
 
 export type PostApiV1ImportsRoomsResponse = PostApiV1ImportsRoomsResponses[keyof PostApiV1ImportsRoomsResponses];
+
+export type PostApiV1ImportsClassesData = {
+    body?: ImportsControllerImportClassesRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/imports/classes';
+};
+
+export type PostApiV1ImportsClassesResponses = {
+    /**
+     * OK
+     */
+    200: ImportsControllerImportClassesResponse;
+};
+
+export type PostApiV1ImportsClassesResponse = PostApiV1ImportsClassesResponses[keyof PostApiV1ImportsClassesResponses];
 
 export type PostApiV1ImportsBoardMembersData = {
     body?: ImportsControllerImportBoardMembersRequest;
