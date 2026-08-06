@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   getApiV1SchoolsSettingsOptions,
@@ -12,18 +13,25 @@ interface NavItem {
   to: string
   label: string
   icon: React.ReactNode
+  order: number
+  group?: string
   adminOnly?: boolean
   parentOnly?: boolean
   boardOnly?: boolean
   moduleGated?: boolean
-  group?: string
 }
 
+/**
+ * Single source of truth for the sidebar. Each item's `group` and `order`
+ * fully determine where it renders — array position doesn't matter.
+ * Group order is: order of first item (by `order`) belonging to that group.
+ */
 const navItems: NavItem[] = [
   {
     to: '/dashboard',
     label: 'Oversigt',
     adminOnly: true,
+    order: 0,
     icon: (
       <svg
         width="18"
@@ -46,6 +54,7 @@ const navItems: NavItem[] = [
     to: '/klasser',
     label: 'Klasser',
     group: 'Planlægning',
+    order: 10,
     icon: (
       <svg
         width="18"
@@ -65,8 +74,32 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    to: '/staa-maal-med',
+    label: 'Stå mål med',
+    adminOnly: true,
+    group: 'Planlægning',
+    order: 11,
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    ),
+  },
+  {
     to: '/kalender',
     label: 'Kalender',
+    group: 'Planlægning',
+    order: 12,
     icon: (
       <svg
         width="18"
@@ -88,6 +121,8 @@ const navItems: NavItem[] = [
   {
     to: '/mig/skema',
     label: 'Mit skema',
+    group: 'Planlægning',
+    order: 13,
     icon: (
       <svg
         width="18"
@@ -112,6 +147,8 @@ const navItems: NavItem[] = [
     to: '/sfo',
     label: 'SFO',
     adminOnly: true,
+    group: 'Planlægning',
+    order: 14,
     icon: (
       <svg
         width="18"
@@ -132,6 +169,8 @@ const navItems: NavItem[] = [
     to: '/ferieindmelding',
     label: 'Ferietilmelding',
     adminOnly: true,
+    group: 'Planlægning',
+    order: 15,
     icon: (
       <svg
         width="18"
@@ -156,6 +195,7 @@ const navItems: NavItem[] = [
     label: 'Medarbejdere',
     adminOnly: true,
     group: 'Stamdata',
+    order: 20,
     icon: (
       <svg
         width="18"
@@ -175,6 +215,8 @@ const navItems: NavItem[] = [
   {
     to: '/fag',
     label: 'Fag',
+    group: 'Stamdata',
+    order: 21,
     icon: (
       <svg
         width="18"
@@ -194,6 +236,8 @@ const navItems: NavItem[] = [
   {
     to: '/lokaler',
     label: 'Lokaler',
+    group: 'Stamdata',
+    order: 22,
     icon: (
       <svg
         width="18"
@@ -211,31 +255,12 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    to: '/import',
-    label: 'Importer data',
-    adminOnly: true,
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="17 8 12 3 7 8" />
-        <line x1="12" y1="3" x2="12" y2="15" />
-      </svg>
-    ),
-  },
-  {
     to: '/elever',
     label: 'Elever',
     adminOnly: true,
     moduleGated: true,
+    group: 'Stamdata',
+    order: 23,
     icon: (
       <svg
         width="18"
@@ -259,6 +284,8 @@ const navItems: NavItem[] = [
     label: 'Forældre',
     adminOnly: true,
     moduleGated: true,
+    group: 'Stamdata',
+    order: 24,
     icon: (
       <svg
         width="18"
@@ -278,10 +305,34 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    to: '/import',
+    label: 'Importer data',
+    adminOnly: true,
+    group: 'Stamdata',
+    order: 25,
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+    ),
+  },
+  {
     to: '/foraeldre/kontakt',
     label: 'Kontakter',
     parentOnly: true,
     moduleGated: true,
+    order: 30,
     icon: (
       <svg
         width="18"
@@ -304,6 +355,7 @@ const navItems: NavItem[] = [
     to: '/filer',
     label: 'Filer',
     group: 'Filer & Eksport',
+    order: 40,
     icon: (
       <svg
         width="18"
@@ -323,6 +375,8 @@ const navItems: NavItem[] = [
     to: '/eksporter',
     label: 'Eksporter',
     adminOnly: true,
+    group: 'Filer & Eksport',
+    order: 41,
     icon: (
       <svg
         width="18"
@@ -341,31 +395,11 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    to: '/staa-maal-med',
-    label: 'Stå mål med',
-    adminOnly: true,
-    group: 'Planlægning',
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-        <polyline points="22 4 12 14.01 9 11.01" />
-      </svg>
-    ),
-  },
-  {
     to: '/bestyrelse/oversigt',
     label: 'Oversigt',
     boardOnly: true,
     group: 'Bestyrelse',
+    order: 50,
     icon: (
       <svg
         width="18"
@@ -388,6 +422,8 @@ const navItems: NavItem[] = [
     to: '/bestyrelse/filer',
     label: 'Filer',
     boardOnly: true,
+    group: 'Bestyrelse',
+    order: 51,
     icon: (
       <svg
         width="18"
@@ -407,6 +443,8 @@ const navItems: NavItem[] = [
     to: '/bestyrelse/staa-maal-med',
     label: 'Stå mål med',
     boardOnly: true,
+    group: 'Bestyrelse',
+    order: 52,
     icon: (
       <svg
         width="18"
@@ -427,6 +465,7 @@ const navItems: NavItem[] = [
     to: '/foraeldrevisning/skema',
     label: 'Skema',
     parentOnly: true,
+    order: 60,
     icon: (
       <svg
         width="18"
@@ -451,6 +490,7 @@ const navItems: NavItem[] = [
     to: '/foraeldrevisning/kalender',
     label: 'Kalender',
     parentOnly: true,
+    order: 61,
     icon: (
       <svg
         width="18"
@@ -473,6 +513,7 @@ const navItems: NavItem[] = [
     to: '/foraeldrevisning/ugeplan',
     label: 'Ugeplan',
     parentOnly: true,
+    order: 62,
     icon: (
       <svg
         width="18"
@@ -497,6 +538,7 @@ const navItems: NavItem[] = [
     to: '/foraeldrevisning/kontakt',
     label: 'Kontakter',
     parentOnly: true,
+    order: 63,
     icon: (
       <svg
         width="18"
@@ -519,6 +561,7 @@ const navItems: NavItem[] = [
     to: '/foraeldrevisning/ferieindmelding',
     label: 'Ferietilmelding',
     parentOnly: true,
+    order: 64,
     icon: (
       <svg
         width="18"
@@ -543,6 +586,7 @@ const navItems: NavItem[] = [
     label: 'Fravær',
     parentOnly: true,
     group: 'Kontakt',
+    order: 70,
     icon: (
       <svg
         width="18"
@@ -565,6 +609,7 @@ const navItems: NavItem[] = [
     label: 'Kontaktbog',
     parentOnly: true,
     group: 'Kontakt',
+    order: 71,
     icon: (
       <svg
         width="18"
@@ -585,6 +630,7 @@ const navItems: NavItem[] = [
     label: 'Fravær',
     moduleGated: true,
     group: 'Kontakt',
+    order: 72,
     icon: (
       <svg
         width="18"
@@ -607,6 +653,7 @@ const navItems: NavItem[] = [
     label: 'Kontaktbog',
     moduleGated: true,
     group: 'Kontakt',
+    order: 73,
     icon: (
       <svg
         width="18"
@@ -627,6 +674,7 @@ const navItems: NavItem[] = [
     label: 'Beskeder',
     moduleGated: true,
     group: 'Kontakt',
+    order: 74,
     icon: (
       <svg
         width="18"
@@ -649,6 +697,7 @@ const navItems: NavItem[] = [
     parentOnly: true,
     moduleGated: true,
     group: 'Kontakt',
+    order: 74,
     icon: (
       <svg
         width="18"
@@ -667,14 +716,77 @@ const navItems: NavItem[] = [
   },
 ]
 
+function NavItemLink({ item, onClose }: { item: NavItem; onClose: () => void }) {
+  return (
+    <NavLink
+      to={item.to}
+      onClick={onClose}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+          isActive ? 'bg-brand-600 text-white' : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+        }`
+      }
+    >
+      <span className="shrink-0">{item.icon}</span>
+      {item.label}
+    </NavLink>
+  )
+}
+
+type NavBlock = { kind: 'item'; item: NavItem } | { kind: 'group'; group: string; items: NavItem[] }
+
+/** Groups items by `group`, sorts groups and in-group items by `order`. Ungrouped items stay standalone blocks. */
+function buildNavBlocks(items: NavItem[]): NavBlock[] {
+  const groupOrder = new Map<string, number>()
+  for (const item of items) {
+    if (item.group != null && !groupOrder.has(item.group)) {
+      groupOrder.set(item.group, item.order)
+    }
+  }
+
+  const blocks: NavBlock[] = []
+  const groupBlocks = new Map<string, Extract<NavBlock, { kind: 'group' }>>()
+
+  for (const item of items) {
+    if (item.group == null) {
+      blocks.push({ kind: 'item', item })
+      continue
+    }
+    let block = groupBlocks.get(item.group)
+    if (!block) {
+      block = { kind: 'group', group: item.group, items: [] }
+      groupBlocks.set(item.group, block)
+      blocks.push(block)
+    }
+    block.items.push(item)
+  }
+
+  for (const block of blocks) {
+    if (block.kind === 'group') {
+      block.items.sort((a, b) => a.order - b.order)
+    }
+  }
+
+  blocks.sort((a, b) => {
+    const orderA = a.kind === 'item' ? a.item.order : (groupOrder.get(a.group) ?? 0)
+    const orderB = b.kind === 'item' ? b.item.order : (groupOrder.get(b.group) ?? 0)
+    return orderA - orderB
+  })
+
+  return blocks
+}
+
 interface SidebarProps {
   open: boolean
   onClose: () => void
 }
 
+const NAV_EXPANDED_GROUPS_KEY = 'nav-expanded-groups'
+
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { logout, userName, isAdmin, isParent, isBoard } = useAuth()
   const { hasParentModule } = useSubscription()
+  const { pathname } = useLocation()
   const { data: school } = useQuery({ ...getApiV1SchoolsSettingsOptions(), enabled: isAdmin })
   const { data: onboarding } = useQuery({
     ...getApiV1SchoolsOnboardingStatusOptions(),
@@ -696,6 +808,36 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     if (item.moduleGated && !hasParentModule) return false
     return !item.adminOnly || isAdmin
   })
+
+  const navBlocks = useMemo(() => buildNavBlocks(visibleNavItems), [visibleNavItems])
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(NAV_EXPANDED_GROUPS_KEY)
+      if (stored) return new Set(JSON.parse(stored))
+    } catch {
+      // ignore malformed storage, fall through to default
+    }
+    return new Set()
+  })
+
+  const activeGroup = visibleNavItems.find((item) => item.to === pathname)?.group
+
+  useEffect(() => {
+    localStorage.setItem(NAV_EXPANDED_GROUPS_KEY, JSON.stringify([...expandedGroups]))
+  }, [expandedGroups])
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(group)) {
+        next.delete(group)
+      } else {
+        next.add(group)
+      }
+      return next
+    })
+  }
 
   return (
     <>
@@ -765,30 +907,50 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
-          {visibleNavItems.map((item, index) => {
-            const prevItem = visibleNavItems[index - 1]
-            const showGroupLabel = item.group != null && item.group !== prevItem?.group
+          {navBlocks.map((block) => {
+            if (block.kind === 'item') {
+              return (
+                <div key={block.item.to}>
+                  <NavItemLink item={block.item} onClose={onClose} />
+                </div>
+              )
+            }
+
+            const isCollapsed =
+              !expandedGroups.has(block.group) && block.group !== activeGroup
+
             return (
-              <div key={item.to}>
-                {showGroupLabel && (
-                  <p className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-brand-400 select-none">
-                    {item.group}
-                  </p>
-                )}
-                <NavLink
-                  to={item.to}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-brand-600 text-white'
-                        : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-                    }`
-                  }
+              <div key={block.group}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(block.group)}
+                  className="flex items-center justify-between w-full px-3 pt-3 pb-1 rounded-md text-xs font-semibold uppercase tracking-wider text-brand-400 select-none hover:bg-brand-800"
                 >
-                  <span className="shrink-0">{item.icon}</span>
-                  {item.label}
-                </NavLink>
+                  {block.group}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                <div
+                  className="grid transition-[grid-template-rows] duration-200 ease-in-out"
+                  style={{ gridTemplateRows: isCollapsed ? '0fr' : '1fr' }}
+                >
+                  <div className="overflow-hidden">
+                    {block.items.map((item) => (
+                      <NavItemLink key={item.to} item={item} onClose={onClose} />
+                    ))}
+                  </div>
+                </div>
               </div>
             )
           })}
