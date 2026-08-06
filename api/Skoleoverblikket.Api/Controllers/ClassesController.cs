@@ -282,9 +282,15 @@ file sealed class NaturalSortComparer : IComparer<string>
 					j++;
 				}
 
-				var n1 = int.Parse(x.AsSpan(numStart1, i - numStart1));
-				var n2 = int.Parse(y.AsSpan(numStart2, j - numStart2));
-				var cmp = n1.CompareTo(n2);
+				var span1 = x.AsSpan(numStart1, i - numStart1).TrimStart('0');
+				var span2 = y.AsSpan(numStart2, j - numStart2).TrimStart('0');
+
+				var cmp = span1.Length.CompareTo(span2.Length);
+				if (cmp == 0)
+				{
+					cmp = span1.CompareTo(span2, StringComparison.Ordinal);
+				}
+
 				if (cmp != 0)
 				{
 					return cmp;
