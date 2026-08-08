@@ -746,7 +746,9 @@ function NavItemLink({ item, onClose }: { item: NavItem; onClose: () => void }) 
       onClick={onClose}
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-          isActive ? 'bg-brand-600 text-white' : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+          isActive
+            ? 'bg-brand-600 text-white'
+            : 'text-brand-200 hover:bg-brand-800 hover:text-white'
         }`
       }
     >
@@ -939,8 +941,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               )
             }
 
-            const isCollapsed =
-              !expandedGroups.has(block.group) && block.group !== activeGroup
+            const isCollapsed = !expandedGroups.has(block.group) && block.group !== activeGroup
 
             return (
               <div key={block.group}>
