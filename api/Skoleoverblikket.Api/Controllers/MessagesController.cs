@@ -166,12 +166,16 @@ public sealed class MessagesController(
 		// GroupMessageId (falling back to the row's own Id for non-group
 		// messages) before paging — otherwise a large group send fills the
 		// Take(50) window with its own fan-out rows and crowds out older
-		// individual sent messages.
+		// individual sent messages. DISTINCT ON pushes the dedupe into
+		// Postgres itself instead of a bounded client-side scan.
 		var messages = await db.Messages
+			.FromSqlInterpolated($"""
+				SELECT DISTINCT ON (COALESCE("GroupMessageId", "Id")) *
+				FROM "Messages"
+				WHERE "SenderId" = {callerId}
+				ORDER BY COALESCE("GroupMessageId", "Id"), "Id"
+				""")
 			.AsNoTracking()
-			.Where(m => m.SenderId == callerId)
-			.GroupBy(m => m.GroupMessageId ?? m.Id)
-			.Select(g => g.OrderBy(m => m.Id).First())
 			.OrderByDescending(m => m.SentAt)
 			.Take(50)
 			.ToListAsync(cancellationToken);

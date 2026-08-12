@@ -966,7 +966,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   </svg>
                 </button>
                 <div
-                  className="grid transition-[grid-template-rows] duration-200 ease-in-out"
+                  className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${
+                    isCollapsed ? 'pointer-events-none' : ''
+                  }`}
                   style={{ gridTemplateRows: isCollapsed ? '0fr' : '1fr' }}
                 >
                   <div className="overflow-hidden">
