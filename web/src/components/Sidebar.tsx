@@ -948,7 +948,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(block.group)}
-                  className="flex items-center justify-between w-full px-3 pt-3 pb-1 rounded-md text-xs font-semibold uppercase tracking-wider text-brand-400 select-none hover:bg-brand-800"
+                  className="flex items-center justify-between w-full px-3 pt-3 pb-1 rounded-md text-xs font-semibold uppercase tracking-wider text-white/70 hover:text-white select-none hover:bg-brand-800"
                 >
                   {block.group}
                   <svg
