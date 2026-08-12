@@ -33,6 +33,8 @@ interface InboxMessageDto {
   body: string
   sentAt: string
   readAt?: string
+  inReplyToId?: string
+  isGroup?: boolean
 }
 
 interface SentMessageDto {
@@ -47,6 +49,7 @@ interface SentMessageDto {
   isGroup?: boolean
   audienceLabel?: string
   groupRecipientCount?: number
+  inReplyToId?: string
 }
 
 interface RecipientDto {
@@ -529,6 +532,7 @@ export default function BeskederPage() {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [inReplyToId, setInReplyToId] = useState<string | null>(null)
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const directoryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -648,19 +652,54 @@ export default function BeskederPage() {
     setShowDropdown(false)
   }
 
-  function handleOpenCompose(prefilledRecipient?: RecipientDto) {
+  function handleOpenCompose(
+    prefilledRecipient?: RecipientDto,
+    prefilled?: { subject: string; body: string; inReplyToId: string }
+  ) {
     setSelectedRecipient(prefilledRecipient ?? null)
     setRecipientSearch('')
     setRecipientResults([])
     setShowDropdown(false)
-    setSubject('')
-    setBody('')
+    setSubject(prefilled?.subject ?? '')
+    setBody(prefilled?.body ?? '')
+    setInReplyToId(prefilled?.inReplyToId ?? null)
     setSendError(null)
     setComposeOpen(true)
   }
 
   function handleDirectoryContactClick(recipient: RecipientDto) {
     handleOpenCompose(recipient)
+  }
+
+  function handleReply() {
+    if (!selectedMsg) return
+
+    const recipient: RecipientDto =
+      tab === 'inbox'
+        ? {
+            id: (selectedMsg as InboxMessageDto).senderId,
+            name: (selectedMsg as InboxMessageDto).senderName,
+            type: (selectedMsg as InboxMessageDto).senderType,
+          }
+        : {
+            id: (selectedMsg as SentMessageDto).recipientId,
+            name: (selectedMsg as SentMessageDto).recipientName,
+            type: (selectedMsg as SentMessageDto).recipientType,
+          }
+
+    const replySubject = selectedMsg.subject.startsWith('Sv: ')
+      ? selectedMsg.subject
+      : `Sv: ${selectedMsg.subject}`
+    const quoted = selectedMsg.body
+      .split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n')
+
+    handleOpenCompose(recipient, {
+      subject: replySubject,
+      body: `\n\n${quoted}`,
+      inReplyToId: selectedMsg.id,
+    })
   }
 
   async function handleSend() {
@@ -674,10 +713,12 @@ export default function BeskederPage() {
           recipientType: selectedRecipient.type,
           subject: subject.trim(),
           body: body.trim(),
+          inReplyToId: inReplyToId ?? undefined,
         },
         throwOnError: true,
       })
       setComposeOpen(false)
+      setInReplyToId(null)
       await fetchMessages()
     } catch {
       setSendError('Der opstod en fejl. Prøv igen.')
@@ -1002,9 +1043,35 @@ export default function BeskederPage() {
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="max-w-2xl">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    {selectedMsg.subject}
-                  </h2>
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">{selectedMsg.subject}</h2>
+                    {!(
+                      (tab === 'sent' && (selectedMsg as SentMessageDto).isGroup) ||
+                      (tab === 'inbox' && (selectedMsg as InboxMessageDto).isGroup)
+                    ) && (
+                      <button
+                        type="button"
+                        onClick={handleReply}
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="9 17 4 12 9 7" />
+                          <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                        </svg>
+                        Svar
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
                     <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
                       {tab === 'inbox'
@@ -1086,16 +1153,24 @@ export default function BeskederPage() {
       {/* 1:1 compose modal */}
       <Modal
         isOpen={composeOpen}
-        onClose={() => setComposeOpen(false)}
+        onClose={() => {
+          setComposeOpen(false)
+          setInReplyToId(null)
+        }}
         size="lg"
         contentClassName="bg-white rounded-xl p-6 shadow-xl w-full max-w-lg"
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">Ny besked</h2>
+          <h2 className="text-base font-semibold text-gray-900">
+            {inReplyToId ? 'Svar' : 'Ny besked'}
+          </h2>
           <button
             type="button"
             aria-label="Luk"
-            onClick={() => setComposeOpen(false)}
+            onClick={() => {
+              setComposeOpen(false)
+              setInReplyToId(null)
+            }}
             className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg
@@ -1234,7 +1309,10 @@ export default function BeskederPage() {
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
-            onClick={() => setComposeOpen(false)}
+            onClick={() => {
+              setComposeOpen(false)
+              setInReplyToId(null)
+            }}
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
           >
             Annuller

@@ -21,11 +21,21 @@ public class Message : ITenantScoped, IEntityTypeConfiguration<Message>
 	public DateTimeOffset SentAt { get; set; }
 	public DateTimeOffset? ReadAt { get; set; }
 	public Guid? GroupMessageId { get; set; }
+	public Guid? InReplyToId { get; set; }
 
 	public void Configure(EntityTypeBuilder<Message> builder)
 	{
 		builder.HasIndex(m => m.GroupMessageId)
 			.HasFilter("\"GroupMessageId\" IS NOT NULL")
 			.HasDatabaseName("IX_Messages_GroupMessageId");
+
+		builder.HasIndex(m => m.InReplyToId)
+			.HasFilter("\"InReplyToId\" IS NOT NULL")
+			.HasDatabaseName("IX_Messages_InReplyToId");
+
+		builder.HasOne<Message>()
+			.WithMany()
+			.HasForeignKey(m => m.InReplyToId)
+			.OnDelete(DeleteBehavior.Restrict);
 	}
 }

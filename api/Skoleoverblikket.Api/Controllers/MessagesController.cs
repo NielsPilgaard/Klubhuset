@@ -37,7 +37,9 @@ public sealed class MessagesController(
 		string Subject,
 		string Body,
 		DateTimeOffset SentAt,
-		DateTimeOffset? ReadAt);
+		DateTimeOffset? ReadAt,
+		Guid? InReplyToId,
+		bool IsGroup = false);
 
 	public record SentMessageDto(
 		Guid Id,
@@ -50,13 +52,15 @@ public sealed class MessagesController(
 		DateTimeOffset? ReadAt,
 		bool IsGroup = false,
 		string? AudienceLabel = null,
-		int? GroupRecipientCount = null);
+		int? GroupRecipientCount = null,
+		Guid? InReplyToId = null);
 
 	public record SendMessageRequest(
 		Guid RecipientId,
 		RecipientType RecipientType,
 		string Subject,
-		string Body);
+		string Body,
+		Guid? InReplyToId = null);
 
 	public record RecipientDto(
 		Guid Id,
@@ -141,7 +145,7 @@ public sealed class MessagesController(
 			var senderName = m.SenderType == RecipientType.Parent
 				? parentMap.GetValueOrDefault(m.SenderId, "Forælder")
 				: staffMap.GetValueOrDefault(m.SenderId, "Medarbejder");
-			return new InboxMessageDto(m.Id, m.SenderId, m.SenderType, senderName, m.Subject, m.Body, m.SentAt, m.ReadAt);
+			return new InboxMessageDto(m.Id, m.SenderId, m.SenderType, senderName, m.Subject, m.Body, m.SentAt, m.ReadAt, m.InReplyToId, IsGroup: m.GroupMessageId != null);
 		}).ToList();
 
 		return Ok(dtos);
@@ -254,7 +258,7 @@ public sealed class MessagesController(
 				var recipientName = m.RecipientType == RecipientType.Parent
 					? parentMap.GetValueOrDefault(m.RecipientId, "Forælder")
 					: staffMap.GetValueOrDefault(m.RecipientId, "Medarbejder");
-				dtos.Add(new SentMessageDto(m.Id, m.RecipientId, m.RecipientType, recipientName, m.Subject, m.Body, m.SentAt, m.ReadAt));
+				dtos.Add(new SentMessageDto(m.Id, m.RecipientId, m.RecipientType, recipientName, m.Subject, m.Body, m.SentAt, m.ReadAt, InReplyToId: m.InReplyToId));
 			}
 		}
 
@@ -305,6 +309,24 @@ public sealed class MessagesController(
 			}
 		}
 
+		if (req.InReplyToId.HasValue)
+		{
+			var parentMessage = await db.Messages
+				.AsNoTracking()
+				.FirstOrDefaultAsync(m => m.Id == req.InReplyToId.Value, cancellationToken);
+
+			if (parentMessage is null || parentMessage.GroupMessageId is not null)
+			{
+				return NotFound();
+			}
+
+			var callerIsParticipant = parentMessage.SenderId == callerId || parentMessage.RecipientId == callerId;
+			if (!callerIsParticipant)
+			{
+				return Forbid();
+			}
+		}
+
 		var message = new Message
 		{
 			Id = Guid.NewGuid(),
@@ -316,6 +338,7 @@ public sealed class MessagesController(
 			Subject = req.Subject,
 			Body = req.Body,
 			SentAt = DateTimeOffset.UtcNow,
+			InReplyToId = req.InReplyToId,
 		};
 
 		db.Messages.Add(message);

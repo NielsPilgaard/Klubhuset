@@ -1840,3 +1840,35 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812195345_Add_Message_InReplyToId') THEN
+    ALTER TABLE "Messages" ADD "InReplyToId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812195345_Add_Message_InReplyToId') THEN
+    CREATE INDEX "IX_Messages_InReplyToId" ON "Messages" ("InReplyToId") WHERE "InReplyToId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812195345_Add_Message_InReplyToId') THEN
+    ALTER TABLE "Messages" ADD CONSTRAINT "FK_Messages_Messages_InReplyToId" FOREIGN KEY ("InReplyToId") REFERENCES "Messages" ("Id") ON DELETE RESTRICT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812195345_Add_Message_InReplyToId') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260812195345_Add_Message_InReplyToId', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

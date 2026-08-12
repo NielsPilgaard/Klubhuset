@@ -9210,6 +9210,7 @@
         "required": [
           "body",
           "id",
+          "isGroup",
           "senderId",
           "senderName",
           "sentAt",
@@ -9245,6 +9246,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isGroup": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -9422,6 +9431,11 @@
           },
           "body": {
             "type": "string"
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9477,6 +9491,11 @@
           "groupRecipientCount": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           }
         },

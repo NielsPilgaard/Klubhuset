@@ -477,6 +477,8 @@ export type MessagesControllerInboxMessageDto = {
     body: string;
     sentAt: string;
     readAt?: string | null;
+    inReplyToId?: string | null;
+    isGroup: boolean;
 };
 
 export type MessagesControllerRecipientDto = {
@@ -515,6 +517,7 @@ export type MessagesControllerSendMessageRequest = {
     recipientType?: RecipientType;
     subject: string;
     body: string;
+    inReplyToId?: string | null;
 };
 
 export type MessagesControllerSentMessageDto = {
@@ -529,6 +532,7 @@ export type MessagesControllerSentMessageDto = {
     isGroup: boolean;
     audienceLabel?: string | null;
     groupRecipientCount?: number | null;
+    inReplyToId?: string | null;
 };
 
 export type ModuleItemDto = {
