@@ -1,10 +1,20 @@
+import { useState } from 'react'
 import Logo from '../components/Logo'
 import Footer from '../components/Footer'
 import CookieBanner from '../components/CookieBanner'
 import { usePageTitle } from '../hooks/usePageTitle'
 
+const MONTHLY_PRICE_KR = 499
+const YEARLY_PRICE_KR = 4999
+const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
+const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
+
+type BillingInterval = 'Monthly' | 'Yearly'
+
 export default function LandingPage() {
   usePageTitle('')
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('Monthly')
+  const isYearly = billingInterval === 'Yearly'
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
       {/* Nav */}
@@ -330,10 +340,48 @@ export default function LandingPage() {
               <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100 rounded-t-2xl">
                 <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
                 <div className="mt-2 flex items-end gap-1 justify-center">
-                  <span className="font-display text-5xl font-semibold text-brand-900">499</span>
+                  <span className="font-display text-5xl font-semibold text-brand-900">
+                    {isYearly ? YEARLY_EFFECTIVE_MONTHLY_KR : MONTHLY_PRICE_KR}
+                  </span>
                   <span className="text-lg text-gray-500 mb-2">kr/md</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {isYearly ? `${YEARLY_PRICE_KR} kr/år · inkl. moms · pr. skole` : 'inkl. moms · pr. skole'}
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <div
+                    className="inline-flex items-center rounded-lg border border-brand-200 bg-white p-1"
+                    role="tablist"
+                    aria-label="Betalingsinterval"
+                  >
+                    {(['Monthly', 'Yearly'] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        role="tab"
+                        aria-selected={billingInterval === opt}
+                        onClick={() => setBillingInterval(opt)}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                          billingInterval === opt
+                            ? 'bg-brand-600 text-white'
+                            : 'text-brand-700 hover:bg-brand-50'
+                        }`}
+                      >
+                        {opt === 'Monthly' ? 'Månedligt' : 'Årligt'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {isYearly && (
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                      Spar {YEARLY_SAVINGS_KR} kr/år
+                    </span>
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                      Intropris
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="px-8 py-6 space-y-3 text-left">
                 {[

@@ -229,14 +229,16 @@ export default function SfoPage() {
   return (
     <div>
       {/* Top bar */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 lg:px-8 py-3 flex items-center justify-between gap-2">
-        <h1 className="font-display text-base font-semibold text-gray-900 shrink-0">SFO Ugeplan</h1>
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-8 py-3 flex items-center justify-between gap-1 sm:gap-2">
+        <h1 className="font-display text-sm sm:text-base font-semibold text-gray-900 shrink-0 truncate">
+          SFO Ugeplan
+        </h1>
 
         {/* Week navigator */}
-        <div className="flex items-center gap-0.5 sm:gap-1">
+        <div className="flex items-center gap-0 sm:gap-1 shrink-0">
           <button
             onClick={prevWeek}
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
+            className="p-1 sm:p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
             title="Forrige uge"
           >
             <svg
@@ -253,7 +255,7 @@ export default function SfoPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={goToThisWeek}
-              className="px-2 sm:px-3 py-1.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 rounded-md transition-colors tabular-nums"
+              className="px-1.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold text-gray-900 hover:bg-gray-100 rounded-md transition-colors tabular-nums whitespace-nowrap"
               title="Gå til denne uge"
             >
               Uge {isoWeek}
@@ -261,7 +263,7 @@ export default function SfoPage() {
             <div className="relative">
               <button
                 onClick={() => setShowYearPicker((p) => !p)}
-                className="px-2 py-1.5 text-sm font-semibold text-brand-600 hover:bg-brand-50 rounded-md transition-colors tabular-nums"
+                className="px-1 sm:px-2 py-1.5 text-xs sm:text-sm font-semibold text-brand-600 hover:bg-brand-50 rounded-md transition-colors tabular-nums"
                 title="Skift år"
               >
                 {isoYear}
@@ -298,7 +300,7 @@ export default function SfoPage() {
           </div>
           <button
             onClick={nextWeek}
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
+            className="p-1 sm:p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
             title="Næste uge"
           >
             <svg
@@ -314,11 +316,11 @@ export default function SfoPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Link
             to={`/udskriv/sfo?isoYear=${isoYear}&isoWeek=${isoWeek}`}
             target="_blank"
-            className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             title="Udskriv"
           >
             <svg
@@ -339,7 +341,7 @@ export default function SfoPage() {
           </Link>
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             <svg
               width="15"
@@ -353,7 +355,6 @@ export default function SfoPage() {
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             <span className="hidden sm:inline">Ny vagt</span>
-            <span className="sm:hidden">Ny</span>
           </button>
         </div>
       </div>
@@ -372,18 +373,18 @@ export default function SfoPage() {
           </div>
         ) : (
           <div className="max-w-5xl mx-auto rounded-xl border border-gray-200 overflow-x-auto">
-            <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] min-w-[520px]">
+            <div className="grid grid-cols-[56px_1fr_1fr_1fr_1fr_1fr] sm:grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] min-w-[360px] sm:min-w-[520px]">
               {/* Header row */}
-              <div className="bg-gray-50 border-b border-r border-gray-200 p-3" />
+              <div className="bg-gray-50 border-b border-r border-gray-200 p-1.5 sm:p-3" />
               {[1, 2, 3, 4, 5].map((day) => (
                 <div
                   key={day}
-                  className="bg-gray-50 border-b border-r border-gray-200 py-3 px-3 text-center"
+                  className="bg-gray-50 border-b border-r border-gray-200 py-1.5 px-1 sm:py-3 sm:px-3 text-center"
                 >
-                  <div className="text-sm font-semibold text-gray-700 hidden sm:block">
+                  <div className="text-xs sm:text-sm font-semibold text-gray-700 hidden sm:block">
                     {DAY_NAMES[day]}
                   </div>
-                  <div className="text-sm font-semibold text-gray-700 sm:hidden">
+                  <div className="text-xs sm:text-sm font-semibold text-gray-700 sm:hidden">
                     {DAY_NAMES_SHORT[day]}
                   </div>
                 </div>
@@ -393,15 +394,15 @@ export default function SfoPage() {
               {sortedTimeSlots.map(([slotKey, slotMeta]) => (
                 <div key={slotKey} className="contents">
                   {/* Row label */}
-                  <div className="bg-gray-50 border-b border-r border-gray-200 p-3 flex flex-col justify-center">
-                    <span className="text-xs text-gray-500 font-mono leading-tight whitespace-nowrap">
+                  <div className="bg-gray-50 border-b border-r border-gray-200 p-1.5 sm:p-3 flex flex-col justify-center overflow-hidden">
+                    <span className="text-[10px] sm:text-xs text-gray-500 font-mono leading-tight whitespace-nowrap">
                       {slotMeta.startTime}
                     </span>
-                    <span className="text-xs text-gray-400 font-mono leading-tight whitespace-nowrap">
+                    <span className="text-[10px] sm:text-xs text-gray-400 font-mono leading-tight whitespace-nowrap">
                       – {slotMeta.endTime}
                     </span>
                     {slotMeta.label && (
-                      <span className="text-xs text-gray-400 mt-1 truncate">{slotMeta.label}</span>
+                      <span className="text-xs text-gray-400 mt-1 truncate hidden sm:block">{slotMeta.label}</span>
                     )}
                   </div>
 
@@ -414,7 +415,7 @@ export default function SfoPage() {
                       return (
                         <div
                           key={`empty-${slotKey}-${day}`}
-                          className="border-b border-r border-gray-200 bg-gray-50 min-h-[160px]"
+                          className="border-b border-r border-gray-200 bg-gray-50 min-h-[90px] sm:min-h-[160px]"
                         />
                       )
                     }
@@ -425,7 +426,7 @@ export default function SfoPage() {
                       <button
                         key={`cell-${shift.id}`}
                         type="button"
-                        className="text-left border-b border-r border-gray-200 bg-white min-h-[160px] p-3 flex flex-col gap-2 cursor-pointer hover:bg-brand-50/30 transition-colors"
+                        className="text-left border-b border-r border-gray-200 bg-white min-h-[90px] sm:min-h-[160px] p-1.5 sm:p-3 flex flex-col gap-1 sm:gap-2 overflow-hidden cursor-pointer hover:bg-brand-50/30 transition-colors"
                         onClick={() => setSelectedCell({ shift, weekShift })}
                       >
                         {(shift.staff ?? []).length > 0 ? (
@@ -433,14 +434,14 @@ export default function SfoPage() {
                             {(shift.staff ?? []).map((s) => (
                               <span
                                 key={s.id}
-                                className="px-1.5 py-0.5 text-xs bg-brand-50 text-brand-700 rounded-full"
+                                className="px-1 sm:px-1.5 py-0.5 text-[10px] sm:text-xs bg-brand-50 text-brand-700 rounded-full truncate max-w-full"
                               >
                                 {s.name}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1 text-xs text-gray-300">
+                          <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-300">
                             <svg
                               width="12"
                               height="12"
@@ -448,6 +449,7 @@ export default function SfoPage() {
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2"
+                              className="hidden sm:block shrink-0"
                             >
                               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                               <circle cx="12" cy="7" r="4" />
@@ -455,7 +457,7 @@ export default function SfoPage() {
                             <span>Ingen</span>
                           </div>
                         )}
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0 hidden sm:block">
                           {weekShift?.beskrivelse ? (
                             <div className="text-xs text-gray-600 line-clamp-4 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
                               <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>

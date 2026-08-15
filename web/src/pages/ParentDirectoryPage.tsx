@@ -35,7 +35,6 @@ export default function ParentDirectoryPage() {
   usePageTitle('Kontakt')
   const [search, setSearch] = useState('')
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
-  const [expandedParentId, setExpandedParentId] = useState<string | null>(null)
 
   const { data: parents = [], isLoading } = useQuery({
     ...getApiV1KontaktOptions(),
@@ -115,18 +114,9 @@ export default function ParentDirectoryPage() {
                       parent.city ||
                       parent.email
                     )
-                    const isParentExpanded = expandedParentId === parent.id
-
                     return (
                       <div key={parent.id}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            hasContactInfo &&
-                            setExpandedParentId(isParentExpanded ? null : parent.id)
-                          }
-                          className="w-full flex items-start gap-3 text-left"
-                        >
+                        <div className="w-full flex items-start gap-3 text-left">
                           <div className="shrink-0">
                             {parent.avatarUrl ? (
                               <img
@@ -145,23 +135,8 @@ export default function ParentDirectoryPage() {
                           <div className="flex-1 min-w-0 pt-1.5">
                             <p className="font-medium text-gray-900 text-sm">{parent.name}</p>
                           </div>
-                          {hasContactInfo && (
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className={`shrink-0 mt-2 text-gray-400 transition-transform ${isParentExpanded ? 'rotate-180' : ''}`}
-                            >
-                              <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                          )}
-                        </button>
-                        {isParentExpanded && hasContactInfo && (
+                        </div>
+                        {hasContactInfo && (
                           <div className="mt-2 pl-12 space-y-0.5">
                             {parent.phone && (
                               <p className="text-sm text-gray-700">

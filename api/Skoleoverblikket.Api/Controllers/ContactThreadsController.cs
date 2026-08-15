@@ -187,10 +187,21 @@ public sealed class ContactThreadsController(
 			return NotFound();
 		}
 
-		var relevantStaffIds = await db.SchemaSlots
+		var slotTeacherIds = db.SchemaSlots
 			.Where(sl => sl.Schema.ClassId == classId.Value)
-			.SelectMany(sl => sl.AideId.HasValue ? new[] { sl.TeacherId, sl.AideId.Value } : new[] { sl.TeacherId })
-			.Union(db.ClassPermissions.Where(cp => cp.ClassId == classId.Value).Select(cp => cp.StaffId))
+			.Select(sl => sl.TeacherId);
+
+		var slotAideIds = db.SchemaSlots
+			.Where(sl => sl.Schema.ClassId == classId.Value && sl.AideId.HasValue)
+			.Select(sl => sl.AideId!.Value);
+
+		var permissionStaffIds = db.ClassPermissions
+			.Where(cp => cp.ClassId == classId.Value)
+			.Select(cp => cp.StaffId);
+
+		var relevantStaffIds = await slotTeacherIds
+			.Union(slotAideIds)
+			.Union(permissionStaffIds)
 			.Distinct()
 			.ToListAsync(cancellationToken);
 
