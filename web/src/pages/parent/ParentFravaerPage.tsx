@@ -175,7 +175,7 @@ export default function ParentFravaerPage() {
       )}
 
       {reports.length === 0 && (
-        <p className="text-sm text-gray-500 py-8">Ingen indmeldte fravær.</p>
+        <p className="text-sm text-gray-500 py-8">Der er ikke indmeldt fravær endnu.</p>
       )}
 
       <div className="space-y-3">

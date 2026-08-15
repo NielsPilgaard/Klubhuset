@@ -252,7 +252,7 @@ export default function FerieindmeldingPage() {
 
           <div className="flex gap-3">
             <div className="flex-1 min-w-0">
-              <p className="block text-sm font-medium text-gray-700 mb-1">Plejeperiode start</p>
+              <p className="block text-sm font-medium text-gray-700 mb-1">Pasning start</p>
               <DatePicker
                 value={form.careStartDate}
                 onChange={(v) => setForm((f) => ({ ...f, careStartDate: v }))}
@@ -261,7 +261,7 @@ export default function FerieindmeldingPage() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="block text-sm font-medium text-gray-700 mb-1">Plejeperiode slut</p>
+              <p className="block text-sm font-medium text-gray-700 mb-1">Pasning slut</p>
               <DatePicker
                 value={form.careEndDate}
                 onChange={(v) => setForm((f) => ({ ...f, careEndDate: v }))}

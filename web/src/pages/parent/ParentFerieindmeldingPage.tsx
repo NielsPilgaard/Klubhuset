@@ -340,8 +340,7 @@ function WindowSection({ window_ }: { window_: WindowDto }) {
         <h2 className="font-display text-lg font-semibold text-gray-900">{window_.title}</h2>
         <p className="text-sm text-gray-500 mt-0.5">
           Frist: {formatDate(window_.registrationDeadline)}
-          {' · '}Plejeperiode: {formatDate(window_.careStartDate)} –{' '}
-          {formatDate(window_.careEndDate)}
+          {' · '}Pasning: {formatDate(window_.careStartDate)} – {formatDate(window_.careEndDate)}
         </p>
       </div>
       <div className="space-y-4">
