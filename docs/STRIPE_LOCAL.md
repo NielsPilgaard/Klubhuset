@@ -1,99 +1,52 @@
 # STRIPE_LOCAL.md — Testing Stripe subscription logic locally
 
-This document covers how to test the full Stripe billing flow locally using the Stripe CLI — both manually and when running as an agent.
+This document covers how the local Stripe billing flow works when running `aspire run`, and how to rotate the test-mode key when it expires.
 
 ---
 
-## Prerequisites
+## How it works — fully automatic
 
-1. **Stripe CLI installed** — [https://docs.stripe.com/stripe-cli](https://docs.stripe.com/stripe-cli)
-2. **Logged in to Stripe CLI** — `stripe login` (uses the Skoleoverblikket test account)
-3. **Aspire stack running** — `aspire run` from the repo root, or the API already up on port 5000
-4. **`appsettings.Development.json` Stripe keys in place** — they are committed and point to the test account
-
----
-
-## How the webhook pipeline works locally
-
-Stripe cannot reach `localhost` directly. The Stripe CLI acts as a proxy: it listens on Stripe's servers and forwards webhook events to your local API.
+The Aspire AppHost (`infrastructure/aspire/Skoleoverblikket.AppHost/Program.cs`) runs a `stripe-listen` container alongside the rest of the stack. It runs `stripe listen` non-interactively (authenticated via `STRIPE_API_KEY`, no `stripe login` needed) and forwards every Stripe test-mode webhook event straight to the local API. There is nothing to start manually — as long as `aspire run` is running, webhooks work.
 
 ```
-Stripe Dashboard / stripe trigger
+Stripe (test mode) / stripe trigger
         │
         ▼
-   Stripe CLI (stripe listen)
+   stripe-listen container (stripe listen --forward-to ...)
         │  forwards with Stripe-Signature header
         ▼
-   http://localhost:5000/api/v1/stripe/webhook
+   http://host.docker.internal:5000/api/v1/stripe/webhook
         │
         ▼
    StripeWebhookController → SubscriptionService
 ```
 
-The webhook secret used by the CLI (`whsec_…`) must match `Stripe:WebhookSecret` in `appsettings.Development.json`. The committed development secret is already paired with the CLI listener.
+The API itself (`Stripe:SecretKey` in `appsettings.Development.json`) and the `stripe-listen` container (`stripe-secret-key` Aspire parameter, same value) both use the same committed test-mode secret key, so checkout sessions created locally and the webhooks they trigger are on the same Stripe test account.
 
 ---
 
-## Step-by-step: running the webhook listener
+## Full end-to-end flow via the UI
 
-### 1. Start the listener
+1. Run `aspire run` from the repo root.
+2. Log in as a school admin in the local frontend (http://localhost:5173).
+3. Navigate to billing → click "Køb abonnement".
+4. The frontend calls `POST /api/v1/billing/checkout` → you are redirected to Stripe Checkout.
+5. Use a [Stripe test card](https://docs.stripe.com/testing#cards): `4242 4242 4242 4242`, any future expiry, any CVC.
+6. Complete payment → Stripe fires `checkout.session.completed` → the `stripe-listen` container forwards it → `StripeWebhookController` processes it → subscription status in DB becomes `Active`. No manual step in between.
 
-```bash
-stripe listen --forward-to http://localhost:5000/api/v1/stripe/webhook
-```
+---
 
-The CLI will print a webhook signing secret on startup:
+## Triggering individual events manually
 
-```
-> Ready! You are using Stripe API Version [2024-xx-xx].
-> Your webhook signing secret is whsec_bd68b4fb57148df7...  (same as appsettings.Development.json)
-```
-
-Leave this terminal open. Every Stripe event (triggered manually or by completing a Checkout session) is forwarded here.
-
-### 2. Trigger individual events manually
-
-In a second terminal, use `stripe trigger` to fire specific webhook events without going through the UI:
+Use `/stripe-listen` or `scripts/stripe-listen.ps1 -EventType <event>` to fire a specific event without going through the checkout UI — see the `stripe-listen` skill. Requires the Stripe CLI installed locally (`winget install Stripe.StripeCLI`) and the Aspire stack running.
 
 ```bash
-# Simulate a completed checkout
 stripe trigger checkout.session.completed
-
-# Simulate a subscription update
 stripe trigger customer.subscription.updated
-
-# Simulate a failed payment
 stripe trigger invoice.payment_failed
-
-# Simulate a successful payment
 stripe trigger invoice.payment_succeeded
-
-# Simulate a subscription deletion/cancellation
 stripe trigger customer.subscription.deleted
 ```
-
-The API will log the received event. Check the Aspire dashboard or API stdout.
-
-### 3. Full end-to-end flow via the UI
-
-1. Log in as a school admin in the local frontend (http://localhost:5173)
-2. Navigate to billing → click "Upgrade" or similar
-3. The frontend calls `POST /api/v1/billing/checkout` → you are redirected to Stripe Checkout
-4. Use a [Stripe test card](https://docs.stripe.com/testing#cards): `4242 4242 4242 4242`, any future expiry, any CVC
-5. Complete payment → Stripe fires `checkout.session.completed` → CLI forwards it → `StripeWebhookController` processes it → subscription status in DB becomes `Active`
-
----
-
-## Useful `stripe` CLI commands
-
-| Command | Purpose |
-|---|---|
-| `stripe listen --forward-to <url>` | Proxy webhooks to local endpoint |
-| `stripe trigger <event>` | Fire a test event |
-| `stripe customers list` | List test customers |
-| `stripe subscriptions list` | List test subscriptions |
-| `stripe logs tail` | Stream API request logs |
-| `stripe open dashboard` | Open Stripe Dashboard in browser |
 
 ---
 
@@ -101,8 +54,8 @@ The API will log the received event. Check the Aspire dashboard or API stdout.
 
 | Event | Handler effect |
 |---|---|
-| `checkout.session.completed` | Creates/links subscription record, sets status to `Active` |
-| `customer.subscription.updated` | Syncs status from Stripe (e.g. trial → active, active → past_due) |
+| `checkout.session.completed` | Creates/links subscription record, sets status to `Active`, persists the checked-out `Interval` |
+| `customer.subscription.updated` | Syncs status from Stripe (e.g. trial → active, active → past_due); syncs `Interval` if the Price's recurring interval changed (portal-driven monthly↔yearly switch) |
 | `customer.subscription.deleted` | Sets status to `Canceled` |
 | `invoice.payment_succeeded` | Sets status to `Active`, updates `CurrentPeriodEnd` |
 | `invoice.payment_failed` | Sets status to `PastDue` |
@@ -115,42 +68,48 @@ All local Stripe config lives in `api/Skoleoverblikket.Api/appsettings.Developme
 
 ```json
 "Stripe": {
-  "SecretKey": "sk_test_51T...",
-  "PriceId": "price_1T...",
-  "WebhookSecret": "whsec_bd68..."
+  "SecretKey": "sk_test_...",
+  "BasePriceIdMonthly": "price_...",
+  "BasePriceIdYearly": "price_...",
+  "WebhookSecret": "whsec_...",
+  "ModulePriceIds": { "ParentModule": { "Monthly": "price_...", "Yearly": "price_..." }, ... }
 }
 ```
 
-The `WebhookSecret` here must match what `stripe listen` prints. They are kept in sync in the committed dev config — do not change one without the other.
+The same `SecretKey` value is also set as the `stripe-secret-key` Aspire parameter in `Program.cs` (used by the `stripe-listen` container). Keep them in sync — see rotation below.
 
 For production values see `docs/DEPLOYMENT.md`.
 
 ---
 
-## Agent instructions
+## Rotating the Stripe test key
 
-When an agent needs to test subscription logic:
+**Symptom**: `stripe-listen` container logs `level=fatal msg="Error while authenticating with Stripe: ... api_key_expired"`.
 
-1. Verify the Aspire stack is running (`aspire run` or check port 5000 is responding).
-2. Start the webhook listener in the background:
-   ```bash
-   stripe listen --forward-to http://localhost:5000/api/v1/stripe/webhook &
-   ```
-3. Trigger the specific event under test with `stripe trigger <event>`.
-4. Query the database or call `GET /api/v1/billing/subscription` to assert the expected subscription state.
-5. Stop the listener when done (`kill %1` or `pkill -f "stripe listen"`).
+**Cause**: Stripe keys obtained via `stripe login` (CLI OAuth) auto-expire after 60–90 days. Keys created directly in the Stripe Dashboard never expire — use one of those instead so this doesn't recur.
 
-Do **not** use production Stripe keys in a local environment. The committed `sk_test_…` key is scoped to test mode and safe to use.
+**Fix**:
+
+1. Stripe Dashboard → Developers → API keys → create a new test-mode secret key (or use the existing dashboard-created one, not a CLI-login-derived one).
+2. Replace the value in two places:
+   - `api/Skoleoverblikket.Api/appsettings.Development.json` → `Stripe:SecretKey`
+   - `infrastructure/aspire/Skoleoverblikket.AppHost/Program.cs` → the `stripe-secret-key` parameter's default value
+3. Restart `aspire run`. The `stripe-listen` container will print a fresh `whsec_...` on first connect — if it differs from `Stripe:WebhookSecret` in `appsettings.Development.json`, copy it in (see troubleshooting below). In practice the signing secret is deterministic per API key, so this is usually a no-op after the first rotation with a given key.
+
+Do **not** use production Stripe keys in a local environment. Test-mode keys (`sk_test_...`) are safe to commit to this repo's dev config.
 
 ---
 
 ## Troubleshooting
 
 **400 from the webhook endpoint**
-The `Stripe-Signature` header did not validate. This means the `WebhookSecret` in `appsettings.Development.json` does not match the secret printed by `stripe listen`. Copy the secret from the CLI output into `appsettings.Development.json`.
+The `Stripe-Signature` header did not validate. `Stripe:WebhookSecret` in `appsettings.Development.json` does not match the secret the `stripe-listen` container is using. Check the container's logs in the Aspire dashboard for the `whsec_...` it printed on startup and copy it in.
+
+**`stripe-listen` container fails with `api_key_expired`**
+See "Rotating the Stripe test key" above.
 
 **Webhook event received but subscription not updated**
 Check that `school_id` is present in the Stripe event metadata. The webhook handler resolves the tenant by looking up `school_id` on the Stripe customer or checkout session. If it is missing, the handler logs a warning and skips the update.
 
-**`stripe: command not found`**
+**`stripe: command not found`** (only affects `stripe trigger`, not the automatic listener)
 Install the Stripe CLI: `winget install Stripe.StripeCLI` on Windows or follow [https://docs.stripe.com/stripe-cli#install](https://docs.stripe.com/stripe-cli#install).
