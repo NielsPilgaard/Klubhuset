@@ -28,6 +28,10 @@ export type AdminControllerModuleOverrideRequest = {
     module?: SubscriptionModule;
 };
 
+export type BillingControllerCheckoutRequest = {
+    interval?: BillingInterval;
+};
+
 export type BillingControllerCheckoutResponse = {
     url: string;
 };
@@ -38,6 +42,7 @@ export type BillingControllerModuleRequest = {
 
 export type BillingControllerSubscriptionDto = {
     status?: SubscriptionStatus;
+    interval?: BillingInterval;
     trialEnd: string;
     currentPeriodEnd?: string | null;
     isTrialing: boolean;
@@ -46,6 +51,8 @@ export type BillingControllerSubscriptionDto = {
     trialDaysLeft: number;
     activeModules?: Array<string>;
 };
+
+export type BillingInterval = 'Monthly' | 'Yearly';
 
 export type BoardFilesControllerBoardFileDto = {
     id: string;
@@ -216,6 +223,7 @@ export type ConflictType = 'TeacherDoubleBooked' | 'RoomDoubleBooked' | 'AideDou
 
 export type ContactThreadsControllerAddMessageRequest = {
     body: string;
+    notifyStaffIds?: Array<string> | null;
 };
 
 export type ContactThreadsControllerContactMessageDto = {
@@ -241,6 +249,13 @@ export type ContactThreadsControllerContactThreadDto = {
 export type ContactThreadsControllerFindOrCreateThreadRequest = {
     studentId: string;
     body: string;
+    notifyStaffIds?: Array<string> | null;
+};
+
+export type ContactThreadsControllerNotifyStaffOptionDto = {
+    id: string;
+    name: string;
+    isRelevant: boolean;
 };
 
 export type ContactThreadsControllerPagedResult1 = {
@@ -446,6 +461,7 @@ export type KontaktControllerKontaktParentDto = {
     address?: string | null;
     postalCode?: string | null;
     city?: string | null;
+    email?: string | null;
     avatarUrl?: string | null;
     studentNames?: Array<string>;
 };
@@ -535,6 +551,19 @@ export type MessagesControllerSentMessageDto = {
     inReplyToId?: string | null;
 };
 
+export type MessagesControllerThreadMessageDto = {
+    id: string;
+    senderId: string;
+    senderType?: RecipientType;
+    senderName: string;
+    recipientId: string;
+    recipientType?: RecipientType;
+    recipientName: string;
+    body: string;
+    sentAt: string;
+    isOwn: boolean;
+};
+
 export type ModuleItemDto = {
     module?: SubscriptionModule;
     isAdminOverride: boolean;
@@ -620,6 +649,9 @@ export type ParentsControllerParentDto = {
     name: string;
     email: string;
     phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
     students?: Array<ParentsControllerStudentRefDto>;
     hasAccount: boolean;
     createdAt: string;
@@ -631,6 +663,13 @@ export type ParentsControllerStudentRefDto = {
     name: string;
     classId: string;
     className: string;
+};
+
+export type ParentsControllerUpdateParentContactRequest = {
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
 };
 
 export type RecipientType = 'Parent' | 'Staff' | 'Board';
@@ -1357,7 +1396,7 @@ export type DeleteApiV1BillingModulesByModuleResponses = {
 };
 
 export type PostApiV1BillingCheckoutData = {
-    body?: never;
+    body?: BillingControllerCheckoutRequest;
     path?: never;
     query?: never;
     url: '/api/v1/billing/checkout';
@@ -2007,6 +2046,24 @@ export type PostApiV1ContactThreadsByThreadIdMessagesResponses = {
     200: unknown;
 };
 
+export type GetApiV1ContactThreadsStaffOptionsByStudentIdData = {
+    body?: never;
+    path: {
+        studentId: string;
+    };
+    query?: never;
+    url: '/api/v1/contact-threads/staff-options/{studentId}';
+};
+
+export type GetApiV1ContactThreadsStaffOptionsByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: Array<ContactThreadsControllerNotifyStaffOptionDto>;
+};
+
+export type GetApiV1ContactThreadsStaffOptionsByStudentIdResponse = GetApiV1ContactThreadsStaffOptionsByStudentIdResponses[keyof GetApiV1ContactThreadsStaffOptionsByStudentIdResponses];
+
 export type PostApiV1ContactThreadsByThreadIdReadData = {
     body?: never;
     path: {
@@ -2368,6 +2425,24 @@ export type GetApiV1MessagesSentResponses = {
 };
 
 export type GetApiV1MessagesSentResponse = GetApiV1MessagesSentResponses[keyof GetApiV1MessagesSentResponses];
+
+export type GetApiV1MessagesByIdThreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/messages/{id}/thread';
+};
+
+export type GetApiV1MessagesByIdThreadResponses = {
+    /**
+     * OK
+     */
+    200: Array<MessagesControllerThreadMessageDto>;
+};
+
+export type GetApiV1MessagesByIdThreadResponse = GetApiV1MessagesByIdThreadResponses[keyof GetApiV1MessagesByIdThreadResponses];
 
 export type PostApiV1MessagesData = {
     body?: MessagesControllerSendMessageRequest;
@@ -2741,6 +2816,22 @@ export type PatchApiV1ParentsByIdAdresseBeskyttelseData = {
 };
 
 export type PatchApiV1ParentsByIdAdresseBeskyttelseResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiV1ParentsByIdContactData = {
+    body?: ParentsControllerUpdateParentContactRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}/contact';
+};
+
+export type PatchApiV1ParentsByIdContactResponses = {
     /**
      * OK
      */
