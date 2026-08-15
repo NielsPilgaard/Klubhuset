@@ -9,10 +9,14 @@ import {
   postApiV1BillingModulesMutation,
   deleteApiV1BillingModulesByModuleMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { SubscriptionDto } from '../api/client'
+import type { SubscriptionDto, BillingInterval } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 const SELF_SERVE_ENABLED = true
+const MONTHLY_PRICE_KR = 499
+const YEARLY_PRICE_KR = 4999
+const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
+const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('da-DK', {
@@ -53,6 +57,7 @@ export default function BillingPage() {
   usePageTitle('Abonnement')
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useQuery(getApiV1BillingSubscriptionOptions())
+  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>('Monthly')
 
   const checkoutMutation = useMutation({
     ...postApiV1BillingCheckoutMutation(),
@@ -135,7 +140,7 @@ export default function BillingPage() {
       ) : data ? (
         <StatusCard
           data={data}
-          onCheckout={() => checkoutMutation.mutate({})}
+          onCheckout={() => checkoutMutation.mutate({ body: { interval: selectedInterval } })}
           onPortal={() => portalMutation.mutate({})}
           isRedirecting={isRedirecting}
         />
@@ -146,7 +151,9 @@ export default function BillingPage() {
         isActive={data?.isActive ?? false}
         isTrialing={data?.isTrialing ?? false}
         trialEnd={data?.trialEnd}
-        onCheckout={() => checkoutMutation.mutate({})}
+        selectedInterval={selectedInterval}
+        onIntervalChange={setSelectedInterval}
+        onCheckout={() => checkoutMutation.mutate({ body: { interval: selectedInterval } })}
         isRedirecting={isRedirecting}
       />
 
@@ -247,7 +254,11 @@ function StatusCard({
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-green-900">
-              Aktivt abonnement — Basis (499 kr/md)
+              Aktivt abonnement — Basis (
+              {data.interval === 'Yearly'
+                ? `${YEARLY_PRICE_KR} kr/år`
+                : `${MONTHLY_PRICE_KR} kr/md`}
+              )
             </h2>
             {data.currentPeriodEnd && (
               <p className="mt-1 text-sm text-green-700">
@@ -505,16 +516,53 @@ function ModuleCard({
   )
 }
 
+function IntervalToggle({
+  selected,
+  onChange,
+}: {
+  selected: BillingInterval
+  onChange: (interval: BillingInterval) => void
+}) {
+  return (
+    <div
+      className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1"
+      role="tablist"
+      aria-label="Betalingsinterval"
+    >
+      {(['Monthly', 'Yearly'] as const).map((interval) => (
+        <button
+          key={interval}
+          type="button"
+          role="tab"
+          aria-selected={selected === interval}
+          onClick={() => onChange(interval)}
+          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            selected === interval
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {interval === 'Monthly' ? 'Månedligt' : 'Årligt'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function PricingCard({
   isActive,
   isTrialing,
   trialEnd,
+  selectedInterval,
+  onIntervalChange,
   onCheckout,
   isRedirecting,
 }: {
   isActive?: boolean
   isTrialing?: boolean
   trialEnd?: string
+  selectedInterval: BillingInterval
+  onIntervalChange: (interval: BillingInterval) => void
   onCheckout: () => void
   isRedirecting: boolean
 }) {
@@ -525,32 +573,64 @@ function PricingCard({
     'Support via e-mail',
     'Ingen binding',
   ]
+  const isYearly = selectedInterval === 'Yearly'
 
   return (
     <div
       className={`bg-white rounded-xl border divide-y divide-gray-100 ${isActive || isTrialing ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}
     >
-      <div className="px-6 py-5 flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-gray-700">Basis</h2>
-            {isActive && (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                Aktiv
-              </span>
-            )}
-            {isTrialing && !isActive && (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
-                Prøveperiode
-              </span>
+      <div className="px-6 py-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-700">Basis</h2>
+              {isActive && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                  Aktiv
+                </span>
+              )}
+              {isTrialing && !isActive && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
+                  Prøveperiode
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-xs text-gray-400">Alt hvad din skole behøver</p>
+          </div>
+          <div className="text-right shrink-0">
+            {isYearly ? (
+              <>
+                <span className="text-2xl font-semibold text-gray-900 tabular-nums">
+                  {YEARLY_EFFECTIVE_MONTHLY_KR}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+                <p className="text-xs text-gray-400 tabular-nums">{YEARLY_PRICE_KR} kr/år</p>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl font-semibold text-gray-900 tabular-nums">
+                  {MONTHLY_PRICE_KR}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+              </>
             )}
           </div>
-          <p className="mt-0.5 text-xs text-gray-400">Alt hvad din skole behøver</p>
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-2xl font-semibold text-gray-900 tabular-nums">499</span>
-          <span className="text-sm text-gray-500"> kr/md</span>
-        </div>
+        {!isActive && SELF_SERVE_ENABLED && (
+          <div className="mt-4 flex items-center gap-3">
+            <IntervalToggle selected={selectedInterval} onChange={onIntervalChange} />
+            {isYearly && (
+              <>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                  Spar {YEARLY_SAVINGS_KR} kr/år
+                </span>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                  Intropris
+                </span>
+              </>
+            )}
+          </div>
+        )}
       </div>
       <div className="px-6 py-5">
         <ul className="space-y-2.5">
