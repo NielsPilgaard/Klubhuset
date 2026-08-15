@@ -1872,3 +1872,21 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260815055403_AddSubscriptionInterval') THEN
+    ALTER TABLE "Subscriptions" ADD "Interval" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260815055403_AddSubscriptionInterval') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260815055403_AddSubscriptionInterval', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
