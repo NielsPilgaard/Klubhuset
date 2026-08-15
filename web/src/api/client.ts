@@ -85,6 +85,7 @@ export type {
   StaffRole,
   AbsenceStatus,
   SubscriptionStatus,
+  BillingInterval,
   NotificationType,
   SubjectCategory,
 } from './generated/types.gen'

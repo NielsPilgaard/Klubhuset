@@ -464,6 +464,12 @@ export type KontaktControllerKontaktParentDto = {
     email?: string | null;
     avatarUrl?: string | null;
     studentNames?: Array<string>;
+    students?: Array<KontaktControllerKontaktStudentDto>;
+};
+
+export type KontaktControllerKontaktStudentDto = {
+    id: string;
+    name: string;
 };
 
 export type MessagesControllerGroupPreviewDto = {

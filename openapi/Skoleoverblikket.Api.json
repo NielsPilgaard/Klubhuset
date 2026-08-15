@@ -365,6 +365,25 @@
         "tags": [
           "Billing"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_CheckoutRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_CheckoutRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_CheckoutRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1878,6 +1897,55 @@
         }
       }
     },
+    "/api/v1/contact-threads/staff-options/{studentId}": {
+      "get": {
+        "tags": [
+          "ContactThreads"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactThreadsController_NotifyStaffOptionDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactThreadsController_NotifyStaffOptionDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactThreadsController_NotifyStaffOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/contact-threads/{threadId}/read": {
       "post": {
         "tags": [
@@ -2806,6 +2874,55 @@
         }
       }
     },
+    "/api/v1/messages/{id}/thread": {
+      "get": {
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessagesController_ThreadMessageDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessagesController_ThreadMessageDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessagesController_ThreadMessageDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/messages": {
       "post": {
         "tags": [
@@ -3580,6 +3697,48 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ParentsController_AdresseBeskyttelseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/parents/{id}/contact": {
+      "patch": {
+        "tags": [
+          "Parents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_UpdateParentContactRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_UpdateParentContactRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_UpdateParentContactRequest"
               }
             }
           }
@@ -7569,6 +7728,15 @@
         },
         "additionalProperties": false
       },
+      "BillingController_CheckoutRequest": {
+        "type": "object",
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/BillingInterval"
+          }
+        },
+        "additionalProperties": false
+      },
       "BillingController_CheckoutResponse": {
         "required": [
           "url"
@@ -7603,6 +7771,9 @@
           "status": {
             "$ref": "#/components/schemas/SubscriptionStatus"
           },
+          "interval": {
+            "$ref": "#/components/schemas/BillingInterval"
+          },
           "trialEnd": {
             "type": "string",
             "format": "date-time"
@@ -7633,6 +7804,13 @@
           }
         },
         "additionalProperties": false
+      },
+      "BillingInterval": {
+        "enum": [
+          "Monthly",
+          "Yearly"
+        ],
+        "type": "string"
       },
       "BoardFilesController_BoardFileDto": {
         "required": [
@@ -8256,6 +8434,14 @@
         "properties": {
           "body": {
             "type": "string"
+          },
+          "notifyStaffIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -8351,6 +8537,35 @@
           },
           "body": {
             "type": "string"
+          },
+          "notifyStaffIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContactThreadsController_NotifyStaffOptionDto": {
+        "required": [
+          "id",
+          "isRelevant",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isRelevant": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -9091,6 +9306,10 @@
             "type": "string",
             "nullable": true
           },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
           "avatarUrl": {
             "type": "string",
             "nullable": true
@@ -9100,6 +9319,29 @@
             "items": {
               "type": "string"
             }
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KontaktController_KontaktStudentDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "KontaktController_KontaktStudentDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9501,6 +9743,56 @@
         },
         "additionalProperties": false
       },
+      "MessagesController_ThreadMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "isOwn",
+          "recipientId",
+          "recipientName",
+          "senderId",
+          "senderName",
+          "sentAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderType": {
+            "$ref": "#/components/schemas/RecipientType"
+          },
+          "senderName": {
+            "type": "string"
+          },
+          "recipientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recipientType": {
+            "$ref": "#/components/schemas/RecipientType"
+          },
+          "recipientName": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isOwn": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "ModuleItemDto": {
         "required": [
           "isAdminOverride"
@@ -9810,6 +10102,18 @@
             "type": "string",
             "nullable": true
           },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
           "students": {
             "type": "array",
             "items": {
@@ -9851,6 +10155,28 @@
           },
           "className": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentsController_UpdateParentContactRequest": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
