@@ -7,6 +7,7 @@ import {
   postApiV1ParentsInviteMutation,
   deleteApiV1ParentsByIdMutation,
   postApiV1ParentInvitationsByParentIdResendMutation,
+  patchApiV1ParentsByIdContactMutation,
   getApiV1StudentsOptions,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { ParentDto, StudentDto } from '../api/client'
@@ -153,10 +154,109 @@ function InviteModal({ students, onClose }: InviteModalProps) {
   )
 }
 
+interface EditContactModalProps {
+  parent: ParentDto
+  onClose: () => void
+}
+
+function EditContactModal({ parent, onClose }: EditContactModalProps) {
+  const qc = useQueryClient()
+  const [phone, setPhone] = useState(parent.phone ?? '')
+  const [address, setAddress] = useState(parent.address ?? '')
+  const [postalCode, setPostalCode] = useState(parent.postalCode ?? '')
+  const [city, setCity] = useState(parent.city ?? '')
+
+  const updateMutation = useMutation({
+    ...patchApiV1ParentsByIdContactMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ParentsQueryKey() })
+      onClose()
+    },
+  })
+
+  function handleSave() {
+    updateMutation.mutate({
+      path: { id: parent.id! },
+      body: {
+        phone: phone.trim() || null,
+        address: address.trim() || null,
+        postalCode: postalCode.trim() || null,
+        city: city.trim() || null,
+      },
+    })
+  }
+
+  return (
+    <Modal isOpen onClose={onClose} title="Rediger kontaktoplysninger">
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Telefonnummer"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Vejnavn og nummer"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex gap-3">
+          <div className="w-24">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Postnr.</label>
+            <input
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              placeholder="0000"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="By"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        {updateMutation.isError && (
+          <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+        )}
+      </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={updateMutation.isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {updateMutation.isPending ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
 export default function ParentsPage() {
   usePageTitle('Forældre')
   const qc = useQueryClient()
   const [showInvite, setShowInvite] = useState(false)
+  const [editingParent, setEditingParent] = useState<ParentDto | null>(null)
   const { hasParentModule } = useSubscription()
 
   const { data: parents, isLoading, isError, refetch } = useQuery(getApiV1ParentsOptions())
@@ -225,6 +325,9 @@ export default function ParentsPage() {
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">
                   E-mail
                 </th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">
+                  Telefon
+                </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Elever
                 </th>
@@ -246,6 +349,9 @@ export default function ParentsPage() {
                     <td className="px-5 py-3 hidden sm:table-cell">
                       <div className="h-4 w-36 bg-gray-100 rounded" />
                     </td>
+                    <td className="px-5 py-3 hidden md:table-cell">
+                      <div className="h-4 w-24 bg-gray-100 rounded" />
+                    </td>
                     <td className="px-5 py-3">
                       <div className="h-4 w-20 bg-gray-100 rounded" />
                     </td>
@@ -257,7 +363,7 @@ export default function ParentsPage() {
                 ))}
               {!isLoading && (parents ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center">
+                  <td colSpan={6} className="px-5 py-12 text-center">
                     <p className="text-gray-400 font-medium">Ingen forældre inviteret endnu</p>
                     <p className="text-gray-400 text-xs mt-1">
                       Inviter den første forældrene for at give adgang til klasseskemaet
@@ -269,6 +375,7 @@ export default function ParentsPage() {
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3 font-medium text-gray-900">{p.name}</td>
                   <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{p.email ?? '—'}</td>
+                  <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{p.phone ?? '—'}</td>
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(p.students ?? []).map((s) => (
@@ -318,6 +425,23 @@ export default function ParentsPage() {
                         </button>
                       )}
                       <button
+                        onClick={() => setEditingParent(p)}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                        title="Rediger kontaktoplysninger"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                      <button
                         onClick={() => {
                           if (confirm(`Slet "${p.name}"? Adgangen fjernes.`))
                             deleteMutation.mutate({ path: { id: p.id! } })
@@ -350,6 +474,9 @@ export default function ParentsPage() {
 
       {showInvite && students && (
         <InviteModal students={students} onClose={() => setShowInvite(false)} />
+      )}
+      {editingParent && (
+        <EditContactModal parent={editingParent} onClose={() => setEditingParent(null)} />
       )}
     </div>
   )

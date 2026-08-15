@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../auth/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
 import Logo from './Logo'
+import NotificationBell from './NotificationBell'
 
 interface NavItem {
   to: string
@@ -347,30 +348,6 @@ const navItems: NavItem[] = [
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         <polyline points="17 8 12 3 7 8" />
         <line x1="12" y1="3" x2="12" y2="15" />
-      </svg>
-    ),
-  },
-  {
-    to: '/foraeldre/kontakt',
-    label: 'Kontakter',
-    parentOnly: true,
-    moduleGated: true,
-    order: 30,
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
   },
@@ -912,6 +889,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               ) : null}
             </div>
           </NavLink>
+          <div className="hidden lg:block shrink-0">
+            <NotificationBell variant="dark" />
+          </div>
           <button
             onClick={onClose}
             className="lg:hidden p-1 rounded text-brand-300 hover:text-white shrink-0"

@@ -5,10 +5,10 @@ import { usePageTitle } from '../../hooks/usePageTitle'
 import {
   getApiV1ContactThreads,
   getApiV1ContactThreadsByThreadIdMessages,
+  getApiV1ContactThreadsStaffOptionsByStudentId,
   postApiV1ContactThreadsByThreadIdRead,
   postApiV1ContactThreadsByThreadIdMessages,
   postApiV1ContactThreads,
-  getApiV1MessagesRecipients,
   getApiV1ParentsMe,
 } from '../../api/generated/sdk.gen'
 
@@ -39,13 +39,6 @@ interface PagedResult<T> {
   pageSize: number
 }
 
-interface RecipientDto {
-  id: string
-  name: string
-  type: 'Parent' | 'Staff'
-  avatarUrl?: string
-}
-
 interface ParentStudentDto {
   studentId?: string
   studentName?: string | null
@@ -67,35 +60,116 @@ function truncate(text: string, max: number): string {
   return `${text.slice(0, max)}…`
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n.charAt(0))
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
+interface NotifyStaffOption {
+  id: string
+  name: string
+  isRelevant: boolean
+}
+
+interface NotifyStaffPickerProps {
+  studentId: string | null
+  selectedIds: string[]
+  onChange: (ids: string[]) => void
+}
+
+function NotifyStaffPicker({ studentId, selectedIds, onChange }: NotifyStaffPickerProps) {
+  const [search, setSearch] = useState('')
+
+  const { data: options = [] } = useQuery({
+    queryKey: [{ _id: 'getApiV1ContactThreadsStaffOptionsByStudentId', path: { studentId } }],
+    queryFn: async () => {
+      const { data } = await getApiV1ContactThreadsStaffOptionsByStudentId({
+        path: { studentId: studentId! },
+        throwOnError: false,
+      })
+      return (data ?? []) as NotifyStaffOption[]
+    },
+    enabled: !!studentId,
+  })
+
+  const filtered = options.filter((o) => o.name.toLowerCase().includes(search.toLowerCase()))
+  const relevant = filtered.filter((o) => o.isRelevant).sort((a, b) => a.name.localeCompare(b.name))
+  const rest = filtered.filter((o) => !o.isRelevant).sort((a, b) => a.name.localeCompare(b.name))
+
+  function toggle(id: string) {
+    onChange(selectedIds.includes(id) ? selectedIds.filter((s) => s !== id) : [...selectedIds, id])
+  }
+
+  if (!studentId || options.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="space-y-2">
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Søg personale…"
+        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+      />
+      <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+        {relevant.length > 0 && (
+          <div>
+            <p className="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
+              Klassens personale
+            </p>
+            {relevant.map((o) => (
+              <label
+                key={o.id}
+                className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(o.id)}
+                  onChange={() => toggle(o.id)}
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-4 w-4 shrink-0"
+                />
+                <span className="text-sm text-gray-900">{o.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        {rest.length > 0 && (
+          <div>
+            <p className="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">Øvrige</p>
+            {rest.map((o) => (
+              <label
+                key={o.id}
+                className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(o.id)}
+                  onChange={() => toggle(o.id)}
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-4 w-4 shrink-0"
+                />
+                <span className="text-sm text-gray-900">{o.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        {filtered.length === 0 && (
+          <p className="px-3 py-3 text-sm text-gray-400">Ingen resultater</p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function ParentKontaktbogPage() {
   usePageTitle('Kontaktbog')
   const qc = useQueryClient()
-  const [sidebarTab, setSidebarTab] = useState<'beskeder' | 'kontakter'>('beskeder')
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
   const [messageBody, setMessageBody] = useState('')
+  const [replyNotifyStaffIds, setReplyNotifyStaffIds] = useState<string[]>([])
   const [newMessageBody, setNewMessageBody] = useState('')
+  const [newNotifyStaffIds, setNewNotifyStaffIds] = useState<string[]>([])
   const [showMobileMessages, setShowMobileMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Directory state
-  const [directorySearch, setDirectorySearch] = useState('')
-  const [allStaff, setAllStaff] = useState<RecipientDto[]>([])
-  const [filteredStaff, setFilteredStaff] = useState<RecipientDto[]>([])
-  const [directoryLoading, setDirectoryLoading] = useState(false)
-  const directoryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Student picker state
+  // Student picker state (for starting a new thread when parent has multiple children)
   const [studentPickerOpen, setStudentPickerOpen] = useState(false)
-  const [pendingStaff, setPendingStaff] = useState<RecipientDto | null>(null)
 
   const threadsQueryKey = [{ _id: 'getApiV1ContactThreads' }] as const
 
@@ -149,10 +223,18 @@ export default function ParentKontaktbogPage() {
   })
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ threadId, body }: { threadId: string; body: string }) => {
+    mutationFn: async ({
+      threadId,
+      body,
+      notifyStaffIds,
+    }: {
+      threadId: string
+      body: string
+      notifyStaffIds: string[]
+    }) => {
       await postApiV1ContactThreadsByThreadIdMessages({
         path: { threadId },
-        body: { body },
+        body: { body, notifyStaffIds },
         throwOnError: true,
       })
     },
@@ -164,13 +246,22 @@ export default function ParentKontaktbogPage() {
       })
       qc.invalidateQueries({ queryKey: threadsQueryKey })
       setMessageBody('')
+      setReplyNotifyStaffIds([])
     },
   })
 
   const createThreadMutation = useMutation({
-    mutationFn: async ({ studentId, body }: { studentId: string; body: string }) => {
+    mutationFn: async ({
+      studentId,
+      body,
+      notifyStaffIds,
+    }: {
+      studentId: string
+      body: string
+      notifyStaffIds: string[]
+    }) => {
       const { data } = await postApiV1ContactThreads({
-        body: { studentId, body },
+        body: { studentId, body, notifyStaffIds },
         throwOnError: true,
       })
       return data as { threadId: string }
@@ -179,99 +270,19 @@ export default function ParentKontaktbogPage() {
       qc.invalidateQueries({ queryKey: threadsQueryKey })
       setSelectedThreadId(data.threadId)
       setNewMessageBody('')
+      setNewNotifyStaffIds([])
       setShowMobileMessages(true)
-      setSidebarTab('beskeder')
     },
   })
 
-  useEffect(() => {
-    return () => {
-      if (directoryDebounceRef.current) {
-        clearTimeout(directoryDebounceRef.current)
-        directoryDebounceRef.current = null
-      }
-    }
-  }, [])
-
-  // Load all staff contacts on tab switch
-  useEffect(() => {
-    if (sidebarTab !== 'kontakter' || allStaff.length > 0) {
-      return
-    }
-    async function loadStaff() {
-      setDirectoryLoading(true)
-      try {
-        const { data } = await getApiV1MessagesRecipients({ query: { q: '' }, throwOnError: false })
-        const recipients = ((data ?? []) as RecipientDto[]).filter((r) => r.type === 'Staff')
-        setAllStaff(recipients)
-        setFilteredStaff(recipients)
-      } finally {
-        setDirectoryLoading(false)
-      }
-    }
-    loadStaff()
-  }, [sidebarTab, allStaff.length])
-
-  function handleDirectorySearch(value: string) {
-    setDirectorySearch(value)
-    if (directoryDebounceRef.current) {
-      clearTimeout(directoryDebounceRef.current)
-    }
-    const searchAtCall = value
-    directoryDebounceRef.current = setTimeout(async () => {
-      if (searchAtCall.length === 0) {
-        setFilteredStaff(allStaff)
-        return
-      }
-      const { data } = await getApiV1MessagesRecipients({
-        query: { q: searchAtCall },
-        throwOnError: false,
-      })
-      setDirectorySearch((current) => {
-        if (current === searchAtCall) {
-          setFilteredStaff(((data ?? []) as RecipientDto[]).filter((r) => r.type === 'Staff'))
-        }
-        return current
-      })
-    }, 300)
-  }
-
-  function navigateToStudentThread(studentId: string) {
-    const existing = threads.find((t) => t.studentId === studentId)
-    if (existing) {
-      handleSelectThread(existing.id)
-    } else {
-      setSelectedThreadId(null)
-      setShowMobileMessages(true)
-    }
-    setSidebarTab('beskeder')
-  }
-
-  function handleStaffClick(staff: RecipientDto) {
-    if (students.length === 0) {
-      return
-    }
-    if (students.length === 1) {
-      const sid = students[0].studentId
-      if (!sid) {
-        return
-      }
-      navigateToStudentThread(sid)
-    } else {
-      setPendingStaff(staff)
-      setStudentPickerOpen(true)
-    }
-  }
-
-  function handleStudentPick(studentId: string) {
-    setStudentPickerOpen(false)
-    setPendingStaff(null)
-    navigateToStudentThread(studentId)
-  }
+  const validStudents = students.filter(
+    (s): s is { studentId: string; studentName?: string | null } => !!s.studentId
+  )
 
   function handleSelectThread(threadId: string) {
     setSelectedThreadId(threadId)
     setShowMobileMessages(true)
+    setReplyNotifyStaffIds([])
     readMutation.mutate(threadId)
   }
 
@@ -279,15 +290,41 @@ export default function ParentKontaktbogPage() {
     if (!selectedThreadId || !messageBody.trim()) {
       return
     }
-    sendMessageMutation.mutate({ threadId: selectedThreadId, body: messageBody.trim() })
+    sendMessageMutation.mutate({
+      threadId: selectedThreadId,
+      body: messageBody.trim(),
+      notifyStaffIds: replyNotifyStaffIds,
+    })
   }
 
-  function handleCreateThread() {
-    const firstStudent = threads[0]
-    if (!firstStudent || !newMessageBody.trim()) {
+  function handleStartNewThread() {
+    if (!newMessageBody.trim()) {
       return
     }
-    createThreadMutation.mutate({ studentId: firstStudent.studentId, body: newMessageBody.trim() })
+    if (validStudents.length === 0) {
+      return
+    }
+    if (validStudents.length === 1) {
+      createThreadMutation.mutate({
+        studentId: validStudents[0].studentId,
+        body: newMessageBody.trim(),
+        notifyStaffIds: newNotifyStaffIds,
+      })
+    } else {
+      setStudentPickerOpen(true)
+    }
+  }
+
+  function handleStudentPick(studentId: string) {
+    setStudentPickerOpen(false)
+    if (!newMessageBody.trim()) {
+      return
+    }
+    createThreadMutation.mutate({
+      studentId,
+      body: newMessageBody.trim(),
+      notifyStaffIds: newNotifyStaffIds,
+    })
   }
 
   useEffect(() => {
@@ -302,145 +339,63 @@ export default function ParentKontaktbogPage() {
       <div
         className={`w-full lg:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col ${showMobileMessages ? 'hidden lg:flex' : 'flex'}`}
       >
-        {/* Sidebar header with title + tabs */}
-        <div className="px-4 pt-4 pb-0 border-b border-gray-100">
-          <h1 className="font-display text-xl font-semibold text-gray-900 mb-3">Kontaktbog</h1>
-          <div className="flex">
+        {/* Sidebar header */}
+        <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between gap-3">
+          <h1 className="font-display text-xl font-semibold text-gray-900">Kontaktbog</h1>
+          {threads.length > 0 && (
             <button
-              onClick={() => setSidebarTab('beskeder')}
-              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                sidebarTab === 'beskeder'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              type="button"
+              onClick={() => {
+                setSelectedThreadId(null)
+                setShowMobileMessages(true)
+              }}
+              className="shrink-0 px-3 py-1.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
             >
-              Beskeder
+              Ny besked
             </button>
-            <button
-              onClick={() => setSidebarTab('kontakter')}
-              className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                sidebarTab === 'kontakter'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Kontakter
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Beskeder tab */}
-        {sidebarTab === 'beskeder' && (
-          <>
-            {threadsLoading && (
-              <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
-                Indlæser…
-              </div>
-            )}
-
-            {!threadsLoading && threads.length === 0 && (
-              <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
-                <p className="text-sm text-gray-500">Ingen beskeder endnu</p>
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-              {threads.map((thread) => (
-                <button
-                  key={thread.id}
-                  onClick={() => handleSelectThread(thread.id)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedThreadId === thread.id ? 'bg-brand-50' : ''}`}
-                >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-medium text-sm text-gray-900">{thread.studentName}</span>
-                    {thread.unreadCount > 0 && (
-                      <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold">
-                        {thread.unreadCount}
-                      </span>
-                    )}
-                  </div>
-                  {thread.lastMessageBody && (
-                    <p className="text-xs text-gray-500 truncate">
-                      {truncate(thread.lastMessageBody, 50)}
-                    </p>
-                  )}
-                  {thread.lastMessageSentAt && (
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {formatDateTime(thread.lastMessageSentAt)}
-                    </p>
-                  )}
-                </button>
-              ))}
-            </div>
-          </>
+        {threadsLoading && (
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
+            Indlæser…
+          </div>
         )}
 
-        {/* Kontakter tab */}
-        {sidebarTab === 'kontakter' && (
-          <>
-            <div className="px-3 py-3 border-b border-gray-50 shrink-0">
-              <div className="relative">
-                <svg
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  type="text"
-                  value={directorySearch}
-                  onChange={(e) => handleDirectorySearch(e.target.value)}
-                  placeholder="Søg efter medarbejder…"
-                  className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-              {directoryLoading && (
-                <div className="flex items-center justify-center py-8 text-sm text-gray-400">
-                  Indlæser…
-                </div>
-              )}
-              {!directoryLoading && filteredStaff.length === 0 && (
-                <div className="flex items-center justify-center py-8 text-sm text-gray-400">
-                  Ingen medarbejdere
-                </div>
-              )}
-              {filteredStaff.map((staff) => (
-                <button
-                  key={staff.id}
-                  onClick={() => handleStaffClick(staff)}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                >
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold shrink-0 overflow-hidden">
-                    {staff.avatarUrl ? (
-                      <img
-                        src={staff.avatarUrl}
-                        alt=""
-                        className="h-8 w-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      getInitials(staff.name)
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{staff.name}</p>
-                    <p className="text-xs text-gray-400">Medarbejder</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
+        {!threadsLoading && threads.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
+            <p className="text-sm text-gray-500">Ingen beskeder endnu</p>
+          </div>
         )}
+
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+          {threads.map((thread) => (
+            <button
+              key={thread.id}
+              onClick={() => handleSelectThread(thread.id)}
+              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedThreadId === thread.id ? 'bg-brand-50' : ''}`}
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="font-medium text-sm text-gray-900">{thread.studentName}</span>
+                {thread.unreadCount > 0 && (
+                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold">
+                    {thread.unreadCount}
+                  </span>
+                )}
+              </div>
+              {thread.lastMessageBody && (
+                <p className="text-xs text-gray-500 truncate">
+                  {truncate(thread.lastMessageBody, 50)}
+                </p>
+              )}
+              {thread.lastMessageSentAt && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {formatDateTime(thread.lastMessageSentAt)}
+                </p>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Message panel */}
@@ -500,7 +455,22 @@ export default function ParentKontaktbogPage() {
             </div>
 
             {/* Input */}
-            <div className="px-4 py-3 bg-white border-t border-gray-200">
+            <div className="px-4 py-3 bg-white border-t border-gray-200 space-y-2">
+              <details className="group">
+                <summary className="cursor-pointer text-xs font-medium text-gray-500 hover:text-brand-600 select-none list-none flex items-center gap-1">
+                  <span>
+                    Underret personale
+                    {replyNotifyStaffIds.length > 0 ? ` (${replyNotifyStaffIds.length})` : ''}
+                  </span>
+                </summary>
+                <div className="mt-2">
+                  <NotifyStaffPicker
+                    studentId={selectedThread.studentId}
+                    selectedIds={replyNotifyStaffIds}
+                    onChange={setReplyNotifyStaffIds}
+                  />
+                </div>
+              </details>
               <div className="flex gap-2 items-end">
                 <textarea
                   value={messageBody}
@@ -530,68 +500,71 @@ export default function ParentKontaktbogPage() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
-            {threads.length === 0 ? (
-              <>
-                <p className="text-sm text-gray-500">Ingen beskeder endnu</p>
-                <div className="w-full max-w-sm space-y-2">
-                  <textarea
-                    value={newMessageBody}
-                    onChange={(e) => setNewMessageBody(e.target.value)}
-                    rows={3}
-                    placeholder="Skriv din første besked til læreren…"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-                  />
-                  <button
-                    onClick={handleCreateThread}
-                    disabled={createThreadMutation.isPending || !newMessageBody.trim()}
-                    className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
-                  >
-                    {createThreadMutation.isPending ? 'Sender…' : 'Skriv til læreren'}
-                  </button>
-                  {createThreadMutation.isError && (
-                    <p className="text-xs text-red-600">Der opstod en fejl. Prøv igen.</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-gray-400">Vælg en samtale til venstre</p>
-            )}
+            <p className="text-sm text-gray-500">
+              {threads.length === 0 ? 'Ingen beskeder endnu' : 'Skriv en ny besked'}
+            </p>
+            <div className="w-full max-w-sm space-y-2">
+              <textarea
+                value={newMessageBody}
+                onChange={(e) => setNewMessageBody(e.target.value)}
+                rows={3}
+                placeholder="Skriv din første besked til læreren…"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              />
+              {validStudents.length === 1 && (
+                <details className="group text-left">
+                  <summary className="cursor-pointer text-xs font-medium text-gray-500 hover:text-brand-600 select-none list-none">
+                    Underret personale
+                    {newNotifyStaffIds.length > 0 ? ` (${newNotifyStaffIds.length})` : ''}
+                  </summary>
+                  <div className="mt-2">
+                    <NotifyStaffPicker
+                      studentId={validStudents[0].studentId}
+                      selectedIds={newNotifyStaffIds}
+                      onChange={setNewNotifyStaffIds}
+                    />
+                  </div>
+                </details>
+              )}
+              <button
+                onClick={handleStartNewThread}
+                disabled={createThreadMutation.isPending || !newMessageBody.trim()}
+                className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
+              >
+                {createThreadMutation.isPending ? 'Sender…' : 'Skriv til læreren'}
+              </button>
+              {createThreadMutation.isError && (
+                <p className="text-xs text-red-600">Der opstod en fejl. Prøv igen.</p>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {/* Student picker modal */}
       <Modal
-        isOpen={studentPickerOpen && !!pendingStaff}
-        onClose={() => {
-          setStudentPickerOpen(false)
-          setPendingStaff(null)
-        }}
+        isOpen={studentPickerOpen}
+        onClose={() => setStudentPickerOpen(false)}
         title="Vælg barn"
         size="sm"
       >
         <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-gray-500">Hvilken besked gælder samtalen?</p>
+          <p className="text-sm text-gray-500">Hvilket barn gælder beskeden?</p>
           <div className="space-y-2">
-            {students
-              .filter((s) => s.studentId && s.studentName)
-              .map((s) => (
-                <button
-                  type="button"
-                  key={s.studentId}
-                  onClick={() => handleStudentPick(s.studentId as string)}
-                  className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-brand-400 hover:bg-brand-50 transition-colors text-sm font-medium text-gray-900"
-                >
-                  {s.studentName}
-                </button>
-              ))}
+            {validStudents.map((s) => (
+              <button
+                type="button"
+                key={s.studentId}
+                onClick={() => handleStudentPick(s.studentId)}
+                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-brand-400 hover:bg-brand-50 transition-colors text-sm font-medium text-gray-900"
+              >
+                {s.studentName}
+              </button>
+            ))}
           </div>
           <button
             type="button"
-            onClick={() => {
-              setStudentPickerOpen(false)
-              setPendingStaff(null)
-            }}
+            onClick={() => setStudentPickerOpen(false)}
             className="w-full text-sm text-gray-500 hover:text-gray-700"
           >
             Annuller

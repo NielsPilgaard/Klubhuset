@@ -1,20 +1,53 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { getApiV1KontaktOptions } from '../api/generated/@tanstack/react-query.gen'
 import type { KontaktControllerKontaktParentDto as KontaktParentDto } from '../api/generated/types.gen'
 
+interface StudentGroup {
+  studentId: string
+  studentName: string
+  parents: KontaktParentDto[]
+}
+
+const NO_STUDENT_KEY = '__no_student__'
+
+function groupByStudent(parents: KontaktParentDto[]): StudentGroup[] {
+  const groups = new Map<string, StudentGroup>()
+
+  for (const parent of parents) {
+    const students = parent.students ?? []
+    const targets = students.length > 0 ? students : [{ id: NO_STUDENT_KEY, name: parent.name }]
+    for (const student of targets) {
+      let group = groups.get(student.id)
+      if (!group) {
+        group = { studentId: student.id, studentName: student.name, parents: [] }
+        groups.set(student.id, group)
+      }
+      group.parents.push(parent)
+    }
+  }
+
+  return [...groups.values()].sort((a, b) => a.studentName.localeCompare(b.studentName, 'da'))
+}
+
 export default function ParentDirectoryPage() {
   usePageTitle('Kontakt')
   const [search, setSearch] = useState('')
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
+  const [expandedParentId, setExpandedParentId] = useState<string | null>(null)
 
   const { data: parents = [], isLoading } = useQuery({
     ...getApiV1KontaktOptions(),
     select: (data) => data as KontaktParentDto[],
   })
 
-  const filtered = parents.filter((p) =>
-    (p.name ?? '').toLowerCase().includes(search.toLowerCase())
+  const groups = useMemo(() => groupByStudent(parents), [parents])
+
+  const filtered = groups.filter(
+    (g) =>
+      g.studentName.toLowerCase().includes(search.toLowerCase()) ||
+      g.parents.some((p) => (p.name ?? '').toLowerCase().includes(search.toLowerCase()))
   )
 
   return (
@@ -43,50 +76,124 @@ export default function ParentDirectoryPage() {
       )}
 
       <div className="space-y-3">
-        {filtered.map((parent) => (
-          <div
-            key={parent.id}
-            className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-4"
-          >
-            <div className="shrink-0">
-              {parent.avatarUrl ? (
-                <img
-                  src={parent.avatarUrl}
-                  alt=""
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-brand-700">
-                    {(parent.name ?? '?').charAt(0).toUpperCase()}
-                  </span>
+        {filtered.map((group) => {
+          const isStudentExpanded = expandedStudentId === group.studentId
+          return (
+            <div key={group.studentId} className="bg-white border border-gray-200 rounded-xl p-4">
+              <button
+                type="button"
+                onClick={() => setExpandedStudentId(isStudentExpanded ? null : group.studentId)}
+                className="w-full flex items-center justify-between gap-4 text-left"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 text-sm">{group.studentName}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {group.parents.length === 1 ? '1 forælder' : `${group.parents.length} forældre`}
+                  </p>
+                </div>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`shrink-0 text-gray-400 transition-transform ${isStudentExpanded ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {isStudentExpanded && (
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                  {group.parents.map((parent) => {
+                    const hasContactInfo = !!(
+                      parent.phone ||
+                      parent.address ||
+                      parent.city ||
+                      parent.email
+                    )
+                    const isParentExpanded = expandedParentId === parent.id
+
+                    return (
+                      <div key={parent.id}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            hasContactInfo &&
+                            setExpandedParentId(isParentExpanded ? null : parent.id)
+                          }
+                          className="w-full flex items-start gap-3 text-left"
+                        >
+                          <div className="shrink-0">
+                            {parent.avatarUrl ? (
+                              <img
+                                src={parent.avatarUrl}
+                                alt=""
+                                className="w-9 h-9 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center">
+                                <span className="text-sm font-semibold text-brand-700">
+                                  {(parent.name ?? '?').charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 pt-1.5">
+                            <p className="font-medium text-gray-900 text-sm">{parent.name}</p>
+                          </div>
+                          {hasContactInfo && (
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={`shrink-0 mt-2 text-gray-400 transition-transform ${isParentExpanded ? 'rotate-180' : ''}`}
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          )}
+                        </button>
+                        {isParentExpanded && hasContactInfo && (
+                          <div className="mt-2 pl-12 space-y-0.5">
+                            {parent.phone && (
+                              <p className="text-sm text-gray-700">
+                                <a href={`tel:${parent.phone}`} className="hover:text-brand-600">
+                                  {parent.phone}
+                                </a>
+                              </p>
+                            )}
+                            {parent.email && (
+                              <p className="text-sm text-gray-700">
+                                <a href={`mailto:${parent.email}`} className="hover:text-brand-600">
+                                  {parent.email}
+                                </a>
+                              </p>
+                            )}
+                            {(parent.address || parent.city) && (
+                              <p className="text-sm text-gray-600">
+                                {[parent.address, parent.postalCode, parent.city]
+                                  .filter(Boolean)
+                                  .join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 text-sm">{parent.name}</p>
-              {(parent.studentNames?.length ?? 0) > 0 && (
-                <p className="text-xs text-gray-500 mt-0.5">{parent.studentNames!.join(', ')}</p>
-              )}
-              {(parent.phone || parent.address || parent.city) && (
-                <div className="mt-1.5 space-y-0.5">
-                  {parent.phone && (
-                    <p className="text-sm text-gray-700">
-                      <a href={`tel:${parent.phone}`} className="hover:text-brand-600">
-                        {parent.phone}
-                      </a>
-                    </p>
-                  )}
-                  {(parent.address || parent.city) && (
-                    <p className="text-sm text-gray-600">
-                      {[parent.address, parent.postalCode, parent.city].filter(Boolean).join(', ')}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

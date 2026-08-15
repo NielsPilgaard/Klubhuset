@@ -4,6 +4,7 @@ import {
   getApiV1MessagesInbox,
   getApiV1MessagesRecipients,
   getApiV1MessagesSent,
+  getApiV1MessagesByIdThread,
   postApiV1Messages,
   postApiV1MessagesByIdRead,
   postApiV1MessagesGroupPreview,
@@ -50,6 +51,19 @@ interface SentMessageDto {
   audienceLabel?: string
   groupRecipientCount?: number
   inReplyToId?: string
+}
+
+interface ThreadMessageDto {
+  id: string
+  senderId: string
+  senderType: RecipientType
+  senderName: string
+  recipientId: string
+  recipientType: RecipientType
+  recipientName: string
+  body: string
+  sentAt: string
+  isOwn: boolean
 }
 
 interface RecipientDto {
@@ -101,6 +115,56 @@ function truncate(text: string, max: number): string {
     return text
   }
   return `${text.slice(0, max)}…`
+}
+
+interface ThreadLinkable {
+  id: string
+  inReplyToId?: string
+  sentAt: string
+  isGroup?: boolean
+}
+
+// InReplyToId only ever points at the previous message, and a reply to my
+// inbox message lands in my *sent* list (and vice versa) — so the chain must
+// be walked across inbox+sent combined, not per-tab, or it breaks as soon as
+// a thread crosses tabs. Returns id -> root id for every message.
+function buildThreadRoots(allMessages: ThreadLinkable[]): Map<string, string> {
+  const byId = new Map(allMessages.map((m) => [m.id, m]))
+  const roots = new Map<string, string>()
+
+  function rootIdOf(msg: ThreadLinkable): string {
+    const cached = roots.get(msg.id)
+    if (cached) return cached
+
+    let current = msg
+    const visited = new Set<string>()
+    while (current.inReplyToId && byId.has(current.inReplyToId) && !visited.has(current.id)) {
+      visited.add(current.id)
+      current = byId.get(current.inReplyToId)!
+    }
+    roots.set(msg.id, current.id)
+    return current.id
+  }
+
+  for (const msg of allMessages) rootIdOf(msg)
+  return roots
+}
+
+// Collapses a flat message list into one row per thread (latest message wins),
+// so replies don't show up as separate list entries.
+function groupByThread<T extends ThreadLinkable>(messages: T[], threadRoots: Map<string, string>): T[] {
+  const latestByRoot = new Map<string, T>()
+  for (const msg of messages) {
+    const rootId = msg.isGroup ? msg.id : (threadRoots.get(msg.id) ?? msg.id)
+    const existing = latestByRoot.get(rootId)
+    if (!existing || new Date(msg.sentAt).getTime() > new Date(existing.sentAt).getTime()) {
+      latestByRoot.set(rootId, msg)
+    }
+  }
+
+  return [...latestByRoot.values()].sort(
+    (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
+  )
 }
 
 // ── GroupComposeModal ────────────────────────────────────────────────────────
@@ -552,6 +616,18 @@ export default function BeskederPage() {
     className: c.className ?? '',
   }))
 
+  const { data: thread = [], isLoading: threadLoading } = useQuery({
+    queryKey: [{ _id: 'getApiV1MessagesByIdThread', path: { id: selectedId } }],
+    queryFn: async () => {
+      const { data } = await getApiV1MessagesByIdThread({
+        path: { id: selectedId! },
+        throwOnError: false,
+      })
+      return (data ?? []) as ThreadMessageDto[]
+    },
+    enabled: selectedId !== null,
+  })
+
   useEffect(() => {
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
@@ -674,8 +750,15 @@ export default function BeskederPage() {
   function handleReply() {
     if (!selectedMsg) return
 
-    const recipient: RecipientDto =
-      tab === 'inbox'
+    // Reply to the last message in the thread, so multi-hop conversations
+    // always append to the end regardless of which row was clicked.
+    const lastMsg = thread.length > 0 ? thread[thread.length - 1] : null
+
+    const recipient: RecipientDto = lastMsg
+      ? lastMsg.isOwn
+        ? { id: lastMsg.recipientId, name: lastMsg.recipientName, type: lastMsg.recipientType }
+        : { id: lastMsg.senderId, name: lastMsg.senderName, type: lastMsg.senderType }
+      : tab === 'inbox'
         ? {
             id: (selectedMsg as InboxMessageDto).senderId,
             name: (selectedMsg as InboxMessageDto).senderName,
@@ -687,18 +770,10 @@ export default function BeskederPage() {
             type: (selectedMsg as SentMessageDto).recipientType,
           }
 
-    const replySubject = selectedMsg.subject.startsWith('Sv: ')
-      ? selectedMsg.subject
-      : `Sv: ${selectedMsg.subject}`
-    const quoted = selectedMsg.body
-      .split('\n')
-      .map((line) => `> ${line}`)
-      .join('\n')
-
     handleOpenCompose(recipient, {
-      subject: replySubject,
-      body: `\n\n${quoted}`,
-      inReplyToId: selectedMsg.id,
+      subject: selectedMsg.subject,
+      body: '',
+      inReplyToId: lastMsg?.id ?? selectedMsg.id,
     })
   }
 
@@ -727,7 +802,10 @@ export default function BeskederPage() {
     }
   }
 
-  const currentMessages = tab === 'inbox' ? inbox : sent
+  const threadRoots = buildThreadRoots([...inbox, ...sent])
+  const groupedInbox = groupByThread(inbox, threadRoots)
+  const groupedSent = groupByThread(sent, threadRoots)
+  const currentMessages = tab === 'inbox' ? groupedInbox : groupedSent
   const selectedInboxMsg = tab === 'inbox' ? inbox.find((m) => m.id === selectedId) : null
   const selectedSentMsg = tab === 'sent' ? sent.find((m) => m.id === selectedId) : null
   const selectedMsg = selectedInboxMsg ?? selectedSentMsg
@@ -919,7 +997,7 @@ export default function BeskederPage() {
             )}
             <div className="divide-y divide-gray-100">
               {tab === 'inbox' &&
-                inbox.map((msg) => {
+                groupedInbox.map((msg) => {
                   const isUnread = !msg.readAt
                   return (
                     <button
@@ -950,7 +1028,7 @@ export default function BeskederPage() {
                   )
                 })}
               {tab === 'sent' &&
-                sent.map((msg) => (
+                groupedSent.map((msg) => (
                   <button
                     type="button"
                     key={msg.id}
@@ -1041,89 +1119,155 @@ export default function BeskederPage() {
                   Tilbage
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-6 py-6">
-                <div className="max-w-2xl">
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">{selectedMsg.subject}</h2>
-                    {!(
-                      (tab === 'sent' && (selectedMsg as SentMessageDto).isGroup) ||
-                      (tab === 'inbox' && (selectedMsg as InboxMessageDto).isGroup)
-                    ) && (
-                      <button
-                        type="button"
-                        onClick={handleReply}
-                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="9 17 4 12 9 7" />
-                          <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
-                        </svg>
-                        Svar
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
-                    <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
-                      {tab === 'inbox'
-                        ? getInitials((selectedMsg as InboxMessageDto).senderName)
-                        : getInitials((selectedMsg as SentMessageDto).recipientName)}
-                    </div>
-                    <div className="min-w-0">
-                      {tab === 'inbox' ? (
+              {(() => {
+                const isGroup =
+                  (tab === 'sent' && (selectedMsg as SentMessageDto).isGroup) ||
+                  (tab === 'inbox' && (selectedMsg as InboxMessageDto).isGroup)
+
+                return (
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <div className="max-w-2xl">
+                      <div className="flex items-center justify-between gap-3 mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {selectedMsg.subject}
+                        </h2>
+                        {!isGroup && (
+                          <button
+                            type="button"
+                            onClick={handleReply}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="9 17 4 12 9 7" />
+                              <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                            </svg>
+                            Svar
+                          </button>
+                        )}
+                      </div>
+
+                      {isGroup ? (
                         <>
-                          <p className="text-sm font-medium text-gray-900">
-                            {(selectedMsg as InboxMessageDto).senderName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(selectedMsg as InboxMessageDto).senderType === 'Parent'
-                              ? 'Forælder'
-                              : 'Medarbejder'}
-                            {' · '}
-                            {formatRelativeTime(selectedMsg.sentAt)}
-                          </p>
+                          <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
+                            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
+                              {tab === 'inbox'
+                                ? getInitials((selectedMsg as InboxMessageDto).senderName)
+                                : getInitials((selectedMsg as SentMessageDto).recipientName)}
+                            </div>
+                            <div className="min-w-0">
+                              {tab === 'inbox' ? (
+                                <>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {(selectedMsg as InboxMessageDto).senderName}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {(selectedMsg as InboxMessageDto).senderType === 'Parent'
+                                      ? 'Forælder'
+                                      : 'Medarbejder'}
+                                    {' · '}
+                                    {formatRelativeTime(selectedMsg.sentAt)}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">
+                                      Gruppe
+                                    </span>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {(selectedMsg as SentMessageDto).audienceLabel}
+                                    </p>
+                                    {(selectedMsg as SentMessageDto).groupRecipientCount !=
+                                      null && (
+                                      <span className="text-xs text-gray-400">
+                                        ({(selectedMsg as SentMessageDto).groupRecipientCount}{' '}
+                                        modtagere)
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500">
+                                    {formatRelativeTime(selectedMsg.sentAt)}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                            {selectedMsg.body}
+                          </div>
                         </>
                       ) : (
-                        <>
-                          <div className="flex items-center gap-1.5">
-                            {(selectedMsg as SentMessageDto).isGroup && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">
-                                Gruppe
-                              </span>
-                            )}
-                            <p className="text-sm font-medium text-gray-900">
-                              {(selectedMsg as SentMessageDto).isGroup
-                                ? (selectedMsg as SentMessageDto).audienceLabel
-                                : `Til: ${(selectedMsg as SentMessageDto).recipientName}`}
-                            </p>
-                            {(selectedMsg as SentMessageDto).isGroup &&
-                              (selectedMsg as SentMessageDto).groupRecipientCount != null && (
-                                <span className="text-xs text-gray-400">
-                                  ({(selectedMsg as SentMessageDto).groupRecipientCount} modtagere)
-                                </span>
-                              )}
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {formatRelativeTime(selectedMsg.sentAt)}
-                          </p>
-                        </>
+                        <div className="space-y-4">
+                          {threadLoading && (
+                            <p className="text-sm text-gray-400">Indlæser samtale…</p>
+                          )}
+                          {!threadLoading && thread.length === 0 && (
+                            <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                              <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
+                                {tab === 'inbox'
+                                  ? getInitials((selectedMsg as InboxMessageDto).senderName)
+                                  : getInitials((selectedMsg as SentMessageDto).recipientName)}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {tab === 'inbox'
+                                    ? (selectedMsg as InboxMessageDto).senderName
+                                    : `Til: ${(selectedMsg as SentMessageDto).recipientName}`}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {formatRelativeTime(selectedMsg.sentAt)}
+                                </p>
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed mt-2">
+                                  {selectedMsg.body}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {[...thread].reverse().map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0 ${msg.isOwn ? 'flex-row-reverse text-right' : ''}`}
+                            >
+                              <div
+                                className={`flex items-center justify-center h-9 w-9 rounded-full text-sm font-semibold shrink-0 ${msg.isOwn ? 'bg-blue-100 text-blue-700' : 'bg-brand-100 text-brand-700'}`}
+                              >
+                                {getInitials(msg.isOwn ? msg.recipientName : msg.senderName)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {msg.isOwn ? 'Dig' : msg.senderName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {(msg.isOwn ? msg.senderType : msg.senderType) === 'Parent'
+                                    ? 'Forælder'
+                                    : 'Medarbejder'}
+                                  {' · '}
+                                  {formatRelativeTime(msg.sentAt)}
+                                </p>
+                                <div
+                                  className={`inline-block mt-2 max-w-lg px-3 py-2 rounded-xl text-sm text-left whitespace-pre-wrap leading-relaxed ${msg.isOwn ? 'bg-blue-100 text-gray-900' : 'bg-white border border-gray-200 text-gray-900'}`}
+                                >
+                                  {msg.body}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {selectedMsg.body}
-                  </div>
-                </div>
-              </div>
+                )
+              })()}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">

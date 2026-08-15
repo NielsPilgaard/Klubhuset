@@ -304,7 +304,6 @@ export default function App() {
                     </ParentRoute>
                   }
                 />
-                <Route path="foraeldre/kontakt" element={<ParentDirectoryPage />} />
                 <Route path="fravaer" element={<FravaerPage />} />
                 <Route path="kontaktbog" element={<KontaktbogPage />} />
                 <Route
