@@ -19,6 +19,7 @@ public sealed class BillingController(
 {
 	public record SubscriptionDto(
 		SubscriptionStatus Status,
+		BillingInterval Interval,
 		DateTimeOffset TrialEnd,
 		DateTimeOffset? CurrentPeriodEnd,
 		bool IsTrialing,
@@ -28,6 +29,8 @@ public sealed class BillingController(
 		IReadOnlyList<string> ActiveModules);
 
 	public record CheckoutResponse(string Url);
+
+	public record CheckoutRequest(BillingInterval Interval);
 
 	[HttpGet("subscription")]
 	public async Task<ActionResult<SubscriptionDto>> GetSubscription(CancellationToken cancellationToken)
@@ -85,7 +88,7 @@ public sealed class BillingController(
 	public record ModuleRequest(SubscriptionModule Module);
 
 	[HttpPost("checkout")]
-	public async Task<ActionResult<CheckoutResponse>> CreateCheckout(CancellationToken cancellationToken)
+	public async Task<ActionResult<CheckoutResponse>> CreateCheckout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
 	{
 		var baseUrl = appOptions.Value.BaseUrl;
 		var successUrl = $"{baseUrl}/abonnement?success=true";
@@ -94,7 +97,7 @@ public sealed class BillingController(
 		try
 		{
 			var url = await subscriptionService.CreateCheckoutSessionAsync(
-				tenantContext.TenantId, successUrl, cancelUrl, cancellationToken);
+				tenantContext.TenantId, request.Interval, successUrl, cancelUrl, cancellationToken);
 			return Ok(new CheckoutResponse(url));
 		}
 		catch (Stripe.StripeException ex)
@@ -138,6 +141,7 @@ public sealed class BillingController(
 
 		return new SubscriptionDto(
 			sub.Status,
+			sub.Interval,
 			sub.TrialEnd,
 			sub.CurrentPeriodEnd,
 			isTrialing,

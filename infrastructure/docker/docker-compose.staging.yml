@@ -85,7 +85,12 @@ services:
       Smtp__Password: ""
       App__BaseUrl: http://localhost:5173
       Stripe__SecretKey: sk_test_stub
-      Stripe__BasePriceId: price_stub
+      Stripe__BasePriceIdMonthly: price_stub_monthly
+      Stripe__BasePriceIdYearly: price_stub_yearly
+      Stripe__ModulePriceIds__ParentModule__Monthly: price_stub_monthly
+      Stripe__ModulePriceIds__ParentModule__Yearly: price_stub_yearly
+      Stripe__ModulePriceIds__BoardModule__Monthly: price_stub_monthly
+      Stripe__ModulePriceIds__BoardModule__Yearly: price_stub_yearly
       Stripe__WebhookSecret: whsec_stub
     ports:
       - "5000:8080"

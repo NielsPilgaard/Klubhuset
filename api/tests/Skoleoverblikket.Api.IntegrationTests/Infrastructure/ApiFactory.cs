@@ -2,6 +2,8 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,7 @@ using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Storage;
+using Stripe;
 using Testcontainers.LocalStack;
 using Testcontainers.PostgreSql;
 using TUnit.AspNetCore;
@@ -35,9 +38,14 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>, IAsyncIniti
 
 	private readonly LocalStackContainer _localStack = new LocalStackBuilder("localstack/localstack:4").Build();
 
+	private readonly IContainer _stripeMock = new ContainerBuilder("stripe/stripe-mock:latest")
+		.WithPortBinding(12111, true)
+		.WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(12111))
+		.Build();
+
 	public async Task InitializeAsync()
 	{
-		await Task.WhenAll(_postgres.StartAsync(), _localStack.StartAsync());
+		await Task.WhenAll(_postgres.StartAsync(), _localStack.StartAsync(), _stripeMock.StartAsync());
 
 		await using var scope = Services.CreateAsyncScope();
 		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -96,12 +104,22 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>, IAsyncIniti
 				var config = new AmazonS3Config { ServiceURL = localStackUrl, ForcePathStyle = true };
 				return new AmazonS3Client(new BasicAWSCredentials("test", "test"), config);
 			});
+
+			// Point the shared StripeClient at stripe-mock instead of the real Stripe API
+			var stripeMockUrl = $"http://{_stripeMock.Hostname}:{_stripeMock.GetMappedPublicPort(12111)}";
+			services.RemoveAll<StripeClient>();
+			services.AddSingleton(_ => new StripeClient(
+				apiKey: "sk_test_stub",
+				apiBase: stripeMockUrl));
 		});
 	}
 
 	public override async ValueTask DisposeAsync()
 	{
 		await base.DisposeAsync();
-		await Task.WhenAll(_postgres.DisposeAsync().AsTask(), _localStack.DisposeAsync().AsTask());
+		await Task.WhenAll(
+			_postgres.DisposeAsync().AsTask(),
+			_localStack.DisposeAsync().AsTask(),
+			_stripeMock.DisposeAsync().AsTask());
 	}
 }

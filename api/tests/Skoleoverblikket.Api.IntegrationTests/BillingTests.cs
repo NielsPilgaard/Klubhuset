@@ -2,11 +2,14 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Controllers;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 using Skoleoverblikket.Api.Models;
+using Stripe;
+using LocalSubscriptionService = Skoleoverblikket.Api.Services.SubscriptionService;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
@@ -19,6 +22,10 @@ namespace Skoleoverblikket.Api.IntegrationTests;
 ///   - Expired trial: IsTrialing=false, HasAccess=false, TrialDaysLeft=0.
 ///   - Active subscription: IsActive=true, HasAccess=true.
 ///   - Active modules listed correctly.
+///   - Yearly billing: checkout persists Interval, AddModuleAsync picks the matching-interval
+///     module price, and a portal-driven interval switch (subscription.updated) updates Interval.
+///   Checkout/module calls hit stripe-mock (Testcontainers) instead of the real Stripe API —
+///   see ApiFactory.
 /// </summary>
 [ClassDataSource<ApiFactory>(Shared = SharedType.PerTestSession)]
 public sealed class BillingTests(ApiFactory factory)
@@ -45,7 +52,7 @@ public sealed class BillingTests(ApiFactory factory)
 
     // ── Private helpers ──────────────────────────────────────────────────────────
 
-    private async Task<Subscription> SeedSubscriptionAsync(
+    private async Task<Models.Subscription> SeedSubscriptionAsync(
         SubscriptionStatus status,
         DateTimeOffset trialEnd,
         DateTimeOffset? currentPeriodEnd = null,
@@ -53,7 +60,7 @@ public sealed class BillingTests(ApiFactory factory)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var sub = new Subscription
+        var sub = new Models.Subscription
         {
             Id = Guid.NewGuid(),
             SchoolId = _tenantId,
@@ -203,5 +210,155 @@ public sealed class BillingTests(ApiFactory factory)
         var dto = await response.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
         await Assert.That(dto).IsNotNull();
         await Assert.That(dto!.ActiveModules.Count).IsEqualTo(0);
+    }
+
+    // ── Yearly billing interval ──────────────────────────────────────────────────
+
+    [Test]
+    public async Task CreateCheckout_YearlyInterval_PersistsIntervalOnSubscription()
+    {
+        var response = await _adminClient.PostAsJsonAsync(
+            "/api/v1/billing/checkout",
+            new BillingController.CheckoutRequest(BillingInterval.Yearly));
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
+        var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
+        await Assert.That(dto).IsNotNull();
+        await Assert.That(dto!.Interval).IsEqualTo(BillingInterval.Yearly);
+    }
+
+    [Test]
+    public async Task CreateCheckout_MonthlyInterval_PersistsIntervalOnSubscription()
+    {
+        var response = await _adminClient.PostAsJsonAsync(
+            "/api/v1/billing/checkout",
+            new BillingController.CheckoutRequest(BillingInterval.Monthly));
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
+        var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
+        await Assert.That(dto).IsNotNull();
+        await Assert.That(dto!.Interval).IsEqualTo(BillingInterval.Monthly);
+    }
+
+    [Test]
+    public async Task AddModule_YearlySubscription_UsesYearlyModulePrice()
+    {
+        var sub = await SeedSubscriptionAsync(
+            SubscriptionStatus.Active,
+            trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
+            stripeSubscriptionId: "sub_test_yearly_module");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var trackedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+            trackedSub.Interval = BillingInterval.Yearly;
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _adminClient.PostAsJsonAsync(
+            "/api/v1/billing/modules",
+            new BillingController.ModuleRequest(SubscriptionModule.ParentModule));
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+
+        var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
+        var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
+        await Assert.That(dto).IsNotNull();
+        await Assert.That(dto!.ActiveModules).Contains(SubscriptionModule.ParentModule.ToString());
+    }
+
+    [Test]
+    public async Task Webhook_SubscriptionUpdatedWithYearlyPrice_UpdatesIntervalToYearly()
+    {
+        var sub = await SeedSubscriptionAsync(
+            SubscriptionStatus.Active,
+            trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
+            stripeSubscriptionId: "sub_test_portal_switch");
+
+        using var scope = _factory.Services.CreateScope();
+        var subscriptionService = scope.ServiceProvider.GetRequiredService<LocalSubscriptionService>();
+
+        var stripeSub = new Stripe.Subscription
+        {
+            Id = "sub_test_portal_switch",
+            Status = "active",
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price
+                        {
+                            Recurring = new PriceRecurring { Interval = "year" },
+                        },
+                    },
+                ],
+            },
+        };
+
+        var stripeEvent = new Event
+        {
+            Type = EventTypes.CustomerSubscriptionUpdated,
+            Data = new EventData { Object = stripeSub },
+        };
+
+        await subscriptionService.HandleWebhookAsync(stripeEvent);
+
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var updatedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+        await Assert.That(updatedSub.Interval).IsEqualTo(BillingInterval.Yearly);
+    }
+
+    [Test]
+    public async Task Webhook_SubscriptionUpdatedWithMonthlyPrice_UpdatesIntervalToMonthly()
+    {
+        var sub = await SeedSubscriptionAsync(
+            SubscriptionStatus.Active,
+            trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
+            stripeSubscriptionId: "sub_test_portal_switch_monthly");
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var trackedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+        trackedSub.Interval = BillingInterval.Yearly;
+        await db.SaveChangesAsync();
+
+        var subscriptionService = scope.ServiceProvider.GetRequiredService<LocalSubscriptionService>();
+
+        var stripeSub = new Stripe.Subscription
+        {
+            Id = "sub_test_portal_switch_monthly",
+            Status = "active",
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price
+                        {
+                            Recurring = new PriceRecurring { Interval = "month" },
+                        },
+                    },
+                ],
+            },
+        };
+
+        var stripeEvent = new Event
+        {
+            Type = EventTypes.CustomerSubscriptionUpdated,
+            Data = new EventData { Object = stripeSub },
+        };
+
+        await subscriptionService.HandleWebhookAsync(stripeEvent);
+
+        var updatedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+        await Assert.That(updatedSub.Interval).IsEqualTo(BillingInterval.Monthly);
     }
 }

@@ -67,6 +67,7 @@ public sealed class SubscriptionService(
 	/// </summary>
 	public async Task<string> CreateCheckoutSessionAsync(
 		Guid schoolId,
+		BillingInterval interval,
 		string successUrl,
 		string cancelUrl,
 		CancellationToken cancellationToken = default)
@@ -74,7 +75,12 @@ public sealed class SubscriptionService(
 		var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 		var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, cancellationToken);
 
-		var priceId = stripeOptions.Value.BasePriceId;
+		var priceId = interval == BillingInterval.Yearly
+			? stripeOptions.Value.BasePriceIdYearly
+			: stripeOptions.Value.BasePriceIdMonthly;
+
+		sub.Interval = interval;
+		await db.SaveChangesAsync(cancellationToken);
 
 		// Ensure Stripe customer exists
 		var customerId = sub.StripeCustomerId;
@@ -105,7 +111,11 @@ public sealed class SubscriptionService(
 			],
 			SuccessUrl = successUrl,
 			CancelUrl = cancelUrl,
-			Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
+			Metadata = new Dictionary<string, string>
+			{
+				["school_id"] = schoolId.ToString(),
+				["interval"] = interval.ToString(),
+			},
 			PaymentMethodCollection = "always",
 			SubscriptionData = sub.Status == SubscriptionStatus.Trialing && sub.TrialEnd > DateTimeOffset.UtcNow
 				? new SessionSubscriptionDataOptions
@@ -191,9 +201,11 @@ public sealed class SubscriptionService(
 			throw new InvalidOperationException("School does not have an active Stripe subscription.");
 		}
 
-		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var priceId) || string.IsNullOrEmpty(priceId))
+		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var intervalPrices)
+			|| !intervalPrices.TryGetValue(sub.Interval.ToString(), out var priceId)
+			|| string.IsNullOrEmpty(priceId))
 		{
-			throw new InvalidOperationException($"No Stripe price configured for module {module}.");
+			throw new InvalidOperationException($"No Stripe price configured for module {module} ({sub.Interval}).");
 		}
 
 		if (sub.ActiveModules.Any(m => m.Module == module))
@@ -387,6 +399,13 @@ public sealed class SubscriptionService(
 		sub.StripeCustomerId ??= session.CustomerId;
 		sub.StripeSubscriptionId = session.SubscriptionId;
 		sub.Status = SubscriptionStatus.Active;
+
+		if (session.Metadata.TryGetValue("interval", out var intervalStr)
+			&& Enum.TryParse<BillingInterval>(intervalStr, out var interval))
+		{
+			sub.Interval = interval;
+		}
+
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
 		await db.SaveChangesAsync(cancellationToken);
 	}
@@ -420,6 +439,21 @@ public sealed class SubscriptionService(
 		}
 
 		sub.Status = newStatus;
+
+		// Portal-driven monthly<->yearly plan switches arrive here as customer.subscription.updated.
+		// Detect the new cadence from the Price recurring interval so later AddModuleAsync calls
+		// buy the matching-interval module Price instead of a stale one.
+		var recurringInterval = stripeSub.Items?.Data?
+			.Select(i => i.Price?.Recurring?.Interval)
+			.FirstOrDefault(interval => interval is not null);
+		if (recurringInterval == "year")
+		{
+			sub.Interval = BillingInterval.Yearly;
+		}
+		else if (recurringInterval == "month")
+		{
+			sub.Interval = BillingInterval.Monthly;
+		}
 
 		// Stripe SDK returns DateTime.MinValue when unset — treat that as null
 		sub.CurrentPeriodEnd = stripeSub.CurrentPeriodEnd > DateTime.UnixEpoch
