@@ -5,3 +5,4 @@
 3. Test fravær (parent side)
 4. Test ugeplan print (parent side)
 5. Test messages reply to / thread feature
+6. Test that notif dropdown looks good
