@@ -20,7 +20,7 @@ public sealed class ParentsController(
 	KeycloakAdminService keycloak,
 	ILogger<ParentsController> logger) : ControllerBase
 {
-	public record ParentDto(Guid Id, string Name, string Email, string? Phone, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt, bool AdresseBeskyttet);
+	public record ParentDto(Guid Id, string Name, string Email, string? Phone, string? Address, string? PostalCode, string? City, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt, bool AdresseBeskyttet);
 	public record StudentRefDto(Guid Id, string Name, Guid ClassId, string ClassName);
 	public record InviteParentRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
@@ -188,11 +188,37 @@ public sealed class ParentsController(
 
 	public record AdresseBeskyttelseRequest(bool AdresseBeskyttet);
 
+	public record UpdateParentContactRequest(
+		[StringLength(50)] string? Phone,
+		[StringLength(500)] string? Address,
+		[StringLength(10)] string? PostalCode,
+		[StringLength(100)] string? City);
+
+	[HttpPatch("{id:guid}/contact")]
+	public async Task<ActionResult> UpdateContact(Guid id, [FromBody] UpdateParentContactRequest req, CancellationToken cancellationToken)
+	{
+		var parent = await db.Parents.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+		if (parent is null)
+		{
+			return NotFound();
+		}
+
+		parent.Phone = req.Phone;
+		parent.Address = req.Address;
+		parent.PostalCode = req.PostalCode;
+		parent.City = req.City;
+		await db.SaveChangesAsync(cancellationToken);
+		return NoContent();
+	}
+
 	private static ParentDto ToDto(Parent p) => new(
 		p.Id,
 		p.Name,
 		p.Email,
 		p.Phone,
+		p.Address,
+		p.PostalCode,
+		p.City,
 		p.Students.Select(s => new StudentRefDto(s.Id, s.Name, s.ClassId, s.Class?.Name ?? string.Empty)).ToList(),
 		p.KeycloakSubject is not null,
 		p.CreatedAt,

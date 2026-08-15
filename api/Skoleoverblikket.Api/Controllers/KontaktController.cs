@@ -18,8 +18,12 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 		string? Address,
 		string? PostalCode,
 		string? City,
+		string? Email,
 		string? AvatarUrl,
-		IReadOnlyList<string> StudentNames);
+		IReadOnlyList<string> StudentNames,
+		IReadOnlyList<KontaktStudentDto> Students);
+
+	public record KontaktStudentDto(Guid Id, string Name);
 
 	[HttpGet]
 	public async Task<ActionResult<IReadOnlyList<KontaktParentDto>>> GetKontakt(CancellationToken cancellationToken)
@@ -89,8 +93,10 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 				hideDetails ? null : p.Address,
 				hideDetails ? null : p.PostalCode,
 				hideDetails ? null : p.City,
+				hideDetails ? null : p.Email,
 				p.AvatarUrl,
-				p.Students.Select(s => s.Name).OrderBy(n => n).ToList());
+				p.Students.Select(s => s.Name).OrderBy(n => n).ToList(),
+				p.Students.Select(s => new KontaktStudentDto(s.Id, s.Name)).OrderBy(s => s.Name).ToList());
 		}).ToList();
 
 		return Ok(dtos);

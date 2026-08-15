@@ -62,6 +62,18 @@ public sealed class MessagesController(
 		string Body,
 		Guid? InReplyToId = null);
 
+	public record ThreadMessageDto(
+		Guid Id,
+		Guid SenderId,
+		RecipientType SenderType,
+		string SenderName,
+		Guid RecipientId,
+		RecipientType RecipientType,
+		string RecipientName,
+		string Body,
+		DateTimeOffset SentAt,
+		bool IsOwn);
+
 	public record RecipientDto(
 		Guid Id,
 		string Name,
@@ -229,42 +241,144 @@ public sealed class MessagesController(
 		var seen = new HashSet<Guid>();
 		var dtos = new List<SentMessageDto>();
 
-		foreach (var m in messages)
+		foreach (var message in messages)
 		{
-			if (m.GroupMessageId is not null)
+			if (message.GroupMessageId is not null)
 			{
-				if (!seen.Add(m.GroupMessageId.Value))
+				if (!seen.Add(message.GroupMessageId.Value))
 				{
 					continue;
 				}
 
-				if (!groupMessageMap.TryGetValue(m.GroupMessageId.Value, out var gm))
+				if (!groupMessageMap.TryGetValue(message.GroupMessageId.Value, out var gm))
 				{
 					continue;
 				}
 
 				var audienceLabel = BuildAudienceLabel(gm, classNames);
 				dtos.Add(new SentMessageDto(
-					m.Id,
-					m.RecipientId,
-					m.RecipientType,
+					message.Id,
+					message.RecipientId,
+					message.RecipientType,
 					audienceLabel,
-					m.Subject,
-					m.Body,
-					m.SentAt,
-					m.ReadAt,
+					message.Subject,
+					message.Body,
+					message.SentAt,
+					message.ReadAt,
 					IsGroup: true,
 					AudienceLabel: audienceLabel,
 					GroupRecipientCount: gm.RecipientCount));
 			}
 			else
 			{
-				var recipientName = m.RecipientType == RecipientType.Parent
-					? parentMap.GetValueOrDefault(m.RecipientId, "Forælder")
-					: staffMap.GetValueOrDefault(m.RecipientId, "Medarbejder");
-				dtos.Add(new SentMessageDto(m.Id, m.RecipientId, m.RecipientType, recipientName, m.Subject, m.Body, m.SentAt, m.ReadAt, InReplyToId: m.InReplyToId));
+				var recipientName = message.RecipientType == RecipientType.Parent
+					? parentMap.GetValueOrDefault(message.RecipientId, "Forælder")
+					: staffMap.GetValueOrDefault(message.RecipientId, "Medarbejder");
+				dtos.Add(new SentMessageDto(message.Id, message.RecipientId, message.RecipientType, recipientName, message.Subject, message.Body, message.SentAt, message.ReadAt, InReplyToId: message.InReplyToId));
 			}
 		}
+
+		return Ok(dtos);
+	}
+
+	[HttpGet("{id:guid}/thread")]
+	public async Task<ActionResult<IReadOnlyList<ThreadMessageDto>>> GetThread(Guid id, CancellationToken cancellationToken)
+	{
+		var caller = await ResolveCallerAsync(cancellationToken);
+		if (caller is null)
+		{
+			return Forbid();
+		}
+
+		var (callerId, _, _) = caller.Value;
+
+		var anchor = await db.Messages
+			.AsNoTracking()
+			.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+
+		if (anchor is null)
+		{
+			return NotFound();
+		}
+
+		if (anchor.SenderId != callerId && anchor.RecipientId != callerId)
+		{
+			return Forbid();
+		}
+
+		// Walk up to the root of the reply chain.
+		var chain = new List<Message> { anchor };
+		var current = anchor;
+		while (current.InReplyToId.HasValue)
+		{
+			var parent = await db.Messages
+				.AsNoTracking()
+				.FirstOrDefaultAsync(m => m.Id == current.InReplyToId.Value, cancellationToken);
+
+			if (parent is null)
+			{
+				break;
+			}
+
+			chain.Add(parent);
+			current = parent;
+		}
+
+		chain.Reverse();
+
+		// Walk down from the anchor to pick up any later replies.
+		current = anchor;
+		while (true)
+		{
+			var child = await db.Messages
+				.AsNoTracking()
+				.FirstOrDefaultAsync(m => m.InReplyToId == current.Id, cancellationToken);
+
+			if (child is null)
+			{
+				break;
+			}
+
+			chain.Add(child);
+			current = child;
+		}
+
+		var parentIds = chain.Where(m => m.SenderType == RecipientType.Parent).Select(m => m.SenderId)
+			.Concat(chain.Where(m => m.RecipientType == RecipientType.Parent).Select(m => m.RecipientId))
+			.Distinct().ToList();
+		var staffIds = chain.Where(m => m.SenderType == RecipientType.Staff).Select(m => m.SenderId)
+			.Concat(chain.Where(m => m.RecipientType == RecipientType.Staff).Select(m => m.RecipientId))
+			.Distinct().ToList();
+
+		var parents = await db.Parents.AsNoTracking()
+			.Where(p => parentIds.Contains(p.Id))
+			.Select(p => new { p.Id, p.Name })
+			.ToListAsync(cancellationToken);
+
+		var staffMembers = await db.Staff.AsNoTracking()
+			.Where(s => staffIds.Contains(s.Id))
+			.Select(s => new { s.Id, s.Name })
+			.ToListAsync(cancellationToken);
+
+		var parentMap = parents.ToDictionary(p => p.Id, p => p.Name);
+		var staffMap = staffMembers.ToDictionary(s => s.Id, s => s.Name);
+
+		string NameOf(Guid personId, RecipientType type) =>
+			type == RecipientType.Parent
+				? parentMap.GetValueOrDefault(personId, "Forælder")
+				: staffMap.GetValueOrDefault(personId, "Medarbejder");
+
+		var dtos = chain.Select(m => new ThreadMessageDto(
+			m.Id,
+			m.SenderId,
+			m.SenderType,
+			NameOf(m.SenderId, m.SenderType),
+			m.RecipientId,
+			m.RecipientType,
+			NameOf(m.RecipientId, m.RecipientType),
+			m.Body,
+			m.SentAt,
+			IsOwn: m.SenderId == callerId)).ToList();
 
 		return Ok(dtos);
 	}
@@ -326,6 +440,15 @@ public sealed class MessagesController(
 
 			var callerIsParticipant = parentMessage.SenderId == callerId || parentMessage.RecipientId == callerId;
 			if (!callerIsParticipant)
+			{
+				return Forbid();
+			}
+
+			var (expectedRecipientId, expectedRecipientType) = parentMessage.SenderId == callerId
+				? (parentMessage.RecipientId, parentMessage.RecipientType)
+				: (parentMessage.SenderId, parentMessage.SenderType);
+
+			if (req.RecipientId != expectedRecipientId || req.RecipientType != expectedRecipientType)
 			{
 				return Forbid();
 			}
