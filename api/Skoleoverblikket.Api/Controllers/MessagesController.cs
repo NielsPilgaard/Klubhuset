@@ -252,6 +252,7 @@ public sealed class MessagesController(
 
 				if (!groupMessageMap.TryGetValue(message.GroupMessageId.Value, out var gm))
 				{
+					logger.LogWarning("GetSent: GroupMessage {GroupMessageId} not found for Message {MessageId} — dropping row from Sent list", message.GroupMessageId, message.Id);
 					continue;
 				}
 
@@ -306,8 +307,10 @@ public sealed class MessagesController(
 			return Forbid();
 		}
 
-		// Walk up to the root of the reply chain.
-		var chain = new List<Message> { anchor };
+		// Find the root of the reply chain, then pull every descendant of that root via a
+		// recursive CTE — a plain child-walk can only ever follow one InReplyToId per level,
+		// so a thread with more than one reply to the same message would silently drop branches.
+		var rootId = anchor.Id;
 		var current = anchor;
 		while (current.InReplyToId.HasValue)
 		{
@@ -320,28 +323,23 @@ public sealed class MessagesController(
 				break;
 			}
 
-			chain.Add(parent);
+			rootId = parent.Id;
 			current = parent;
 		}
 
-		chain.Reverse();
-
-		// Walk down from the anchor to pick up any later replies.
-		current = anchor;
-		while (true)
-		{
-			var child = await db.Messages
-				.AsNoTracking()
-				.FirstOrDefaultAsync(m => m.InReplyToId == current.Id, cancellationToken);
-
-			if (child is null)
-			{
-				break;
-			}
-
-			chain.Add(child);
-			current = child;
-		}
+		var chain = await db.Messages
+			.FromSqlInterpolated($"""
+				WITH RECURSIVE thread AS (
+					SELECT * FROM "Messages" WHERE "Id" = {rootId}
+					UNION ALL
+					SELECT m.* FROM "Messages" m
+					INNER JOIN thread t ON m."InReplyToId" = t."Id"
+				)
+				SELECT * FROM thread
+				""")
+			.AsNoTracking()
+			.OrderBy(m => m.SentAt)
+			.ToListAsync(cancellationToken);
 
 		var parentIds = chain.Where(m => m.SenderType == RecipientType.Parent).Select(m => m.SenderId)
 			.Concat(chain.Where(m => m.RecipientType == RecipientType.Parent).Select(m => m.RecipientId))

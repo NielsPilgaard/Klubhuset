@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1MessagesInbox,
   getApiV1MessagesRecipients,
@@ -18,6 +18,7 @@ import type {
   BroadcastAudience,
   StaffRole,
   ClassesControllerClassDto,
+  MessagesControllerThreadMessageDto,
 } from '../api/generated/types.gen'
 import { Modal } from '../components/Modal'
 import { useAuth } from '../auth/useAuth'
@@ -53,18 +54,7 @@ interface SentMessageDto {
   inReplyToId?: string
 }
 
-interface ThreadMessageDto {
-  id: string
-  senderId: string
-  senderType: RecipientType
-  senderName: string
-  recipientId: string
-  recipientType: RecipientType
-  recipientName: string
-  body: string
-  sentAt: string
-  isOwn: boolean
-}
+type ThreadMessageDto = MessagesControllerThreadMessageDto
 
 interface RecipientDto {
   id: string
@@ -110,6 +100,12 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
+// Messages are only ever between Parent and Staff — the generated RecipientType also includes
+// Board (board members), which never participates in this messaging flow.
+function toMessageRecipientType(type: string | undefined): RecipientType {
+  return type === 'Staff' ? 'Staff' : 'Parent'
+}
+
 function truncate(text: string, max: number): string {
   if (text.length <= max) {
     return text
@@ -122,6 +118,7 @@ interface ThreadLinkable {
   inReplyToId?: string
   sentAt: string
   isGroup?: boolean
+  readAt?: string
 }
 
 // InReplyToId only ever points at the previous message, and a reply to my
@@ -151,20 +148,29 @@ function buildThreadRoots(allMessages: ThreadLinkable[]): Map<string, string> {
 }
 
 // Collapses a flat message list into one row per thread (latest message wins),
-// so replies don't show up as separate list entries.
-function groupByThread<T extends ThreadLinkable>(messages: T[], threadRoots: Map<string, string>): T[] {
+// so replies don't show up as separate list entries. Unread state is OR'd across every
+// message in the thread, not just the retained latest one, so an unread earlier reply
+// still marks the collapsed row unread even if the newest message was already read.
+function groupByThread<T extends ThreadLinkable>(
+  messages: T[],
+  threadRoots: Map<string, string>
+): (T & { hasUnread: boolean })[] {
   const latestByRoot = new Map<string, T>()
+  const unreadByRoot = new Map<string, boolean>()
   for (const msg of messages) {
     const rootId = msg.isGroup ? msg.id : (threadRoots.get(msg.id) ?? msg.id)
     const existing = latestByRoot.get(rootId)
     if (!existing || new Date(msg.sentAt).getTime() > new Date(existing.sentAt).getTime()) {
       latestByRoot.set(rootId, msg)
     }
+    if (!msg.readAt) {
+      unreadByRoot.set(rootId, true)
+    }
   }
 
-  return [...latestByRoot.values()].sort(
-    (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
-  )
+  return [...latestByRoot.entries()]
+    .map(([rootId, msg]) => ({ ...msg, hasUnread: unreadByRoot.get(rootId) ?? false }))
+    .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
 }
 
 // ── GroupComposeModal ────────────────────────────────────────────────────────
@@ -571,6 +577,7 @@ export default function BeskederPage() {
   usePageTitle('Beskeder')
   const { isAdmin, isParent } = useAuth()
 
+  const qc = useQueryClient()
   const [tab, setTab] = useState<'inbox' | 'sent'>('inbox')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
@@ -616,12 +623,18 @@ export default function BeskederPage() {
     className: c.className ?? '',
   }))
 
-  const { data: thread = [], isLoading: threadLoading } = useQuery({
-    queryKey: [{ _id: 'getApiV1MessagesByIdThread', path: { id: selectedId } }],
+  const threadQueryKey = [{ _id: 'getApiV1MessagesByIdThread', path: { id: selectedId } }] as const
+
+  const {
+    data: thread = [],
+    isLoading: threadLoading,
+    isError: threadError,
+  } = useQuery({
+    queryKey: threadQueryKey,
     queryFn: async () => {
       const { data } = await getApiV1MessagesByIdThread({
         path: { id: selectedId! },
-        throwOnError: false,
+        throwOnError: true,
       })
       return (data ?? []) as ThreadMessageDto[]
     },
@@ -691,13 +704,26 @@ export default function BeskederPage() {
   async function handleSelectInbox(id: string) {
     setSelectedId(id)
     setMobilePanel('detail')
-    const msg = inbox.find((m) => m.id === id)
-    if (msg && !msg.readAt) {
-      await postApiV1MessagesByIdRead({ path: { id }, throwOnError: false })
-      setInbox((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, readAt: new Date().toISOString() } : m))
-      )
+
+    // The clicked row is the latest message in its thread (per groupByThread), but earlier
+    // replies in the same thread can still be unread — mark every unread message sharing
+    // that thread root as read, not just the clicked one.
+    const rootId = threadRoots.get(id) ?? id
+    const unreadInThread = inbox.filter(
+      (m) => !m.readAt && (threadRoots.get(m.id) ?? m.id) === rootId
+    )
+    if (unreadInThread.length === 0) {
+      return
     }
+
+    await Promise.all(
+      unreadInThread.map((m) =>
+        postApiV1MessagesByIdRead({ path: { id: m.id }, throwOnError: false })
+      )
+    )
+    const now = new Date().toISOString()
+    const unreadIds = new Set(unreadInThread.map((m) => m.id))
+    setInbox((prev) => prev.map((m) => (unreadIds.has(m.id) ? { ...m, readAt: now } : m)))
   }
 
   function handleRecipientSearchChange(value: string) {
@@ -748,7 +774,7 @@ export default function BeskederPage() {
   }
 
   function handleReply() {
-    if (!selectedMsg) return
+    if (!selectedMsg || threadLoading) return
 
     // Reply to the last message in the thread, so multi-hop conversations
     // always append to the end regardless of which row was clicked.
@@ -756,8 +782,16 @@ export default function BeskederPage() {
 
     const recipient: RecipientDto = lastMsg
       ? lastMsg.isOwn
-        ? { id: lastMsg.recipientId, name: lastMsg.recipientName, type: lastMsg.recipientType }
-        : { id: lastMsg.senderId, name: lastMsg.senderName, type: lastMsg.senderType }
+        ? {
+            id: lastMsg.recipientId,
+            name: lastMsg.recipientName,
+            type: toMessageRecipientType(lastMsg.recipientType),
+          }
+        : {
+            id: lastMsg.senderId,
+            name: lastMsg.senderName,
+            type: toMessageRecipientType(lastMsg.senderType),
+          }
       : tab === 'inbox'
         ? {
             id: (selectedMsg as InboxMessageDto).senderId,
@@ -795,6 +829,11 @@ export default function BeskederPage() {
       setComposeOpen(false)
       setInReplyToId(null)
       await fetchMessages()
+      if (selectedId !== null) {
+        await qc.invalidateQueries({
+          queryKey: [{ _id: 'getApiV1MessagesByIdThread', path: { id: selectedId } }],
+        })
+      }
     } catch {
       setSendError('Der opstod en fejl. Prøv igen.')
     } finally {
@@ -998,7 +1037,7 @@ export default function BeskederPage() {
             <div className="divide-y divide-gray-100">
               {tab === 'inbox' &&
                 groupedInbox.map((msg) => {
-                  const isUnread = !msg.readAt
+                  const isUnread = msg.hasUnread
                   return (
                     <button
                       type="button"
@@ -1135,7 +1174,8 @@ export default function BeskederPage() {
                           <button
                             type="button"
                             onClick={handleReply}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                            disabled={threadLoading}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <svg
                               aria-hidden="true"
@@ -1211,7 +1251,12 @@ export default function BeskederPage() {
                           {threadLoading && (
                             <p className="text-sm text-gray-400">Indlæser samtale…</p>
                           )}
-                          {!threadLoading && thread.length === 0 && (
+                          {!threadLoading && threadError && (
+                            <p className="text-sm text-red-600">
+                              Kunne ikke hente samtalen. Prøv igen.
+                            </p>
+                          )}
+                          {!threadLoading && !threadError && thread.length === 0 && (
                             <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
                               <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
                                 {tab === 'inbox'
@@ -1241,16 +1286,14 @@ export default function BeskederPage() {
                               <div
                                 className={`flex items-center justify-center h-9 w-9 rounded-full text-sm font-semibold shrink-0 ${msg.isOwn ? 'bg-blue-100 text-blue-700' : 'bg-brand-100 text-brand-700'}`}
                               >
-                                {getInitials(msg.isOwn ? msg.recipientName : msg.senderName)}
+                                {getInitials(msg.senderName)}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-gray-900">
                                   {msg.isOwn ? 'Dig' : msg.senderName}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {(msg.isOwn ? msg.senderType : msg.senderType) === 'Parent'
-                                    ? 'Forælder'
-                                    : 'Medarbejder'}
+                                  {msg.senderType === 'Parent' ? 'Forælder' : 'Medarbejder'}
                                   {' · '}
                                   {formatRelativeTime(msg.sentAt)}
                                 </p>
