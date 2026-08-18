@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import keycloak from '../auth/keycloak'
 import CookieBanner from '../components/CookieBanner'
 import {
@@ -166,6 +167,9 @@ export default function InvitationAcceptPage() {
   if (state === 'loading' || state === 'accepting') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div
           className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center"
           role="status"
@@ -184,6 +188,9 @@ export default function InvitationAcceptPage() {
   if (state === 'invalid') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -225,6 +232,9 @@ export default function InvitationAcceptPage() {
 
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -260,6 +270,9 @@ export default function InvitationAcceptPage() {
   if (state === 'error') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -285,6 +298,9 @@ export default function InvitationAcceptPage() {
   if (state === 'contact-info') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
           <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -389,6 +405,9 @@ export default function InvitationAcceptPage() {
   // state === 'ready' — show invitation details and login button
   return (
     <>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
           <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">

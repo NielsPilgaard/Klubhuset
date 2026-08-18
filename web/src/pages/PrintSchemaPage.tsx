@@ -1,5 +1,6 @@
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { Helmet } from 'react-helmet-async'
 import {
   getApiV1ClassesByIdOptions,
   getApiV1ClassesByClassIdScheduleOptions,
@@ -211,6 +212,9 @@ export default function PrintSchemaPage() {
 
   return (
     <>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <style>{`
         @page {
           size: A4 landscape;

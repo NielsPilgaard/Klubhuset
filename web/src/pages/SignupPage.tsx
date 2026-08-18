@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Helmet } from 'react-helmet-async'
 import keycloak, { seedPostSignupToken } from '../auth/keycloak'
 
 const SELF_SERVE_ENABLED = true
@@ -77,6 +78,9 @@ export default function SignupPage() {
   if (!SELF_SERVE_ENABLED) {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md text-center px-8 py-12">
           <span className="font-display text-2xl font-semibold text-brand-800">
             Skoleoverblikket
@@ -98,6 +102,9 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
         {/* Header */}
         <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">

@@ -1,12 +1,16 @@
 import Logo from '../components/Logo'
 import Footer from '../components/Footer'
-import { usePageTitle } from '../hooks/usePageTitle'
+import SeoMeta from '../components/SeoMeta'
 import { useState } from 'react'
 
 export default function KontaktPage() {
-  usePageTitle('Book en demo')
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
+      <SeoMeta
+        title="Book en demo"
+        description="Book en gratis demo af Skoleoverblikket. Vi kontakter dig hurtigst muligt med et tidspunkt."
+        path="/kontakt"
+      />
       <PublicNav />
 
       <main className="flex-1 py-20 px-6">

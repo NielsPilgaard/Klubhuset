@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { getApiV1SfoUgeplanOptions } from '../api/generated/@tanstack/react-query.gen'
 import type { SfoWeekPlanShiftDto } from '../api/client'
 
@@ -48,7 +49,16 @@ export default function SfoPrintPage() {
     }
   }, [isLoading])
 
-  if (isLoading) return <div className="p-8 text-gray-400">Henter SFO ugeplan…</div>
+  if (isLoading) {
+    return (
+      <>
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
+        <div className="p-8 text-gray-400">Henter SFO ugeplan…</div>
+      </>
+    )
+  }
 
   const timeAxis = buildTimeAxis(shifts)
 
@@ -64,6 +74,9 @@ export default function SfoPrintPage() {
 
   return (
     <>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <style>{`
       @page { size: A4 landscape; margin: 10mm; }
       @media print {

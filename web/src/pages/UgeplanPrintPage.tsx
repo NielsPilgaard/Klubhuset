@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import {
   getApiV1ClassesByClassIdUgeplanOptions,
   getApiV1ClassesOptions,
@@ -39,8 +40,28 @@ export default function UgeplanPrintPage() {
     }
   }, [isLoading, weekPlan])
 
-  if (!classId) return <div className="p-8 text-gray-400">Mangler classId parameter.</div>
-  if (isLoading) return <div className="p-8 text-gray-400">Henter ugeplan…</div>
+  const robotsTag = (
+    <Helmet>
+      <meta name="robots" content="noindex,nofollow" />
+    </Helmet>
+  )
+
+  if (!classId) {
+    return (
+      <>
+        {robotsTag}
+        <div className="p-8 text-gray-400">Mangler classId parameter.</div>
+      </>
+    )
+  }
+  if (isLoading) {
+    return (
+      <>
+        {robotsTag}
+        <div className="p-8 text-gray-400">Henter ugeplan…</div>
+      </>
+    )
+  }
 
   type SlotRow = {
     id: string
@@ -75,6 +96,7 @@ export default function UgeplanPrintPage() {
 
   return (
     <>
+      {robotsTag}
       <style>{`
         @page { size: A4 landscape; margin: 10mm; }
         @media print {
