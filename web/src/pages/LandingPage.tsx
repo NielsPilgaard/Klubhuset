@@ -24,12 +24,12 @@ const SOFTWARE_APPLICATION_JSON_LD = {
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   description:
-    'Skemaplanlægning til friskoler og privatskoler. Byg ugeskemaer med automatisk konfliktkontrol, hold styr på undervisningstimer og udskriv klare skemaer.',
+    'Billig og enkel skoleadministration. Skema, SFO, ugeplan, vikardækning og forældrekontakt samlet i ét system — i stedet for fem. Prøv gratis i 14 dage.',
   offers: {
     '@type': 'Offer',
     price: '499',
     priceCurrency: 'DKK',
-    priceValidUntil: '2027-12-31',
+    priceValidUntil: '2026-12-31',
     description: 'Basis-abonnement pr. måned, inkl. moms, pr. skole. Ingen bindingsperiode.',
   },
 }
