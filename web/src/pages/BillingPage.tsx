@@ -18,6 +18,15 @@ const YEARLY_PRICE_KR = 4999
 const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
 const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
 
+const PARENT_MODULE_MONTHLY_KR = 499
+const PARENT_MODULE_YEARLY_KR = 4999
+const BOARD_MODULE_MONTHLY_KR = 199
+const BOARD_MODULE_YEARLY_KR = 1999
+
+function moduleCadencePrice(monthlyKr: number, yearlyKr: number, isYearly: boolean): string {
+  return isYearly ? `${yearlyKr} kr/år` : `${monthlyKr} kr/md`
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('da-DK', {
     day: 'numeric',
@@ -113,6 +122,9 @@ export default function BillingPage() {
 
   const isRedirecting = checkoutMutation.isPending || portalMutation.isPending
   const activeModules = data?.activeModules ?? []
+  // Module pricing follows the subscription's committed interval once active (that's what
+  // AddModuleAsync actually charges); before activation, preview the interval being chosen.
+  const moduleIsYearly = (data?.isActive ? data.interval : selectedInterval) === 'Yearly'
 
   return (
     <div className="p-6 pb-12 lg:p-8 max-w-2xl mx-auto space-y-8">
@@ -140,6 +152,7 @@ export default function BillingPage() {
       ) : data ? (
         <StatusCard
           data={data}
+          selectedInterval={selectedInterval}
           onCheckout={() => checkoutMutation.mutate({ body: { interval: selectedInterval } })}
           onPortal={() => portalMutation.mutate({})}
           isRedirecting={isRedirecting}
@@ -163,7 +176,11 @@ export default function BillingPage() {
         <ModuleCard
           name="Forældremodul"
           description="Giv forældre adgang til at se klassernes skema, kalender og ugeplan. Inviter forældre via e-mail og knyt dem til deres barns klasse."
-          price="499 kr/md"
+          price={moduleCadencePrice(
+            PARENT_MODULE_MONTHLY_KR,
+            PARENT_MODULE_YEARLY_KR,
+            moduleIsYearly
+          )}
           isActive={activeModules.includes('ParentModule')}
           canToggle={data?.isActive ?? false}
           isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
@@ -175,7 +192,11 @@ export default function BillingPage() {
           <ModuleCard
             name="Bestyrelsesmodul"
             description="Giv bestyrelsesmedlemmer en dedikeret adgang med aggregerede statistikker og bestyrelsesdokumenter. Admin styrer adgangsniveau pr. bestyrelsesmedlem."
-            price="199 kr/md"
+            price={moduleCadencePrice(
+              BOARD_MODULE_MONTHLY_KR,
+              BOARD_MODULE_YEARLY_KR,
+              moduleIsYearly
+            )}
             isActive={activeModules.includes('BoardModule')}
             canToggle={data?.isActive ?? false}
             isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
@@ -191,16 +212,20 @@ export default function BillingPage() {
 
 function StatusCard({
   data,
+  selectedInterval,
   onCheckout,
   onPortal,
   isRedirecting,
 }: {
   data: SubscriptionDto
+  selectedInterval: BillingInterval
   onCheckout: () => void
   onPortal: () => void
   isRedirecting: boolean
 }) {
   if (data.isTrialing) {
+    const trialCadenceLabel =
+      selectedInterval === 'Yearly' ? `${YEARLY_PRICE_KR} kr/år` : `${MONTHLY_PRICE_KR} kr/md`
     return (
       <div className="bg-brand-50 border border-brand-200 rounded-xl p-6">
         <div className="flex items-start gap-3">
@@ -227,7 +252,7 @@ function StatusCard({
             </p>
             <p className="mt-0.5 text-sm text-brand-600">
               Du kan bruge alle funktioner gratis frem til den {formatDate(data.trialEnd ?? '')}.
-              Herefter koster det 499 kr/md.
+              Herefter koster det {trialCadenceLabel}.
             </p>
           </div>
         </div>
@@ -401,8 +426,8 @@ function ActivateModuleModal({
             <span className="text-sm font-semibold text-gray-900 tabular-nums">+{price}</span>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Beløbet lægges til din næste faktura og fortsætter månedligt, indtil du deaktiverer
-            modulet.
+            Beløbet lægges til din næste faktura og fortsætter{' '}
+            {price.endsWith('kr/år') ? 'årligt' : 'månedligt'}, indtil du deaktiverer modulet.
           </p>
         </div>
         <div className="flex gap-3">

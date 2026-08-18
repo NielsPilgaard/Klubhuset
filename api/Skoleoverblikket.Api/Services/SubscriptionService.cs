@@ -75,12 +75,16 @@ public sealed class SubscriptionService(
 		var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 		var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, cancellationToken);
 
-		var priceId = interval == BillingInterval.Yearly
-			? stripeOptions.Value.BasePriceIdYearly
-			: stripeOptions.Value.BasePriceIdMonthly;
+		var priceId = interval switch
+		{
+			BillingInterval.Monthly => stripeOptions.Value.BasePriceIdMonthly,
+			BillingInterval.Yearly => stripeOptions.Value.BasePriceIdYearly,
+			_ => throw new ArgumentOutOfRangeException(nameof(interval), interval, "Unsupported billing interval."),
+		};
 
-		sub.Interval = interval;
-		await db.SaveChangesAsync(cancellationToken);
+		// Interval is persisted only once checkout completes (HandleCheckoutCompletedAsync) —
+		// writing it here would leave a stale Interval on the subscription if the customer
+		// abandons checkout. The chosen interval travels via session metadata instead.
 
 		// Ensure Stripe customer exists
 		var customerId = sub.StripeCustomerId;
@@ -441,18 +445,21 @@ public sealed class SubscriptionService(
 		sub.Status = newStatus;
 
 		// Portal-driven monthly<->yearly plan switches arrive here as customer.subscription.updated.
-		// Detect the new cadence from the Price recurring interval so later AddModuleAsync calls
-		// buy the matching-interval module Price instead of a stale one.
-		var recurringInterval = stripeSub.Items?.Data?
-			.Select(i => i.Price?.Recurring?.Interval)
-			.FirstOrDefault(interval => interval is not null);
-		if (recurringInterval == "year")
+		// Detect the new cadence from the base-plan line item specifically (matched by price ID) —
+		// not "any recurring item" — since a module item could otherwise be mistaken for the base
+		// plan and make later AddModuleAsync calls buy the wrong-interval module Price.
+		var basePriceIds = stripeSub.Items?.Data?.Select(i => i.Price?.Id);
+		if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdYearly) == true)
 		{
 			sub.Interval = BillingInterval.Yearly;
 		}
-		else if (recurringInterval == "month")
+		else if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdMonthly) == true)
 		{
 			sub.Interval = BillingInterval.Monthly;
+		}
+		else
+		{
+			logger.LogWarning("SubscriptionService.HandleSubscriptionChangedAsync: no base-plan price item found for StripeSubscriptionId {StripeSubscriptionId} — keeping existing Interval {Interval}", stripeSub.Id, sub.Interval);
 		}
 
 		// Stripe SDK returns DateTime.MinValue when unset — treat that as null

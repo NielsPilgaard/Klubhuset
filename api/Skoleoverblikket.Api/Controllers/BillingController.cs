@@ -90,6 +90,11 @@ public sealed class BillingController(
 	[HttpPost("checkout")]
 	public async Task<ActionResult<CheckoutResponse>> CreateCheckout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
 	{
+		if (!Enum.IsDefined(request.Interval))
+		{
+			return Problem(title: "Ugyldigt betalingsinterval", detail: "Interval skal være Monthly eller Yearly.", statusCode: StatusCodes.Status400BadRequest);
+		}
+
 		var baseUrl = appOptions.Value.BaseUrl;
 		var successUrl = $"{baseUrl}/abonnement?success=true";
 		var cancelUrl = $"{baseUrl}/abonnement";

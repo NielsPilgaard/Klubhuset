@@ -1,22 +1,52 @@
 import { useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import Logo from '../components/Logo'
 import Footer from '../components/Footer'
 import CookieBanner from '../components/CookieBanner'
-import { usePageTitle } from '../hooks/usePageTitle'
+import SeoMeta from '../components/SeoMeta'
 
 const MONTHLY_PRICE_KR = 499
 const YEARLY_PRICE_KR = 4999
 const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
 const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
 
+const PARENT_MODULE_MONTHLY_KR = 499
+const PARENT_MODULE_YEARLY_KR = 4999
+const BOARD_MODULE_MONTHLY_KR = 199
+const BOARD_MODULE_YEARLY_KR = 1999
+
 type BillingInterval = 'Monthly' | 'Yearly'
 
+const SOFTWARE_APPLICATION_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Skoleoverblikket',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  description:
+    'Skemaplanlægning til friskoler og privatskoler. Byg ugeskemaer med automatisk konfliktkontrol, hold styr på undervisningstimer og udskriv klare skemaer.',
+  offers: {
+    '@type': 'Offer',
+    price: '499',
+    priceCurrency: 'DKK',
+    priceValidUntil: '2027-12-31',
+    description: 'Basis-abonnement pr. måned, inkl. moms, pr. skole. Ingen bindingsperiode.',
+  },
+}
+
 export default function LandingPage() {
-  usePageTitle('')
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('Monthly')
   const isYearly = billingInterval === 'Yearly'
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
+      <SeoMeta
+        title="Billig og enkel skoleadministration til friskoler og privatskoler"
+        description="Billig og enkel skoleadministration. Skema, SFO, ugeplan, vikardækning og forældrekontakt samlet i ét system — i stedet for fem. Prøv gratis i 14 dage."
+        path="/"
+      />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(SOFTWARE_APPLICATION_JSON_LD)}</script>
+      </Helmet>
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
@@ -346,7 +376,9 @@ export default function LandingPage() {
                   <span className="text-lg text-gray-500 mb-2">kr/md</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  {isYearly ? `${YEARLY_PRICE_KR} kr/år · inkl. moms · pr. skole` : 'inkl. moms · pr. skole'}
+                  {isYearly
+                    ? `${YEARLY_PRICE_KR} kr/år · inkl. moms · pr. skole`
+                    : 'inkl. moms · pr. skole'}
                 </p>
                 <div className="mt-4 flex items-center justify-center gap-2">
                   <div
@@ -439,7 +471,9 @@ export default function LandingPage() {
               </div>
               <ModuleCard
                 title="Forældremodul"
-                price="499"
+                monthlyPrice={PARENT_MODULE_MONTHLY_KR}
+                yearlyPrice={PARENT_MODULE_YEARLY_KR}
+                isYearly={isYearly}
                 features={[
                   'Ugeplaner og kalenderadgang',
                   'Kontaktbog og beskeder',
@@ -449,7 +483,9 @@ export default function LandingPage() {
               />
               <ModuleCard
                 title="Bestyrelsesmodul"
-                price="199"
+                monthlyPrice={BOARD_MODULE_MONTHLY_KR}
+                yearlyPrice={BOARD_MODULE_YEARLY_KR}
+                isYearly={isYearly}
                 features={['Filhåndtering (100 GB)', 'Overblik over "stå mål med"-dækning']}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">
@@ -587,23 +623,32 @@ function AudienceItem({ title, description }: { title: string; description: stri
 
 function ModuleCard({
   title,
-  price,
+  monthlyPrice,
+  yearlyPrice,
+  isYearly,
   features,
 }: {
   title: string
-  price: string
+  monthlyPrice: number
+  yearlyPrice: number
+  isYearly: boolean
   features: string[]
 }) {
+  const effectiveMonthly = isYearly ? Math.round(yearlyPrice / 12) : monthlyPrice
   return (
     <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
       <div className="px-6 pt-6 pb-4 bg-brand-50 border-b border-brand-100 text-center">
         <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">{title}</p>
         <div className="mt-2 flex items-end gap-1 justify-center">
           <span className="text-lg text-gray-500 mb-2">+</span>
-          <span className="font-display text-5xl font-semibold text-brand-900">{price}</span>
+          <span className="font-display text-5xl font-semibold text-brand-900">
+            {effectiveMonthly}
+          </span>
           <span className="text-lg text-gray-500 mb-2">kr/md</span>
         </div>
-        <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
+        <p className="text-sm text-gray-500 mt-1">
+          {isYearly ? `${yearlyPrice} kr/år · inkl. moms · pr. skole` : 'inkl. moms · pr. skole'}
+        </p>
       </div>
       <div className="px-6 py-4 space-y-2">
         {features.map((f) => (
