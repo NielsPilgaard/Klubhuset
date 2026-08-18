@@ -1,0 +1,143 @@
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  getApiV1ParentsMeOptions,
+  getApiV1ParentsMeQueryKey,
+  patchApiV1ParentsMeContactMutation,
+} from '../../api/generated/@tanstack/react-query.gen'
+import { usePageTitle } from '../../hooks/usePageTitle'
+
+export default function ParentProfilePage() {
+  usePageTitle('Min profil')
+  const qc = useQueryClient()
+
+  const { data: parent, isLoading } = useQuery(getApiV1ParentsMeOptions())
+
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [city, setCity] = useState('')
+  const [shareContactInfo, setShareContactInfo] = useState(false)
+
+  useEffect(() => {
+    if (!parent) return
+    setName(parent.name ?? '')
+    setPhone(parent.phone ?? '')
+    setAddress(parent.address ?? '')
+    setPostalCode(parent.postalCode ?? '')
+    setCity(parent.city ?? '')
+    setShareContactInfo(parent.shareContactInfo ?? false)
+  }, [parent])
+
+  const [saved, setSaved] = useState(false)
+
+  const updateMutation = useMutation({
+    ...patchApiV1ParentsMeContactMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ParentsMeQueryKey() })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 4000)
+    },
+  })
+
+  function handleSave() {
+    if (!name.trim() || updateMutation.isPending) return
+    updateMutation.mutate({
+      body: {
+        name: name.trim(),
+        phone: phone.trim() || null,
+        address: address.trim() || null,
+        postalCode: postalCode.trim() || null,
+        city: city.trim() || null,
+        shareContactInfo,
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <div className="p-4 md:p-6 text-sm text-gray-500">Indlæser profil...</div>
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-lg space-y-6">
+      <h1 className="text-xl font-semibold text-gray-900">Min profil</h1>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Telefonnummer"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Vejnavn og nummer"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex gap-3">
+          <div className="w-24">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Postnr.</label>
+            <input
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              placeholder="0000"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="By"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={shareContactInfo}
+            onChange={(e) => setShareContactInfo(e.target.checked)}
+            className="mt-0.5 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span className="text-sm text-gray-700">
+            Del mine kontaktoplysninger med andre forældre i mit barns klasse
+          </span>
+        </label>
+
+        {updateMutation.isError && (
+          <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+        )}
+        {saved && <p className="text-sm text-green-600">Ændringer gemt.</p>}
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!name.trim() || updateMutation.isPending}
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {updateMutation.isPending ? 'Gemmer...' : 'Gem'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
