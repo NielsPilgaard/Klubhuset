@@ -622,6 +622,11 @@ export type ParentMeControllerParentMeDto = {
     id: string;
     name: string;
     avatarUrl?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    shareContactInfo: boolean;
     classes?: Array<ParentMeControllerParentClassDto>;
     students?: Array<ParentMeControllerParentStudentDto>;
 };
@@ -633,6 +638,7 @@ export type ParentMeControllerParentStudentDto = {
 };
 
 export type ParentMeControllerUpdateContactRequest = {
+    name: string;
     phone?: string | null;
     address?: string | null;
     postalCode?: string | null;
@@ -672,6 +678,7 @@ export type ParentsControllerStudentRefDto = {
 };
 
 export type ParentsControllerUpdateParentContactRequest = {
+    name: string;
     phone?: string | null;
     address?: string | null;
     postalCode?: string | null;

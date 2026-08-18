@@ -161,6 +161,7 @@ interface EditContactModalProps {
 
 function EditContactModal({ parent, onClose }: EditContactModalProps) {
   const qc = useQueryClient()
+  const [name, setName] = useState(parent.name ?? '')
   const [phone, setPhone] = useState(parent.phone ?? '')
   const [address, setAddress] = useState(parent.address ?? '')
   const [postalCode, setPostalCode] = useState(parent.postalCode ?? '')
@@ -175,9 +176,11 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
   })
 
   function handleSave() {
+    if (!name.trim()) return
     updateMutation.mutate({
       path: { id: parent.id! },
       body: {
+        name: name.trim(),
         phone: phone.trim() || null,
         address: address.trim() || null,
         postalCode: postalCode.trim() || null,
@@ -189,6 +192,14 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
   return (
     <Modal isOpen onClose={onClose} title="Rediger kontaktoplysninger">
       <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
           <input
@@ -242,7 +253,7 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
         <button
           type="button"
           onClick={handleSave}
-          disabled={updateMutation.isPending}
+          disabled={!name.trim() || updateMutation.isPending}
           className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {updateMutation.isPending ? 'Gemmer...' : 'Gem'}

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Storage;
+using System.ComponentModel.DataAnnotations;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -12,7 +13,17 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize(Roles = Roles.Parent)]
 public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) : ControllerBase
 {
-	public record ParentMeDto(Guid Id, string Name, string? AvatarUrl, IReadOnlyList<ParentClassDto> Classes, IReadOnlyList<ParentStudentDto> Students);
+	public record ParentMeDto(
+		Guid Id,
+		string Name,
+		string? AvatarUrl,
+		string? Phone,
+		string? Address,
+		string? PostalCode,
+		string? City,
+		bool ShareContactInfo,
+		IReadOnlyList<ParentClassDto> Classes,
+		IReadOnlyList<ParentStudentDto> Students);
 	public record ParentClassDto(Guid ClassId, string ClassName);
 	public record ParentStudentDto(Guid StudentId, string StudentName, Guid ClassId);
 
@@ -45,7 +56,17 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 			.Select(s => new ParentStudentDto(s.Id, s.Name, s.ClassId))
 			.ToList();
 
-		return Ok(new ParentMeDto(parent.Id, parent.Name, parent.AvatarUrl, classes, students));
+		return Ok(new ParentMeDto(
+			parent.Id,
+			parent.Name,
+			parent.AvatarUrl,
+			parent.Phone,
+			parent.Address,
+			parent.PostalCode,
+			parent.City,
+			parent.ShareContactInfo,
+			classes,
+			students));
 	}
 
 	public record AvatarPresignRequest(string ContentType, long FileSizeBytes);
@@ -85,6 +106,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 	}
 
 	public record UpdateContactRequest(
+		[Required, StringLength(200, MinimumLength = 1)] string Name,
 		string? Phone,
 		string? Address,
 		string? PostalCode,
@@ -105,6 +127,7 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 			return NotFound();
 		}
 
+		parent.Name = req.Name.Trim();
 		parent.Phone = req.Phone;
 		parent.Address = req.Address;
 		parent.PostalCode = req.PostalCode;

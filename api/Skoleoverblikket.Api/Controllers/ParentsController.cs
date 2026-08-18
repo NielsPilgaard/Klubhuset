@@ -189,6 +189,7 @@ public sealed class ParentsController(
 	public record AdresseBeskyttelseRequest(bool AdresseBeskyttet);
 
 	public record UpdateParentContactRequest(
+		[Required, StringLength(200, MinimumLength = 1)] string Name,
 		[StringLength(50)] string? Phone,
 		[StringLength(500)] string? Address,
 		[StringLength(10)] string? PostalCode,
@@ -203,6 +204,7 @@ public sealed class ParentsController(
 			return NotFound();
 		}
 
+		parent.Name = req.Name.Trim();
 		parent.Phone = req.Phone;
 		parent.Address = req.Address;
 		parent.PostalCode = req.PostalCode;

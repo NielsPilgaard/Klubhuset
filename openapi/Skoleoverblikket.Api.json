@@ -9962,7 +9962,8 @@
       "ParentMeController_ParentMeDto": {
         "required": [
           "id",
-          "name"
+          "name",
+          "shareContactInfo"
         ],
         "type": "object",
         "properties": {
@@ -9976,6 +9977,25 @@
           "avatarUrl": {
             "type": "string",
             "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "shareContactInfo": {
+            "type": "boolean"
           },
           "classes": {
             "type": "array",
@@ -10016,10 +10036,14 @@
       },
       "ParentMeController_UpdateContactRequest": {
         "required": [
+          "name",
           "shareContactInfo"
         ],
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "phone": {
             "type": "string",
             "nullable": true
@@ -10160,8 +10184,14 @@
         "additionalProperties": false
       },
       "ParentsController_UpdateParentContactRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "phone": {
             "type": "string",
             "nullable": true

@@ -147,6 +147,7 @@ export default function InvitationAcceptPage() {
     try {
       await patchApiV1ParentsMeContact({
         body: {
+          name: preview!.name,
           phone: phone || null,
           address: address || null,
           postalCode: postalCode || null,
