@@ -4,7 +4,7 @@ This file defines how AI agents should work in this codebase.
 
 ## Project context
 
-Skoleoverblikket is a multi-tenant SaaS schema planner for Danish schools. Each tenant is a school. The platform helps schools build, manage, and print their weekly class schedules with real-time conflict detection. The platform is Danish-language only, targeting the Danish market.
+Skoleoverblikket is affordable, dead-simple admin software for Danish schools, multi-tenant SaaS, one tenant per school. The schema planner (weekly class schedules with real-time conflict detection) is the core, but the product has grown into the school's full admin backbone: SFO, ugeplan, vikardækning, parent communication (kontaktbog, beskeder, kontakt directory), fraværsregistrering, ferieindmelding, filarkiv, bestyrelse, and stå-mål-med compliance publishing. The point is to let schools spend less money and less time on admin and paperwork, so staff can focus on teaching instead of syncing data between disconnected tools. The platform is Danish-language only, targeting the Danish market.
 
 **Primary market**: friskoler and private/independent schools. **Secondary market**: folkeskoler — folkeskoler are NOT vendor-locked to any timetable tool; Aula (the national school-home communication platform) is a separate communication product and folkeskoler choose their timetable tool independently.
 
@@ -28,8 +28,11 @@ Never bypass this filter. Never trust a slug string as an authorization signal �
 
 **Billing via Stripe Checkout**: all billing is self-serve. 14-day free trial, then monthly Stripe Checkout. No manual invoicing. No MobilePay.
 
-**Built features (beyond core schema planner)**:
+**Built features (beyond core schema planner)**. This product is far broader than "a timetable app" — it is becoming the full admin backbone for a small school, which is the point: less paperwork and fewer disconnected tools, not just a schema grid.
+
 - SFO week plan (`SfoWeekPlanController`, `SfoController`) — weekly SFO schedule with print view
+- Ugeplan / weekplan (`WeekPlanController`) — per-class weekly plan with file attachments per slot, shown to parents
+- Vikar overview (`VikarController`) — free/busy staff lookup per time slot and one-click substitute assignment when a teacher or aide is out
 - Parent module (`ParentsController`, `ParentMeController`, `ParentInvitationsController`) — parent portal with schema/calendar/ugeplan views
 - Absence reporting (`AbsenceController`) — parents report absence, staff confirm/dismiss
 - Kontakt directory (`KontaktController`) — role-filtered parent directory with `ShareContactInfo` consent
@@ -38,6 +41,13 @@ Never bypass this filter. Never trust a slug string as an authorization signal �
 - Notifications (`NotificationsController`) — in-app + email, per-type opt-out via `NotificationPreference`
 - Calendar with recurrence (`CalendarController`) — school calendar events with recurrence and excluded dates
 - Class permissions (`ClassPermissionsController`) — per-class edit grants (superadmin vs. restricted mode)
+- File explorer (`FilesController`) — upload files, link to courses, browse by course, OVHCloud object storage
+- Bestyrelse / board module (`BoardMembersController`, `BoardInvitationsController`, `BoardFilesController`) — board member invitations and a board-only file space, separate from staff/parent files
+- Stå mål med / compliance publishing (`StaaMaalMedController`) — lets friskoler publish teaching goals and plans per course/grade to satisfy Friskoleloven §1a public-disclosure requirements
+- Stats dashboard (`StatsController`) — school-wide overview numbers (classes, staff, schema completeness) for the admin dashboard
+- Reports (`ReportsController`) — Excel export of teacher/staff hours and UVM timetal comparisons
+- CSV import (`ImportsController`) — bulk import of parents/students onto existing classes, admin-only, with per-row warnings
+- Demo requests (`DemoRequestController`) — public "book a demo" form on the marketing site, emailed to sales
 - Module billing (`SubscriptionModulesController`) — parent module gated behind Stripe subscription
 - Backoffice (`SuperAdminTenantsController`, `SuperAdminEmailPreviewController`) — isSuperAdmin role, view-as mode
 - Avatar uploads — presign+confirm pattern for Parent, Staff, Student avatars stored in OVHCloud
