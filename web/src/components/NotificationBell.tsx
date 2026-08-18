@@ -109,14 +109,15 @@ export default function NotificationBell({ variant = 'light' }: NotificationBell
       case 'GroupMessage':
         return '/beskeder'
       case 'WeekPlanChanged':
-        return '/foraeldrevisning/ugeplan'
+        return isParent ? '/foraeldrevisning/ugeplan' : '/mig/skema'
       case 'AbsenceConfirmed':
       case 'AbsenceDismissed':
         return isParent ? '/foraeldrevisning/fravaer' : '/fravaer'
       case 'VacationRegistrationOpened':
         return '/foraeldrevisning/ferieindmelding'
       default:
-        return isAdmin ? '/dashboard' : '/mig/skema'
+        if (isAdmin) return '/dashboard'
+        return isParent ? '/foraeldrevisning/skema' : '/mig/skema'
     }
   }
 

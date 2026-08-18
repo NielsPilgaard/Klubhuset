@@ -341,6 +341,7 @@ export default function SfoPage() {
           </Link>
           <button
             onClick={openCreate}
+            aria-label="Ny vagt"
             className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             <svg
@@ -354,7 +355,9 @@ export default function SfoPage() {
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span className="hidden sm:inline">Ny vagt</span>
+            <span className="hidden sm:inline" aria-hidden="true">
+              Ny vagt
+            </span>
           </button>
         </div>
       </div>
@@ -402,7 +405,9 @@ export default function SfoPage() {
                       – {slotMeta.endTime}
                     </span>
                     {slotMeta.label && (
-                      <span className="text-xs text-gray-400 mt-1 truncate hidden sm:block">{slotMeta.label}</span>
+                      <span className="text-xs text-gray-400 mt-1 truncate hidden sm:block">
+                        {slotMeta.label}
+                      </span>
                     )}
                   </div>
 

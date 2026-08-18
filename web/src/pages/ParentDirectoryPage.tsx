@@ -82,6 +82,8 @@ export default function ParentDirectoryPage() {
               <button
                 type="button"
                 onClick={() => setExpandedStudentId(isStudentExpanded ? null : group.studentId)}
+                aria-expanded={isStudentExpanded}
+                aria-controls={`kontakt-group-${group.studentId}`}
                 className="w-full flex items-center justify-between gap-4 text-left"
               >
                 <div className="min-w-0">
@@ -106,7 +108,10 @@ export default function ParentDirectoryPage() {
               </button>
 
               {isStudentExpanded && (
-                <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                <div
+                  id={`kontakt-group-${group.studentId}`}
+                  className="mt-3 pt-3 border-t border-gray-100 space-y-2"
+                >
                   {group.parents.map((parent) => {
                     const hasContactInfo = !!(
                       parent.phone ||
