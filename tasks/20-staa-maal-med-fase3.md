@@ -57,13 +57,22 @@ with how `UvmTimetableService` already keys yearly data).
 
 ### 1. Årsplaner pr. klassetrin og fag
 
-`TeachingPlan` keyed by `(GradeLevel, CourseId-or-CourseCategory, SkoleaarStartYear)`
-— one plan per grade-level curriculum per year, covering all parallel classes
-at that grade (5.A and 5.B share one "Dansk, 5. klasse" plan). This matches
-how curriculum is actually organized and avoids duplicate authoring for
-schools with multiple classes per grade. It also means the plan survives
-årsrul automatically: årsrul increments `Class.GradeLevel`, and since the
-plan isn't keyed on `Class` at all, nothing needs to migrate.
+`TeachingPlan` keyed by `(GradeLevel, CourseId, SkoleaarStartYear)` — one plan
+per grade-level curriculum per year, covering all parallel classes at that
+grade (5.A and 5.B share one "Dansk, 5. klasse" plan). Unique constraint on
+`(TenantId, GradeLevel, CourseId, SkoleaarStartYear)`. Keying on `CourseId`
+(not `CourseCategory`) matches how `TeachingGoal` authoring is actually
+scoped — a course, not a category, has an underviser assigned via
+`SchemaSlot` — and means a course rename doesn't change the plan's identity.
+If a course's `Category` is later changed, existing plans keyed on that
+`CourseId` are unaffected (identity is the course row, not its category);
+a lærer's authoring rights are still derived live from their current
+`SchemaSlot` assignments for that course, so a recategorization only affects
+*future* authorization checks, never orphans a stored plan. This matches how
+curriculum is actually organized and avoids duplicate authoring for schools
+with multiple classes per grade. It also means the plan survives årsrul
+automatically: årsrul increments `Class.GradeLevel`, and since the plan
+isn't keyed on `Class` at all, nothing needs to migrate.
 
 Each plan holds:
 
@@ -101,17 +110,31 @@ fixing a mistake either.
 route: `/s/{slug}/staa-mal-med` (or under whatever the existing public-slug
 convention is). This is an explicit, scoped exception to "all endpoints
 require auth" — resolves tenant via slug→TenantId at the controller boundary
-exactly like other slug usage elsewhere, and additionally gates on a
-school-level `IsPublished` bool (default `false`). The anonymous GET only
-ever returns data for a resolved TenantId where `IsPublished == true` —
-nothing else about the auth model changes, and the slug is never itself
-trusted as an authorization token per AGENTS.md.
+exactly like other slug usage elsewhere.
 
-Page shows all published `TeachingPlan`s grouped by trin, plus the current
-`CompliancePath`, for the current skoleår. This page **is** the
-tilsynsstøtte artifact — doc §3 ("Tilsynsstøtte" as a separate deliverable)
-is dropped. No PDF export in this phase; revisit only if real tilsynsførende
-feedback says the web page isn't enough.
+Publishing is **year-scoped**, not a single school-level bool. A school-level
+`IsPublished` flag would leak next year's in-progress drafts the moment last
+year's page goes live, and would let a published plan mutate silently if an
+admin edits it after publishing. Instead: a `PublishedComplianceSnapshot` row
+per `(TenantId, SkoleaarStartYear)`, written atomically when the admin
+publishes (or re-publishes) that skoleår — a serialized copy of that year's
+`TeachingPlan`s and `CompliancePath` at the moment of publishing, same
+pattern as the coverage-snapshot feature in
+[40-staa-maal-med-annual-snapshot.md](40-staa-maal-med-annual-snapshot.md).
+The public page serves the snapshot for the current (or most recently
+published) skoleår, never live draft rows. Drafts for the current or next
+skoleår stay fully editable regardless of publish state; publishing/
+re-publishing only ever affects the snapshot for the skoleår being published,
+never other years' snapshots. The anonymous GET resolves slug→TenantId then
+looks up the latest `PublishedComplianceSnapshot` for that tenant — nothing
+else about the auth model changes, and the slug is never itself trusted as
+an authorization token per AGENTS.md.
+
+Page shows the published snapshot's `TeachingPlan`s grouped by trin, plus
+the snapshotted `CompliancePath`, for the skoleår it was published for. This
+page **is** the tilsynsstøtte artifact — doc §3 ("Tilsynsstøtte" as a
+separate deliverable) is dropped. No PDF export in this phase; revisit only
+if real tilsynsførende feedback says the web page isn't enough.
 
 ### 4. Billing / module gating
 

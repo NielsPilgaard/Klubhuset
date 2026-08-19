@@ -57,8 +57,14 @@ Skoleår is already a first-class string elsewhere in the codebase:
 `"{startYear}-{startYear + 1}"` (e.g. `"2025-2026"`) from
 `now.Month >= 8 ? now.Year : now.Year - 1`, matching the
 `Data/uvm-timetal/2025-2026.json` file naming convention. The snapshot's
-skoleår tag should reuse this same format and derivation so it lines up with
-which UVM timetal file was used to compute the frozen numbers.
+`SchoolYear` column stores this string form directly (`"2025-2026"`), reusing
+`UvmTimetableService`'s exact derivation so it lines up with which UVM
+timetal file was used to compute the frozen numbers. Task 20's
+`TeachingPlan`/`CompliancePath` key on `int SkoleaarStartYear` instead
+(`2025` for `"2025-2026"`) — the two representations carry the same
+information, so any query needing to join snapshot and plan data for "the
+same skoleår" converts at that single boundary (`SchoolYear.Split('-')[0]`
+↔ `SkoleaarStartYear`), never compares the string and int forms directly.
 
 ## Proposed scope
 
@@ -67,21 +73,37 @@ which UVM timetal file was used to compute the frozen numbers.
      `"2025-2026"`, same format as `UvmTimetableService`), `CreatedAt`,
      `CreatedByStaffId` (who triggered it), `Reason` (short free-text, e.g.
      "Manuelt gemt før tilsynsbesøg" — admin-entered or a sensible default),
-     `Data` (serialized copy of `CoverageResponseDto` — likely `jsonb`/`json`
-     column; exact serialization shape is an implementation detail for
-     whoever picks this up, but it should be enough to reconstruct the same
-     per-class, per-subject, hours + status table the live view shows).
+     `DataVersion` (int, **required**, not nullable — every snapshot is
+     stamped with the `CoverageResponseDto` schema version it was written
+     against, starting at `1`; a nullable/optional version field would let
+     the first-ever snapshot ship without one, which then has no way to be
+     told apart from "version unknown" once a `2` exists), `Data` (serialized
+     copy of `CoverageResponseDto` shaped per `DataVersion` — likely
+     `jsonb`/`json` column; exact serialization shape is an implementation
+     detail for whoever picks this up, but it should be enough to
+     reconstruct the same per-class, per-subject, hours + status table the
+     live view shows). If `CoverageResponseDto` changes shape later, bump
+     `DataVersion` and add a version-specific deserializer/migrator on read
+     so old rows (`DataVersion == 1`) stay reconstructable rather than
+     silently failing to parse against the new shape.
    - Tenant-scoped via the standard EF Core global query filter
      (`HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)`) — never
      bypass it, per `AGENTS.md`.
+   - Retention: kept indefinitely, no auto-purge — consistent with this
+     being a small friskole's occasional audit record, not a high-volume
+     table (a handful of snapshots per skoleår at most). Admin can manually
+     delete a snapshot (`DELETE /snapshots/{id}`, `[Authorize(Roles =
+     Roles.Admin)]`); Board keeps read-only access to list/retrieve, same as
+     the rest of stå-mål-med, but cannot delete.
    - Needs a new EF Core migration (new table). Not written as part of this
      task — use `/add-migration` when implementing.
 
 2. **Backend** — extend `StaaMaalMedController`
    (`api/Skoleoverblikket.Api/Controllers/StaaMaalMedController.cs`) or add
    a sibling controller under the same `api/v1/staa-maal-med` route prefix:
-   - `POST /snapshots` (`[Authorize(Roles = $"{Roles.Admin},{Roles.Board}")]`
-     — matching the existing controller-level attribute) — runs the same
+   - `POST /snapshots` (`[Authorize(Roles = Roles.Admin)]` — snapshot creation
+     is admin-triggered only, per the TL;DR and "gem øjebliksbillede" button;
+     Board stays read-only same as the rest of stå-mål-med) — runs the same
      coverage computation `GetCoverage` already does, serializes the result,
      stamps it with the derived `SchoolYear`, `CreatedByStaffId` (resolved
      from the authenticated user, not a client-supplied parameter), and an
@@ -113,11 +135,6 @@ which UVM timetal file was used to compute the frozen numbers.
 
 ## Open questions
 
-- **Retention policy**: how long are snapshots kept, if ever purged? Not
-  decided here — default assumption is "kept indefinitely, no auto-delete,"
-  consistent with this being a small friskole's occasional audit record
-  rather than a high-volume table, but worth confirming before implementing
-  if storage/compliance concerns apply.
 - **Auto-snapshot at all**: this task commits to manual/admin-triggered
   snapshots only, per `AGENTS.md`'s simplicity-first principle — a school
   secretary clicking a button before a tilsyn visit is simpler to build,
@@ -132,8 +149,3 @@ which UVM timetal file was used to compute the frozen numbers.
 - **PDF/export of a snapshot**: out of scope per the task brief. If a
   tilsynsførende wants a printable report, that's a separate, later task
   (and would naturally build on the stored `Data` payload here).
-- **Snapshot payload versioning**: if `CoverageResponseDto`'s shape changes
-  after snapshots exist, old stored payloads won't match. Worth a short
-  schema-version field on `StaaMaalMedSnapshot` if this is a real concern,
-  but not designed in detail here — flagged for whoever implements this to
-  decide.

@@ -164,4 +164,52 @@ public sealed class ParentModuleTests(ApiFactory factory)
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 	}
+
+	[Test]
+	public async Task UpdateContact_Returns204_AtMaxFieldLengths()
+	{
+		const string parentSubject = "parent-sub-boundary-max";
+		await SeedParentWithStudentAsync(parentSubject);
+
+		using var parentClient = _factory.CreateClient();
+		parentClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
+		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
+
+		var response = await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", new
+		{
+			Name = new string('N', 200),
+			Phone = new string('P', 50),
+			Address = new string('A', 500),
+			PostalCode = new string('1', 10),
+			City = new string('C', 100),
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenFieldsExceedMaxLength()
+	{
+		const string parentSubject = "parent-sub-boundary-over";
+		await SeedParentWithStudentAsync(parentSubject);
+
+		using var parentClient = _factory.CreateClient();
+		parentClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
+		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
+
+		var response = await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", new
+		{
+			Name = "Bente Larsen",
+			Phone = new string('P', 51),
+			Address = new string('A', 501),
+			PostalCode = new string('1', 11),
+			City = new string('C', 101),
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
 }

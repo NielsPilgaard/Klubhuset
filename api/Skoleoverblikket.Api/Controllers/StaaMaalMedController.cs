@@ -78,7 +78,9 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 				// Categories taught at this grade that UVM doesn't define for it at all
 				// (e.g. Tysk scheduled in 3. klasse — Tysk only starts 6. klasse).
 				var unexpectedGradeCategories = hoursPerCategory.Keys
-					.Where(category => !timetal.TryGetValue(category.ToString(), out var gradeMap) || !gradeMap.ContainsKey(gradeLevel))
+					.Where(category => !timetal.TryGetValue(category.ToString(), out var gradeMap)
+						|| !gradeMap.TryGetValue(gradeLevel, out var vejledende)
+						|| vejledende <= 0)
 					.Select(category => category.ToString())
 					.OrderBy(name => name)
 					.ToList();

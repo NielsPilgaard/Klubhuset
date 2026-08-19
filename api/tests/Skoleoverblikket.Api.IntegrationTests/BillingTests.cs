@@ -350,8 +350,9 @@ public sealed class BillingTests(ApiFactory factory)
 
 		await subscriptionService.HandleWebhookAsync(stripeEvent);
 
-		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-		var updatedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+		using var verifyScope = _factory.Services.CreateScope();
+		var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var updatedSub = await verifyDb.Subscriptions.FirstAsync(s => s.Id == sub.Id);
 		await Assert.That(updatedSub.Interval).IsEqualTo(BillingInterval.Yearly);
 	}
 
@@ -399,7 +400,9 @@ public sealed class BillingTests(ApiFactory factory)
 
 		await subscriptionService.HandleWebhookAsync(stripeEvent);
 
-		var updatedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+		using var verifyScope = _factory.Services.CreateScope();
+		var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var updatedSub = await verifyDb.Subscriptions.FirstAsync(s => s.Id == sub.Id);
 		await Assert.That(updatedSub.Interval).IsEqualTo(BillingInterval.Monthly);
 	}
 }

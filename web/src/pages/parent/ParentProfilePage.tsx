@@ -93,16 +93,28 @@ export default function ParentProfilePage() {
 
       <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+          <label
+            htmlFor="parent-profile-name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Navn *
+          </label>
           <input
+            id="parent-profile-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+          <label
+            htmlFor="parent-profile-phone"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Telefon
+          </label>
           <input
+            id="parent-profile-phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Telefonnummer"
@@ -110,8 +122,14 @@ export default function ParentProfilePage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+          <label
+            htmlFor="parent-profile-address"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Adresse
+          </label>
           <input
+            id="parent-profile-address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Vejnavn og nummer"
@@ -120,8 +138,14 @@ export default function ParentProfilePage() {
         </div>
         <div className="flex gap-3">
           <div className="w-24">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Postnr.</label>
+            <label
+              htmlFor="parent-profile-postal-code"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Postnr.
+            </label>
             <input
+              id="parent-profile-postal-code"
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}
               placeholder="0000"
@@ -129,8 +153,14 @@ export default function ParentProfilePage() {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+            <label
+              htmlFor="parent-profile-city"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              By
+            </label>
             <input
+              id="parent-profile-city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="By"

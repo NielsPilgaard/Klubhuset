@@ -107,10 +107,10 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 
 	public record UpdateContactRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
-		string? Phone,
-		string? Address,
-		string? PostalCode,
-		string? City,
+		[StringLength(50)] string? Phone,
+		[StringLength(500)] string? Address,
+		[StringLength(10)] string? PostalCode,
+		[StringLength(100)] string? City,
 		bool ShareContactInfo);
 
 	[HttpPatch("contact")]

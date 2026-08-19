@@ -11,7 +11,7 @@ export type AbsenceControllerAbsenceReportDto = {
     date: string;
     endDate?: string | null;
     reason?: string | null;
-    status?: AbsenceStatus;
+    status: AbsenceStatus;
     createdAt: string;
 };
 
@@ -25,11 +25,11 @@ export type AbsenceControllerReportAbsenceRequest = {
 export type AbsenceStatus = 'Reported' | 'Confirmed' | 'Dismissed';
 
 export type AdminControllerModuleOverrideRequest = {
-    module?: SubscriptionModule;
+    module: SubscriptionModule;
 };
 
 export type BillingControllerCheckoutRequest = {
-    interval?: BillingInterval;
+    interval: BillingInterval;
 };
 
 export type BillingControllerCheckoutResponse = {
@@ -37,12 +37,12 @@ export type BillingControllerCheckoutResponse = {
 };
 
 export type BillingControllerModuleRequest = {
-    module?: SubscriptionModule;
+    module: SubscriptionModule;
 };
 
 export type BillingControllerSubscriptionDto = {
-    status?: SubscriptionStatus;
-    interval?: BillingInterval;
+    status: SubscriptionStatus;
+    interval: BillingInterval;
     trialEnd: string;
     currentPeriodEnd?: string | null;
     isTrialing: boolean;
@@ -129,7 +129,7 @@ export type BroadcastAudience = 'AllParents' | 'ClassParents' | 'SfoParents' | '
 
 export type CalendarControllerCalendarEntryDto = {
     id: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     title: string;
     startDate: string;
     endDate: string;
@@ -140,7 +140,7 @@ export type CalendarControllerCalendarEntryDto = {
 
 export type CalendarControllerCreateCalendarEntryRequest = {
     title: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     startDate: string;
     endDate: string;
     recurrenceRule?: string | null;
@@ -149,14 +149,14 @@ export type CalendarControllerCreateCalendarEntryRequest = {
 
 export type CalendarControllerDefaultHolidayDto = {
     title: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     startDate: string;
     endDate: string;
 };
 
 export type CalendarControllerUpdateCalendarEntryRequest = {
     title: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     startDate: string;
     endDate: string;
     recurrenceRule?: string | null;
@@ -205,12 +205,12 @@ export type ClassesControllerYearRollRequest = {
 };
 
 export type ConflictInfo = {
-    type?: ConflictType;
+    type: ConflictType;
     slotAId: string;
     slotBId: string;
     resourceId: string;
     resourceName: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     startTime: string;
     endTime: string;
     slotACourseName: string;
@@ -228,7 +228,7 @@ export type ContactThreadsControllerAddMessageRequest = {
 
 export type ContactThreadsControllerContactMessageDto = {
     id: string;
-    senderType?: SenderType;
+    senderType: SenderType;
     senderId: string;
     senderName: string;
     body: string;
@@ -493,7 +493,7 @@ export type MessagesControllerGroupPreviewRequest = {
 export type MessagesControllerInboxMessageDto = {
     id: string;
     senderId: string;
-    senderType?: RecipientType;
+    senderType: RecipientType;
     senderName: string;
     subject: string;
     body: string;
@@ -506,7 +506,7 @@ export type MessagesControllerInboxMessageDto = {
 export type MessagesControllerRecipientDto = {
     id: string;
     name: string;
-    type?: RecipientType;
+    type: RecipientType;
     avatarUrl?: string | null;
 };
 
@@ -536,7 +536,7 @@ export type MessagesControllerSendGroupMessageRequest = {
 
 export type MessagesControllerSendMessageRequest = {
     recipientId: string;
-    recipientType?: RecipientType;
+    recipientType: RecipientType;
     subject: string;
     body: string;
     inReplyToId?: string | null;
@@ -545,7 +545,7 @@ export type MessagesControllerSendMessageRequest = {
 export type MessagesControllerSentMessageDto = {
     id: string;
     recipientId: string;
-    recipientType?: RecipientType;
+    recipientType: RecipientType;
     recipientName: string;
     subject: string;
     body: string;
@@ -560,10 +560,10 @@ export type MessagesControllerSentMessageDto = {
 export type MessagesControllerThreadMessageDto = {
     id: string;
     senderId: string;
-    senderType?: RecipientType;
+    senderType: RecipientType;
     senderName: string;
     recipientId: string;
-    recipientType?: RecipientType;
+    recipientType: RecipientType;
     recipientName: string;
     body: string;
     sentAt: string;
@@ -571,19 +571,19 @@ export type MessagesControllerThreadMessageDto = {
 };
 
 export type ModuleItemDto = {
-    module?: SubscriptionModule;
+    module: SubscriptionModule;
     isAdminOverride: boolean;
     stripeSubscriptionItemId?: string | null;
 };
 
 export type NotificationPreferencesControllerNotificationPreferenceDto = {
-    type?: NotificationType;
+    type: NotificationType;
     inApp: boolean;
     email: boolean;
 };
 
 export type NotificationPreferencesControllerUpsertPreferenceItem = {
-    type?: NotificationType;
+    type: NotificationType;
     inApp: boolean;
     email: boolean;
 };
@@ -592,7 +592,7 @@ export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanCha
 
 export type NotificationsControllerNotificationDto = {
     id: string;
-    type?: NotificationType;
+    type: NotificationType;
     body: string;
     createdAt: string;
     readAt?: string | null;
@@ -701,7 +701,7 @@ export type RoomsControllerUpsertRoomRequest = {
 };
 
 export type SchedulesControllerScheduleSlotDto = {
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     startTime: string;
     endTime: string;
     courseName: string;
@@ -752,7 +752,7 @@ export type SchemasControllerSetDateRangeRequest = {
 export type SchemasControllerSlotDto = {
     id: string;
     timeSlotId: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     courseId: string;
     courseName: string;
     teacherId: string;
@@ -770,7 +770,7 @@ export type SchemasControllerSlotsAndConflictsDto = {
 
 export type SchemasControllerUpsertSlotRequest = {
     timeSlotId: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     courseId: string;
     teacherId: string;
     roomId?: string | null;
@@ -883,7 +883,7 @@ export type StaffControllerStaffDto = {
     name: string;
     email?: string | null;
     phone?: string | null;
-    role?: StaffRole;
+    role: StaffRole;
     isAdmin: boolean;
     keycloakSubject?: string | null;
 };
@@ -892,7 +892,7 @@ export type StaffControllerUpsertStaffRequest = {
     name: string;
     email?: string | null;
     phone?: string | null;
-    role?: StaffRole;
+    role: StaffRole;
     isAdmin: boolean;
 };
 
@@ -951,7 +951,7 @@ export type StatsControllerHoursPerCourse = {
 export type StatsControllerHoursPerStaff = {
     staffId: string;
     staffName: string;
-    role?: StaffRole;
+    role: StaffRole;
     hours: number;
 };
 
@@ -1003,7 +1003,7 @@ export type TenantDetailDto = {
     contactEmail?: string | null;
     contactPhone?: string | null;
     createdAt: string;
-    subscriptionStatus?: SubscriptionStatus;
+    subscriptionStatus: SubscriptionStatus;
     stripeCustomerId?: string | null;
     stripeSubscriptionId?: string | null;
     trialEnd: string;
@@ -1016,7 +1016,7 @@ export type TenantListItemDto = {
     name: string;
     contactEmail?: string | null;
     createdAt: string;
-    subscriptionStatus?: SubscriptionStatus;
+    subscriptionStatus: SubscriptionStatus;
     trialEnd: string;
     currentPeriodEnd?: string | null;
     activeModuleCount: number;
@@ -1090,7 +1090,7 @@ export type VacationRegistrationControllerCreateWindowRequest = {
     registrationDeadline: string;
     careStartDate: string;
     careEndDate: string;
-    granularity?: VacationRegistrationGranularity;
+    granularity: VacationRegistrationGranularity;
     isOpen: boolean;
 };
 
@@ -1120,7 +1120,7 @@ export type VacationRegistrationControllerUpdateWindowRequest = {
     registrationDeadline: string;
     careStartDate: string;
     careEndDate: string;
-    granularity?: VacationRegistrationGranularity;
+    granularity: VacationRegistrationGranularity;
     isOpen: boolean;
 };
 
@@ -1135,7 +1135,7 @@ export type VacationRegistrationControllerWindowDto = {
     registrationDeadline: string;
     careStartDate: string;
     careEndDate: string;
-    granularity?: VacationRegistrationGranularity;
+    granularity: VacationRegistrationGranularity;
     isOpen: boolean;
     entryCount: number;
     createdAt: string;
@@ -1151,13 +1151,13 @@ export type VikarControllerAssignSubstituteRequest = {
 export type VikarControllerAvailableStaffDto = {
     id: string;
     name: string;
-    role?: StaffRole;
+    role: StaffRole;
 };
 
 export type VikarControllerBusyStaffDto = {
     id: string;
     name: string;
-    role?: StaffRole;
+    role: StaffRole;
     conflictDescription: string;
 };
 
@@ -1178,7 +1178,7 @@ export type WeekPlanControllerBreakTimeSlotDto = {
 };
 
 export type WeekPlanControllerHolidayDayDto = {
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     title: string;
 };
 
@@ -1206,7 +1206,7 @@ export type WeekPlanControllerWeekPlanDto = {
 export type WeekPlanControllerWeekPlanSlotDto = {
     id: string;
     schemaSlotId: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     timeSlotId: string;
     timeSlotLabel: string;
     startTime: string;

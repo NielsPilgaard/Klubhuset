@@ -175,7 +175,11 @@ export default function BillingPage() {
         trialEnd={data?.trialEnd}
         selectedInterval={selectedInterval}
         onIntervalChange={setSelectedInterval}
-        onCheckout={() => checkoutMutation.mutate({ body: { interval: selectedInterval } })}
+        onCheckout={() =>
+          checkoutMutation.mutate({
+            body: { interval: data?.isActive ? (data.interval ?? 'Monthly') : selectedInterval },
+          })
+        }
         isRedirecting={isRedirecting}
       />
 
