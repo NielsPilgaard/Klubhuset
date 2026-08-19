@@ -558,11 +558,8 @@ function IntervalToggle({
   onChange: (interval: BillingInterval) => void
 }) {
   return (
-    <div
-      className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1"
-      role="group"
-      aria-label="Betalingsinterval"
-    >
+    <fieldset className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1 m-0">
+      <legend className="sr-only">Betalingsinterval</legend>
       {(['Monthly', 'Yearly'] as const).map((interval) => (
         <button
           key={interval}
@@ -578,7 +575,7 @@ function IntervalToggle({
           {interval === 'Monthly' ? 'Månedligt' : 'Årligt'}
         </button>
       ))}
-    </div>
+    </fieldset>
   )
 }
 
