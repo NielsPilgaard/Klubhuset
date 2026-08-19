@@ -2,33 +2,35 @@
 title: 'Parent calendar grid parity + parent self-service stamdata'
 purpose: 'Give parents the same calendar grid admin/staff see (read-only), and let parents edit their own contact info instead of relying on admin.'
 description: >-
-  Two fixes. (1) ParentCalendarPage is list-only; extract the read-only
-  grid rendering out of CalendarPage into a shared component so parents get
-  the same month grid/carousel view, no edit affordances. (2) Parents have
-  no self-service profile edit; wire up the already-existing but unused
-  ParentMeController PATCH /contact endpoint behind a new "Min profil" page.
-status: 'Proposed'
+  Two fixes, both complete. (1) Extracted the read-only grid rendering out
+  of CalendarPage into a shared CalendarGrid component so parents get the
+  same month grid/carousel view, no edit affordances. (2) Added
+  self-service profile edit via the ParentMeController PATCH /contact
+  endpoint behind a new "Min profil" page. Remaining work is verification
+  only.
+status: 'Done'
 ---
 
 # Parent calendar grid parity + parent self-service stamdata
 
 ## TL;DR
 
-Two independent fixes, grilled and scoped:
+Two independent fixes, grilled, scoped, and implemented:
 
-1. **Calendar**: extract shared read-only grid component out of
-   `CalendarPage.tsx` (buildMonthGrid, month cards, DayPopover display
-   mode). `ParentCalendarPage.tsx` renders it instead of its current flat
-   list. Also fix `CalendarPage.tsx` to read `isAdmin` via `useAuth()`
-   instead of `keycloak.hasRealmRole('admin')` directly (latent bug: breaks
+1. **Calendar**: shared read-only `CalendarGrid` component extracted out
+   of `CalendarPage.tsx` (buildMonthGrid, month cards, DayPopover display
+   mode). `ParentCalendarPage.tsx` renders it instead of the old flat
+   list. `CalendarPage.tsx` now reads `isAdmin` via `useAuth()` instead of
+   `keycloak.hasRealmRole('admin')` directly (fixed latent bug that broke
    superadmin "view as parent"). Parent keeps `.ics` export. Staff/teacher
-   already see the grid today (route not `AdminRoute`-gated) — out of scope.
-2. **Profile**: new `foraeldrevisning/profil` page. Backend
-   `PATCH /api/v1/parents/me/contact` already exists but is unused and
-   missing `Name`; `GET /api/v1/parents/me` doesn't return
-   Phone/Address/PostalCode/City/ShareContactInfo. Extend both. Admin's
-   parallel `UpdateParentContactRequest`/`EditContactModal` also gains
-   `Name` for parity/override.
+   already saw the grid before this change (route not `AdminRoute`-gated)
+   — out of scope.
+2. **Profile**: new `foraeldrevisning/profil` page
+   (`ParentProfilePage.tsx`), routed and linked from parent nav. Backend
+   `PATCH /api/v1/parents/me/contact` now accepts `Name`; `GET
+   /api/v1/parents/me` returns Phone/Address/PostalCode/City/
+   ShareContactInfo. Admin's parallel `UpdateParentContactRequest`/
+   `EditContactModal` also gained `Name` for parity/override.
 
 ## Context — findings from explore + grill
 
@@ -77,8 +79,10 @@ Two independent fixes, grilled and scoped:
   authenticated user, zero extra work.
 - Editable parent fields: **Name, Phone, Address, PostalCode, City,
   ShareContactInfo**. Not editable by parent: Email, AdresseBeskyttet.
-- Name validation: same as admin today — required, trim, ≤200 chars. No
-  new audit/logging (no existing audit infra; disproportionate for a name
+- Name validation: both parent (`ParentMeController`) and admin
+  (`ParentsController`) endpoints apply identical rules — trim surrounding
+  whitespace, require non-empty after trim, reject values over 200 chars.
+  No new audit/logging (no existing audit infra; disproportionate for a name
   field).
 - New dedicated page `foraeldrevisning/profil` ("Min profil") in parent
   nav — not a modal off an existing page. Matches existing parent route

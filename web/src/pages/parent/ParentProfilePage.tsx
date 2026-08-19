@@ -55,6 +55,7 @@ export default function ParentProfilePage() {
 
   function handleSave() {
     if (!name.trim() || updateMutation.isPending) return
+    setSaved(false)
     updateMutation.mutate({
       body: {
         name: name.trim(),

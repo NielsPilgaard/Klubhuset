@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -14,11 +14,7 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import { BILLING_INTERVAL_STORAGE_KEY, parseBillingInterval } from '../lib/billingInterval'
 
 function initialBillingInterval(): BillingInterval {
-  const stored = parseBillingInterval(localStorage.getItem(BILLING_INTERVAL_STORAGE_KEY))
-  if (stored) {
-    localStorage.removeItem(BILLING_INTERVAL_STORAGE_KEY)
-  }
-  return stored ?? 'Monthly'
+  return parseBillingInterval(localStorage.getItem(BILLING_INTERVAL_STORAGE_KEY)) ?? 'Monthly'
 }
 
 const SELF_SERVE_ENABLED = true
@@ -76,6 +72,10 @@ export default function BillingPage() {
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useQuery(getApiV1BillingSubscriptionOptions())
   const [selectedInterval, setSelectedInterval] = useState<BillingInterval>(initialBillingInterval)
+
+  useEffect(() => {
+    localStorage.removeItem(BILLING_INTERVAL_STORAGE_KEY)
+  }, [])
 
   const checkoutMutation = useMutation({
     ...postApiV1BillingCheckoutMutation(),
@@ -560,15 +560,14 @@ function IntervalToggle({
   return (
     <div
       className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1"
-      role="tablist"
+      role="group"
       aria-label="Betalingsinterval"
     >
       {(['Monthly', 'Yearly'] as const).map((interval) => (
         <button
           key={interval}
           type="button"
-          role="tab"
-          aria-selected={selected === interval}
+          aria-pressed={selected === interval}
           onClick={() => onChange(interval)}
           className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
             selected === interval
