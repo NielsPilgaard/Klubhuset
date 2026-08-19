@@ -7,7 +7,7 @@ description: >-
   Add per-route meta via react-helmet-async, add robots.txt + sitemap.xml,
   noindex gated/tokenized routes, and add SoftwareApplication JSON-LD to
   the landing page.
-status: 'Proposed'
+status: 'Completed'
 ---
 
 # SEO: og tags, sitemap, robots.txt, per-route meta
@@ -110,7 +110,7 @@ status: 'Proposed'
   local HTML file + Playwright screenshot. **Done** — see
   `web/public/og-image.png`.
 - `robots.txt`:
-  ```
+  ```text
   User-agent: *
   Allow: /
 

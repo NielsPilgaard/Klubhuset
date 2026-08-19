@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal } from '../components/Modal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,9 +13,9 @@ import {
 } from '../api/generated/@tanstack/react-query.gen'
 import type { CalendarEntryDto, DefaultHolidayDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useIcsExport } from '../hooks/useIcsExport'
 import { DatePicker } from '../components/DatePicker'
 import { useAuth } from '../auth/useAuth'
-import keycloak from '../auth/keycloak'
 import {
   TYPE_LABELS,
   getSchoolYears,
@@ -304,47 +304,7 @@ export default function CalendarPage() {
   const [schoolStartYear, setSchoolStartYear] = useState(currentSchoolStartYear)
   const { startYear, endYear } = getSchoolYears(schoolStartYear)
 
-  const [exportPending, setExportPending] = useState(false)
-  const [exportDone, setExportDone] = useState(false)
-  const exportTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
-    }
-  }, [])
-
-  async function handleExportIcs() {
-    if (exportPending) return
-    setExportPending(true)
-    setExportDone(false)
-    try {
-      await keycloak.updateToken(30)
-      // Raw fetch intentional: SDK client cannot return Blob responses (typed as unknown).
-      const res = await fetch('/api/v1/calendar/export.ics', {
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-      if (!res.ok) throw new Error('Export fejlede')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'skoleoverblikket-kalender.ics'
-      a.style.display = 'none'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      setExportDone(true)
-      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
-      exportTimeoutRef.current = setTimeout(() => {
-        setExportDone(false)
-        exportTimeoutRef.current = null
-      }, 8000)
-    } finally {
-      setExportPending(false)
-    }
-  }
+  const { exportPending, exportDone, exportError, handleExportIcs } = useIcsExport()
 
   const [createDate, setCreateDate] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<CalendarEntryDto | null>(null)
@@ -471,6 +431,12 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {exportError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-sm text-red-800">
+          Kunne ikke hente kalenderfilen. Prøv igen.
+        </div>
+      )}
+
       {/* Empty state */}
       {isAdmin && !hasEntries && (
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-5">
@@ -485,7 +451,7 @@ export default function CalendarPage() {
 
       <CalendarGrid
         schoolStartYear={schoolStartYear}
-        entries={allEntries}
+        entries={schoolYearEntries}
         isAdmin={isAdmin}
         onCreateForDate={(dateStr) => setCreateDate(dateStr)}
         onEdit={(entry) => setEditingEntry(entry)}

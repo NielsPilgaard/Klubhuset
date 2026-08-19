@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getApiV1CalendarOptions } from '../../api/generated/@tanstack/react-query.gen'
 import type { CalendarEntryDto } from '../../api/client'
 import { usePageTitle } from '../../hooks/usePageTitle'
-import keycloak from '../../auth/keycloak'
+import { useIcsExport } from '../../hooks/useIcsExport'
 import {
   getSchoolYears,
   isEntryInSchoolYear,
@@ -39,47 +39,7 @@ export default function ParentCalendarPage() {
   ]
   const schoolYearEntries = allEntries.filter((e) => isEntryInSchoolYear(e, schoolStartYear))
 
-  const [exportPending, setExportPending] = useState(false)
-  const [exportDone, setExportDone] = useState(false)
-  const exportTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
-    }
-  }, [])
-
-  async function handleExportIcs() {
-    if (exportPending) return
-    setExportPending(true)
-    setExportDone(false)
-    try {
-      await keycloak.updateToken(30)
-      // Raw fetch intentional: SDK client cannot return Blob responses (typed as unknown).
-      const res = await fetch('/api/v1/calendar/export.ics', {
-        headers: { Authorization: `Bearer ${keycloak.token}` },
-      })
-      if (!res.ok) throw new Error('Export fejlede')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'skoleoverblikket-kalender.ics'
-      a.style.display = 'none'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      setExportDone(true)
-      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
-      exportTimeoutRef.current = setTimeout(() => {
-        setExportDone(false)
-        exportTimeoutRef.current = null
-      }, 8000)
-    } finally {
-      setExportPending(false)
-    }
-  }
+  const { exportPending, exportDone, exportError, handleExportIcs } = useIcsExport()
 
   const yearOptions = Array.from({ length: 3 }, (_, i) => defaultYear - 1 + i)
 
@@ -119,10 +79,20 @@ export default function ParentCalendarPage() {
         </div>
       )}
 
+      {exportError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-sm text-red-800">
+          Kunne ikke hente kalenderfilen. Prøv igen.
+        </div>
+      )}
+
       {schoolYearEntries.length === 0 ? (
         <p className="text-sm text-gray-500">Ingen kalenderbegivenheder endnu.</p>
       ) : (
-        <CalendarGrid schoolStartYear={schoolStartYear} entries={allEntries} isAdmin={false} />
+        <CalendarGrid
+          schoolStartYear={schoolStartYear}
+          entries={schoolYearEntries}
+          isAdmin={false}
+        />
       )}
     </div>
   )

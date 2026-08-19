@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import keycloak, { seedPostSignupToken } from '../auth/keycloak'
+import { BILLING_INTERVAL_STORAGE_KEY, parseBillingInterval } from '../lib/billingInterval'
 
 const SELF_SERVE_ENABLED = true
 
@@ -49,6 +50,12 @@ export default function SignupPage() {
         const body = await res.json()
         redirectingRef.current = true
         seedPostSignupToken(body.accessToken, body.refreshToken)
+        const interval = parseBillingInterval(
+          new URLSearchParams(window.location.search).get('interval')
+        )
+        if (interval) {
+          localStorage.setItem(BILLING_INTERVAL_STORAGE_KEY, interval)
+        }
         window.location.href = `/setup?schoolName=${encodeURIComponent(name)}`
         return
       }

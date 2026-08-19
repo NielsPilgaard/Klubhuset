@@ -11,6 +11,15 @@ import {
 } from '../api/generated/@tanstack/react-query.gen'
 import type { SubscriptionDto, BillingInterval } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { BILLING_INTERVAL_STORAGE_KEY, parseBillingInterval } from '../lib/billingInterval'
+
+function initialBillingInterval(): BillingInterval {
+  const stored = parseBillingInterval(localStorage.getItem(BILLING_INTERVAL_STORAGE_KEY))
+  if (stored) {
+    localStorage.removeItem(BILLING_INTERVAL_STORAGE_KEY)
+  }
+  return stored ?? 'Monthly'
+}
 
 const SELF_SERVE_ENABLED = true
 const MONTHLY_PRICE_KR = 499
@@ -66,7 +75,7 @@ export default function BillingPage() {
   usePageTitle('Abonnement')
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useQuery(getApiV1BillingSubscriptionOptions())
-  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>('Monthly')
+  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>(initialBillingInterval)
 
   const checkoutMutation = useMutation({
     ...postApiV1BillingCheckoutMutation(),

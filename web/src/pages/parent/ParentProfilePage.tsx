@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1ParentsMeOptions,
@@ -11,7 +11,7 @@ export default function ParentProfilePage() {
   usePageTitle('Min profil')
   const qc = useQueryClient()
 
-  const { data: parent, isLoading } = useQuery(getApiV1ParentsMeOptions())
+  const { data: parent, isLoading, isError, refetch } = useQuery(getApiV1ParentsMeOptions())
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -28,16 +28,28 @@ export default function ParentProfilePage() {
     setPostalCode(parent.postalCode ?? '')
     setCity(parent.city ?? '')
     setShareContactInfo(parent.shareContactInfo ?? false)
-  }, [parent])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parent?.id])
 
   const [saved, setSaved] = useState(false)
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    }
+  }, [])
 
   const updateMutation = useMutation({
     ...patchApiV1ParentsMeContactMutation(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: getApiV1ParentsMeQueryKey() })
       setSaved(true)
-      setTimeout(() => setSaved(false), 4000)
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+      savedTimeoutRef.current = setTimeout(() => {
+        setSaved(false)
+        savedTimeoutRef.current = null
+      }, 4000)
     },
   })
 
@@ -57,6 +69,21 @@ export default function ParentProfilePage() {
 
   if (isLoading) {
     return <div className="p-4 md:p-6 text-sm text-gray-500">Indlæser profil...</div>
+  }
+
+  if (isError) {
+    return (
+      <div className="p-4 md:p-6 max-w-lg space-y-3">
+        <p className="text-sm text-red-600">Kunne ikke hente din profil.</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          Prøv igen
+        </button>
+      </div>
+    )
   }
 
   return (

@@ -177,7 +177,6 @@ function DayPopover({
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
       role="dialog"
-      aria-modal="true"
     >
       <div className="px-3 py-2 border-b border-gray-100">
         <p className="text-xs font-medium text-gray-700 capitalize">{formattedDate}</p>
@@ -328,11 +327,12 @@ export function CalendarGrid({
   function handleEntryClick(entry: CalendarEntryDto) {
     const dateStr = entry.startDate!
     const [y, m] = dateStr.split('-').map(Number)
-    const key = `${y}-${m}`
     setHighlightedRange({ start: entry.startDate!, end: entry.endDate ?? entry.startDate! })
     const idx = schoolYearMonths.findIndex(({ year, month }) => year === y && month === m)
     if (idx >= 0) setCarouselIndex(idx)
     setTimeout(() => {
+      const isMobile = window.matchMedia('(max-width: 1023px)').matches
+      const key = `${y}-${m}-${isMobile ? 'mobile' : 'desktop'}`
       const el = monthRefs.current.get(key)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 0)
@@ -351,12 +351,14 @@ export function CalendarGrid({
       : 'text-xs text-gray-400 text-right pr-1 py-0.5 leading-none flex items-center justify-end'
     const weekNumCol = large ? '2.5rem' : '2rem'
 
+    const refKey = `${year}-${month}-${large ? 'mobile' : 'desktop'}`
+
     return (
       <div
-        key={`${year}-${month}`}
+        key={refKey}
         ref={(el) => {
-          if (el) monthRefs.current.set(`${year}-${month}`, el)
-          else monthRefs.current.delete(`${year}-${month}`)
+          if (el) monthRefs.current.set(refKey, el)
+          else monthRefs.current.delete(refKey)
         }}
         className={`bg-white rounded-xl border border-gray-200 ${large ? 'p-6' : 'p-5'}`}
       >
@@ -538,7 +540,14 @@ export function CalendarGrid({
                   <tr
                     key={`${entry.id}-${entry.startDate}`}
                     onClick={() => handleEntryClick(entry)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleEntryClick(entry)
+                      }
+                    }}
+                    tabIndex={0}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500"
                   >
                     <td className="px-5 py-3">
                       <span

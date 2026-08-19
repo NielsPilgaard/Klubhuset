@@ -4,6 +4,7 @@ import Logo from '../components/Logo'
 import Footer from '../components/Footer'
 import CookieBanner from '../components/CookieBanner'
 import SeoMeta from '../components/SeoMeta'
+import type { BillingInterval } from '../api/client'
 
 const MONTHLY_PRICE_KR = 499
 const YEARLY_PRICE_KR = 4999
@@ -15,8 +16,6 @@ const PARENT_MODULE_YEARLY_KR = 4999
 const BOARD_MODULE_MONTHLY_KR = 199
 const BOARD_MODULE_YEARLY_KR = 1999
 
-type BillingInterval = 'Monthly' | 'Yearly'
-
 const SOFTWARE_APPLICATION_JSON_LD = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
@@ -27,7 +26,7 @@ const SOFTWARE_APPLICATION_JSON_LD = {
     'Billig og enkel skoleadministration. Skema, SFO, ugeplan, vikardækning og forældrekontakt samlet i ét system — i stedet for fem. Prøv gratis i 14 dage.',
   offers: {
     '@type': 'Offer',
-    price: '499',
+    price: String(MONTHLY_PRICE_KR),
     priceCurrency: 'DKK',
     priceValidUntil: '2026-12-31',
     description: 'Basis-abonnement pr. måned, inkl. moms, pr. skole. Ingen bindingsperiode.',
@@ -452,7 +451,7 @@ export default function LandingPage() {
                 </div>
                 <div className="pt-4">
                   <a
-                    href="/signup"
+                    href={`/signup?interval=${billingInterval}`}
                     className="block w-full text-center py-3 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
                   >
                     Start 14 dages gratis prøve
