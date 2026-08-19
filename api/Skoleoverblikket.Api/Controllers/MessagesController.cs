@@ -72,7 +72,8 @@ public sealed class MessagesController(
 		string RecipientName,
 		string Body,
 		DateTimeOffset SentAt,
-		bool IsOwn);
+		bool IsOwn,
+		Guid? InReplyToId = null);
 
 	public record RecipientDto(
 		Guid Id,
@@ -376,7 +377,8 @@ public sealed class MessagesController(
 			NameOf(m.RecipientId, m.RecipientType),
 			m.Body,
 			m.SentAt,
-			IsOwn: m.SenderId == callerId)).ToList();
+			IsOwn: m.SenderId == callerId,
+			InReplyToId: m.InReplyToId)).ToList();
 
 		return Ok(dtos);
 	}

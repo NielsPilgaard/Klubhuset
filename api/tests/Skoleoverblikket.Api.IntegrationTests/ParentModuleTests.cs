@@ -190,9 +190,71 @@ public sealed class ParentModuleTests(ApiFactory factory)
 	}
 
 	[Test]
-	public async Task UpdateContact_Returns400_WhenFieldsExceedMaxLength()
+	public async Task UpdateContact_Returns400_WhenPhoneExceedsMaxLength()
 	{
-		const string parentSubject = "parent-sub-boundary-over";
+		var response = await PatchContactAsync("parent-sub-boundary-over-phone", new
+		{
+			Name = "Bente Larsen",
+			Phone = new string('P', 51),
+			Address = (string?)null,
+			PostalCode = (string?)null,
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenAddressExceedsMaxLength()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-address", new
+		{
+			Name = "Bente Larsen",
+			Phone = (string?)null,
+			Address = new string('A', 501),
+			PostalCode = (string?)null,
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenPostalCodeExceedsMaxLength()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-postalcode", new
+		{
+			Name = "Bente Larsen",
+			Phone = (string?)null,
+			Address = (string?)null,
+			PostalCode = new string('1', 11),
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenCityExceedsMaxLength()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-city", new
+		{
+			Name = "Bente Larsen",
+			Phone = (string?)null,
+			Address = (string?)null,
+			PostalCode = (string?)null,
+			City = new string('C', 101),
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	private async Task<HttpResponseMessage> PatchContactAsync(string parentSubject, object body)
+	{
 		await SeedParentWithStudentAsync(parentSubject);
 
 		using var parentClient = _factory.CreateClient();
@@ -200,16 +262,6 @@ public sealed class ParentModuleTests(ApiFactory factory)
 		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
 		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
 
-		var response = await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", new
-		{
-			Name = "Bente Larsen",
-			Phone = new string('P', 51),
-			Address = new string('A', 501),
-			PostalCode = new string('1', 11),
-			City = new string('C', 101),
-			ShareContactInfo = true,
-		});
-
-		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+		return await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", body);
 	}
 }

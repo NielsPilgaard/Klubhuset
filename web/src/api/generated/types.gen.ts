@@ -568,6 +568,7 @@ export type MessagesControllerThreadMessageDto = {
     body: string;
     sentAt: string;
     isOwn: boolean;
+    inReplyToId?: string | null;
 };
 
 export type ModuleItemDto = {

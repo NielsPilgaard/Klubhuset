@@ -90,8 +90,9 @@ table. Board role stays read-only, same as Fase 1/2.
 
 ### 2. §1a compliance-stier
 
-`CompliancePath` — one row per skoleår, recording which of the five paths
-(A–E) the school follows plus supporting documentation:
+`CompliancePath` — one row per skoleår, unique on `(TenantId, SkoleaarStartYear)`,
+recording which of the five paths (A–E) the school follows plus supporting
+documentation:
 
 - **Sti A**: Folkeskolens Fælles Mål anvendes direkte
 - **Sti B**: Skolens egne mål, der svarer til Fælles Mål
@@ -103,6 +104,13 @@ Freely editable while unpublished. Once the school publishes (see §3 below),
 changing sti requires an explicit re-publish action — the public/tilsyn-facing
 record shouldn't silently mutate mid-year, but schools aren't locked out of
 fixing a mistake either.
+
+`PublishedComplianceSnapshot` — one row per `(TenantId, SkoleaarStartYear)`,
+same uniqueness as `CompliancePath`. Re-publishing must not create a second
+snapshot for a year already published: publish is an upsert keyed on
+`(TenantId, SkoleaarStartYear)` — replace the existing row's content in the
+same transaction rather than inserting a new one, so the public URL for a
+given year always resolves to exactly one snapshot.
 
 ### 3. Publishing (public URL)
 
@@ -116,10 +124,13 @@ Publishing is **year-scoped**, not a single school-level bool. A school-level
 `IsPublished` flag would leak next year's in-progress drafts the moment last
 year's page goes live, and would let a published plan mutate silently if an
 admin edits it after publishing. Instead: a `PublishedComplianceSnapshot` row
-per `(TenantId, SkoleaarStartYear)`, written atomically when the admin
-publishes (or re-publishes) that skoleår — a serialized copy of that year's
-`TeachingPlan`s and `CompliancePath` at the moment of publishing, same
-pattern as the coverage-snapshot feature in
+per `(TenantId, SkoleaarStartYear)`, unique on that pair, written via atomic
+upsert when the admin publishes (or re-publishes) that skoleår — insert if no
+snapshot exists for the year, else replace the existing row's contents in the
+same transaction, so re-publishing can never create a duplicate year-scoped
+snapshot. Each row is a serialized copy of that year's `TeachingPlan`s and
+`CompliancePath` at the moment of publishing, same pattern as the
+coverage-snapshot feature in
 [40-staa-maal-med-annual-snapshot.md](40-staa-maal-med-annual-snapshot.md).
 The public page serves the snapshot for the current (or most recently
 published) skoleår, never live draft rows. Drafts for the current or next

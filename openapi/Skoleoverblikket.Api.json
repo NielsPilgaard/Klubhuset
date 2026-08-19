@@ -9814,6 +9814,11 @@
           },
           "isOwn": {
             "type": "boolean"
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false

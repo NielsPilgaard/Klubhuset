@@ -173,7 +173,7 @@ export default function BillingPage() {
         isActive={data?.isActive ?? false}
         isTrialing={data?.isTrialing ?? false}
         trialEnd={data?.trialEnd}
-        selectedInterval={selectedInterval}
+        selectedInterval={data?.isActive ? (data.interval ?? selectedInterval) : selectedInterval}
         onIntervalChange={setSelectedInterval}
         onCheckout={() =>
           checkoutMutation.mutate({

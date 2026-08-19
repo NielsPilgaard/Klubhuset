@@ -213,64 +213,36 @@ public sealed class BillingTests(ApiFactory factory)
 	}
 
 	// ── Yearly billing interval ──────────────────────────────────────────────────
+	//
+	// HandleCheckoutCompletedAsync verifies Interval against the actual Stripe subscription's
+	// base-plan price (via Stripe.SubscriptionService.GetAsync) rather than trusting client-
+	// supplied session metadata — a portal/API-driven price swap shouldn't be able to disagree
+	// with what Stripe actually billed. stripe-mock returns canned fixture data for any
+	// subscription id, unrelated to our configured stub price IDs, so the resolved price never
+	// matches BasePriceIdMonthly/BasePriceIdYearly here: ApplyIntervalFromBasePlan falls through
+	// to its "keep existing Interval" branch. Same fixture limitation already documented on
+	// AddModule_YearlySubscription_UsesYearlyModulePrice below — the interval-selection logic
+	// itself is covered directly by Webhook_SubscriptionUpdatedWithYearlyPrice/MonthlyPrice,
+	// which construct the Stripe.Subscription object in-process and don't touch stripe-mock.
 
 	[Test]
-	public async Task CreateCheckout_YearlyInterval_PersistsIntervalOnSubscription()
+	public async Task CreateCheckout_YearlyInterval_ReturnsCheckoutUrl()
 	{
 		var response = await _adminClient.PostAsJsonAsync(
 			"/api/v1/billing/checkout",
 			new BillingController.CheckoutRequest(BillingInterval.Yearly));
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-		// Interval is persisted once checkout.session.completed arrives, not at session creation —
-		// simulate the webhook the same way Stripe would deliver it.
-		await CompleteCheckoutAsync(BillingInterval.Yearly);
-
-		var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
-		var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
-		await Assert.That(dto).IsNotNull();
-		await Assert.That(dto!.Interval).IsEqualTo(BillingInterval.Yearly);
 	}
 
 	[Test]
-	public async Task CreateCheckout_MonthlyInterval_PersistsIntervalOnSubscription()
+	public async Task CreateCheckout_MonthlyInterval_ReturnsCheckoutUrl()
 	{
 		var response = await _adminClient.PostAsJsonAsync(
 			"/api/v1/billing/checkout",
 			new BillingController.CheckoutRequest(BillingInterval.Monthly));
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-		await CompleteCheckoutAsync(BillingInterval.Monthly);
-
-		var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
-		var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
-		await Assert.That(dto).IsNotNull();
-		await Assert.That(dto!.Interval).IsEqualTo(BillingInterval.Monthly);
-	}
-
-	private async Task CompleteCheckoutAsync(BillingInterval interval)
-	{
-		using var scope = _factory.Services.CreateScope();
-		var subscriptionService = scope.ServiceProvider.GetRequiredService<LocalSubscriptionService>();
-
-		var session = new Stripe.Checkout.Session
-		{
-			Metadata = new Dictionary<string, string>
-			{
-				["school_id"] = _tenantId.ToString(),
-				["interval"] = interval.ToString(),
-			},
-		};
-
-		var stripeEvent = new Event
-		{
-			Type = EventTypes.CheckoutSessionCompleted,
-			Data = new EventData { Object = session },
-		};
-
-		await subscriptionService.HandleWebhookAsync(stripeEvent);
 	}
 
 	[Test]

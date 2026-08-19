@@ -316,6 +316,13 @@ public sealed class MessagesTests(ApiFactory factory)
 		await Assert.That(thread.Select(m => m.Id)).Contains(replyTwo.Id);
 		var sentTimes = thread.Select(m => m.SentAt).ToList();
 		await Assert.That(sentTimes.SequenceEqual(sentTimes.OrderBy(t => t))).IsTrue();
+
+		var rootDto = thread.Single(m => m.Id == root.Id);
+		await Assert.That(rootDto.InReplyToId).IsNull();
+		var replyOneDto = thread.Single(m => m.Id == replyOne.Id);
+		await Assert.That(replyOneDto.InReplyToId).IsEqualTo(root.Id);
+		var replyTwoDto = thread.Single(m => m.Id == replyTwo.Id);
+		await Assert.That(replyTwoDto.InReplyToId).IsEqualTo(root.Id);
 	}
 
 	// ── Reply authorization guards (POST /api/v1/messages with InReplyToId) ────────

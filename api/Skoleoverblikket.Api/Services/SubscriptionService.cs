@@ -16,7 +16,8 @@ public sealed class SubscriptionService(
 	CustomerService customerService,
 	SessionService sessionService,
 	Stripe.BillingPortal.SessionService billingPortalSessionService,
-	SubscriptionItemService subscriptionItemService)
+	SubscriptionItemService subscriptionItemService,
+	Stripe.SubscriptionService stripeSubscriptionService)
 {
 	private const int TrialDays = 14;
 
@@ -82,9 +83,10 @@ public sealed class SubscriptionService(
 			_ => throw new ArgumentOutOfRangeException(nameof(interval), interval, "Unsupported billing interval."),
 		};
 
-		// Interval is persisted only once checkout completes (HandleCheckoutCompletedAsync) —
-		// writing it here would leave a stale Interval on the subscription if the customer
-		// abandons checkout. The chosen interval travels via session metadata instead.
+		// Interval is persisted only once checkout completes (HandleCheckoutCompletedAsync),
+		// verified against the actual Stripe subscription price rather than trusted from
+		// session metadata — writing it here would leave a stale Interval if the customer
+		// abandons checkout. Metadata still carries "interval" for dashboard debugging only.
 
 		// Ensure Stripe customer exists
 		var customerId = sub.StripeCustomerId;
@@ -404,14 +406,34 @@ public sealed class SubscriptionService(
 		sub.StripeSubscriptionId = session.SubscriptionId;
 		sub.Status = SubscriptionStatus.Active;
 
-		if (session.Metadata.TryGetValue("interval", out var intervalStr)
-			&& Enum.TryParse<BillingInterval>(intervalStr, out var interval))
+		if (session.SubscriptionId is not null)
 		{
-			sub.Interval = interval;
+			var stripeSub = await stripeSubscriptionService.GetAsync(session.SubscriptionId, cancellationToken: cancellationToken);
+			ApplyIntervalFromBasePlan(sub, stripeSub);
 		}
 
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
 		await db.SaveChangesAsync(cancellationToken);
+	}
+
+	// Detects billing cadence from the base-plan line item specifically (matched by price ID) —
+	// not "any recurring item" — since a module item could otherwise be mistaken for the base
+	// plan and make later AddModuleAsync calls buy the wrong-interval module Price.
+	private void ApplyIntervalFromBasePlan(LocalSubscription sub, StripeSubscription stripeSub)
+	{
+		var basePriceIds = stripeSub.Items?.Data?.Select(i => i.Price?.Id);
+		if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdYearly) == true)
+		{
+			sub.Interval = BillingInterval.Yearly;
+		}
+		else if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdMonthly) == true)
+		{
+			sub.Interval = BillingInterval.Monthly;
+		}
+		else
+		{
+			logger.LogWarning("SubscriptionService.ApplyIntervalFromBasePlan: no base-plan price item found for StripeSubscriptionId {StripeSubscriptionId} — keeping existing Interval {Interval}", stripeSub.Id, sub.Interval);
+		}
 	}
 
 	private async Task HandleSubscriptionChangedAsync(StripeSubscription stripeSub, CancellationToken cancellationToken)
@@ -444,23 +466,7 @@ public sealed class SubscriptionService(
 
 		sub.Status = newStatus;
 
-		// Portal-driven monthly<->yearly plan switches arrive here as customer.subscription.updated.
-		// Detect the new cadence from the base-plan line item specifically (matched by price ID) —
-		// not "any recurring item" — since a module item could otherwise be mistaken for the base
-		// plan and make later AddModuleAsync calls buy the wrong-interval module Price.
-		var basePriceIds = stripeSub.Items?.Data?.Select(i => i.Price?.Id);
-		if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdYearly) == true)
-		{
-			sub.Interval = BillingInterval.Yearly;
-		}
-		else if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdMonthly) == true)
-		{
-			sub.Interval = BillingInterval.Monthly;
-		}
-		else
-		{
-			logger.LogWarning("SubscriptionService.HandleSubscriptionChangedAsync: no base-plan price item found for StripeSubscriptionId {StripeSubscriptionId} — keeping existing Interval {Interval}", stripeSub.Id, sub.Interval);
-		}
+		ApplyIntervalFromBasePlan(sub, stripeSub);
 
 		// Stripe SDK returns DateTime.MinValue when unset — treat that as null
 		sub.CurrentPeriodEnd = stripeSub.CurrentPeriodEnd > DateTime.UnixEpoch

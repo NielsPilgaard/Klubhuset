@@ -127,7 +127,13 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 			return NotFound();
 		}
 
-		parent.Name = req.Name.Trim();
+		var trimmedName = req.Name.Trim();
+		if (trimmedName.Length == 0)
+		{
+			return BadRequest();
+		}
+
+		parent.Name = trimmedName;
 		parent.Phone = req.Phone;
 		parent.Address = req.Address;
 		parent.PostalCode = req.PostalCode;
