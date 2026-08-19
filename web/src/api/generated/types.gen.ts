@@ -858,6 +858,7 @@ export type StaaMaalMedControllerClassCoverageDto = {
     className: string;
     gradeLevel: number;
     subjects?: Array<StaaMaalMedControllerSubjectCoverageDto>;
+    unexpectedGradeCategories?: Array<string>;
 };
 
 export type StaaMaalMedControllerCoverageResponseDto = {

@@ -14,7 +14,7 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable) : ControllerBase
 {
 	public record SubjectCoverageDto(string Category, double WeeklyHours, double VejledendeWeeklyHours, double AnnualHours, double VejledendeAnnualHours, string Status);
-	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects);
+	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects, List<string> UnexpectedGradeCategories);
 	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
 
 	[HttpGet("coverage")]
@@ -75,11 +75,20 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 						status));
 				}
 
+				// Categories taught at this grade that UVM doesn't define for it at all
+				// (e.g. Tysk scheduled in 3. klasse — Tysk only starts 6. klasse).
+				var unexpectedGradeCategories = hoursPerCategory.Keys
+					.Where(category => !timetal.TryGetValue(category.ToString(), out var gradeMap) || !gradeMap.ContainsKey(gradeLevel))
+					.Select(category => category.ToString())
+					.OrderBy(name => name)
+					.ToList();
+
 				return new ClassCoverageDto(
 					classGroup.Key.ClassId,
 					classGroup.Key.Name,
 					gradeLevel,
-					subjects.OrderBy(s => s.Category).ToList());
+					subjects.OrderBy(s => s.Category).ToList(),
+					unexpectedGradeCategories);
 			})
 			.ToList();
 
@@ -106,7 +115,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 
 			if (subjects.Count > 0)
 			{
-				classes.Add(new ClassCoverageDto(cls.Id, cls.Name, gradeLevel, subjects.OrderBy(s => s.Category).ToList()));
+				classes.Add(new ClassCoverageDto(cls.Id, cls.Name, gradeLevel, subjects.OrderBy(s => s.Category).ToList(), []));
 			}
 		}
 

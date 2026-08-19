@@ -121,10 +121,19 @@ export default function StaaMaalMedPage() {
                 const subjectMap = Object.fromEntries(
                   (cls.subjects ?? []).map((s) => [s.category ?? '', s])
                 )
+                const unexpected = cls.unexpectedGradeCategories ?? []
                 return (
                   <tr key={cls.classId} className="hover:bg-gray-50">
                     <td className="sticky left-0 bg-white px-4 py-2.5 font-medium text-gray-900 border-b border-gray-100 whitespace-nowrap">
-                      {cls.className}
+                      <div>{cls.className}</div>
+                      {unexpected.length > 0 && (
+                        <div
+                          className="mt-0.5 text-xs text-amber-600"
+                          title={`${unexpected.map((c) => CATEGORY_LABELS[c] ?? c).join(', ')} er ikke en del af UVM's fagrække på dette klassetrin`}
+                        >
+                          ⚠ Uventet fag: {unexpected.map((c) => CATEGORY_LABELS[c] ?? c).join(', ')}
+                        </div>
+                      )}
                     </td>
                     {allCategories.map((cat) => {
                       const subject = subjectMap[cat]

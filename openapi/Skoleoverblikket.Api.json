@@ -10868,6 +10868,12 @@
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_SubjectCoverageDto"
             }
+          },
+          "unexpectedGradeCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false

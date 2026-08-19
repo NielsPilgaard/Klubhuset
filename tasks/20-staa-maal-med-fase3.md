@@ -1,31 +1,62 @@
-# Task 20: Stå mål med — Fase 3 (Årsplan / Undervisningsplan)
-
-**Status**: Future / ikke planlagt  
-**Forudsætning**: Fase 1 og Fase 2 er færdige (se task 19)
-
+---
+title: 'Stå mål med — Fase 3 (Årsplan / Undervisningsplan)'
+purpose: 'Scope the long-term, separate-module feature for storing and publishing undervisningsplaner and læringsmål per Friskoleloven §1a.'
+description: >-
+  Proposed Fase 3 of the "stå mål med" compliance feature: structured storage
+  and public/PDF publishing of per-class-per-course teaching plans and
+  learning goals, plus registration of the school's chosen §1a compliance
+  path (A–E). Significantly larger scope than Fase 1–2 and not a natural
+  extension of the schema planner — effectively a separate module. No code
+  exists yet; this is a scoping doc, not an implementation plan.
+status: 'Proposed'
 ---
 
-## Beskrivelse
+# Stå mål med — Fase 3 (Årsplan / Undervisningsplan)
 
-Fase 3 handler om opbevaring og offentliggørelse af undervisningsplaner og læringsmål i henhold til friskoleloven § 1a. Det er et markant større scope end Fase 1–2 og hænger ikke naturligt sammen med skemaplanlæggeren — det er i praksis et separat modul.
+## TL;DR
 
----
+Fase 1+2 (structural subject-coverage view + UVM timetal comparison) are
+**built and live** — `StaaMaalMedController` (`GET /api/v1/staa-maal-med/coverage`)
+computes green/yellow/red/missing coverage per class from live `SchemaSlot`
+data against UVM's vejledende timetal, plus `UnexpectedGradeCategories`
+flagging courses scheduled at grades UVM doesn't define them for. Fase 3 is
+a different, much larger feature: storing and publishing full
+undervisningsplaner/læringsmål per §1a, with new `TeachingPlan`,
+`TeachingGoal`, `CompliancePath` entities. No auto-certification, no AI
+quality assessment, no STUK/UVM integration — see task 19 §4 for why.
 
-## Hvad Fase 3 indebærer
+## Context
 
-### Årsplaner pr. klasse og fag
+Fase 1+2 are done — see `StaaMaalMedController.cs`
+(`api/Skoleoverblikket.Api/Controllers/StaaMaalMedController.cs`), which
+serves structural coverage data derived entirely from existing `SchemaSlot`
+records. That data source is why Fase 1–2 fit naturally inside the schema
+planner: no new entities, just a read-model over data already there.
 
-Hvert fag pr. klasse skal have en tilknyttet undervisningsplan, der beskriver:
+Fase 3 is categorically different. §1a compliance also requires publishing
+actual teaching plans and goals per course/class/year, plus documenting
+which of five recognized compliance paths (A–E) the school follows — none of
+which exists in current schema data. See task 19 §6 ("Fase 3") for the
+original framing and §4 ("Regelbaseret vs. AI-assisteret check") for why
+this stays structural/documentary rather than an automated quality
+judgment.
+
+## Proposed scope
+
+### 1. Årsplaner pr. klasse og fag
+
+Each course-per-class needs an associated teaching plan describing:
 
 - Læringsmål for skoleåret
 - Valgte metoder og materialer
 - Evalueringsform
 
-Disse skal opbevares struktureret i databasen og kunne offentliggøres (enten som PDF-eksport eller som en offentlig URL).
+Stored structurally in the database, publishable as PDF export or a public URL.
 
-### § 1a compliance-stier
+### 2. §1a compliance-stier
 
-Friskolen skal dokumentere, at undervisningen "står mål med" folkeskolens. Der er fem anerkendte stier:
+Friskolen must document that undervisningen "står mål med" folkeskolens, via
+one of five recognized paths:
 
 - **Sti A**: Folkeskolens Fælles Mål anvendes direkte
 - **Sti B**: Skolens egne mål, der svarer til Fælles Mål
@@ -33,23 +64,20 @@ Friskolen skal dokumentere, at undervisningen "står mål med" folkeskolens. Der
 - **Sti D**: Internationale programmer (f.eks. IB)
 - **Sti E**: Anden dokumenteret tilgang
 
-Systemet skal kunne registrere hvilken sti skolen anvender, og gemme den tilhørende dokumentation.
+System must record which path the school uses and store supporting documentation.
 
-### Tilsynsstøtte
+### 3. Tilsynsstøtte
 
-Tilsynsrapporter og selvevalueringer skal kunne genereres som eksport til brug ved den eksterne tilsynsførendes besøg.
+Tilsynsrapporter and selvevalueringer must be exportable for use at the
+external tilsynsførende's visit.
 
----
+### 4. Data model (new entities)
 
-## Datakrav (nye entiteter)
+- `TeachingPlan` — undervisningsplan tied to `Class` + `Course` + skoleår
+- `TeachingGoal` — concrete læringsmål under a plan
+- `CompliancePath` — school's chosen §1a-sti per skoleår
 
-- `TeachingPlan` — en undervisningsplan knyttet til `Class` + `Course` + skoleår
-- `TeachingGoal` — konkrete læringsmål under en plan
-- `CompliancePath` — registrering af skolens valgte § 1a-sti pr. skoleår
-
-Disse kræver EF Core-migrationer og nye API-endpoints.
-
----
+Requires new EF Core migrations and new API endpoints.
 
 ## Hvad der IKKE skal implementeres
 
@@ -58,8 +86,15 @@ Disse kræver EF Core-migrationer og nye API-endpoints.
 - Integration med STUK eller UVM's systemer
 - Juridisk rådgivning eller certifikater
 
----
+## Open questions
+
+- Publishing mechanism: PDF export, public URL, or both?
+- Is this a module gated behind `SubscriptionModulesController` like the
+  parent module, or bundled?
+- Does `CompliancePath` need to support switching sti mid-skoleår, or is it
+  fixed once set?
 
 ## Referencer
 
-Se task 19, afsnit 6 "Fase 3" og afsnit 4 "Regelbaseret vs. AI-assisteret check" for baggrund og afgrænsning.
+Se [task 19](completed/19-staa-maal-med.md), afsnit 6 "Fase 3" og afsnit 4
+"Regelbaseret vs. AI-assisteret check" for baggrund og afgrænsning.
