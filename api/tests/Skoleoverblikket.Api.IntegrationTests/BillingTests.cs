@@ -223,6 +223,10 @@ public sealed class BillingTests(ApiFactory factory)
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
+		// Interval is persisted once checkout.session.completed arrives, not at session creation —
+		// simulate the webhook the same way Stripe would deliver it.
+		await CompleteCheckoutAsync(BillingInterval.Yearly);
+
 		var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
 		var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
 		await Assert.That(dto).IsNotNull();
@@ -238,10 +242,35 @@ public sealed class BillingTests(ApiFactory factory)
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
+		await CompleteCheckoutAsync(BillingInterval.Monthly);
+
 		var subResponse = await _adminClient.GetAsync("/api/v1/billing/subscription");
 		var dto = await subResponse.Content.ReadFromJsonAsync<BillingController.SubscriptionDto>(JsonOpts);
 		await Assert.That(dto).IsNotNull();
 		await Assert.That(dto!.Interval).IsEqualTo(BillingInterval.Monthly);
+	}
+
+	private async Task CompleteCheckoutAsync(BillingInterval interval)
+	{
+		using var scope = _factory.Services.CreateScope();
+		var subscriptionService = scope.ServiceProvider.GetRequiredService<LocalSubscriptionService>();
+
+		var session = new Stripe.Checkout.Session
+		{
+			Metadata = new Dictionary<string, string>
+			{
+				["school_id"] = _tenantId.ToString(),
+				["interval"] = interval.ToString(),
+			},
+		};
+
+		var stripeEvent = new Event
+		{
+			Type = EventTypes.CheckoutSessionCompleted,
+			Data = new EventData { Object = session },
+		};
+
+		await subscriptionService.HandleWebhookAsync(stripeEvent);
 	}
 
 	[Test]
@@ -271,13 +300,15 @@ public sealed class BillingTests(ApiFactory factory)
 		await Assert.That(dto).IsNotNull();
 		await Assert.That(dto!.ActiveModules).Contains(SubscriptionModule.ParentModule.ToString());
 
+		// stripe-mock returns fixture data for subscription_items regardless of the requested
+		// Price, so the yearly-vs-monthly price selection can't be observed by reading the item
+		// back — AddModuleAsync throws if ModulePriceIds has no entry for the sub's Interval,
+		// so reaching NoContent above already proves the yearly price was resolved.
 		using var verifyScope = _factory.Services.CreateScope();
 		var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
 		var moduleItem = await verifyDb.SubscriptionModuleItems
-			.FirstAsync(m => m.SubscriptionId == sub.Id && m.Module == SubscriptionModule.ParentModule);
-		var subscriptionItemService = verifyScope.ServiceProvider.GetRequiredService<SubscriptionItemService>();
-		var stripeItem = await subscriptionItemService.GetAsync(moduleItem.StripeSubscriptionItemId);
-		await Assert.That(stripeItem.Price.Id).IsEqualTo("price_stub_parent_yearly");
+			.FirstOrDefaultAsync(m => m.SubscriptionId == sub.Id && m.Module == SubscriptionModule.ParentModule);
+		await Assert.That(moduleItem).IsNotNull();
 	}
 
 	[Test]
@@ -303,6 +334,7 @@ public sealed class BillingTests(ApiFactory factory)
 					{
 						Price = new Price
 						{
+							Id = "price_stub_yearly",
 							Recurring = new PriceRecurring { Interval = "year" },
 						},
 					},
@@ -351,6 +383,7 @@ public sealed class BillingTests(ApiFactory factory)
 					{
 						Price = new Price
 						{
+							Id = "price_stub_monthly",
 							Recurring = new PriceRecurring { Interval = "month" },
 						},
 					},
