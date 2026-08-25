@@ -622,16 +622,15 @@ public sealed class MessagesController(
 		var school = await db.Schools.AsNoTracking().IgnoreQueryFilters()
 			.FirstOrDefaultAsync(s => s.Id == tenantContext.TenantId, cancellationToken);
 		var schoolName = school?.Name ?? "Skoleoverblikket";
+		var inboxUrl = $"{appOptions.Value.SanitizedBaseUrl}/beskeder";
 		var settingsUrl = $"{appOptions.Value.SanitizedBaseUrl}/indstillinger/notifikationer";
-		var footer = $"<p style=\"font-size:12px;color:#888;\">Du modtager denne e-mail fra {HtmlEncoder.Default.Encode(schoolName)}. " +
-					 $"<a href=\"{HtmlEncoder.Default.Encode(settingsUrl)}\">Log ind og gå til Notifikationsindstillinger</a> for at ændre dine e-mailpræferencer.</p>";
 
 		var emails = recipients.Where(r => !string.IsNullOrWhiteSpace(r.Email)).Select(r => r.Email!).ToList();
 		if (emails.Count > 0)
 		{
 			try
 			{
-				var html = BuildHtml(req.Body, footer);
+				var html = BuildHtml(callerName, req.Subject, req.Body, schoolName, inboxUrl, settingsUrl);
 				const int batchSize = 50;
 				for (int i = 0; i < emails.Count; i += batchSize)
 				{
@@ -728,20 +727,34 @@ public sealed class MessagesController(
 		}
 	}
 
-	private static string BuildHtml(string body, string footer)
+	private static string BuildHtml(string senderName, string subject, string body, string schoolName, string inboxUrl, string settingsUrl)
 	{
-		var sb = new StringBuilder();
-		sb.Append("<div style=\"font-family:sans-serif;max-width:600px;\">");
+		var encodedSender = HtmlEncoder.Default.Encode(senderName);
+		var encodedSubject = HtmlEncoder.Default.Encode(subject);
+		var encodedSchoolName = HtmlEncoder.Default.Encode(schoolName);
+		var encodedInboxUrl = HtmlEncoder.Default.Encode(inboxUrl);
+		var encodedSettingsUrl = HtmlEncoder.Default.Encode(settingsUrl);
+
+		var bodyParagraphs = new StringBuilder();
 		foreach (var line in body.Split('\n'))
 		{
-			sb.Append("<p>");
-			sb.Append(HtmlEncoder.Default.Encode(line));
-			sb.Append("</p>");
+			bodyParagraphs.Append("<p>");
+			bodyParagraphs.Append(HtmlEncoder.Default.Encode(line));
+			bodyParagraphs.Append("</p>");
 		}
 
-		sb.Append(footer);
-		sb.Append("</div>");
-		return sb.ToString();
+		return EmailTemplate.Wrap(encodedSubject, $"""
+			<h1>{encodedSubject}</h1>
+			<p style="margin-bottom:8px;">{encodedSender} har sendt en besked via {encodedSchoolName}:</p>
+			{bodyParagraphs}
+			<div class="btn-wrapper">
+			  <a href="{encodedInboxUrl}" class="btn">Åbn besked</a>
+			</div>
+			<div class="notice">
+			  <p style="margin-bottom:0;">Du modtager denne e-mail, fordi du har slået e-mailnotifikationer til.
+			  <a href="{encodedSettingsUrl}" style="color:#1f6321;">Administrér notifikationer</a></p>
+			</div>
+			""");
 	}
 
 	private async Task<List<RecipientDto>> BuildAllRecipientsAsync(

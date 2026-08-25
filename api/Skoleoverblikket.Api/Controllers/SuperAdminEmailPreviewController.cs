@@ -45,7 +45,7 @@ public sealed class SuperAdminEmailPreviewController(IOptions<ApplicationOptions
 	[HttpGet("notification")]
 	[Produces("text/html")]
 	public ContentResult Notification(
-		[FromQuery] string body = "Dit barns skema er blevet opdateret for uge 22.")
+		[FromQuery] string body = "Du har fået en ny besked i kontaktbogen.")
 	{
 		var baseUrl = appOptions.Value.SanitizedBaseUrl;
 		var settingsUrl = $"{baseUrl}/indstillinger/notifikationer";
