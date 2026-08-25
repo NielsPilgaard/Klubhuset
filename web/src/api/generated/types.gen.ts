@@ -655,6 +655,11 @@ export type ParentsControllerAdresseBeskyttelseRequest = {
     adresseBeskyttet: boolean;
 };
 
+export type ParentsControllerCoParentDto = {
+    id: string;
+    name: string;
+};
+
 export type ParentsControllerInviteParentRequest = {
     name: string;
     email: string;
@@ -665,6 +670,20 @@ export type ParentsControllerParentDto = {
     id: string;
     name: string;
     email: string;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    students?: Array<ParentsControllerStudentRefDto>;
+    hasAccount: boolean;
+    createdAt: string;
+    adresseBeskyttet: boolean;
+    coParent?: ParentsControllerCoParentDto;
+};
+
+export type ParentsControllerParentSummaryDto = {
+    id: string;
+    name: string;
     phone?: string | null;
     address?: string | null;
     postalCode?: string | null;
@@ -2773,7 +2792,7 @@ export type GetApiV1ParentsResponses = {
     /**
      * OK
      */
-    200: Array<ParentsControllerParentDto>;
+    200: Array<ParentsControllerParentSummaryDto>;
 };
 
 export type GetApiV1ParentsResponse = GetApiV1ParentsResponses[keyof GetApiV1ParentsResponses];

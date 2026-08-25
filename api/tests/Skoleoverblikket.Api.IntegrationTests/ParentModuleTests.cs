@@ -69,7 +69,7 @@ public sealed class ParentModuleTests(ApiFactory factory)
 		var response = await _adminClient.GetAsync("/api/v1/parents");
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-		var list = await response.Content.ReadFromJsonAsync<List<ParentsController.ParentDto>>();
+		var list = await response.Content.ReadFromJsonAsync<List<ParentsController.ParentSummaryDto>>();
 		await Assert.That(list).IsNotNull();
 		await Assert.That(list!.Count).IsEqualTo(0);
 	}
@@ -179,9 +179,9 @@ public sealed class ParentModuleTests(ApiFactory factory)
 		var response = await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", new
 		{
 			Name = new string('N', 200),
-			Phone = new string('P', 50),
+			Phone = "+4512345678",
 			Address = new string('A', 500),
-			PostalCode = new string('1', 10),
+			PostalCode = "1234",
 			City = new string('C', 100),
 			ShareContactInfo = true,
 		});
@@ -190,12 +190,12 @@ public sealed class ParentModuleTests(ApiFactory factory)
 	}
 
 	[Test]
-	public async Task UpdateContact_Returns400_WhenPhoneExceedsMaxLength()
+	public async Task UpdateContact_Returns400_WhenPhoneIsInvalidFormat()
 	{
 		var response = await PatchContactAsync("parent-sub-boundary-over-phone", new
 		{
 			Name = "Bente Larsen",
-			Phone = new string('P', 51),
+			Phone = "not-a-phone-number",
 			Address = (string?)null,
 			PostalCode = (string?)null,
 			City = (string?)null,
@@ -203,6 +203,22 @@ public sealed class ParentModuleTests(ApiFactory factory)
 		});
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns204_WhenPhoneHasSpacesAndPrefix()
+	{
+		var response = await PatchContactAsync("parent-sub-phone-spaces", new
+		{
+			Name = "Bente Larsen",
+			Phone = "+45 12 34 56 78",
+			Address = (string?)null,
+			PostalCode = (string?)null,
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 	}
 
 	[Test]
@@ -222,14 +238,14 @@ public sealed class ParentModuleTests(ApiFactory factory)
 	}
 
 	[Test]
-	public async Task UpdateContact_Returns400_WhenPostalCodeExceedsMaxLength()
+	public async Task UpdateContact_Returns400_WhenPostalCodeIsInvalidFormat()
 	{
 		var response = await PatchContactAsync("parent-sub-boundary-over-postalcode", new
 		{
 			Name = "Bente Larsen",
 			Phone = (string?)null,
 			Address = (string?)null,
-			PostalCode = new string('1', 11),
+			PostalCode = "12345",
 			City = (string?)null,
 			ShareContactInfo = true,
 		});

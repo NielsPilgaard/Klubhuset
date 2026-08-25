@@ -3501,7 +3501,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ParentsController_ParentDto"
+                    "$ref": "#/components/schemas/ParentsController_ParentSummaryDto"
                   }
                 }
               },
@@ -3509,7 +3509,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ParentsController_ParentDto"
+                    "$ref": "#/components/schemas/ParentsController_ParentSummaryDto"
                   }
                 }
               },
@@ -3517,7 +3517,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ParentsController_ParentDto"
+                    "$ref": "#/components/schemas/ParentsController_ParentSummaryDto"
                   }
                 }
               }
@@ -6568,7 +6568,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "default": "Dit barns skema er blevet opdateret for uge 22."
+              "default": "Du har fået en ny besked i kontaktbogen."
             }
           }
         ],
@@ -10300,6 +10300,23 @@
         },
         "additionalProperties": false
       },
+      "ParentsController_CoParentDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ParentsController_InviteParentRequest": {
         "required": [
           "email",
@@ -10342,6 +10359,61 @@
             "type": "string"
           },
           "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParentsController_StudentRefDto"
+            }
+          },
+          "hasAccount": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "adresseBeskyttet": {
+            "type": "boolean"
+          },
+          "coParent": {
+            "$ref": "#/components/schemas/ParentsController_CoParentDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentsController_ParentSummaryDto": {
+        "required": [
+          "adresseBeskyttet",
+          "createdAt",
+          "hasAccount",
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
             "type": "string"
           },
           "phone": {
