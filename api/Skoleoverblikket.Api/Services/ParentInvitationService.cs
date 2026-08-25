@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text.Encodings.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Skoleoverblikket.Api.Auth;
@@ -53,9 +52,9 @@ public sealed class ParentInvitationService(
 
 		await email.SendAsync(new EmailMessage(
 			To: parent.Email,
-			Subject: $"Invitation til {school} pa Skoleoverblikket",
-			HtmlBody: BuildHtmlEmail(parent.Name, school, link, temporaryPassword),
-			PlainTextBody: BuildPlainEmail(parent.Name, school, link, temporaryPassword)
+			Subject: ParentInvitationEmail.Subject(school),
+			HtmlBody: ParentInvitationEmail.BuildHtml(parent.Name, school, link, temporaryPassword),
+			PlainTextBody: ParentInvitationEmail.BuildPlainText(parent.Name, school, link, temporaryPassword)
 		), cancellationToken);
 
 		return invitation;
@@ -148,53 +147,5 @@ public sealed class ParentInvitationService(
 
 		RandomNumberGenerator.Shuffle(chars.AsSpan());
 		return new string(chars);
-	}
-
-	private static string BuildHtmlEmail(string name, string schoolName, string link, string? temporaryPassword)
-	{
-		var encodedName = HtmlEncoder.Default.Encode(name);
-		var encodedSchoolName = HtmlEncoder.Default.Encode(schoolName);
-		var encodedLink = HtmlEncoder.Default.Encode(link);
-
-		var passwordBlock = temporaryPassword is not null
-			? $"""
-			  <div style="margin:0 0 24px;padding:16px;background:#f3f4f6;border-radius:8px;border:1px solid #e5e7eb;">
-			    <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Din midlertidige adgangskode (skal ændres ved første login):</p>
-			    <span style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:0.05em;color:#111827;">{HtmlEncoder.Default.Encode(temporaryPassword)}</span>
-			  </div>
-			  """
-			: string.Empty;
-
-		return EmailTemplate.Wrap($"Adgang til {encodedSchoolName}", $"""
-			<h1>Adgang til {encodedSchoolName}</h1>
-			<p>Hej {encodedName},<br><br>
-			Du er inviteret til at se dit barns skema på <strong>{encodedSchoolName}</strong> via Skoleoverblikket.
-			Klik på knappen herunder for at oprette din konto. Linket er gyldigt i 14 dage.</p>
-			{passwordBlock}
-			<div class="btn-wrapper">
-			  <a href="{encodedLink}" class="btn">Opret konto</a>
-			</div>
-			<div class="notice">
-			  <p style="margin-bottom:0;">Har du problemer med knappen? Kopier dette link direkte i din browser:<br>
-			  <a href="{encodedLink}" style="color:#1f6321;word-break:break-all;">{encodedLink}</a></p>
-			</div>
-			""");
-	}
-
-	private static string BuildPlainEmail(string name, string schoolName, string link, string? temporaryPassword)
-	{
-		var passwordLine = temporaryPassword is not null
-			? $"\nDin midlertidige adgangskode: {temporaryPassword}\n(Skal ændres ved første login.)\n"
-			: string.Empty;
-
-		return $"""
-Hej {name},
-
-Du er inviteret til at se dit barns skema på {schoolName} via Skoleoverblikket.{passwordLine}
-Opret din konto her:
-{link}
-
-Linket er gyldigt i 14 dage.
-""";
 	}
 }
