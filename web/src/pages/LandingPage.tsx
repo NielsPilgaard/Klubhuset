@@ -748,7 +748,7 @@ function RefundTooltip() {
         <path d="M7 11V7a5 5 0 0 1 9.9-1" />
       </svg>
       <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-64 rounded-lg bg-gray-900 px-3 py-2 text-xs text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-lg text-left">
-        Abonnementet kan opsiges til enhver tid. betaling.
+        Abonnementet kan opsiges til enhver tid.
       </div>
     </div>
   )

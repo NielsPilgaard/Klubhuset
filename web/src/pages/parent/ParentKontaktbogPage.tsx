@@ -459,7 +459,7 @@ export default function ParentKontaktbogPage() {
               <details className="group">
                 <summary className="cursor-pointer text-xs font-medium text-gray-500 hover:text-brand-600 select-none list-none flex items-center gap-1">
                   <span>
-                    Underret personale
+                    Giv besked til personale
                     {replyNotifyStaffIds.length > 0 ? ` (${replyNotifyStaffIds.length})` : ''}
                   </span>
                 </summary>
@@ -514,7 +514,7 @@ export default function ParentKontaktbogPage() {
               {validStudents.length === 1 && (
                 <details className="group text-left">
                   <summary className="cursor-pointer text-xs font-medium text-gray-500 hover:text-brand-600 select-none list-none">
-                    Underret personale
+                    Giv besked til personale
                     {newNotifyStaffIds.length > 0 ? ` (${newNotifyStaffIds.length})` : ''}
                   </summary>
                   <div className="mt-2">
