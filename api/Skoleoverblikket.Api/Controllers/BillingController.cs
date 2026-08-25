@@ -118,6 +118,7 @@ public sealed class BillingController(
 	public record SwitchIntervalRequest(BillingInterval Interval);
 
 	[HttpPost("interval")]
+	[ProducesResponseType(StatusCodes.Status204NoContent)]
 	public async Task<IActionResult> SwitchInterval([FromBody] SwitchIntervalRequest request, CancellationToken cancellationToken)
 	{
 		if (!Enum.IsDefined(request.Interval))

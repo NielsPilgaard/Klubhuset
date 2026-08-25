@@ -18,7 +18,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 	public record SubjectCoverageDto(string Category, double WeeklyHours, double VejledendeWeeklyHours, double AnnualHours, double VejledendeAnnualHours, string Status);
 	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects, List<string> UnexpectedGradeCategories);
 	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
-	public record CreateSnapshotRequest(string? Reason);
+	public record CreateSnapshotRequest([property: System.ComponentModel.DataAnnotations.MaxLength(500)] string? Reason);
 	public record SnapshotSummaryDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason);
 	public record SnapshotDetailDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason, CoverageResponseDto Data);
 
@@ -35,6 +35,11 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 	[Authorize(Roles = Roles.Admin)]
 	public async Task<ActionResult<SnapshotSummaryDto>> CreateSnapshot([FromBody] CreateSnapshotRequest req, CancellationToken cancellationToken)
 	{
+		if (req.Reason is not null && req.Reason.Length > 500)
+		{
+			return Problem(title: "Ugyldig begrundelse", detail: "Begrundelse må højst være 500 tegn.", statusCode: StatusCodes.Status400BadRequest);
+		}
+
 		var subject = User.GetKeycloakSubject();
 		var staff = await db.Staff.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
 		if (staff is null)

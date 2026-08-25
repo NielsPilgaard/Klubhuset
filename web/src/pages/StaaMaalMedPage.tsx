@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useAuth } from '../auth/useAuth'
 import { Modal } from '../components/Modal'
 import {
   getApiV1StaaMaalMedCoverageOptions,
@@ -165,6 +166,7 @@ function CoverageLegend() {
 }
 
 function LiveCoverageTab() {
+  const { isAdmin } = useAuth()
   const qc = useQueryClient()
   const [showModal, setShowModal] = useState(false)
   const [reason, setReason] = useState('')
@@ -187,12 +189,14 @@ function LiveCoverageTab() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <CoverageLegend />
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors shrink-0"
-        >
-          Gem version
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors shrink-0"
+          >
+            Gem version
+          </button>
+        )}
       </div>
 
       {savedMessage && (
@@ -215,12 +219,7 @@ function LiveCoverageTab() {
         <CoverageTable data={data} />
       )}
 
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title="Gem version"
-        size="sm"
-      >
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Gem version" size="sm">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -229,8 +228,8 @@ function LiveCoverageTab() {
           className="px-6 py-5 space-y-4"
         >
           <p className="text-sm text-gray-600">
-            Gemmer en version af den nuværende faglige dækning, så den kan tilgås senere —
-            f.eks. før et tilsynsbesøg.
+            Gemmer en version af den nuværende faglige dækning, så den kan tilgås senere — f.eks.
+            før et tilsynsbesøg.
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -321,7 +320,11 @@ function SnapshotDetail({ id, onBack }: { id: string; onBack: () => void }) {
 }
 
 function SnapshotsListTab({ onSelect }: { onSelect: (id: string) => void }) {
-  const { data: snapshots = [], isLoading } = useQuery(getApiV1StaaMaalMedSnapshotsOptions())
+  const {
+    data: snapshots = [],
+    isLoading,
+    isError,
+  } = useQuery(getApiV1StaaMaalMedSnapshotsOptions())
 
   if (isLoading) {
     return (
@@ -329,6 +332,14 @@ function SnapshotsListTab({ onSelect }: { onSelect: (id: string) => void }) {
         {[...Array(3)].map((_, i) => (
           <div key={i} className="h-14 bg-gray-100 rounded-xl" />
         ))}
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+        Kunne ikke hente versioner. Prøv at genindlæse siden.
       </div>
     )
   }

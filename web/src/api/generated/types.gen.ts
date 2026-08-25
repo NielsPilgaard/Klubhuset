@@ -1460,10 +1460,12 @@ export type PostApiV1BillingIntervalData = {
 
 export type PostApiV1BillingIntervalResponses = {
     /**
-     * OK
+     * No Content
      */
-    200: unknown;
+    204: void;
 };
+
+export type PostApiV1BillingIntervalResponse = PostApiV1BillingIntervalResponses[keyof PostApiV1BillingIntervalResponses];
 
 export type PostApiV1BillingPortalData = {
     body?: never;
