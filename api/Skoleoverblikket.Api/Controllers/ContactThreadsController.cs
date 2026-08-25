@@ -187,23 +187,7 @@ public sealed class ContactThreadsController(
 			return NotFound();
 		}
 
-		var slotTeacherIds = db.SchemaSlots
-			.Where(sl => sl.Schema.ClassId == classId.Value)
-			.Select(sl => sl.TeacherId);
-
-		var slotAideIds = db.SchemaSlots
-			.Where(sl => sl.Schema.ClassId == classId.Value && sl.AideId.HasValue)
-			.Select(sl => sl.AideId!.Value);
-
-		var permissionStaffIds = db.ClassPermissions
-			.Where(cp => cp.ClassId == classId.Value)
-			.Select(cp => cp.StaffId);
-
-		var relevantStaffIds = await slotTeacherIds
-			.Union(slotAideIds)
-			.Union(permissionStaffIds)
-			.Distinct()
-			.ToListAsync(cancellationToken);
+		var relevantStaffIds = await GetRelevantStaffIdsAsync(classId.Value, cancellationToken);
 
 		var relevantSet = relevantStaffIds.ToHashSet();
 
@@ -218,6 +202,40 @@ public sealed class ContactThreadsController(
 			.ToList();
 
 		return Ok(result);
+	}
+
+	// Falls back to "staff relevant to the student's class" (same set GetNotifyStaffOptions
+	// offers) when a parent sends a message without picking anyone in the notify-staff
+	// picker — e.g. it failed to load. Prevents a message from silently reaching zero staff.
+	private async Task<List<Guid>> GetFallbackStaffIdsAsync(Guid studentId, CancellationToken cancellationToken)
+	{
+		var classId = await db.Students
+			.Where(s => s.Id == studentId)
+			.Select(s => (Guid?)s.ClassId)
+			.FirstOrDefaultAsync(cancellationToken);
+
+		return classId is null ? [] : await GetRelevantStaffIdsAsync(classId.Value, cancellationToken);
+	}
+
+	private async Task<List<Guid>> GetRelevantStaffIdsAsync(Guid classId, CancellationToken cancellationToken)
+	{
+		var slotTeacherIds = db.SchemaSlots
+			.Where(sl => sl.Schema.ClassId == classId)
+			.Select(sl => sl.TeacherId);
+
+		var slotAideIds = db.SchemaSlots
+			.Where(sl => sl.Schema.ClassId == classId && sl.AideId.HasValue)
+			.Select(sl => sl.AideId!.Value);
+
+		var permissionStaffIds = db.ClassPermissions
+			.Where(cp => cp.ClassId == classId)
+			.Select(cp => cp.StaffId);
+
+		return await slotTeacherIds
+			.Union(slotAideIds)
+			.Union(permissionStaffIds)
+			.Distinct()
+			.ToListAsync(cancellationToken);
 	}
 
 	[HttpPost]
@@ -447,14 +465,18 @@ public sealed class ContactThreadsController(
 	{
 		if (senderType == SenderType.Parent)
 		{
-			if (notifyStaffIds is null || notifyStaffIds.Count == 0)
+			var staffIdsToNotify = notifyStaffIds is { Count: > 0 }
+				? notifyStaffIds
+				: await GetFallbackStaffIdsAsync(studentId, cancellationToken);
+
+			if (staffIdsToNotify.Count == 0)
 			{
 				return;
 			}
 
 			var targetStaff = await db.Staff
 				.AsNoTracking()
-				.Where(s => notifyStaffIds.Contains(s.Id))
+				.Where(s => staffIdsToNotify.Contains(s.Id))
 				.ToListAsync(cancellationToken);
 
 			foreach (var s in targetStaff)

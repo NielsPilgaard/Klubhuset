@@ -155,10 +155,11 @@ public sealed class SubscriptionService(
 	/// </summary>
 	public async Task SwitchIntervalAsync(Guid schoolId, BillingInterval targetInterval, CancellationToken cancellationToken = default)
 	{
-		var sub = await db.Subscriptions
-			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
+		await using var lockTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+		var sub = await LockSubscriptionForUpdateAsync(schoolId, cancellationToken)
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+		await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(cancellationToken);
 
 		if (sub.Status != SubscriptionStatus.Active)
 		{
@@ -201,6 +202,11 @@ public sealed class SubscriptionService(
 				throw new InvalidOperationException($"No Stripe price configured for module {moduleItem.Module} ({targetInterval}).");
 			}
 
+			if (string.IsNullOrEmpty(moduleItem.StripeSubscriptionItemId))
+			{
+				throw new InvalidOperationException($"Module {moduleItem.Module} on subscription {sub.Id} has no Stripe subscription item ID — cannot switch interval.");
+			}
+
 			items.Add(new SubscriptionItemOptions { Id = moduleItem.StripeSubscriptionItemId, Price = modulePriceId });
 		}
 
@@ -218,6 +224,18 @@ public sealed class SubscriptionService(
 		ApplyIntervalFromBasePlan(sub, updated);
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
 		await db.SaveChangesAsync(cancellationToken);
+		await lockTransaction.CommitAsync(cancellationToken);
+	}
+
+	// Postgres row lock (SELECT ... FOR UPDATE) on the single Subscription row, held for the
+	// duration of the caller's transaction. Serializes SwitchIntervalAsync against AddModuleAsync
+	// so a concurrent module add can't read a stale sub.Interval mid-switch and price the new
+	// Stripe item on the interval that's about to change out from under it.
+	private async Task<LocalSubscription?> LockSubscriptionForUpdateAsync(Guid schoolId, CancellationToken cancellationToken)
+	{
+		return await db.Subscriptions
+			.FromSqlInterpolated($"SELECT * FROM \"Subscriptions\" WHERE \"SchoolId\" = {schoolId} FOR UPDATE")
+			.FirstOrDefaultAsync(cancellationToken);
 	}
 
 	/// <summary>
@@ -278,10 +296,11 @@ public sealed class SubscriptionService(
 	/// </summary>
 	public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 	{
-		var sub = await db.Subscriptions
-			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
+		await using var lockTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+		var sub = await LockSubscriptionForUpdateAsync(schoolId, cancellationToken)
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+		await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(cancellationToken);
 
 		if (sub.Status != SubscriptionStatus.Active)
 		{
@@ -323,6 +342,7 @@ public sealed class SubscriptionService(
 		try
 		{
 			await db.SaveChangesAsync(cancellationToken);
+			await lockTransaction.CommitAsync(cancellationToken);
 		}
 		catch (DbUpdateException ex)
 		{
@@ -518,7 +538,11 @@ public sealed class SubscriptionService(
 		}
 		else
 		{
-			logger.LogWarning("SubscriptionService.ApplyIntervalFromBasePlan: no base-plan price item found for StripeSubscriptionId {StripeSubscriptionId} — keeping existing Interval {Interval}", stripeSub.Id, sub.Interval);
+			// Logged as an error, not a warning: this means BasePriceIdMonthly/BasePriceIdYearly in
+			// config no longer match any item on a real Stripe subscription — likely a price ID
+			// rotation that wasn't updated in config. Every call site (checkout, interval switch,
+			// webhook) hits this silently otherwise, freezing Interval as stale with no other signal.
+			logger.LogError("SubscriptionService.ApplyIntervalFromBasePlan: no base-plan price item found for StripeSubscriptionId {StripeSubscriptionId} — Interval left stale at {Interval}. Check Stripe:BasePriceIdMonthly/BasePriceIdYearly config against the actual Stripe subscription items.", stripeSub.Id, sub.Interval);
 		}
 	}
 

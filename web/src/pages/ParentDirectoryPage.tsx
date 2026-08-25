@@ -10,14 +10,16 @@ interface StudentGroup {
   parents: KontaktParentDto[]
 }
 
-const NO_STUDENT_KEY = '__no_student__'
-
 function groupByStudent(parents: KontaktParentDto[]): StudentGroup[] {
   const groups = new Map<string, StudentGroup>()
 
   for (const parent of parents) {
     const students = parent.students ?? []
-    const targets = students.length > 0 ? students : [{ id: NO_STUDENT_KEY, name: parent.name }]
+    // Parents with no linked student each get their own group, keyed by their own id —
+    // otherwise every parentless parent would collide into one shared group labeled with
+    // whichever parent's name happened to create it first.
+    const targets =
+      students.length > 0 ? students : [{ id: `__no_student_${parent.id}`, name: parent.name }]
     for (const student of targets) {
       let group = groups.get(student.id)
       if (!group) {

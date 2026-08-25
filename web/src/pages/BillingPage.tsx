@@ -212,7 +212,7 @@ export default function BillingPage() {
         />
         <div className="mt-3">
           <ModuleCard
-            name="Bestyrelsesmodul"
+            name="Bestyrelse og tilsyn"
             description="Giv bestyrelsesmedlemmer en dedikeret adgang med aggregerede statistikker og bestyrelsesdokumenter. Admin styrer adgangsniveau pr. bestyrelsesmedlem."
             monthlyKr={BOARD_MODULE_MONTHLY_KR}
             yearlyKr={BOARD_MODULE_YEARLY_KR}
@@ -237,7 +237,7 @@ const MODULE_PRICING: Record<string, { monthly: number; yearly: number; label: s
     yearly: PARENT_MODULE_YEARLY_KR,
   },
   BoardModule: {
-    label: 'Bestyrelsesmodul',
+    label: 'Bestyrelse og tilsyn',
     monthly: BOARD_MODULE_MONTHLY_KR,
     yearly: BOARD_MODULE_YEARLY_KR,
   },
@@ -297,7 +297,8 @@ function SwitchIntervalModal({
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-gray-800">Basis</span>
             <span className="text-gray-500 tabular-nums">
-              {basisFrom} <span aria-hidden="true">→</span> <b className="text-gray-900">{basisTo}</b>
+              {basisFrom} <span aria-hidden="true">→</span>{' '}
+              <b className="text-gray-900">{basisTo}</b>
             </span>
           </div>
           {activeModules.map((moduleKey) => {
@@ -316,9 +317,8 @@ function SwitchIntervalModal({
             )
           })}
           <p className="pt-1 text-xs text-gray-500">
-            {toYearly
-              ? 'Du betaler det fulde årsbeløb ved næste opkrævning.'
-              : 'Fremtidige opkrævninger sker månedligt fra næste betalingsdato.'}
+            Du opkræves med det samme — beløbet modregnes for den ubrugte tid på dit nuværende{' '}
+            {fromInterval === 'Yearly' ? 'årlige' : 'månedlige'} abonnement.
           </p>
         </div>
         <div className="flex gap-3">
@@ -444,6 +444,14 @@ function StatusCard({
               {data.currentPeriodEnd && (
                 <p className="mt-1 text-sm text-green-700">
                   Næste betaling den {formatDate(data.currentPeriodEnd)}
+                </p>
+              )}
+              {activeModules.length > 0 && (
+                <p className="mt-1 text-sm text-green-700">
+                  Tilkøb:{' '}
+                  {activeModules
+                    .map((moduleKey) => MODULE_PRICING[moduleKey]?.label ?? moduleKey)
+                    .join(', ')}
                 </p>
               )}
               <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -680,7 +688,7 @@ function ModuleCard({
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-gray-700">{name}</h3>
               {isActive && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
                   Aktiv
                 </span>
               )}
@@ -691,14 +699,18 @@ function ModuleCard({
             {isYearly ? (
               <>
                 <span className="text-lg font-semibold text-gray-900 tabular-nums">
-                  {yearlyKr} kr/år
+                  {Math.round(yearlyKr / 12)}
                 </span>
-                <p className="text-xs text-gray-400 tabular-nums">{monthlyKr} kr/md ækvivalent</p>
+                <span className="text-sm text-gray-500"> kr/md</span>
+                <p className="text-xs text-gray-400 tabular-nums">{yearlyKr} kr/år</p>
               </>
             ) : (
-              <span className="text-lg font-semibold text-gray-900 tabular-nums">
-                {monthlyKr} kr/md
-              </span>
+              <>
+                <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                  {monthlyKr}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+              </>
             )}
           </div>
         </div>

@@ -24,6 +24,10 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 
 	private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
+	// School year runs Aug 1 – Jul 31 in Danish local time. Using UTC directly would mislabel
+	// snapshots taken in the UTC-early-morning window around the Aug 1 boundary (CEST is UTC+2).
+	private static readonly TimeZoneInfo DanishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Copenhagen");
+
 	[HttpGet("coverage")]
 	public async Task<ActionResult<CoverageResponseDto>> GetCoverage(CancellationToken cancellationToken)
 	{
@@ -49,7 +53,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 
 		var coverage = await ComputeCoverageAsync(cancellationToken);
 
-		var now = DateTime.UtcNow;
+		var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, DanishTimeZone);
 		var schoolYearStart = now.Month >= 8 ? now.Year : now.Year - 1;
 		var schoolYear = $"{schoolYearStart}-{schoolYearStart + 1}";
 
@@ -98,7 +102,13 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 
 		if (snapshot.DataVersion != 1)
 		{
-			return Problem($"Unsupported snapshot data version: {snapshot.DataVersion}.", statusCode: StatusCodes.Status500InternalServerError);
+			// Not a server error: the snapshot itself is in an unsupported format (e.g. saved
+			// by a newer app version). A 500 here would be indistinguishable from a transient
+			// failure to the frontend, hiding a compliance record right when someone needs it.
+			return Problem(
+				title: "Snapshot-version understøttes ikke",
+				detail: $"Denne version blev gemt i et format, der ikke længere understøttes (version {snapshot.DataVersion}).",
+				statusCode: StatusCodes.Status409Conflict);
 		}
 
 		var data = JsonSerializer.Deserialize<CoverageResponseDto>(snapshot.Data, JsonOptions)
@@ -206,6 +216,11 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 			.Where(c => c.GradeLevel.HasValue && !classesWithSlots.Contains(c.Id))
 			.ToListAsync(cancellationToken);
 
+		// No schema means no StartDate/EndDate to compute real school weeks from — fall back to
+		// SchoolWeekCalculator's own null-input default so this stays a single source of truth
+		// instead of a second hardcoded week count that can drift from the real one.
+		var fallbackWeekCount = SchoolWeekCalculator.CountSchoolWeeks(null, null, holidays);
+
 		foreach (var cls in allGradedClasses)
 		{
 			var gradeLevel = cls.GradeLevel!.Value;
@@ -217,7 +232,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 					continue;
 				}
 
-				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, Math.Round(vejledende * 40, 0), "missing"));
+				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, Math.Round(vejledende * fallbackWeekCount, 0), "missing"));
 			}
 
 			if (subjects.Count > 0)
