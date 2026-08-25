@@ -13,6 +13,14 @@ import type {
   ParentMeControllerParentMeDto as ParentMeResponse,
   AbsenceStatus,
 } from '../../api/generated/types.gen'
+import { DatePicker } from '../../components/DatePicker'
+
+const REASON_OPTIONS = ['Syg', 'Ferie', 'Hentes tidligt', 'Møder sent', 'Andet']
+
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}-${m}-${y}`
+}
 
 function StatusBadge({ status }: { status: AbsenceStatus | undefined }) {
   const map: Record<AbsenceStatus, { label: string; className: string }> = {
@@ -33,11 +41,14 @@ function StatusBadge({ status }: { status: AbsenceStatus | undefined }) {
 export default function ParentFravaerPage() {
   usePageTitle('Fravær')
   const qc = useQueryClient()
+  const today = new Date().toISOString().slice(0, 10)
   const [showForm, setShowForm] = useState(false)
   const [studentId, setStudentId] = useState('')
-  const [date, setDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [date, setDate] = useState(today)
+  const [endDate, setEndDate] = useState(today)
   const [reason, setReason] = useState('')
+  const [customReason, setCustomReason] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const { data: meData } = useQuery({
     ...getApiV1ParentsMeOptions(),
@@ -57,9 +68,10 @@ export default function ParentFravaerPage() {
       qc.invalidateQueries({ queryKey: absenceMineQueryKey })
       setShowForm(false)
       setStudentId('')
-      setDate('')
-      setEndDate('')
+      setDate(today)
+      setEndDate(today)
       setReason('')
+      setCustomReason(false)
     },
   })
 
@@ -79,7 +91,7 @@ export default function ParentFravaerPage() {
       body: {
         studentId,
         date,
-        endDate: endDate || null,
+        endDate: endDate && endDate !== date ? endDate : null,
         reason: reason || null,
       },
     })
@@ -122,35 +134,47 @@ export default function ParentFravaerPage() {
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Fra dato</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
+              <DatePicker value={date} onChange={setDate} />
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Til dato (valgfrit)
               </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
+              <DatePicker value={endDate} onChange={setEndDate} min={date} />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Årsag (valgfrit)</label>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={2}
-              placeholder="F.eks. syg, ferie..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-            />
+            <select
+              value={customReason ? 'Andet' : reason}
+              onChange={(e) => {
+                if (e.target.value === 'Andet') {
+                  setCustomReason(true)
+                  setReason('')
+                } else {
+                  setCustomReason(false)
+                  setReason(e.target.value)
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">Vælg årsag</option>
+              {REASON_OPTIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            {customReason && (
+              <input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Uddyb årsag..."
+                autoFocus
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            )}
           </div>
           <div className="flex gap-3">
             <button
@@ -185,8 +209,8 @@ export default function ParentFravaerPage() {
               <div>
                 <p className="font-medium text-gray-900 text-sm">{r.studentName}</p>
                 <p className="text-sm text-gray-600 mt-0.5">
-                  {r.date}
-                  {r.endDate ? ` – ${r.endDate}` : ''}
+                  {formatDate(r.date!)}
+                  {r.endDate ? ` – ${formatDate(r.endDate)}` : ''}
                   {r.reason ? ` · ${r.reason}` : ''}
                 </p>
               </div>
@@ -194,7 +218,7 @@ export default function ParentFravaerPage() {
                 <StatusBadge status={r.status} />
                 {r.status === 'Reported' && (
                   <button
-                    onClick={() => r.id && deleteMutation.mutate({ path: { id: r.id } })}
+                    onClick={() => r.id && setDeleteTargetId(r.id)}
                     className="text-xs text-gray-400 hover:text-red-600 transition-colors"
                   >
                     Annuller
@@ -205,6 +229,38 @@ export default function ParentFravaerPage() {
           </div>
         ))}
       </div>
+
+      {deleteTargetId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-5 max-w-sm w-full space-y-4">
+            <p className="text-sm text-gray-900">
+              Er du sikker på, at du vil annullere denne fraværsindmeldelse?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTargetId(null)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Fortryd
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  deleteMutation.mutate(
+                    { path: { id: deleteTargetId } },
+                    { onSuccess: () => setDeleteTargetId(null) },
+                  )
+                }}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? 'Annullerer…' : 'Ja, annuller'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
