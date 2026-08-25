@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Skoleoverblikket.Api.Controllers;
 using Skoleoverblikket.Api.Data;
@@ -302,7 +303,22 @@ public sealed class MessagesTests(ApiFactory factory)
 			SentAt = root.SentAt.AddMinutes(2),
 			InReplyToId = root.Id,
 		};
-		db.Messages.AddRange(replyOne, replyTwo);
+		// replyThree shares replyTwo's SentAt exactly — the ordering must fall back to Id
+		// as a deterministic tie-breaker rather than leaving the pair in arbitrary order.
+		var replyThree = new Message
+		{
+			Id = Guid.NewGuid(),
+			TenantId = _tenantId,
+			SenderId = a.Id,
+			SenderType = RecipientType.Parent,
+			RecipientId = b.Id,
+			RecipientType = RecipientType.Parent,
+			Subject = "Rod",
+			Body = "Svar tre",
+			SentAt = replyTwo.SentAt,
+			InReplyToId = root.Id,
+		};
+		db.Messages.AddRange(replyOne, replyTwo, replyThree);
 		await db.SaveChangesAsync();
 
 		using var client = CreateParentClient("msg-thread-branch-a");
@@ -314,8 +330,13 @@ public sealed class MessagesTests(ApiFactory factory)
 		await Assert.That(thread!.Select(m => m.Id)).Contains(root.Id);
 		await Assert.That(thread.Select(m => m.Id)).Contains(replyOne.Id);
 		await Assert.That(thread.Select(m => m.Id)).Contains(replyTwo.Id);
+		await Assert.That(thread.Select(m => m.Id)).Contains(replyThree.Id);
 		var sentTimes = thread.Select(m => m.SentAt).ToList();
 		await Assert.That(sentTimes.SequenceEqual(sentTimes.OrderBy(t => t))).IsTrue();
+
+		var tiedPairIds = thread.Where(m => m.SentAt == replyTwo.SentAt).Select(m => m.Id).ToList();
+		var expectedTiedOrder = tiedPairIds.OrderBy(id => id).ToList();
+		await Assert.That(tiedPairIds.SequenceEqual(expectedTiedOrder)).IsTrue();
 
 		var rootDto = thread.Single(m => m.Id == root.Id);
 		await Assert.That(rootDto.InReplyToId).IsNull();
@@ -323,6 +344,8 @@ public sealed class MessagesTests(ApiFactory factory)
 		await Assert.That(replyOneDto.InReplyToId).IsEqualTo(root.Id);
 		var replyTwoDto = thread.Single(m => m.Id == replyTwo.Id);
 		await Assert.That(replyTwoDto.InReplyToId).IsEqualTo(root.Id);
+		var replyThreeDto = thread.Single(m => m.Id == replyThree.Id);
+		await Assert.That(replyThreeDto.InReplyToId).IsEqualTo(root.Id);
 	}
 
 	// ── Reply authorization guards (POST /api/v1/messages with InReplyToId) ────────
@@ -371,6 +394,38 @@ public sealed class MessagesTests(ApiFactory factory)
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
 	}
+
+	[Test]
+	public async Task SendMessage_ValidReply_PersistsInReplyToId()
+	{
+		var sender = await CreateParentAsync("msg-reply-valid-sender", name: "Nanna Afsender", shareContactInfo: true);
+		var recipient = await CreateParentAsync("msg-reply-valid-recipient", name: "Oscar Modtager", shareContactInfo: true);
+
+		var original = await CreateMessageAsync(sender.Id, RecipientType.Parent, recipient.Id, RecipientType.Parent);
+
+		var request = new MessagesController.SendMessageRequest(
+			sender.Id, RecipientType.Parent, "Re: Test emne", "Gyldigt svar", original.Id);
+
+		using var client = CreateParentClient("msg-reply-valid-recipient");
+		var response = await client.PostAsJsonAsync("/api/v1/messages", request, JsonOpts);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+		var created = await response.Content.ReadFromJsonAsync<CreatedMessageDto>(JsonOpts);
+		await Assert.That(created).IsNotNull();
+
+		using var scope = _factory.Services.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var reply = await db.Messages.AsNoTracking().IgnoreQueryFilters().SingleAsync(m => m.Id == created!.Id);
+		await Assert.That(reply.InReplyToId).IsEqualTo(original.Id);
+
+		using var threadClient = CreateParentClient("msg-reply-valid-recipient");
+		var threadResponse = await threadClient.GetAsync($"/api/v1/messages/{original.Id}/thread");
+		var thread = await threadResponse.Content.ReadFromJsonAsync<List<MessagesController.ThreadMessageDto>>(JsonOpts);
+		var replyDto = thread!.Single(m => m.Id == reply.Id);
+		await Assert.That(replyDto.InReplyToId).IsEqualTo(original.Id);
+	}
+
+	private sealed record CreatedMessageDto(Guid Id);
 
 	[Test]
 	public async Task SendMessage_ReplyByNonParticipant_Returns403()

@@ -328,18 +328,21 @@ public sealed class MessagesController(
 			current = parent;
 		}
 
+		var tenantId = tenantContext.TenantId;
 		var chain = await db.Messages
 			.FromSqlInterpolated($"""
 				WITH RECURSIVE thread AS (
-					SELECT * FROM "Messages" WHERE "Id" = {rootId}
+					SELECT * FROM "Messages" WHERE "Id" = {rootId} AND "TenantId" = {tenantId}
 					UNION ALL
 					SELECT m.* FROM "Messages" m
 					INNER JOIN thread t ON m."InReplyToId" = t."Id"
+					WHERE m."TenantId" = {tenantId}
 				)
 				SELECT * FROM thread
 				""")
 			.AsNoTracking()
 			.OrderBy(m => m.SentAt)
+			.ThenBy(m => m.Id)
 			.ToListAsync(cancellationToken);
 
 		var parentIds = chain.Where(m => m.SenderType == RecipientType.Parent).Select(m => m.SenderId)
