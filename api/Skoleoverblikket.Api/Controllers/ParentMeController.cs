@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Storage;
 using System.ComponentModel.DataAnnotations;
 
@@ -130,13 +131,23 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 		var trimmedName = req.Name.Trim();
 		if (trimmedName.Length == 0)
 		{
-			return BadRequest();
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["name"] = ["Navn er påkrævet."] } });
+		}
+
+		if (!ContactValidation.TryNormalizePhone(req.Phone, out var normalizedPhone))
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["phone"] = ["Telefonnummer skal være 8 cifre, evt. med +45 foran."] } });
+		}
+
+		if (!ContactValidation.TryNormalizePostalCode(req.PostalCode, out var normalizedPostalCode))
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["postalCode"] = ["Postnummer skal være 4 cifre."] } });
 		}
 
 		parent.Name = trimmedName;
-		parent.Phone = req.Phone;
+		parent.Phone = normalizedPhone;
 		parent.Address = req.Address;
-		parent.PostalCode = req.PostalCode;
+		parent.PostalCode = normalizedPostalCode;
 		parent.City = req.City;
 		parent.ShareContactInfo = req.ShareContactInfo;
 

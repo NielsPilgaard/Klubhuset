@@ -325,11 +325,22 @@ export default function InvitationAcceptPage() {
             </p>
           </div>
 
-          <div className="px-8 py-6 space-y-4">
+          <form
+            className="px-8 py-6 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              submitContactInfo()
+            }}
+          >
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Telefon
+              </label>
               <input
+                id="phone"
+                name="tel"
                 type="tel"
+                autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Valgfrit"
@@ -337,9 +348,14 @@ export default function InvitationAcceptPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Adresse
+              </label>
               <input
+                id="address"
+                name="street-address"
                 type="text"
+                autoComplete="street-address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Valgfrit"
@@ -348,9 +364,14 @@ export default function InvitationAcceptPage() {
             </div>
             <div className="flex gap-3">
               <div className="w-28">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                  Postnummer
+                </label>
                 <input
+                  id="postalCode"
+                  name="postal-code"
                   type="text"
+                  autoComplete="postal-code"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   placeholder="Valgfrit"
@@ -359,9 +380,14 @@ export default function InvitationAcceptPage() {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                  By
+                </label>
                 <input
+                  id="city"
+                  name="address-level2"
                   type="text"
+                  autoComplete="address-level2"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Valgfrit"
@@ -371,6 +397,8 @@ export default function InvitationAcceptPage() {
             </div>
             <label className="flex items-start gap-3 cursor-pointer">
               <input
+                id="shareContactInfo"
+                name="shareContactInfo"
                 type="checkbox"
                 checked={shareContactInfo}
                 onChange={(e) => setShareContactInfo(e.target.checked)}
@@ -383,13 +411,14 @@ export default function InvitationAcceptPage() {
 
             {contactError && <p className="text-sm text-red-600">{contactError}</p>}
             <button
-              onClick={submitContactInfo}
+              type="submit"
               disabled={submittingContact}
               className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
             >
               {submittingContact ? 'Gemmer…' : 'Gem og fortsæt'}
             </button>
             <button
+              type="button"
               onClick={() => {
                 window.location.href = '/foraeldrevisning/skema'
               }}
@@ -397,7 +426,7 @@ export default function InvitationAcceptPage() {
             >
               Spring over
             </button>
-          </div>
+          </form>
         </div>
       </div>
     )

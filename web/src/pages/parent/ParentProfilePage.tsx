@@ -6,6 +6,13 @@ import {
   patchApiV1ParentsMeContactMutation,
 } from '../../api/generated/@tanstack/react-query.gen'
 import { usePageTitle } from '../../hooks/usePageTitle'
+import {
+  isValidPhone,
+  isValidPostalCode,
+  normalizePhone,
+  PHONE_ERROR_MESSAGE,
+  POSTAL_CODE_ERROR_MESSAGE,
+} from '../../lib/validation'
 
 export default function ParentProfilePage() {
   usePageTitle('Min profil')
@@ -53,13 +60,16 @@ export default function ParentProfilePage() {
     },
   })
 
+  const phoneValid = isValidPhone(phone)
+  const postalCodeValid = isValidPostalCode(postalCode)
+
   function handleSave() {
-    if (!name.trim() || updateMutation.isPending) return
+    if (!name.trim() || !phoneValid || !postalCodeValid || updateMutation.isPending) return
     setSaved(false)
     updateMutation.mutate({
       body: {
         name: name.trim(),
-        phone: phone.trim() || null,
+        phone: phone.trim() ? normalizePhone(phone.trim()) : null,
         address: address.trim() || null,
         postalCode: postalCode.trim() || null,
         city: city.trim() || null,
@@ -117,9 +127,13 @@ export default function ParentProfilePage() {
             id="parent-profile-phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="Telefonnummer"
+            type="tel"
+            placeholder="+45 12 34 56 78"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
+          {phone.trim() !== '' && !phoneValid && (
+            <p className="text-xs text-red-600 mt-1">{PHONE_ERROR_MESSAGE}</p>
+          )}
         </div>
         <div>
           <label
