@@ -52,6 +52,10 @@ export type BillingControllerSubscriptionDto = {
     activeModules?: Array<string>;
 };
 
+export type BillingControllerSwitchIntervalRequest = {
+    interval: BillingInterval;
+};
+
 export type BillingInterval = 'Monthly' | 'Yearly';
 
 export type BoardFilesControllerBoardFileDto = {
@@ -866,6 +870,27 @@ export type StaaMaalMedControllerCoverageResponseDto = {
     classes?: Array<StaaMaalMedControllerClassCoverageDto>;
 };
 
+export type StaaMaalMedControllerCreateSnapshotRequest = {
+    reason?: string | null;
+};
+
+export type StaaMaalMedControllerSnapshotDetailDto = {
+    id: string;
+    schoolYear: string;
+    createdAt: string;
+    createdByStaffName: string;
+    reason?: string | null;
+    data?: StaaMaalMedControllerCoverageResponseDto;
+};
+
+export type StaaMaalMedControllerSnapshotSummaryDto = {
+    id: string;
+    schoolYear: string;
+    createdAt: string;
+    createdByStaffName: string;
+    reason?: string | null;
+};
+
 export type StaaMaalMedControllerSubjectCoverageDto = {
     category: string;
     weeklyHours: number;
@@ -1425,6 +1450,20 @@ export type PostApiV1BillingCheckoutResponses = {
 };
 
 export type PostApiV1BillingCheckoutResponse = PostApiV1BillingCheckoutResponses[keyof PostApiV1BillingCheckoutResponses];
+
+export type PostApiV1BillingIntervalData = {
+    body?: BillingControllerSwitchIntervalRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/billing/interval';
+};
+
+export type PostApiV1BillingIntervalResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type PostApiV1BillingPortalData = {
     body?: never;
@@ -3870,6 +3909,72 @@ export type GetApiV1StaaMaalMedCoverageResponses = {
 };
 
 export type GetApiV1StaaMaalMedCoverageResponse = GetApiV1StaaMaalMedCoverageResponses[keyof GetApiV1StaaMaalMedCoverageResponses];
+
+export type GetApiV1StaaMaalMedSnapshotsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots';
+};
+
+export type GetApiV1StaaMaalMedSnapshotsResponses = {
+    /**
+     * OK
+     */
+    200: Array<StaaMaalMedControllerSnapshotSummaryDto>;
+};
+
+export type GetApiV1StaaMaalMedSnapshotsResponse = GetApiV1StaaMaalMedSnapshotsResponses[keyof GetApiV1StaaMaalMedSnapshotsResponses];
+
+export type PostApiV1StaaMaalMedSnapshotsData = {
+    body?: StaaMaalMedControllerCreateSnapshotRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots';
+};
+
+export type PostApiV1StaaMaalMedSnapshotsResponses = {
+    /**
+     * OK
+     */
+    200: StaaMaalMedControllerSnapshotSummaryDto;
+};
+
+export type PostApiV1StaaMaalMedSnapshotsResponse = PostApiV1StaaMaalMedSnapshotsResponses[keyof PostApiV1StaaMaalMedSnapshotsResponses];
+
+export type DeleteApiV1StaaMaalMedSnapshotsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots/{id}';
+};
+
+export type DeleteApiV1StaaMaalMedSnapshotsByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1StaaMaalMedSnapshotsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots/{id}';
+};
+
+export type GetApiV1StaaMaalMedSnapshotsByIdResponses = {
+    /**
+     * OK
+     */
+    200: StaaMaalMedControllerSnapshotDetailDto;
+};
+
+export type GetApiV1StaaMaalMedSnapshotsByIdResponse = GetApiV1StaaMaalMedSnapshotsByIdResponses[keyof GetApiV1StaaMaalMedSnapshotsByIdResponses];
 
 export type GetApiV1ModulesData = {
     body?: never;
