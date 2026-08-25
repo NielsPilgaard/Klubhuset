@@ -6,15 +6,19 @@ import CookieBanner from '../components/CookieBanner'
 import SeoMeta from '../components/SeoMeta'
 import type { BillingInterval } from '../api/client'
 
-const MONTHLY_PRICE_KR = 499
-const YEARLY_PRICE_KR = 4999
+// Keep in sync with web/src/pages/BillingPage.tsx — same prices, must match Stripe Price IDs in StripeOptions.
+const MONTHLY_PRICE_KR = 300
+const YEARLY_PRICE_KR = 3000
 const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
 const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
 
-const PARENT_MODULE_MONTHLY_KR = 499
-const PARENT_MODULE_YEARLY_KR = 4999
-const BOARD_MODULE_MONTHLY_KR = 199
-const BOARD_MODULE_YEARLY_KR = 1999
+const PARENT_MODULE_MONTHLY_KR = 300
+const PARENT_MODULE_YEARLY_KR = 3000
+const BOARD_MODULE_MONTHLY_KR = 300
+const BOARD_MODULE_YEARLY_KR = 3000
+
+const ALL_MODULES_YEARLY_TOTAL_KR =
+  YEARLY_PRICE_KR + PARENT_MODULE_YEARLY_KR + BOARD_MODULE_YEARLY_KR
 
 const SOFTWARE_APPLICATION_JSON_LD = {
   '@context': 'https://schema.org',
@@ -230,9 +234,9 @@ export default function LandingPage() {
                   <line x1="10" y1="14" x2="14" y2="14" />
                 </svg>
               }
-              title="Bestyrelsesmodul"
+              title="Bestyrelse & Tilsyn"
               description={
-                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over "stå mål med"-dækning.'
+                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker og dokumentdeling. Inkluderer "stå mål med"-dækning, undervisningsplaner og offentliggørelse af §1a-tilsynsgrundlag.'
               }
             />
             <FeatureCard
@@ -361,7 +365,10 @@ export default function LandingPage() {
       <section id="priser" className="py-20 px-6 bg-brand-900 text-white">
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold mb-3">Enkel og gennemsigtig pris</h2>
-          <p className="text-brand-200 mb-12">Enkel pris — udvid efter behov.</p>
+          <p className="text-brand-200 mb-2">300 kr/md pr. modul — udvid efter behov.</p>
+          <p className="text-brand-300 text-sm mb-12">
+            Vælg alle tre årligt og betal {ALL_MODULES_YEARLY_TOTAL_KR} kr/år i alt
+          </p>
           {/* Layout: Basis left, modules stacked right */}
           <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto">
             {/* Basis card */}
@@ -403,16 +410,16 @@ export default function LandingPage() {
                     ))}
                   </div>
                 </div>
-                {isYearly && (
-                  <div className="mt-3 flex items-center justify-center gap-2">
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  {isYearly && (
                     <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
                       Spar {YEARLY_SAVINGS_KR} kr/år
                     </span>
-                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
-                      Intropris
-                    </span>
-                  </div>
-                )}
+                  )}
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                    Intropris
+                  </span>
+                </div>
               </div>
               <div className="px-8 py-6 space-y-3 text-left">
                 {[
@@ -481,11 +488,15 @@ export default function LandingPage() {
                 ]}
               />
               <ModuleCard
-                title="Bestyrelsesmodul"
+                title="Bestyrelse & Tilsyn"
                 monthlyPrice={BOARD_MODULE_MONTHLY_KR}
                 yearlyPrice={BOARD_MODULE_YEARLY_KR}
                 isYearly={isYearly}
-                features={['Filhåndtering (100 GB)', 'Overblik over "stå mål med"-dækning']}
+                features={[
+                  'Filhåndtering (100 GB)',
+                  'Overblik over "stå mål med"-dækning',
+                  'Offentliggørelse af §1a-tilsynsgrundlag',
+                ]}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">
                 Kræver Basis · Samles på én faktura
@@ -527,7 +538,7 @@ export default function LandingPage() {
               </svg>
             }
             title="Gennemsigtige priser"
-            description="499 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
+            description="300 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
           />
           <TrustItem
             icon={
@@ -634,6 +645,7 @@ function ModuleCard({
   features: string[]
 }) {
   const effectiveMonthly = isYearly ? Math.round(yearlyPrice / 12) : monthlyPrice
+  const yearlySavings = monthlyPrice * 12 - yearlyPrice
   return (
     <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
       <div className="px-6 pt-6 pb-4 bg-brand-50 border-b border-brand-100 text-center">
@@ -648,6 +660,16 @@ function ModuleCard({
         <p className="text-sm text-gray-500 mt-1">
           {isYearly ? `${yearlyPrice} kr/år · inkl. moms · pr. skole` : 'inkl. moms · pr. skole'}
         </p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          {isYearly && (
+            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+              Spar {yearlySavings} kr/år
+            </span>
+          )}
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+            Intropris
+          </span>
+        </div>
       </div>
       <div className="px-6 py-4 space-y-2">
         {features.map((f) => (
@@ -726,8 +748,7 @@ function RefundTooltip() {
         <path d="M7 11V7a5 5 0 0 1 9.9-1" />
       </svg>
       <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-64 rounded-lg bg-gray-900 px-3 py-2 text-xs text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-lg text-left">
-        Abonnementet kan opsiges til enhver tid. Der ydes ikke refusion for den igangværende måneds
-        betaling.
+        Abonnementet kan opsiges til enhver tid. betaling.
       </div>
     </div>
   )
