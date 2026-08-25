@@ -138,7 +138,78 @@ public sealed class SubscriptionService(
 	}
 
 	/// <summary>
-	/// Creates a Stripe billing portal session for the given school.
+	/// Switches a school's subscription (base plan + all active module items) to the target
+	/// billing interval in one Stripe update call. Replaces reliance on Stripe Portal's native
+	/// plan-switch UI, which only targets a single subscription item — with our base+module-items
+	/// model that would silently leave module items on the old interval (verified in task 42).
+	/// </summary>
+	public async Task SwitchIntervalAsync(Guid schoolId, BillingInterval targetInterval, CancellationToken cancellationToken = default)
+	{
+		var sub = await db.Subscriptions
+			.Include(s => s.ActiveModules)
+			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
+			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+
+		if (sub.Status != SubscriptionStatus.Active)
+		{
+			throw new InvalidOperationException("School does not have an active paid subscription.");
+		}
+
+		if (sub.StripeSubscriptionId is null)
+		{
+			throw new InvalidOperationException("School does not have an active Stripe subscription.");
+		}
+
+		if (sub.Interval == targetInterval)
+		{
+			return;
+		}
+
+		var targetBasePriceId = targetInterval switch
+		{
+			BillingInterval.Monthly => stripeOptions.Value.BasePriceIdMonthly,
+			BillingInterval.Yearly => stripeOptions.Value.BasePriceIdYearly,
+			_ => throw new ArgumentOutOfRangeException(nameof(targetInterval), targetInterval, "Unsupported billing interval."),
+		};
+
+		var stripeSub = await stripeSubscriptionService.GetAsync(sub.StripeSubscriptionId, cancellationToken: cancellationToken);
+		var baseItem = stripeSub.Items?.Data?.FirstOrDefault(i =>
+			i.Price?.Id == stripeOptions.Value.BasePriceIdMonthly || i.Price?.Id == stripeOptions.Value.BasePriceIdYearly)
+			?? throw new InvalidOperationException($"No base-plan item found on Stripe subscription {sub.StripeSubscriptionId}.");
+
+		var items = new List<SubscriptionItemOptions>
+		{
+			new() { Id = baseItem.Id, Price = targetBasePriceId },
+		};
+
+		foreach (var moduleItem in sub.ActiveModules.Where(m => !m.IsAdminOverride))
+		{
+			if (!stripeOptions.Value.ModulePriceIds.TryGetValue(moduleItem.Module.ToString(), out var intervalPrices)
+				|| !intervalPrices.TryGetValue(targetInterval.ToString(), out var modulePriceId)
+				|| string.IsNullOrEmpty(modulePriceId))
+			{
+				throw new InvalidOperationException($"No Stripe price configured for module {moduleItem.Module} ({targetInterval}).");
+			}
+
+			items.Add(new SubscriptionItemOptions { Id = moduleItem.StripeSubscriptionItemId, Price = modulePriceId });
+		}
+
+		var updated = await stripeSubscriptionService.UpdateAsync(sub.StripeSubscriptionId, new SubscriptionUpdateOptions
+		{
+			Items = items,
+			ProrationBehavior = "none",
+		}, cancellationToken: cancellationToken);
+
+		ApplyIntervalFromBasePlan(sub, updated);
+		sub.UpdatedAt = DateTimeOffset.UtcNow;
+		await db.SaveChangesAsync(cancellationToken);
+	}
+
+	/// <summary>
+	/// Creates a Stripe billing portal session for the given school. Plan/interval switching
+	/// must stay disabled on the Portal configuration (Dashboard → Settings → Billing → Customer
+	/// portal) — see SwitchIntervalAsync for why, and use that endpoint for interval changes
+	/// instead. Portal here is for payment method updates and cancellation only.
 	/// </summary>
 	public async Task<string> CreateBillingPortalSessionAsync(
 		Guid schoolId,

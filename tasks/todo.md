@@ -14,3 +14,11 @@
    - Parent profile page (foraeldrevisning/profil): edit Name/Phone/Address/PostalCode/City/ShareContactInfo, save succeeds.
    - GET /parents/me returns new fields after save, persists on refresh.
    - Admin EditContactModal for parents still works unchanged.
+10. Verify task 42 output (billing interval switch)
+    - Active sub, monthly, no modules: click "Skift til årlig" on /abonnement → 204, sub card flips to yearly, price updates.
+    - Active sub, monthly, ParentModule + BoardModule active: switch to yearly → both module items also billed yearly afterward (check Stripe dashboard test-mode sub, not just DB Interval).
+    - Switch back yearly → monthly works same way.
+    - Switching while already on target interval: button still works, no error, no duplicate Stripe call side effects.
+    - Trialing school: no switch button shown (button only under active-subscription card).
+    - "Administrer abonnement" (Portal) still opens and still does NOT offer a plan-switch option (Portal config has it disabled — confirm it stays that way, don't re-enable in Dashboard).
+    - Non-admin user cannot reach the switch action (403 from API if attempted directly).

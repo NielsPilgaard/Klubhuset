@@ -377,4 +377,78 @@ public sealed class BillingTests(ApiFactory factory)
 		var updatedSub = await verifyDb.Subscriptions.FirstAsync(s => s.Id == sub.Id);
 		await Assert.That(updatedSub.Interval).IsEqualTo(BillingInterval.Monthly);
 	}
+
+	// ── API-driven interval switch (task 42) ─────────────────────────────────────
+	//
+	// Portal's native plan-switch only targets a single subscription item and was found
+	// (task 42 investigation, Stripe test mode) to silently leave module items on the old
+	// interval when a base+module-items subscription switches via Portal. SwitchIntervalAsync
+	// replaces that: it updates the base item and every active module item to the target
+	// interval's Price in one Stripe call. Portal's subscription_update feature must stay
+	// disabled in the Dashboard config — see CreateBillingPortalSessionAsync.
+	//
+	// stripe-mock returns fixture data for any subscription id regardless of the requested
+	// Price (same limitation as AddModule_YearlySubscription_UsesYearlyModulePrice above), so
+	// the actual item-price-update call to Stripe can't be observed end-to-end here. These
+	// tests cover the reachable business-rule branches instead: same-interval no-op, and the
+	// guard rails (inactive subscription, no Stripe subscription).
+
+	[Test]
+	public async Task SwitchInterval_SameAsCurrent_ReturnsNoContentWithoutCallingStripe()
+	{
+		await SeedSubscriptionAsync(
+			SubscriptionStatus.Active,
+			trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
+			stripeSubscriptionId: "sub_test_switch_noop");
+
+		var response = await _adminClient.PostAsJsonAsync(
+			"/api/v1/billing/interval",
+			new BillingController.SwitchIntervalRequest(BillingInterval.Monthly));
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+	}
+
+	[Test]
+	public async Task SwitchInterval_TrialingSubscription_Returns400()
+	{
+		await SeedSubscriptionAsync(
+			SubscriptionStatus.Trialing,
+			trialEnd: DateTimeOffset.UtcNow.AddDays(7));
+
+		var response = await _adminClient.PostAsJsonAsync(
+			"/api/v1/billing/interval",
+			new BillingController.SwitchIntervalRequest(BillingInterval.Yearly));
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task SwitchInterval_NoStripeSubscription_Returns400()
+	{
+		await SeedSubscriptionAsync(
+			SubscriptionStatus.Active,
+			trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
+			stripeSubscriptionId: null);
+
+		var response = await _adminClient.PostAsJsonAsync(
+			"/api/v1/billing/interval",
+			new BillingController.SwitchIntervalRequest(BillingInterval.Yearly));
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task SwitchInterval_NonAdmin_Returns403()
+	{
+		using var client = _factory.CreateClient();
+		client.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+		client.DefaultRequestHeaders.Add("X-Test-Roles", "user");
+		client.DefaultRequestHeaders.Add("X-Test-Subject", "nonadmin-switch");
+
+		var response = await client.PostAsJsonAsync(
+			"/api/v1/billing/interval",
+			new BillingController.SwitchIntervalRequest(BillingInterval.Yearly));
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+	}
 }

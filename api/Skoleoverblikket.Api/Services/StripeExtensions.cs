@@ -17,7 +17,7 @@ public static class StripeExtensions
 		// point at a stripe-mock container instead of the real Stripe API. Individual *Service
 		// classes below resolve this client via DI rather than hitting Stripe's global
 		// StripeConfiguration.ApiKey.
-		services.AddSingleton(sp =>
+		services.AddSingleton<IStripeClient>(sp =>
 		{
 			var options = sp.GetRequiredService<IOptions<StripeOptions>>().Value;
 			return string.IsNullOrEmpty(options.ApiBase)

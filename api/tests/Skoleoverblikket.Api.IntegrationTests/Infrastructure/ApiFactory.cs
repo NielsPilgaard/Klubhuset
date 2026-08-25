@@ -1,3 +1,4 @@
+using System.Net;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -40,7 +41,10 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>, IAsyncIniti
 
 	private readonly IContainer _stripeMock = new ContainerBuilder("stripe/stripe-mock:latest")
 		.WithPortBinding(12111, true)
-		.WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(12111))
+		.WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r
+			.ForPort(12111)
+			.ForPath("/v1/charges")
+			.ForStatusCode(HttpStatusCode.Unauthorized)))
 		.Build();
 
 	public async Task InitializeAsync()
@@ -107,8 +111,8 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>, IAsyncIniti
 
 			// Point the shared StripeClient at stripe-mock instead of the real Stripe API
 			var stripeMockUrl = $"http://{_stripeMock.Hostname}:{_stripeMock.GetMappedPublicPort(12111)}";
-			services.RemoveAll<StripeClient>();
-			services.AddSingleton(_ => new StripeClient(
+			services.RemoveAll<IStripeClient>();
+			services.AddSingleton<IStripeClient>(_ => new StripeClient(
 				apiKey: "sk_test_stub",
 				apiBase: stripeMockUrl));
 		});

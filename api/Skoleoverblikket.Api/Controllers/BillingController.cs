@@ -115,6 +115,36 @@ public sealed class BillingController(
 		}
 	}
 
+	public record SwitchIntervalRequest(BillingInterval Interval);
+
+	[HttpPost("interval")]
+	public async Task<IActionResult> SwitchInterval([FromBody] SwitchIntervalRequest request, CancellationToken cancellationToken)
+	{
+		if (!Enum.IsDefined(request.Interval))
+		{
+			return Problem(title: "Ugyldigt betalingsinterval", detail: "Interval skal være Monthly eller Yearly.", statusCode: StatusCodes.Status400BadRequest);
+		}
+
+		try
+		{
+			await subscriptionService.SwitchIntervalAsync(tenantContext.TenantId, request.Interval, cancellationToken);
+			return NoContent();
+		}
+		catch (InvalidOperationException ex)
+		{
+			return Problem(title: "Kunne ikke skifte betalingsinterval", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+		}
+		catch (Stripe.StripeException ex)
+		{
+			logger.LogError(ex, "SwitchInterval Stripe error: {Code} {Message}", ex.StripeError?.Code, ex.Message);
+			return Problem(
+				title: "Betalingsgateway fejl",
+				detail: "Kunne ikke skifte betalingsinterval. Prøv igen eller kontakt support.",
+				statusCode: StatusCodes.Status502BadGateway,
+				extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
+		}
+	}
+
 	[HttpPost("portal")]
 	public async Task<ActionResult<CheckoutResponse>> CreatePortal(CancellationToken cancellationToken)
 	{

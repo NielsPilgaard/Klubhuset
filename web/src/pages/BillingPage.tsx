@@ -7,6 +7,7 @@ import {
   postApiV1BillingCheckoutMutation,
   postApiV1BillingPortalMutation,
   postApiV1BillingModulesMutation,
+  postApiV1BillingIntervalMutation,
   deleteApiV1BillingModulesByModuleMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { SubscriptionDto, BillingInterval } from '../api/client'
@@ -103,6 +104,19 @@ export default function BillingPage() {
     },
   })
 
+  const switchIntervalMutation = useMutation({
+    ...postApiV1BillingIntervalMutation(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(getApiV1BillingSubscriptionOptions())
+    },
+    onError: (error) => {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Kunne ikke skifte betalingsinterval'
+      console.error('Switch interval error:', error)
+      alert(errorMessage)
+    },
+  })
+
   const addModuleMutation = useMutation({
     ...postApiV1BillingModulesMutation(),
     onSuccess: () => {
@@ -164,7 +178,9 @@ export default function BillingPage() {
           selectedInterval={selectedInterval}
           onCheckout={() => checkoutMutation.mutate({ body: { interval: selectedInterval } })}
           onPortal={() => portalMutation.mutate({})}
+          onSwitchInterval={(interval) => switchIntervalMutation.mutate({ body: { interval } })}
           isRedirecting={isRedirecting}
+          isSwitchingInterval={switchIntervalMutation.isPending}
         />
       ) : null}
 
@@ -228,13 +244,17 @@ function StatusCard({
   selectedInterval,
   onCheckout,
   onPortal,
+  onSwitchInterval,
   isRedirecting,
+  isSwitchingInterval,
 }: {
   data: SubscriptionDto
   selectedInterval: BillingInterval
   onCheckout: () => void
   onPortal: () => void
+  onSwitchInterval: (interval: BillingInterval) => void
   isRedirecting: boolean
+  isSwitchingInterval: boolean
 }) {
   if (data.isTrialing) {
     const trialCadenceLabel =
@@ -303,15 +323,29 @@ function StatusCard({
                 Næste betaling den {formatDate(data.currentPeriodEnd)}
               </p>
             )}
-            <button
-              onClick={onPortal}
-              disabled={isRedirecting}
-              className="mt-4 px-4 py-2 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isRedirecting ? 'Vent...' : 'Administrer abonnement'}
-            </button>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                onClick={onPortal}
+                disabled={isRedirecting}
+                className="px-4 py-2 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isRedirecting ? 'Vent...' : 'Administrer abonnement'}
+              </button>
+              <button
+                onClick={() => onSwitchInterval(data.interval === 'Yearly' ? 'Monthly' : 'Yearly')}
+                disabled={isSwitchingInterval}
+                className="px-4 py-2 text-sm font-medium border border-green-300 text-green-800 rounded-lg hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSwitchingInterval
+                  ? 'Skifter...'
+                  : data.interval === 'Yearly'
+                    ? 'Skift til månedlig'
+                    : 'Skift til årlig'}
+              </button>
+            </div>
             <p className="mt-2 text-xs text-green-600">
-              Du kan opsige eller ændre dit abonnement via administreringsportalen.
+              Du kan opsige abonnementet via administreringsportalen. Skift af betalingsinterval
+              sker her — modultilkøb følger automatisk med.
             </p>
           </div>
         </div>
