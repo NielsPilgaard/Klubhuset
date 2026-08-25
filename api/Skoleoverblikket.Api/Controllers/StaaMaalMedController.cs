@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -5,20 +6,119 @@ using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/staa-maal-med")]
 [Authorize(Roles = $"{Roles.Admin},{Roles.Board}")]
-public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable) : ControllerBase
+public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable, ITenantContext tenant) : ControllerBase
 {
 	public record SubjectCoverageDto(string Category, double WeeklyHours, double VejledendeWeeklyHours, double AnnualHours, double VejledendeAnnualHours, string Status);
 	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects, List<string> UnexpectedGradeCategories);
 	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
+	public record CreateSnapshotRequest(string? Reason);
+	public record SnapshotSummaryDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason);
+	public record SnapshotDetailDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason, CoverageResponseDto Data);
+
+	private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
 	[HttpGet("coverage")]
 	public async Task<ActionResult<CoverageResponseDto>> GetCoverage(CancellationToken cancellationToken)
+	{
+		var coverage = await ComputeCoverageAsync(cancellationToken);
+		return Ok(coverage);
+	}
+
+	[HttpPost("snapshots")]
+	[Authorize(Roles = Roles.Admin)]
+	public async Task<ActionResult<SnapshotSummaryDto>> CreateSnapshot([FromBody] CreateSnapshotRequest req, CancellationToken cancellationToken)
+	{
+		var subject = User.GetKeycloakSubject();
+		var staff = await db.Staff.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
+		if (staff is null)
+		{
+			return Forbid();
+		}
+
+		var coverage = await ComputeCoverageAsync(cancellationToken);
+
+		var now = DateTime.UtcNow;
+		var schoolYearStart = now.Month >= 8 ? now.Year : now.Year - 1;
+		var schoolYear = $"{schoolYearStart}-{schoolYearStart + 1}";
+
+		var snapshot = new StaaMaalMedSnapshot
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenant.TenantId,
+			SchoolYear = schoolYear,
+			CreatedByStaffId = staff.Id,
+			Reason = req.Reason,
+			DataVersion = 1,
+			Data = JsonSerializer.Serialize(coverage),
+		};
+
+		db.StaaMaalMedSnapshots.Add(snapshot);
+		await db.SaveChangesAsync(cancellationToken);
+
+		return CreatedAtAction(nameof(GetSnapshot), new { id = snapshot.Id },
+			new SnapshotSummaryDto(snapshot.Id, snapshot.SchoolYear, snapshot.CreatedAt, staff.Name, snapshot.Reason));
+	}
+
+	[HttpGet("snapshots")]
+	public async Task<ActionResult<List<SnapshotSummaryDto>>> GetSnapshots(CancellationToken cancellationToken)
+	{
+		var snapshots = await db.StaaMaalMedSnapshots
+			.AsNoTracking()
+			.OrderByDescending(s => s.CreatedAt)
+			.Select(s => new SnapshotSummaryDto(s.Id, s.SchoolYear, s.CreatedAt, s.CreatedByStaff.Name, s.Reason))
+			.ToListAsync(cancellationToken);
+
+		return Ok(snapshots);
+	}
+
+	[HttpGet("snapshots/{id:guid}")]
+	public async Task<ActionResult<SnapshotDetailDto>> GetSnapshot(Guid id, CancellationToken cancellationToken)
+	{
+		var snapshot = await db.StaaMaalMedSnapshots
+			.AsNoTracking()
+			.Include(s => s.CreatedByStaff)
+			.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+		if (snapshot is null)
+		{
+			return NotFound();
+		}
+
+		if (snapshot.DataVersion != 1)
+		{
+			return Problem($"Unsupported snapshot data version: {snapshot.DataVersion}.", statusCode: StatusCodes.Status500InternalServerError);
+		}
+
+		var data = JsonSerializer.Deserialize<CoverageResponseDto>(snapshot.Data, JsonOptions)
+			?? new CoverageResponseDto([]);
+
+		return Ok(new SnapshotDetailDto(snapshot.Id, snapshot.SchoolYear, snapshot.CreatedAt, snapshot.CreatedByStaff.Name, snapshot.Reason, data));
+	}
+
+	[HttpDelete("snapshots/{id:guid}")]
+	[Authorize(Roles = Roles.Admin)]
+	public async Task<IActionResult> DeleteSnapshot(Guid id, CancellationToken cancellationToken)
+	{
+		var snapshot = await db.StaaMaalMedSnapshots.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+		if (snapshot is null)
+		{
+			return NotFound();
+		}
+
+		db.StaaMaalMedSnapshots.Remove(snapshot);
+		await db.SaveChangesAsync(cancellationToken);
+
+		return NoContent();
+	}
+
+	private async Task<CoverageResponseDto> ComputeCoverageAsync(CancellationToken cancellationToken)
 	{
 		var timetal = timetable.Load();
 
@@ -127,6 +227,6 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 			return g != 0 ? g : string.Compare(a.ClassName, b.ClassName, StringComparison.Ordinal);
 		});
 
-		return Ok(new CoverageResponseDto(classes));
+		return new CoverageResponseDto(classes);
 	}
 }

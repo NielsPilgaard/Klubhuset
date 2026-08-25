@@ -1890,3 +1890,53 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825152626_AddStaaMaalMedSnapshot') THEN
+    CREATE TABLE "StaaMaalMedSnapshots" (
+        "Id" uuid NOT NULL,
+        "TenantId" uuid NOT NULL,
+        "SchoolYear" character varying(20) NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedByStaffId" uuid NOT NULL,
+        "Reason" character varying(500),
+        "DataVersion" integer NOT NULL,
+        "Data" jsonb NOT NULL,
+        CONSTRAINT "PK_StaaMaalMedSnapshots" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_StaaMaalMedSnapshots_Staff_CreatedByStaffId" FOREIGN KEY ("CreatedByStaffId") REFERENCES "Staff" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825152626_AddStaaMaalMedSnapshot') THEN
+    CREATE INDEX "IX_StaaMaalMedSnapshots_CreatedByStaffId" ON "StaaMaalMedSnapshots" ("CreatedByStaffId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825152626_AddStaaMaalMedSnapshot') THEN
+    CREATE INDEX "IX_StaaMaalMedSnapshots_TenantId_CreatedAt" ON "StaaMaalMedSnapshots" ("TenantId", "CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825152626_AddStaaMaalMedSnapshot') THEN
+    CREATE INDEX "IX_StaaMaalMedSnapshots_TenantId_SchoolYear" ON "StaaMaalMedSnapshots" ("TenantId", "SchoolYear");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825152626_AddStaaMaalMedSnapshot') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260825152626_AddStaaMaalMedSnapshot', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+

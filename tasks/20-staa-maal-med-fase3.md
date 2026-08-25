@@ -128,18 +128,26 @@ per `(TenantId, SkoleaarStartYear)`, unique on that pair, written via atomic
 upsert when the admin publishes (or re-publishes) that skoleår — insert if no
 snapshot exists for the year, else replace the existing row's contents in the
 same transaction, so re-publishing can never create a duplicate year-scoped
-snapshot. Each row is a serialized copy of that year's `TeachingPlan`s and
-`CompliancePath` at the moment of publishing, same pattern as the
-coverage-snapshot feature in
+snapshot. Each row holds an explicit, allowlisted public snapshot payload —
+not a raw serialized copy of the `TeachingPlan`/`CompliancePath` records —
+projecting only publication-safe fields (læringsmål, metoder/materialer,
+evalueringsform, chosen sti + supporting docs). Freeform text fields
+(læringsmål, metoder/materialer, evalueringsform, sti documentation) are
+validated/sanitized before persistence; the publish action rejects invalid
+content rather than persisting it. Same pattern as the coverage-snapshot
+feature in
 [40-staa-maal-med-annual-snapshot.md](40-staa-maal-med-annual-snapshot.md).
-The public page serves the snapshot for the current (or most recently
-published) skoleår, never live draft rows. Drafts for the current or next
-skoleår stay fully editable regardless of publish state; publishing/
-re-publishing only ever affects the snapshot for the skoleår being published,
-never other years' snapshots. The anonymous GET resolves slug→TenantId then
-looks up the latest `PublishedComplianceSnapshot` for that tenant — nothing
-else about the auth model changes, and the slug is never itself trusted as
-an authorization token per AGENTS.md.
+The public page serves the snapshot for the current skoleår if one has been
+published; otherwise it serves the latest snapshot with a `SkoleaarStartYear`
+prior to the current skoleår. It never serves a snapshot for a future
+skoleår, even if one exists (e.g. an admin pre-publishing next year's plan
+early). Drafts for the current or next skoleår stay fully editable regardless
+of publish state; publishing/re-publishing only ever affects the snapshot for
+the skoleår being published, never other years' snapshots. The anonymous GET
+resolves slug→TenantId then applies this selection rule against that
+tenant's `PublishedComplianceSnapshot` rows — nothing else about the auth
+model changes, and the slug is never itself trusted as an authorization
+token per AGENTS.md.
 
 Page shows the published snapshot's `TeachingPlan`s grouped by trin, plus
 the snapshotted `CompliancePath`, for the skoleår it was published for. This
