@@ -165,6 +165,9 @@ export default function ParentProfilePage() {
               placeholder="0000"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
+            {postalCode.trim() !== '' && !postalCodeValid && (
+              <p className="text-xs text-red-600 mt-1">{POSTAL_CODE_ERROR_MESSAGE}</p>
+            )}
           </div>
           <div className="flex-1">
             <label
@@ -203,7 +206,7 @@ export default function ParentProfilePage() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={!name.trim() || updateMutation.isPending}
+            disabled={!name.trim() || !phoneValid || !postalCodeValid || updateMutation.isPending}
             className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {updateMutation.isPending ? 'Gemmer...' : 'Gem'}
