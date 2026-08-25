@@ -142,6 +142,16 @@ public sealed class SubscriptionService(
 	/// billing interval in one Stripe update call. Replaces reliance on Stripe Portal's native
 	/// plan-switch UI, which only targets a single subscription item — with our base+module-items
 	/// model that would silently leave module items on the old interval (verified in task 42).
+	///
+	/// Stripe cannot change an item's recurring interval without resetting the billing cycle
+	/// anchor to now (confirmed against the real Stripe test API, see BillingProrationTests.cs —
+	/// the API rejects BillingCycleAnchor="unchanged" for an interval change), so this always
+	/// invoices the customer immediately for the new interval. ProrationBehavior="create_prorations"
+	/// (not "none") makes that immediate invoice fair: it credits the unused time already paid on
+	/// the old plan and only charges the difference — e.g. switching monthly->yearly on day 3 of
+	/// the month charges the yearly price minus a credit for the ~27 unused days on the old monthly
+	/// plan, not the full yearly amount. The renewal date still moves to "now + new interval";
+	/// callers must not assume it's preserved.
 	/// </summary>
 	public async Task SwitchIntervalAsync(Guid schoolId, BillingInterval targetInterval, CancellationToken cancellationToken = default)
 	{
@@ -194,10 +204,15 @@ public sealed class SubscriptionService(
 			items.Add(new SubscriptionItemOptions { Id = moduleItem.StripeSubscriptionItemId, Price = modulePriceId });
 		}
 
+		// create_prorations (not "none"): switching interval always resets the billing cycle to
+		// now (Stripe has no way to change an item's recurring interval and keep the cycle
+		// unchanged), which would otherwise invoice the customer for the full new-interval price
+		// today with no credit for time already paid on the old plan. Prorating credits that
+		// unused time so the immediate invoice only charges the difference.
 		var updated = await stripeSubscriptionService.UpdateAsync(sub.StripeSubscriptionId, new SubscriptionUpdateOptions
 		{
 			Items = items,
-			ProrationBehavior = "none",
+			ProrationBehavior = "create_prorations",
 		}, cancellationToken: cancellationToken);
 
 		ApplyIntervalFromBasePlan(sub, updated);
