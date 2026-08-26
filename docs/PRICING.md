@@ -1,18 +1,26 @@
+---
+title: 'Pricing'
+description: >-
+  Current billing model — Basis flat fee, optional module add-ons, monthly or
+  yearly interval, 14-day trial. Reflects SubscriptionModulesController /
+  Stripe config, not just the original pricing ADR.
+status: 'Living'
+purpose: Canonical reference for current pricing tiers, trial terms, and billing mechanics — the source of truth PRD.md and AGENTS.md summarize from.
+---
+
 # PRICING.md — Skoleoverblikket Pricing
 
 ## Model
 
-Simple flat monthly fee per school. 14-day free trial with full access. Self-serve billing via Stripe Checkout.
+Simple flat monthly-or-yearly fee per school for the Basis plan, plus optional paid modules a school can add on top. 14-day free trial with full Basis access. Self-serve billing via Stripe Checkout — see [docs/adr/stripe-checkout-billing.md](adr/stripe-checkout-billing.md).
 
-Pricing is transparent and listed on the website. No sales calls, no hidden fees, no per-student pricing.
+Pricing is transparent and listed on the website. No sales calls, no hidden fees, no per-student pricing — see [docs/adr/school-based-pricing.md](adr/school-based-pricing.md).
 
 ---
 
-## V1 tier
+## Basis (base plan)
 
-### Basis
-
-**499 kr/month** · All features · 100 GB file storage
+All core features, billed monthly or yearly (interval switch is self-serve via the Stripe billing portal). Exact DKK price is configured in Stripe, not this repo — see [docs/DEPLOYMENT.md](DEPLOYMENT.md) `Stripe__PriceId`.
 
 Included:
 
@@ -26,44 +34,37 @@ Included:
 - Admin dashboard
 - Staff invitation and onboarding
 - Email notifications
+- A storage quota (school-level, size TBD per current Stripe config)
+
+## Modules (optional add-ons)
+
+Additional capabilities are sold as opt-in modules on top of Basis, each billed on the same monthly/yearly interval as the base subscription (switching interval switches the whole subscription, base plan and modules together). Enforced via `SubscriptionModulesController` — a tenant's active modules gate access to the corresponding feature area in the app.
+
+| Module | Unlocks |
+|---|---|
+| Parent module | Parent portal: schema/calendar/ugeplan views, kontaktbog, beskeder, kontakt directory, fraværsregistrering, ferieindmelding — see [AGENTS.md](../AGENTS.md) built-features list |
+
+More modules may be added over time; check `ModulePriceIds` in Stripe config for the current list rather than assuming this table is exhaustive.
 
 ---
-
-## Future tier (not v1)
-
-### Skole+
-
-**499 kr/month** · All Basis features · 1000 GB file storage
-
-Everything in Basis, plus:
-
-- Priority support
-- Custom fields on staff/class records
-- UVM reporting (when available)
-- Extended storage (1000 GB)
-
----
-
-## Tier differentiation philosophy
-
-Tiers are differentiated by **what costs us more to provide** — storage, support burden, advanced reporting — NOT by student count or school size. A school with 80 students and a school with 400 students pay the same for Basis. Per-student pricing is unpredictable and schools dislike it.
 
 ## Trial
 
-- **14-day free trial** with full Basis access
-- No credit card required to start the trial
-- Trial converts to paid via Stripe Checkout at the end of the 14 days
-- Schools that don't convert lose access (read-only grace period TBD)
+- **14-day free trial** with full Basis access.
+- No credit card required to start the trial.
+- Trial converts to paid via Stripe Checkout at the end of the 14 days.
+- Schools that don't convert lose access (read-only grace period TBD).
 
 ## Payment
 
-- Monthly billing via Stripe Checkout
-- Auto-renew
-- Schools manage their subscription (upgrade, downgrade, cancel) via Stripe billing portal
-- All billing is self-serve — no manual invoicing
+- Billing via Stripe Checkout, monthly or yearly interval.
+- Auto-renew.
+- Schools manage their subscription (interval switch, module add/remove, cancel) via the Stripe billing portal.
+- All billing is self-serve — no manual invoicing, no MobilePay. See [docs/adr/stripe-checkout-billing.md](adr/stripe-checkout-billing.md).
 
 ## Notes
 
-- Pricing is in DKK, targeting the Danish market only
-- No free tier — the 14-day trial replaces it
-- Scandinavian expansion may require pricing adjustments (SEK, NOK) in the future
+- Pricing is in DKK, targeting the Danish market only.
+- No free tier — the 14-day trial replaces it.
+- Scandinavian expansion may require pricing adjustments (SEK, NOK) in the future.
+- This doc previously described a hypothetical future "Skole+" flat second tier. That model was superseded by the module-add-on approach actually implemented (`SubscriptionModulesController`) — this doc now reflects that.

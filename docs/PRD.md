@@ -1,3 +1,12 @@
+---
+title: 'PRD'
+description: >-
+  Full product requirements — target segments, core v1 feature scope,
+  competitive positioning, migration paths, and out-of-scope boundaries.
+status: 'Living'
+purpose: Canonical source for what the product is, who it's for, and what it does — the document to read before proposing any new feature.
+---
+
 # PRD.md — Skoleoverblikket Product Requirements
 
 ## Product overview
@@ -167,9 +176,9 @@ Parents log in to view their children's schedule and communicate with school sta
 
 ### Payments and billing
 
-- **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly
+- **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly or yearly
 - **14-day free trial**: full access, no payment required upfront
-- **Single tier (v1)**: 499 kr/month — all features included
+- **Basis plan + optional modules**: see [docs/PRICING.md](PRICING.md) for current tier, module, and pricing detail — do not restate numbers here, they drift
 - Schools are never invoiced manually — everything is self-serve
 
 ---

@@ -1,3 +1,13 @@
+---
+title: 'Authorization Model'
+description: >-
+  JWT + role/ClassPermission authorization: admin vs. staff roles, the
+  superadmin-mode/restricted-mode class-editing logic, tenant isolation, and
+  the endpoint authorization summary.
+status: 'Living'
+purpose: Reference before touching any endpoint's auth — the ClassPermission superadmin/restricted-mode interaction is non-obvious and easy to get wrong.
+---
+
 # Authorization Model
 
 ## Overview

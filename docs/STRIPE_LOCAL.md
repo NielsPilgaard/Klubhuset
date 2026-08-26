@@ -1,3 +1,12 @@
+---
+title: 'Stripe Local Testing'
+description: >-
+  How the local Stripe billing webhook flow works under aspire run, and how
+  to rotate the local test-mode key when it expires.
+status: 'Living'
+purpose: How-to for testing Stripe subscription flows locally without touching production billing.
+---
+
 # STRIPE_LOCAL.md — Testing Stripe subscription logic locally
 
 This document covers how the local Stripe billing flow works when running `aspire run`, and how to rotate the test-mode key when it expires.
@@ -33,20 +42,6 @@ The API itself (`Stripe:SecretKey` in `appsettings.Development.json`) and the `s
 4. The frontend calls `POST /api/v1/billing/checkout` → you are redirected to Stripe Checkout.
 5. Use a [Stripe test card](https://docs.stripe.com/testing#cards): `4242 4242 4242 4242`, any future expiry, any CVC.
 6. Complete payment → Stripe fires `checkout.session.completed` → the `stripe-listen` container forwards it → `StripeWebhookController` processes it → subscription status in DB becomes `Active`. No manual step in between.
-
----
-
-## Triggering individual events manually
-
-Use `/stripe-listen` or `scripts/stripe-listen.ps1 -EventType <event>` to fire a specific event without going through the checkout UI — see the `stripe-listen` skill. Requires the Stripe CLI installed locally (`winget install Stripe.StripeCLI`) and the Aspire stack running.
-
-```bash
-stripe trigger checkout.session.completed
-stripe trigger customer.subscription.updated
-stripe trigger invoice.payment_failed
-stripe trigger invoice.payment_succeeded
-stripe trigger customer.subscription.deleted
-```
 
 ---
 
@@ -110,6 +105,3 @@ See "Rotating the Stripe test key" above.
 
 **Webhook event received but subscription not updated**
 Check that `school_id` is present in the Stripe event metadata. The webhook handler resolves the tenant by looking up `school_id` on the Stripe customer or checkout session. If it is missing, the handler logs a warning and skips the update.
-
-**`stripe: command not found`** (only affects `stripe trigger`, not the automatic listener)
-Install the Stripe CLI: `winget install Stripe.StripeCLI` on Windows or follow [https://docs.stripe.com/stripe-cli#install](https://docs.stripe.com/stripe-cli#install).

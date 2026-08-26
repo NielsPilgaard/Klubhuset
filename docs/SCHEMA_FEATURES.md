@@ -1,3 +1,13 @@
+---
+title: 'Schema Features'
+description: >-
+  Detailed spec of the schema planner — time slot inheritance, the onboarding
+  wizard, entities, conflict detection, printable views, and the
+  admin/teacher/aide permission matrix.
+status: 'Living'
+purpose: Implementation-level reference for the core schema-planner feature; read before changing schema builder behavior.
+---
+
 # Schema features
 
 This document describes the schema planner (skemaplanlægger) feature in detail. See [PRD.md](PRD.md) for context.

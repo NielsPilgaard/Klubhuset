@@ -1,3 +1,13 @@
+---
+title: 'Testing Strategy'
+description: >-
+  Two-layer test strategy — tUnit/Testcontainers API integration tests and
+  Playwright e2e — what belongs in each layer, non-brittle rules, and what's
+  explicitly skipped and why.
+status: 'Living'
+purpose: Reference before writing any test — determines which layer a test belongs in and what patterns keep it from becoming a maintenance burden.
+---
+
 # TESTING.md — Testing strategy
 
 ## Philosophy
