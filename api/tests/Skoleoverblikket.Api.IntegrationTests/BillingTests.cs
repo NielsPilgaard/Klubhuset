@@ -110,6 +110,7 @@ public sealed class BillingTests(ApiFactory factory)
 			  "id": "evt_test_{{Guid.NewGuid():N}}",
 			  "object": "event",
 			  "type": "{{eventType}}",
+			  "request": null,
 			  "data": {
 			    "object": {
 			      "id": "{{subscriptionId}}",
