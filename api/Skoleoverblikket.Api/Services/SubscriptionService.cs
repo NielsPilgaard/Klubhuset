@@ -341,10 +341,12 @@ public sealed class SubscriptionService(
 			await db.SaveChangesAsync(cancellationToken);
 			await lockTransaction.CommitAsync(cancellationToken);
 		}
-		catch (DbUpdateException ex)
+		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			// Compensate: remove the Stripe item so billing matches DB state.
-			logger.LogWarning(ex, "AddModuleAsync: DB save failed after Stripe item {ItemId} created for school {SchoolId}, module {Module}. Removing Stripe item.", item.Id, schoolId, module);
+			// Catches CommitAsync failures too, not just DbUpdateException from SaveChangesAsync —
+			// either leaves the Stripe item created with no matching DB row.
+			logger.LogWarning(ex, "AddModuleAsync: DB save/commit failed after Stripe item {ItemId} created for school {SchoolId}, module {Module}. Removing Stripe item.", item.Id, schoolId, module);
 			try
 			{
 				await subscriptionItemService.DeleteAsync(item.Id, new SubscriptionItemDeleteOptions(), cancellationToken: cancellationToken);

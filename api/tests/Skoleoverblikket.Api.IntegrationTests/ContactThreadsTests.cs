@@ -281,10 +281,14 @@ public sealed class ContactThreadsTests(ApiFactory factory)
     public async Task AddMessage_NotificationDeliveryFails_RequestStillSucceedsWithOneMessage()
     {
         const string parentSubject = "ct-notifyfail-parent";
+        const string staffSubject = "ct-notifyfail-staff";
         var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
             _factory.Services, _tenantId, "7.a");
         var student = await CreateStudentAsync(klass.Id, "Freja Elev");
         await CreateParentAsync(parentSubject, student.Id, "Thomas Forælder");
+        await TestDataBuilder.CreateStaffAsync(
+            _factory.Services, _tenantId,
+            name: "Nanna Lærer", isAdmin: true, keycloakSubject: staffSubject);
 
         using var client = CreateParentClient(parentSubject);
         var createResponse = await client.PostAsJsonAsync("/api/v1/contact-threads", new
@@ -296,10 +300,15 @@ public sealed class ContactThreadsTests(ApiFactory factory)
         var created = await createResponse.Content.ReadFromJsonAsync<CreateThreadResponse>(JsonOpts);
         var threadId = created!.ThreadId;
 
+        // Second message sent by staff so the recipient (the parent, via thread.StudentId's
+        // Parents) is guaranteed to exist without seeding a schema slot or ClassPermission —
+        // that's what actually drives INotificationService.CreateAsync being invoked below.
+        using var staffClient = CreateStaffClient(staffSubject, isAdmin: true);
+
         NoOpNotificationService.ShouldThrow.Value = true;
         try
         {
-            var response = await client.PostAsJsonAsync($"/api/v1/contact-threads/{threadId}/messages", new
+            var response = await staffClient.PostAsJsonAsync($"/api/v1/contact-threads/{threadId}/messages", new
             {
                 body = "Besked hvor notifikation fejler.",
             });

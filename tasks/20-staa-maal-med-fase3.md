@@ -159,7 +159,8 @@ if real tilsynsførende feedback says the web page isn't enough.
 ### 4. Billing / module gating
 
 Folded into `SubscriptionModule.BoardModule`, reframed as a combined
-"Bestyrelse & Tilsyn" governance module — one Stripe price, one enum value.
+"Bestyrelse & Tilsyn" governance module — one Stripe Product with one Price
+per billing interval (Monthly/Yearly), one enum value.
 Board members, board files, and stå-mål-med Fase 3 all gate on the same
 entitlement check. No new `SubscriptionModule` enum value. Rationale:
 bestyrelse and tilsyn are the same buyer persona (school governance/oversight),

@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +11,6 @@ using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.IntegrationTests.Infrastructure;
 using Skoleoverblikket.Api.Models;
 using Stripe;
-using LocalSubscriptionService = Skoleoverblikket.Api.Services.SubscriptionService;
 
 namespace Skoleoverblikket.Api.IntegrationTests;
 
@@ -86,6 +87,61 @@ public sealed class BillingTests(ApiFactory factory)
 			IsAdminOverride = true,
 		});
 		await db.SaveChangesAsync();
+	}
+
+	// Signs a raw JSON payload the same way Stripe signs real webhook deliveries
+	// (t={timestamp},v1={hex hmac-sha256 of "{timestamp}.{payload}"}), so tests exercise
+	// StripeWebhookController's actual EventUtility.ConstructEvent signature verification
+	// instead of calling SubscriptionService.HandleWebhookAsync directly.
+	private static string SignPayload(string payload, string webhookSecret)
+	{
+		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		var signedPayload = $"{timestamp}.{payload}";
+		using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(webhookSecret));
+		var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(signedPayload));
+		var signature = Convert.ToHexStringLower(hash);
+		return $"t={timestamp},v1={signature}";
+	}
+
+	private async Task<HttpResponseMessage> PostWebhookAsync(string eventType, string subscriptionId, string priceId, string recurringInterval)
+	{
+		var payload = $$"""
+			{
+			  "id": "evt_test_{{Guid.NewGuid():N}}",
+			  "object": "event",
+			  "type": "{{eventType}}",
+			  "data": {
+			    "object": {
+			      "id": "{{subscriptionId}}",
+			      "object": "subscription",
+			      "status": "active",
+			      "items": {
+			        "object": "list",
+			        "data": [
+			          {
+			            "id": "si_test_1",
+			            "object": "subscription_item",
+			            "price": {
+			              "id": "{{priceId}}",
+			              "object": "price",
+			              "recurring": { "interval": "{{recurringInterval}}" }
+			            }
+			          }
+			        ]
+			      }
+			    }
+			  }
+			}
+			""";
+
+		using var client = _factory.CreateClient();
+		var signature = SignPayload(payload, "whsec_stub");
+		using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/stripe/webhook")
+		{
+			Content = new StringContent(payload, Encoding.UTF8, "application/json"),
+		};
+		request.Headers.Add("Stripe-Signature", signature);
+		return await client.SendAsync(request);
 	}
 
 	// ── Auth enforcement ──────────────────────────────────────────────────────────
@@ -291,36 +347,10 @@ public sealed class BillingTests(ApiFactory factory)
 			trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
 			stripeSubscriptionId: "sub_test_portal_switch");
 
-		using var scope = _factory.Services.CreateScope();
-		var subscriptionService = scope.ServiceProvider.GetRequiredService<LocalSubscriptionService>();
+		var response = await PostWebhookAsync(
+			EventTypes.CustomerSubscriptionUpdated, "sub_test_portal_switch", "price_stub_yearly", "year");
 
-		var stripeSub = new Stripe.Subscription
-		{
-			Id = "sub_test_portal_switch",
-			Status = "active",
-			Items = new StripeList<SubscriptionItem>
-			{
-				Data =
-				[
-					new SubscriptionItem
-					{
-						Price = new Price
-						{
-							Id = "price_stub_yearly",
-							Recurring = new PriceRecurring { Interval = "year" },
-						},
-					},
-				],
-			},
-		};
-
-		var stripeEvent = new Event
-		{
-			Type = EventTypes.CustomerSubscriptionUpdated,
-			Data = new EventData { Object = stripeSub },
-		};
-
-		await subscriptionService.HandleWebhookAsync(stripeEvent);
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
 		using var verifyScope = _factory.Services.CreateScope();
 		var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -336,41 +366,18 @@ public sealed class BillingTests(ApiFactory factory)
 			trialEnd: DateTimeOffset.UtcNow.AddDays(-7),
 			stripeSubscriptionId: "sub_test_portal_switch_monthly");
 
-		using var scope = _factory.Services.CreateScope();
-		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-		var trackedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
-		trackedSub.Interval = BillingInterval.Yearly;
-		await db.SaveChangesAsync();
-
-		var subscriptionService = scope.ServiceProvider.GetRequiredService<LocalSubscriptionService>();
-
-		var stripeSub = new Stripe.Subscription
+		using (var scope = _factory.Services.CreateScope())
 		{
-			Id = "sub_test_portal_switch_monthly",
-			Status = "active",
-			Items = new StripeList<SubscriptionItem>
-			{
-				Data =
-				[
-					new SubscriptionItem
-					{
-						Price = new Price
-						{
-							Id = "price_stub_monthly",
-							Recurring = new PriceRecurring { Interval = "month" },
-						},
-					},
-				],
-			},
-		};
+			var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+			var trackedSub = await db.Subscriptions.FirstAsync(s => s.Id == sub.Id);
+			trackedSub.Interval = BillingInterval.Yearly;
+			await db.SaveChangesAsync();
+		}
 
-		var stripeEvent = new Event
-		{
-			Type = EventTypes.CustomerSubscriptionUpdated,
-			Data = new EventData { Object = stripeSub },
-		};
+		var response = await PostWebhookAsync(
+			EventTypes.CustomerSubscriptionUpdated, "sub_test_portal_switch_monthly", "price_stub_monthly", "month");
 
-		await subscriptionService.HandleWebhookAsync(stripeEvent);
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
 		using var verifyScope = _factory.Services.CreateScope();
 		var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();

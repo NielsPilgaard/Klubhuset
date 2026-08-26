@@ -22,6 +22,12 @@ function formatDate(iso: string): string {
   return `${d}-${m}-${y}`
 }
 
+function todayIso(): string {
+  const now = new Date()
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
 function StatusBadge({ status }: { status: AbsenceStatus | undefined }) {
   const map: Record<AbsenceStatus, { label: string; className: string }> = {
     Reported: { label: 'Indmeldt', className: 'bg-yellow-100 text-yellow-800' },
@@ -41,7 +47,7 @@ function StatusBadge({ status }: { status: AbsenceStatus | undefined }) {
 export default function ParentFravaerPage() {
   usePageTitle('Fravær')
   const qc = useQueryClient()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayIso()
   const [showForm, setShowForm] = useState(false)
   const [studentId, setStudentId] = useState('')
   const [date, setDate] = useState(today)
@@ -81,6 +87,13 @@ export default function ParentFravaerPage() {
   })
 
   const children: ParentStudentDto[] = meData?.students ?? []
+
+  function handleDateChange(value: string) {
+    setDate(value)
+    if (endDate && endDate < value) {
+      setEndDate(value)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -134,7 +147,7 @@ export default function ParentFravaerPage() {
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Fra dato</label>
-              <DatePicker value={date} onChange={setDate} />
+              <DatePicker value={date} onChange={handleDateChange} />
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">

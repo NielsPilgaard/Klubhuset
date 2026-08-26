@@ -8,7 +8,7 @@ description: >-
   subscription item; behavior with multiple items per subscription is
   unverified. Investigate actual Portal behavior in Stripe test mode and
   either confirm it is safe or implement a fix.
-status: 'Ready'
+status: 'Completed'
 ---
 
 # Verify and fix Stripe Portal interval switching for multi-item subscriptions
