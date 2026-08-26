@@ -40,7 +40,10 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 		[Required] int ParentsCreated,
 		[Required] int ParentsUpdated,
 		[Required] int ParentStudentLinksCreated,
-		[Required] IReadOnlyList<ImportWarning> Warnings);
+		[Required] IReadOnlyList<ImportWarning> Warnings,
+		[Required] IReadOnlyList<UninvitedParentDto> UninvitedParents);
+
+	public record UninvitedParentDto([Required] Guid Id, [Required] string Name, [Required] string Email);
 
 	[HttpPost("students-and-parents")]
 	public async Task<ActionResult<ImportStudentsAndParentsResponse>> ImportStudentsAndParents(
@@ -51,6 +54,7 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 
 		int classesCreated = 0, studentsCreated = 0, studentsSkipped = 0,
 			parentsCreated = 0, parentsUpdated = 0, linksCreated = 0;
+		var touchedParents = new Dictionary<Guid, Parent>();
 
 		// Pre-load existing classes for this tenant
 		var classCache = (await db.Classes
@@ -252,15 +256,22 @@ public sealed class ImportsController(AppDbContext db, ITenantContext tenant) : 
 					parent.Students.Add(student);
 					linksCreated++;
 				}
+
+				touchedParents[parent.Id] = parent;
 			}
 		}
 
 		await db.SaveChangesAsync(cancellationToken);
 
+		var uninvitedParents = touchedParents.Values
+			.Where(p => p.KeycloakSubject is null && !string.IsNullOrWhiteSpace(p.Email))
+			.Select(p => new UninvitedParentDto(p.Id, p.Name, p.Email))
+			.ToList();
+
 		return Ok(new ImportStudentsAndParentsResponse(
 			classesCreated, studentsCreated, studentsSkipped,
 			parentsCreated, parentsUpdated, linksCreated,
-			warnings));
+			warnings, uninvitedParents));
 	}
 
 	public record ImportStaffRow(

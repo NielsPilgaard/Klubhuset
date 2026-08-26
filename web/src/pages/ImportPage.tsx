@@ -4,7 +4,6 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import PasteGrid, { type ColumnDef, type GridRow } from '../components/PasteGrid'
 import {
   getApiV1BoardMembers,
-  getApiV1Parents,
   getApiV1Staff,
   postApiV1ImportsBoardMembers,
   postApiV1ImportsClasses,
@@ -383,20 +382,13 @@ function StudentsTab() {
       const res = await postApiV1ImportsStudentsAndParents({ body: { rows: payload } })
       setResult(res.data!)
 
-      if ((res.data!.parentsCreated ?? 0) > 0 || (res.data!.parentsUpdated ?? 0) > 0) {
-        const importedEmails = new Set(
-          payload
-            .flatMap((r) => [r.parent1?.email, r.parent2?.email])
-            .filter((e): e is string => !!e)
-            .map((e) => e.toLowerCase())
-        )
-        const parentsRes = await getApiV1Parents()
-        const uninvited = (parentsRes.data ?? [])
-          .filter((p) => !p.hasAccount && p.email && importedEmails.has(p.email.toLowerCase()))
-          .map((p) => ({ id: p.id!, name: p.name!, email: p.email! }))
-        if (uninvited.length > 0) {
-          setUninvitedParents(uninvited)
-        }
+      const uninvited = (res.data!.uninvitedParents ?? []).map((p) => ({
+        id: p.id!,
+        name: p.name!,
+        email: p.email!,
+      }))
+      if (uninvited.length > 0) {
+        setUninvitedParents(uninvited)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Der opstod en fejl')

@@ -451,11 +451,18 @@ export type ImportsControllerImportStudentsAndParentsResponse = {
     parentsUpdated: number;
     parentStudentLinksCreated: number;
     warnings?: Array<ImportsControllerImportWarning>;
+    uninvitedParents?: Array<ImportsControllerUninvitedParentDto>;
 };
 
 export type ImportsControllerImportWarning = {
     row: number;
     message: string;
+};
+
+export type ImportsControllerUninvitedParentDto = {
+    id: string;
+    name: string;
+    email: string;
 };
 
 export type KontaktControllerKontaktParentDto = {

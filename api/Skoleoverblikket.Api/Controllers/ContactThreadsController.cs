@@ -15,7 +15,8 @@ namespace Skoleoverblikket.Api.Controllers;
 public sealed class ContactThreadsController(
 	AppDbContext db,
 	ITenantContext tenantContext,
-	INotificationService notificationService) : ControllerBase
+	INotificationService notificationService,
+	ILogger<ContactThreadsController> logger) : ControllerBase
 {
 	public record ContactThreadDto(
 		Guid Id,
@@ -454,7 +455,29 @@ public sealed class ContactThreadsController(
 		return NoContent();
 	}
 
+	// The ContactMessage is already persisted by the time this runs, so a notification/email
+	// failure here must never fail the request or the caller may retry and create a duplicate
+	// ContactMessage. Failures are logged and swallowed instead.
 	private async Task SendNotificationsAsync(
+		Guid threadId,
+		Guid studentId,
+		string studentName,
+		string senderName,
+		SenderType senderType,
+		IReadOnlyList<Guid>? notifyStaffIds,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			await SendNotificationsCoreAsync(threadId, studentId, studentName, senderName, senderType, notifyStaffIds, cancellationToken);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			logger.LogError(ex, "Failed to send notifications for contact message on thread {ThreadId}.", threadId);
+		}
+	}
+
+	private async Task SendNotificationsCoreAsync(
 		Guid threadId,
 		Guid studentId,
 		string studentName,

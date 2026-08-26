@@ -25,7 +25,8 @@ Key decisions from scoping:
   how curriculum actually works and survives årsrul (5.A → 6.A) with zero
   migration since GradeLevel is what rolls.
 - **Publishing**: public URL only (`/s/{slug}/staa-mal-med`), gated by a
-  school-level `IsPublished` bool, default off. No PDF export.
+  year-scoped `PublishedComplianceSnapshot` row per `(TenantId,
+  SkoleaarStartYear)` — no school-level published flag. No PDF export.
 - **Sti mutability**: one `CompliancePath` per skoleår, freely editable until
   published; published requires explicit re-publish to change.
 - **Goals**: freeform text list, no Fælles Mål reference table.
@@ -170,13 +171,13 @@ what's ultimately one purchasing decision.
 - `TeachingPlan` — undervisningsplan tied to `GradeLevel` + `Course` +
   `SkoleaarStartYear` (int)
 - `TeachingGoal` — freeform læringsmål under a plan, ordered text list
-- `CompliancePath` — school's chosen §1a-sti per `SkoleaarStartYear`,
-  with an `IsPublished` flag (or equivalent) gating the public page
+- `CompliancePath` — school's chosen §1a-sti per `SkoleaarStartYear`
+- `PublishedComplianceSnapshot` — one row per `(TenantId,
+  SkoleaarStartYear)`, unique on that pair, holding the allowlisted public
+  snapshot payload; its existence for a year is what gates the public page
+  for that year (see §3 selection rule above)
 
-Requires new EF Core migrations and new API endpoints. `School` (or
-equivalent tenant-root entity) needs the `IsPublished` gate — confirm which
-entity owns it during implementation (likely `School`, not a per-plan flag,
-since the public page publishes the whole year at once).
+Requires new EF Core migrations and new API endpoints.
 
 ## Hvad der IKKE skal implementeres
 

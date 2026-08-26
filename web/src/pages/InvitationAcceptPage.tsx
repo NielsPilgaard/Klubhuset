@@ -364,7 +364,10 @@ export default function InvitationAcceptPage() {
             </div>
             <div className="flex gap-3">
               <div className="w-28">
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="postalCode"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Postnummer
                 </label>
                 <input

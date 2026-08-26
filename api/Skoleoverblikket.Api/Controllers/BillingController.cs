@@ -52,6 +52,14 @@ public sealed class BillingController(
 		{
 			return Problem(title: "Modul kunne ikke tilføjes", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
 		}
+		catch (SubscriptionConfigurationException ex)
+		{
+			logger.LogError(ex, "AddModule configuration error: {Message}", ex.Message);
+			return Problem(
+				title: "Modul er ikke korrekt konfigureret",
+				detail: "Kunne ikke tilføje modul på grund af en serverfejl. Kontakt support.",
+				statusCode: StatusCodes.Status500InternalServerError);
+		}
 		catch (Stripe.StripeException ex)
 		{
 			logger.LogError(ex, "AddModule Stripe error: {Code} {Message}", ex.StripeError?.Code, ex.Message);
@@ -134,6 +142,14 @@ public sealed class BillingController(
 		catch (InvalidOperationException ex)
 		{
 			return Problem(title: "Kunne ikke skifte betalingsinterval", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+		}
+		catch (SubscriptionConfigurationException ex)
+		{
+			logger.LogError(ex, "SwitchInterval configuration error: {Message}", ex.Message);
+			return Problem(
+				title: "Abonnement er ikke korrekt konfigureret",
+				detail: "Kunne ikke skifte betalingsinterval på grund af en serverfejl. Kontakt support.",
+				statusCode: StatusCodes.Status500InternalServerError);
 		}
 		catch (Stripe.StripeException ex)
 		{

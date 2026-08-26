@@ -9462,6 +9462,12 @@
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportWarning"
             }
+          },
+          "uninvitedParents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_UninvitedParentDto"
+            }
           }
         },
         "additionalProperties": false
@@ -9478,6 +9484,27 @@
             "format": "int32"
           },
           "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_UninvitedParentDto": {
+        "required": [
+          "email",
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
             "type": "string"
           }
         },

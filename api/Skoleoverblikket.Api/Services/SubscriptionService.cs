@@ -9,6 +9,13 @@ using StripeSubscription = Stripe.Subscription;
 
 namespace Skoleoverblikket.Api.Services;
 
+/// <summary>
+/// Thrown when subscription/module operations fail due to missing or inconsistent
+/// server-side configuration or data (e.g. unconfigured Stripe prices, missing Stripe
+/// subscription items) rather than an invalid client request.
+/// </summary>
+public sealed class SubscriptionConfigurationException(string message) : Exception(message);
+
 public sealed class SubscriptionService(
 	AppDbContext db,
 	IOptions<StripeOptions> stripeOptions,
@@ -186,7 +193,7 @@ public sealed class SubscriptionService(
 		var stripeSub = await stripeSubscriptionService.GetAsync(sub.StripeSubscriptionId, cancellationToken: cancellationToken);
 		var baseItem = stripeSub.Items?.Data?.FirstOrDefault(i =>
 			i.Price?.Id == stripeOptions.Value.BasePriceIdMonthly || i.Price?.Id == stripeOptions.Value.BasePriceIdYearly)
-			?? throw new InvalidOperationException($"No base-plan item found on Stripe subscription {sub.StripeSubscriptionId}.");
+			?? throw new SubscriptionConfigurationException($"No base-plan item found on Stripe subscription {sub.StripeSubscriptionId}.");
 
 		var items = new List<SubscriptionItemOptions>
 		{
@@ -195,16 +202,11 @@ public sealed class SubscriptionService(
 
 		foreach (var moduleItem in sub.ActiveModules.Where(m => !m.IsAdminOverride))
 		{
-			if (!stripeOptions.Value.ModulePriceIds.TryGetValue(moduleItem.Module.ToString(), out var intervalPrices)
-				|| !intervalPrices.TryGetValue(targetInterval.ToString(), out var modulePriceId)
-				|| string.IsNullOrEmpty(modulePriceId))
-			{
-				throw new InvalidOperationException($"No Stripe price configured for module {moduleItem.Module} ({targetInterval}).");
-			}
+			var modulePriceId = ResolveModulePriceId(moduleItem.Module, targetInterval);
 
 			if (string.IsNullOrEmpty(moduleItem.StripeSubscriptionItemId))
 			{
-				throw new InvalidOperationException($"Module {moduleItem.Module} on subscription {sub.Id} has no Stripe subscription item ID — cannot switch interval.");
+				throw new SubscriptionConfigurationException($"Module {moduleItem.Module} on subscription {sub.Id} has no Stripe subscription item ID — cannot switch interval.");
 			}
 
 			items.Add(new SubscriptionItemOptions { Id = moduleItem.StripeSubscriptionItemId, Price = modulePriceId });
@@ -312,12 +314,7 @@ public sealed class SubscriptionService(
 			throw new InvalidOperationException("School does not have an active Stripe subscription.");
 		}
 
-		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var intervalPrices)
-			|| !intervalPrices.TryGetValue(sub.Interval.ToString(), out var priceId)
-			|| string.IsNullOrEmpty(priceId))
-		{
-			throw new InvalidOperationException($"No Stripe price configured for module {module} ({sub.Interval}).");
-		}
+		var priceId = ResolveModulePriceId(module, sub.Interval);
 
 		if (sub.ActiveModules.Any(m => m.Module == module))
 		{
@@ -520,6 +517,18 @@ public sealed class SubscriptionService(
 
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
 		await db.SaveChangesAsync(cancellationToken);
+	}
+
+	private string ResolveModulePriceId(SubscriptionModule module, BillingInterval interval)
+	{
+		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var intervalPrices)
+			|| !intervalPrices.TryGetValue(interval.ToString(), out var priceId)
+			|| string.IsNullOrEmpty(priceId))
+		{
+			throw new SubscriptionConfigurationException($"No Stripe price configured for module {module} ({interval}).");
+		}
+
+		return priceId;
 	}
 
 	// Detects billing cadence from the base-plan line item specifically (matched by price ID) —

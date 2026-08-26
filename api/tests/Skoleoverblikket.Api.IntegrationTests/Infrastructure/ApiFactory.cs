@@ -39,7 +39,7 @@ public sealed class ApiFactory : TestWebApplicationFactory<Program>, IAsyncIniti
 
 	private readonly LocalStackContainer _localStack = new LocalStackBuilder("localstack/localstack:4").Build();
 
-	private readonly IContainer _stripeMock = new ContainerBuilder("stripe/stripe-mock:latest")
+	private readonly IContainer _stripeMock = new ContainerBuilder("stripe/stripe-mock:v0.196.0")
 		.WithPortBinding(12111, true)
 		.WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r
 			.ForPort(12111)
