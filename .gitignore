@@ -360,6 +360,7 @@ MigrationBackup/
 .env
 
 media/CONTACTS.md
+media/outreach/
 .vscode/settings.json
 test-results/
 .claude/settings.json
