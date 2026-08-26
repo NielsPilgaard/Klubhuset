@@ -51,7 +51,7 @@ public sealed class ParentsController(
 
 		if (parent is null)
 		{
-			return NotFound();
+			return Problem(statusCode: StatusCodes.Status404NotFound);
 		}
 
 		var studentIds = parent.Students.Select(s => s.Id).ToList();

@@ -174,7 +174,7 @@ public sealed class ContactThreadsController(
 				.AnyAsync(p => p.KeycloakSubject == sub && p.Students.Any(s => s.Id == studentId), cancellationToken);
 			if (!hasAccess)
 			{
-				return Forbid();
+				return Problem(statusCode: StatusCodes.Status403Forbidden);
 			}
 		}
 
@@ -185,7 +185,7 @@ public sealed class ContactThreadsController(
 
 		if (classId is null)
 		{
-			return NotFound();
+			return Problem(statusCode: StatusCodes.Status404NotFound);
 		}
 
 		var relevantStaffIds = await GetRelevantStaffIdsAsync(classId.Value, cancellationToken);

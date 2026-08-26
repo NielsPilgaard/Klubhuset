@@ -300,12 +300,12 @@ public sealed class MessagesController(
 
 		if (anchor is null)
 		{
-			return NotFound();
+			return Problem(statusCode: StatusCodes.Status404NotFound);
 		}
 
 		if (anchor.SenderId != callerId && anchor.RecipientId != callerId)
 		{
-			return Forbid();
+			return Problem(statusCode: StatusCodes.Status403Forbidden);
 		}
 
 		// Find the root of the reply chain, then pull every descendant of that root via a
@@ -438,13 +438,13 @@ public sealed class MessagesController(
 
 			if (parentMessage is null || parentMessage.GroupMessageId is not null)
 			{
-				return NotFound();
+				return Problem(statusCode: StatusCodes.Status404NotFound);
 			}
 
 			var callerIsParticipant = parentMessage.SenderId == callerId || parentMessage.RecipientId == callerId;
 			if (!callerIsParticipant)
 			{
-				return Forbid();
+				return Problem(statusCode: StatusCodes.Status403Forbidden);
 			}
 
 			var (expectedRecipientId, expectedRecipientType) = parentMessage.SenderId == callerId
@@ -453,7 +453,7 @@ public sealed class MessagesController(
 
 			if (req.RecipientId != expectedRecipientId || req.RecipientType != expectedRecipientType)
 			{
-				return Forbid();
+				return Problem(statusCode: StatusCodes.Status403Forbidden);
 			}
 		}
 
