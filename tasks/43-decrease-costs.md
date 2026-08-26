@@ -96,11 +96,23 @@ as-is; only the Price amounts change.
    `appsettings.Development.json` and production secrets/environment.
 4. **Migrate existing subscriptions**: for every active Stripe subscription,
    update each item's Price to the corresponding new Price ID
-   (`ProrationBehavior = "none"`, matching the pattern already used in
-   `SwitchIntervalAsync`). Write a one-off script or admin endpoint —
+   (`ProrationBehavior = "none"`). Write a one-off script or admin endpoint —
    whichever fits the existing backoffice tooling
    (`SuperAdminTenantsController`) better; do not hand-edit in Stripe
-   Dashboard for more than a handful of schools.
+   Dashboard for more than a handful of schools. Make the migration
+   resumable and idempotent: paginate through subscriptions rather than
+   loading all at once, only touch items whose current Price matches the
+   expected old→new mapping (so a re-run after a partial failure doesn't
+   re-touch already-migrated items or misfire on an unrelated Price), and
+   persist a checkpoint/audit log of what was updated so a failed run can
+   resume rather than restart. Decide up front how prepaid yearly
+   subscriptions are treated before applying `ProrationBehavior = "none"` to
+   them — a school that already paid for a year at the old price needs an
+   explicit answer (e.g. defer their Price swap to renewal) rather than a
+   silent mid-term Price change with no proration. After migrating, run a
+   reconciliation pass that re-reads every subscription and confirms it
+   landed on the intended new Price — don't assume the update calls
+   succeeded silently.
 5. **Rewrite `docs/PRICING.md`**: replace the single-tier "Basis 499"
    description with the modular model — Basis/Board/Parent at 300 kr/mo
    each, yearly bundle pricing summing to 9000 kr/yr for all three, and

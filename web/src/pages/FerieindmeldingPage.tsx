@@ -156,7 +156,7 @@ export default function FerieindmeldingPage() {
                   <OpenBadge isOpen={w.isOpen} />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Pleje: {formatDate(w.careStartDate)} – {formatDate(w.careEndDate)}
+                  Pasning: {formatDate(w.careStartDate)} – {formatDate(w.careEndDate)}
                   {' · '}Frist: {formatDate(w.registrationDeadline)}
                   {' · '}
                   {w.entryCount ?? 0} indmeldinger

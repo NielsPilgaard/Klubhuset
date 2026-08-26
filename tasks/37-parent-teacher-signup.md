@@ -71,13 +71,21 @@ Danish domain term: **skole-hjem-samtale** (school-home conference).
 
 Slot generation happens server-side on session create: iterate
 `StartTime`→`EndTime` in `SlotDurationMinutes` steps, insert one
-`MeetingSlot` row per step. Booking is an update on the slot row (claim
-`BookedByParentId`+`StudentId`), guarded by a unique/conditional constraint
-so two parents can't win the same slot in a race — mirrors the unique
-index pattern on `VacationRegistrationEntry` (`TenantId, WindowId,
-StudentId`), here needs `TenantId, SlotId` uniqueness on the booked state
-(e.g. partial unique index on `SlotId` where `BookedByParentId is not
-null`, or optimistic concurrency token).
+`MeetingSlot` row per step. Validate inputs before inserting any rows:
+`SlotDurationMinutes` must be positive, `StartTime` must precede `EndTime`,
+and `EndTime - StartTime` must divide evenly by `SlotDurationMinutes` —
+reject the request otherwise rather than generating a partial or
+zero-length slot.
+
+Booking is an update on the slot row (claim `BookedByParentId`+
+`StudentId`), which must be atomic against concurrent booking attempts —
+a conditional update (`UPDATE ... WHERE BookedByParentId IS NULL`) or an
+optimistic concurrency token, not a plain read-then-write, so two parents
+can't both win the same slot in a race. One booking per `(SessionId,
+StudentId)` needs its own database-enforced uniqueness (e.g. a unique
+index on `(TenantId, SessionId, StudentId)` where booked) — a unique index
+on `SlotId` alone only prevents two bookings on the same slot row, not a
+student double-booking two different slots in the same session.
 
 New EF Core migration via `/add-migration` — never edit existing
 migrations.

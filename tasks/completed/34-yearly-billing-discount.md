@@ -19,6 +19,8 @@ For base price and each module price, create a second Price with `interval=year`
 
 Enable **Customer Portal price switching**: Stripe Dashboard → Settings → Billing → Customer portal → Products → allow customers to switch between the monthly/yearly Price of the same product. This lets existing monthly subscribers upgrade to yearly via the existing `CreateBillingPortalSessionAsync` flow — no new portal code needed.
 
+> **Superseded by task 42.** Portal price switching stays disabled — task 42 found it silently leaves module items on the old interval for this base+module-items subscription model. Interval changes go through `SwitchIntervalAsync` / `POST /api/v1/billing/interval` instead, which updates base + all module items in one call with explicit proration. `ModulePriceIds` is nested by module then interval (`ModulePriceIds[module][interval]`), not the flat `$"{module}:{interval}"` key shown below.
+
 ---
 
 ## .NET changes
@@ -106,6 +108,6 @@ After controller/DTO changes, run `/codegen` to regenerate OpenAPI spec + typed 
 
 ## Out of scope
 
-- Proration UI/messaging for monthly→yearly switches — Stripe Portal handles proration automatically, no custom logic needed.
+- Proration UI/messaging for monthly→yearly switches — Stripe Portal handles proration automatically, no custom logic needed. **Superseded by task 42**: Portal switching stays disabled; `SwitchIntervalAsync` explicitly sets `ProrationBehavior = "create_prorations"` itself rather than relying on Portal defaults.
 - Multi-year or other intervals — only monthly/yearly.
 - Retroactive discounts for existing yearly-ineligible contracts — none exist yet, all current subs are monthly. No current subs actually.

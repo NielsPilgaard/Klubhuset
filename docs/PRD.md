@@ -124,9 +124,9 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 
 ### Stå mål med (compliance publishing)
 
-- Lets friskoler publish their own teaching goals and plans per course and grade level, satisfying the Friskoleloven §1a public-disclosure requirement
+- Lets friskoler publish their own teaching goals and plans per course and grade level on the school's website, satisfying the Friskoleloven §1c website-publication duty — §1a itself defines what the goals and teaching plans must contain, and publication alone does not establish §1a compliance
 - Fælles Mål applies automatically whenever the school has not published its own goals and plans
-- See [tasks/completed/19-staa-maal-med.md](../tasks/completed/19-staa-maal-med.md) for the legal background
+- See [tasks/completed/19-staa-maal-med.md](../tasks/completed/19-staa-maal-med.md) for the legal background and [Friskoleloven, LBK nr 1245 af 08/10/2024](https://www.retsinformation.dk/eli/lta/2024/1245/pdf)
 
 ### CSV import
 

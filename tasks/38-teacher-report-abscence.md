@@ -60,7 +60,8 @@ can be assigned as vikar.
   - Rank 1: `Staff.Role == Substitute` first, then others.
   - Exclude staff busy at that Weekday+TimeSlot: busy = has own `SchemaSlot`
     as Teacher or Aide at that Weekday+TimeSlot (any class), OR already has
-    a `VikarAssignment` at that Date+TimeSlot from a different absence.
+    a `VikarAssignment` at that Date+TimeSlot from a different absence, OR
+    has an active `StaffAbsence` covering that date themself.
   - Exclude the absent staff member themself.
 - **Notification + display**: assigned vikar gets notified via
   `INotificationService` (new `NotificationType.VikarAssigned`). Schema
@@ -91,8 +92,12 @@ can be assigned as vikar.
      list per the rules above.
    - `POST /{id}/assign` (`Roles.Admin`) — body: `SchemaSlotId`, `Date`,
      `AssignedStaffId`. Validates candidate isn't busy (re-check server-side,
-     don't trust client-supplied list). Creates `VikarAssignment`, notifies
-     assigned staff.
+     don't trust client-supplied list). The availability re-check and the
+     `VikarAssignment` insert must be atomic against concurrent admins
+     assigning the same staff member to overlapping slots — a database lock,
+     serializable transaction with retry, or an equivalent constraint, not a
+     plain check-then-write. Creates `VikarAssignment`, notifies assigned
+     staff.
    - `DELETE /vikar-assignment/{id}` (`Roles.Admin`) — unassign.
    - Tenant scoping via `ITenantContext` per `AGENTS.md` — never bypass
      global query filter.

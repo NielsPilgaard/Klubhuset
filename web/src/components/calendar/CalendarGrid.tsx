@@ -95,7 +95,9 @@ export function getDayEntries(
 ): CalendarEntryDto[] {
   const pad = (n: number) => n.toString().padStart(2, '0')
   const dateStr = `${year}-${pad(month)}-${pad(day)}`
-  return entries.filter((e) => (e.startDate ?? '') <= dateStr && dateStr <= (e.endDate ?? ''))
+  return entries.filter(
+    (e) => (e.startDate ?? '') <= dateStr && dateStr <= (e.endDate ?? e.startDate ?? '')
+  )
 }
 
 export function formatDateDDMMYYYY(isoDate: string): string {
@@ -175,7 +177,13 @@ function DayPopover({
       className="absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 w-52 text-left"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onClose()
+          return
+        }
+        e.stopPropagation()
+      }}
       role="dialog"
     >
       <div className="px-3 py-2 border-b border-gray-100">
@@ -558,7 +566,10 @@ export function CalendarGrid({
                     </td>
                     <td className="px-5 py-3 font-medium text-gray-900">{entry.title}</td>
                     <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
-                      {formatDateRange(entry.startDate ?? '', entry.endDate ?? '')}
+                      {formatDateRange(
+                        entry.startDate ?? '',
+                        entry.endDate ?? entry.startDate ?? ''
+                      )}
                     </td>
                     {isAdmin && (
                       <td className="px-5 py-3 text-right">

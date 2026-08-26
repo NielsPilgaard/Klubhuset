@@ -11,6 +11,7 @@ import {
   postApiV1ContactThreads,
   getApiV1ParentsMe,
 } from '../../api/generated/sdk.gen'
+import type { ContactThreadsControllerNotifyStaffOptionDto } from '../../api/generated/types.gen'
 
 interface ContactThreadDto {
   id: string
@@ -60,12 +61,6 @@ function truncate(text: string, max: number): string {
   return `${text.slice(0, max)}…`
 }
 
-interface NotifyStaffOption {
-  id: string
-  name: string
-  isRelevant: boolean
-}
-
 interface NotifyStaffPickerProps {
   studentId: string | null
   selectedIds: string[]
@@ -82,7 +77,7 @@ function NotifyStaffPicker({ studentId, selectedIds, onChange }: NotifyStaffPick
         path: { studentId: studentId! },
         throwOnError: false,
       })
-      return (data ?? []) as NotifyStaffOption[]
+      return data ?? ([] as ContactThreadsControllerNotifyStaffOptionDto[])
     },
     enabled: !!studentId,
   })

@@ -59,7 +59,7 @@ New landing page for non-admin authenticated users (Teacher/Aide/Vikar), replaci
 
 - `HomeRedirect`: non-admin, non-parent, non-board authenticated users (i.e. staff) → `/mig/oversigt` (was `/mig/skema`)
 - `AdminRoute` fallback (non-admin hitting an admin-only route) currently `Navigate to="/mig/skema"` → `/mig/oversigt`, since a non-admin falling through an admin route is staff, parent, or board — parent/board are redirected away from their own guarded routes by `ParentRoute`/`BoardRoute` before reaching here in practice, so this fallback is effectively staff-only.
-- `ParentRoute` and `BoardRoute` fallbacks stay `Navigate to="/mig/skema"` **unchanged** — `/mig/oversigt` is staff-only (Teacher/Aide/Vikar); a non-parent/non-board caller here may be staff or admin, neither of which should be routed to `/mig/skema` as a final landing, but must never land on the other role's page either. Route to `/` (`HomeRedirect`) instead, which already resolves each role correctly.
+- `ParentRoute` and `BoardRoute` fallbacks change from `Navigate to="/mig/skema"` to `Navigate to="/"` (`HomeRedirect`) — `/mig/oversigt` is staff-only (Teacher/Aide/Vikar); a non-parent/non-board caller here may be staff or admin, neither of which should be routed to `/mig/skema` as a final landing, but must never land on the other role's page either. `HomeRedirect` already resolves each role correctly, so route there instead of hard-coding a guess.
 - New route: `path="mig/oversigt"` → `StaffDashboardPage` (new component), itself guarded to staff roles only (not admin, not parent, not board)
 
 ### `Sidebar.tsx`
@@ -97,7 +97,11 @@ public record OpenVacationWindowDto(Guid WindowId, DateOnly RegistrationDeadline
 
 ### New endpoint: `GET /api/v1/stats/my-dashboard`
 
-New controller or new action in `StatsController.cs`, `[Authorize]` (any authenticated staff role, not Admin/Board-restricted), scoped to caller's own `StaffId` via `ITenantContext`:
+New controller or new action in `StatsController.cs`, restricted at the API
+boundary to authenticated staff roles only (Teacher/Aide/Vikar) — not just a
+frontend guard. Parent, board, admin, and super-admin principals must be
+rejected regardless of how the frontend routes them. Scoped to caller's own
+`StaffId` via `ITenantContext`:
 
 ```csharp
 public record MyDashboardStats(

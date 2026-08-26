@@ -50,7 +50,7 @@ The API itself (`Stripe:SecretKey` in `appsettings.Development.json`) and the `s
 | Event | Handler effect |
 |---|---|
 | `checkout.session.completed` | Creates/links subscription record, sets status to `Active`, persists the checked-out `Interval` |
-| `customer.subscription.updated` | Syncs status from Stripe (e.g. trial → active, active → past_due); syncs `Interval` if the Price's recurring interval changed (portal-driven monthly↔yearly switch) |
+| `customer.subscription.updated` | Syncs status from Stripe (e.g. trial → active, active → past_due); syncs `Interval` if the Price's recurring interval changed — driven by `POST /api/v1/billing/interval` (`SwitchIntervalAsync`), not Stripe Portal, which has plan/interval switching disabled (see `SubscriptionService.CreateBillingPortalSessionAsync`) |
 | `customer.subscription.deleted` | Sets status to `Canceled` |
 | `invoice.payment_succeeded` | Sets status to `Active`, updates `CurrentPeriodEnd` |
 | `invoice.payment_failed` | Sets status to `PastDue` |

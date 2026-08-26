@@ -66,8 +66,15 @@ where an empty table means "unrestricted," not "no staff for this class"
 - **Identity display**: sender name + avatar always shown on every message.
   `ShareContactInfo` consent (gates the separate Kontakt directory lookup)
   does **not** apply here — posting in a group forum inherently reveals
-  identity, same as the Facebook group it replaces.
-- **Content**: plain text only, links auto-detected/linkified. No rich text
+  identity, same as the Facebook group it replaces. **Needs explicit sign-off
+  before implementation**: this exposes name+avatar to every parent/staff in
+  the class thread with no consent gate and no way to leave — before
+  building, either write the privacy notice shown at first use, define what
+  happens when a member wants their history removed, and confirm disclosure
+  handling, or get explicit approval to skip that and ship as-is.
+- **Content**: plain text only, links auto-detected/linkified. Linkification
+  must allowlist `http`/`https` schemes only — `javascript:`, `data:`, and any
+  other scheme render as plain text, never as a clickable link. No rich text
   editor, no reactions/emoji in this task.
 - **File attachments**: documents + images, reusing the existing
   presign+confirm upload pattern to OVHCloud used for avatars. Apply a
@@ -128,7 +135,9 @@ where an empty table means "unrestricted," not "no staff for this class"
 4. **Backend — notifications**: new `NotificationType`, wire into
    `NotificationsController`/`NotificationPreference` opt-out flow, fan out
    to thread members (parents of enrolled students + roster staff) on new
-   message, excluding the sender.
+   message, excluding the sender. Deduplicate recipient IDs before fan-out —
+   a parent with multiple enrolled students in the class, or staff reachable
+   via more than one roster path, must be notified once, not once per match.
 5. **Frontend**:
    - New top-level nav item (phone + laptop both first-class — parents
      primarily on mobile).

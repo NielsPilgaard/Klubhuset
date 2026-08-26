@@ -204,16 +204,28 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
     <Modal isOpen onClose={onClose} title="Rediger kontaktoplysninger">
       <div className="px-6 py-5 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Navn *</label>
+          <label
+            htmlFor="parent-edit-name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Navn *
+          </label>
           <input
+            id="parent-edit-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+          <label
+            htmlFor="parent-edit-phone"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Telefon
+          </label>
           <input
+            id="parent-edit-phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             type="tel"
@@ -225,8 +237,14 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+          <label
+            htmlFor="parent-edit-address"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Adresse
+          </label>
           <input
+            id="parent-edit-address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Vejnavn og nummer"
@@ -235,8 +253,14 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
         </div>
         <div className="flex gap-3">
           <div className="w-24">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Postnr.</label>
+            <label
+              htmlFor="parent-edit-postal-code"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Postnr.
+            </label>
             <input
+              id="parent-edit-postal-code"
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}
               placeholder="0000"
@@ -247,8 +271,14 @@ function EditContactModal({ parent, onClose }: EditContactModalProps) {
             )}
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+            <label
+              htmlFor="parent-edit-city"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              By
+            </label>
             <input
+              id="parent-edit-city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="By"
