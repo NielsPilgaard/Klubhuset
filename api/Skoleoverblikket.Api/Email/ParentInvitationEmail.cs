@@ -4,7 +4,7 @@ namespace Skoleoverblikket.Api.Email;
 
 internal static class ParentInvitationEmail
 {
-	internal static string Subject(string schoolName) => $"Invitation til {schoolName} pa Skoleoverblikket";
+	internal static string Subject(string schoolName) => $"Invitation til {schoolName} på Skoleoverblikket";
 
 	internal static string BuildHtml(string name, string schoolName, string link, string? temporaryPassword)
 	{
