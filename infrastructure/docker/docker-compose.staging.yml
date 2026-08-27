@@ -90,7 +90,8 @@ services:
       Stripe__ModulePriceIds__ParentModule__Monthly: price_stub_parent_monthly
       Stripe__ModulePriceIds__ParentModule__Yearly: price_stub_parent_yearly
       Stripe__ModulePriceIds__BoardModule__Monthly: price_stub_board_monthly
-      Stripe__ModulePriceIds__BoardModule__Yearly: price_stub_board_yearly      Stripe__WebhookSecret: whsec_stub
+      Stripe__ModulePriceIds__BoardModule__Yearly: price_stub_board_yearly
+      Stripe__WebhookSecret: whsec_stub
     ports:
       - "5000:8080"
     depends_on:
