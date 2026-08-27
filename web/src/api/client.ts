@@ -85,6 +85,7 @@ export type {
   StaffRole,
   AbsenceStatus,
   SubscriptionStatus,
+  BillingInterval,
   NotificationType,
   SubjectCategory,
 } from './generated/types.gen'
@@ -115,6 +116,7 @@ export type {
   StatsControllerDashboardStats as DashboardStats,
   StudentsControllerStudentDto as StudentDto,
   ParentsControllerParentDto as ParentDto,
+  ParentsControllerParentSummaryDto as ParentSummaryDto,
   ParentMeControllerParentMeDto as ParentMeDto,
   TimeSlotsControllerTemplateDto as TemplateDto,
   TimeSlotsControllerTimeSlotDto as TimeSlotDto,

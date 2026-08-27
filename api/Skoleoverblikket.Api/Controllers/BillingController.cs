@@ -19,6 +19,7 @@ public sealed class BillingController(
 {
 	public record SubscriptionDto(
 		SubscriptionStatus Status,
+		BillingInterval Interval,
 		DateTimeOffset TrialEnd,
 		DateTimeOffset? CurrentPeriodEnd,
 		bool IsTrialing,
@@ -28,6 +29,8 @@ public sealed class BillingController(
 		IReadOnlyList<string> ActiveModules);
 
 	public record CheckoutResponse(string Url);
+
+	public record CheckoutRequest(BillingInterval Interval);
 
 	[HttpGet("subscription")]
 	public async Task<ActionResult<SubscriptionDto>> GetSubscription(CancellationToken cancellationToken)
@@ -48,6 +51,14 @@ public sealed class BillingController(
 		catch (InvalidOperationException ex)
 		{
 			return Problem(title: "Modul kunne ikke tilføjes", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+		}
+		catch (SubscriptionConfigurationException ex)
+		{
+			logger.LogError(ex, "AddModule configuration error: {Message}", ex.Message);
+			return Problem(
+				title: "Modul er ikke korrekt konfigureret",
+				detail: "Kunne ikke tilføje modul på grund af en serverfejl. Kontakt support.",
+				statusCode: StatusCodes.Status500InternalServerError);
 		}
 		catch (Stripe.StripeException ex)
 		{
@@ -85,8 +96,13 @@ public sealed class BillingController(
 	public record ModuleRequest(SubscriptionModule Module);
 
 	[HttpPost("checkout")]
-	public async Task<ActionResult<CheckoutResponse>> CreateCheckout(CancellationToken cancellationToken)
+	public async Task<ActionResult<CheckoutResponse>> CreateCheckout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
 	{
+		if (!Enum.IsDefined(request.Interval))
+		{
+			return Problem(title: "Ugyldigt betalingsinterval", detail: "Interval skal være Monthly eller Yearly.", statusCode: StatusCodes.Status400BadRequest);
+		}
+
 		var baseUrl = appOptions.Value.BaseUrl;
 		var successUrl = $"{baseUrl}/abonnement?success=true";
 		var cancelUrl = $"{baseUrl}/abonnement";
@@ -94,7 +110,7 @@ public sealed class BillingController(
 		try
 		{
 			var url = await subscriptionService.CreateCheckoutSessionAsync(
-				tenantContext.TenantId, successUrl, cancelUrl, cancellationToken);
+				tenantContext.TenantId, request.Interval, successUrl, cancelUrl, cancellationToken);
 			return Ok(new CheckoutResponse(url));
 		}
 		catch (Stripe.StripeException ex)
@@ -102,6 +118,45 @@ public sealed class BillingController(
 			return Problem(
 				title: "Betalingsgateway fejl",
 				detail: "Kunne ikke oprette betalingssession. Prøv igen eller kontakt support.",
+				statusCode: StatusCodes.Status502BadGateway,
+				extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
+		}
+	}
+
+	public record SwitchIntervalRequest(BillingInterval Interval);
+
+	[HttpPost("interval")]
+	[ProducesResponseType(StatusCodes.Status204NoContent)]
+	public async Task<IActionResult> SwitchInterval([FromBody] SwitchIntervalRequest request, CancellationToken cancellationToken)
+	{
+		if (!Enum.IsDefined(request.Interval))
+		{
+			return Problem(title: "Ugyldigt betalingsinterval", detail: "Interval skal være Monthly eller Yearly.", statusCode: StatusCodes.Status400BadRequest);
+		}
+
+		try
+		{
+			await subscriptionService.SwitchIntervalAsync(tenantContext.TenantId, request.Interval, cancellationToken);
+			return NoContent();
+		}
+		catch (InvalidOperationException ex)
+		{
+			return Problem(title: "Kunne ikke skifte betalingsinterval", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+		}
+		catch (SubscriptionConfigurationException ex)
+		{
+			logger.LogError(ex, "SwitchInterval configuration error: {Message}", ex.Message);
+			return Problem(
+				title: "Abonnement er ikke korrekt konfigureret",
+				detail: "Kunne ikke skifte betalingsinterval på grund af en serverfejl. Kontakt support.",
+				statusCode: StatusCodes.Status500InternalServerError);
+		}
+		catch (Stripe.StripeException ex)
+		{
+			logger.LogError(ex, "SwitchInterval Stripe error: {Code} {Message}", ex.StripeError?.Code, ex.Message);
+			return Problem(
+				title: "Betalingsgateway fejl",
+				detail: "Kunne ikke skifte betalingsinterval. Prøv igen eller kontakt support.",
 				statusCode: StatusCodes.Status502BadGateway,
 				extensions: new Dictionary<string, object?> { ["stripeCode"] = ex.StripeError?.Code });
 		}
@@ -138,6 +193,7 @@ public sealed class BillingController(
 
 		return new SubscriptionDto(
 			sub.Status,
+			sub.Interval,
 			sub.TrialEnd,
 			sub.CurrentPeriodEnd,
 			isTrialing,

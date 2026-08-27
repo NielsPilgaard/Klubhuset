@@ -6,7 +6,7 @@ All billing today is monthly-only (`StripeOptions.BasePriceId`, `ModulePriceIds`
 
 Discount mechanism: **separate yearly Stripe Price IDs**, not coupons. Coupons on a monthly price don't change billing interval — a real annual plan needs its own Price with `interval: year`.
 
-**Intro pricing**: launch yearly at a low intro price (~10.000 kr/år, all modules included) to win first paying customers. Raise later without touching existing customers — Stripe subscriptions pin the Price ID they checked out with, so a later config change (swap `BasePriceIdYearly`/`ModulePriceIds` to a new, higher Price) only affects *new* checkouts. Existing subs keep billing at their original Price forever (until they themselves change plan via Portal). No grandfather field or extra logic needed — this falls out of the Price-ID-per-sub model for free. Just:
+**Intro pricing**: launch yearly at a low intro base price (~10.000 kr/år) to win first paying customers; modules remain separate add-on Prices billed on the same interval (base + add-on model, not an all-inclusive bundle — see `ModulePriceIds`). Raise later without touching existing customers — Stripe subscriptions pin the Price ID they checked out with, so a later config change (swap `BasePriceIdYearly`/`ModulePriceIds` to a new, higher Price) only affects *new* checkouts. Existing subs keep billing at their original Price forever (until they themselves change plan via Portal). No grandfather field or extra logic needed — this falls out of the Price-ID-per-sub model for free. Just:
 - Create the yearly Prices in Stripe at the intro amount now.
 - Show an "Intropris" badge next to the yearly option on the billing page.
 - When raising later: create new Stripe Prices, update `BasePriceIdYearly`/`ModulePriceIds` config, deploy. Do not edit/archive the old Price while any sub still references it.
@@ -18,6 +18,8 @@ Discount mechanism: **separate yearly Stripe Price IDs**, not coupons. Coupons o
 For base price and each module price, create a second Price with `interval=year`, same product, discounted vs. 12x monthly. Record new Price IDs for config.
 
 Enable **Customer Portal price switching**: Stripe Dashboard → Settings → Billing → Customer portal → Products → allow customers to switch between the monthly/yearly Price of the same product. This lets existing monthly subscribers upgrade to yearly via the existing `CreateBillingPortalSessionAsync` flow — no new portal code needed.
+
+> **Superseded by task 42.** Portal price switching stays disabled — task 42 found it silently leaves module items on the old interval for this base+module-items subscription model. Interval changes go through `SwitchIntervalAsync` / `POST /api/v1/billing/interval` instead, which updates base + all module items in one call with explicit proration. `ModulePriceIds` is nested by module then interval (`ModulePriceIds[module][interval]`), not the flat `$"{module}:{interval}"` key shown below.
 
 ---
 
@@ -106,6 +108,6 @@ After controller/DTO changes, run `/codegen` to regenerate OpenAPI spec + typed 
 
 ## Out of scope
 
-- Proration UI/messaging for monthly→yearly switches — Stripe Portal handles proration automatically, no custom logic needed.
+- Proration UI/messaging for monthly→yearly switches — Stripe Portal handles proration automatically, no custom logic needed. **Superseded by task 42**: Portal switching stays disabled; `SwitchIntervalAsync` explicitly sets `ProrationBehavior = "create_prorations"` itself rather than relying on Portal defaults.
 - Multi-year or other intervals — only monthly/yearly.
 - Retroactive discounts for existing yearly-ineligible contracts — none exist yet, all current subs are monthly. No current subs actually.

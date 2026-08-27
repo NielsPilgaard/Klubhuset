@@ -69,7 +69,7 @@ public sealed class ParentModuleTests(ApiFactory factory)
 		var response = await _adminClient.GetAsync("/api/v1/parents");
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-		var list = await response.Content.ReadFromJsonAsync<List<ParentsController.ParentDto>>();
+		var list = await response.Content.ReadFromJsonAsync<List<ParentsController.ParentSummaryDto>>();
 		await Assert.That(list).IsNotNull();
 		await Assert.That(list!.Count).IsEqualTo(0);
 	}
@@ -163,5 +163,121 @@ public sealed class ParentModuleTests(ApiFactory factory)
 		var response = await _adminClient.GetAsync($"/api/v1/classes/{klass.Id}/schemas");
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns204_AtMaxFieldLengths()
+	{
+		const string parentSubject = "parent-sub-boundary-max";
+		await SeedParentWithStudentAsync(parentSubject);
+
+		using var parentClient = _factory.CreateClient();
+		parentClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
+		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
+
+		var response = await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", new
+		{
+			Name = new string('N', 200),
+			Phone = "+4512345678",
+			Address = new string('A', 500),
+			PostalCode = "1234",
+			City = new string('C', 100),
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenPhoneIsInvalidFormat()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-phone", new
+		{
+			Name = "Bente Larsen",
+			Phone = "not-a-phone-number",
+			Address = (string?)null,
+			PostalCode = (string?)null,
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns204_WhenPhoneHasSpacesAndPrefix()
+	{
+		var response = await PatchContactAsync("parent-sub-phone-spaces", new
+		{
+			Name = "Bente Larsen",
+			Phone = "+45 12 34 56 78",
+			Address = (string?)null,
+			PostalCode = (string?)null,
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenAddressExceedsMaxLength()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-address", new
+		{
+			Name = "Bente Larsen",
+			Phone = (string?)null,
+			Address = new string('A', 501),
+			PostalCode = (string?)null,
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenPostalCodeIsInvalidFormat()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-postalcode", new
+		{
+			Name = "Bente Larsen",
+			Phone = (string?)null,
+			Address = (string?)null,
+			PostalCode = "12345",
+			City = (string?)null,
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	[Test]
+	public async Task UpdateContact_Returns400_WhenCityExceedsMaxLength()
+	{
+		var response = await PatchContactAsync("parent-sub-boundary-over-city", new
+		{
+			Name = "Bente Larsen",
+			Phone = (string?)null,
+			Address = (string?)null,
+			PostalCode = (string?)null,
+			City = new string('C', 101),
+			ShareContactInfo = true,
+		});
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+	}
+
+	private async Task<HttpResponseMessage> PatchContactAsync(string parentSubject, object body)
+	{
+		await SeedParentWithStudentAsync(parentSubject);
+
+		using var parentClient = _factory.CreateClient();
+		parentClient.DefaultRequestHeaders.Add("X-Test-TenantId", _tenantId.ToString());
+		parentClient.DefaultRequestHeaders.Add("X-Test-Roles", "parent");
+		parentClient.DefaultRequestHeaders.Add("X-Test-Subject", parentSubject);
+
+		return await parentClient.PatchAsJsonAsync("/api/v1/parents/me/contact", body);
 	}
 }

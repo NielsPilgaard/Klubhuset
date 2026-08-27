@@ -189,19 +189,18 @@ export default function KontaktbogPage() {
       <div
         className={`w-full lg:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col ${showMobileMessages ? 'hidden lg:flex' : 'flex'}`}
       >
-        <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-between gap-2">
+        <div className="px-4 py-4 border-b border-gray-100 space-y-3">
           <h1 className="font-display text-xl font-semibold text-gray-900">
             Kontaktbog – alle klasser
           </h1>
           <button
             onClick={() => setShowCompose(true)}
-            className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-            aria-label="Ny samtale"
-            title="Ny samtale"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
           >
             <svg
-              width="18"
-              height="18"
+              className="shrink-0"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -209,10 +208,10 @@ export default function KontaktbogPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              <line x1="12" y1="8" x2="12" y2="16" />
-              <line x1="8" y1="12" x2="16" y2="12" />
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
+            Ny samtale
           </button>
         </div>
 

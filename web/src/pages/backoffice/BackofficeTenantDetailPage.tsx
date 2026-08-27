@@ -27,7 +27,7 @@ const ALL_MODULES: ModuleItem['module'][] = ['ParentModule', 'BoardModule']
 
 const moduleLabels: Record<ModuleItem['module'], string> = {
   ParentModule: 'Forældremodul',
-  BoardModule: 'Bestyrelsesmodul',
+  BoardModule: 'Bestyrelse og tilsyn',
 }
 
 const statusLabel: Record<SubscriptionStatus, string> = {

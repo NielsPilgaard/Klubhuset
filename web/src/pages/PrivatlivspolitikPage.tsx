@@ -1,11 +1,15 @@
 import Logo from '../components/Logo'
 import Footer from '../components/Footer'
-import { usePageTitle } from '../hooks/usePageTitle'
+import SeoMeta from '../components/SeoMeta'
 
 export default function PrivatlivspolitikPage() {
-  usePageTitle('Privatlivspolitik')
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
+      <SeoMeta
+        title="Privatlivspolitik"
+        description="Læs Skoleoverblikkets privatlivspolitik om behandling af personoplysninger for skoler, medarbejdere og forældre."
+        path="/privatlivspolitik"
+      />
       <PublicNav />
 
       <main className="flex-1 py-20 px-6">

@@ -1,3 +1,12 @@
+---
+title: 'PRD'
+description: >-
+  Full product requirements — target segments, core v1 feature scope,
+  competitive positioning, migration paths, and out-of-scope boundaries.
+status: 'Living'
+purpose: Canonical source for what the product is, who it's for, and what it does — the document to read before proposing any new feature.
+---
+
 # PRD.md — Skoleoverblikket Product Requirements
 
 ## Product overview
@@ -95,11 +104,42 @@ On school setup, admin defines the default lesson structure via a guided wizard:
 - Browse files by course
 - Storage: OVHCloud Object Storage (S3-compatible, EU)
 
+### Ugeplan (weekly plan)
+
+- Per-class weekly plan, separate from the schema grid
+- File attachments per time slot (worksheets, materials)
+- Visible to parents in the parent portal
+
+### Vikardækning (substitute coverage)
+
+- One-click lookup of free vs. busy staff for a given time slot when a teacher or aide is absent
+- Busy staff shown with the reason (which class/slot they're already booked on)
+- Assign a substitute teacher or aide directly from the lookup
+
+### Bestyrelse (board module)
+
+- Separate space for the school board, distinct from staff and parent access
+- Board member invitations (email invite → Keycloak account)
+- Board-only file storage, not visible to staff or parents
+
+### Stå mål med (compliance publishing)
+
+- Lets friskoler publish their own teaching goals and plans per course and grade level on the school's website, satisfying the Friskoleloven §1c website-publication duty — §1a itself defines what the goals and teaching plans must contain, and publication alone does not establish §1a compliance
+- Fælles Mål applies automatically whenever the school has not published its own goals and plans
+- See [tasks/completed/19-staa-maal-med.md](../tasks/completed/19-staa-maal-med.md) for the legal background and [Friskoleloven, LBK nr 1245 af 08/10/2024](https://www.retsinformation.dk/eli/lta/2024/1245/pdf)
+
+### CSV import
+
+- Bulk import parents and students onto existing classes
+- Admin-only, with per-row validation warnings
+- Reduces manual data entry when onboarding a new class or migrating from a spreadsheet
+
 ### Stats and reporting
 
+- Admin dashboard: classes with complete schemas, unassigned slots, staffing gaps at a glance
 - Hours per course per class (towards minimumstimetal)
 - Hours per teacher / aide
-- Exportable summaries
+- Excel export of staff/teacher hours and UVM timetal comparisons
 
 ### Printable schema
 
@@ -136,9 +176,9 @@ Parents log in to view their children's schedule and communicate with school sta
 
 ### Payments and billing
 
-- **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly
+- **Stripe Checkout**: self-serve signup, card payment, auto-renew monthly or yearly
 - **14-day free trial**: full access, no payment required upfront
-- **Single tier (v1)**: 499 kr/month — all features included
+- **Basis plan + optional modules**: see [docs/PRICING.md](PRICING.md) for current tier, module, and pricing detail — do not restate numbers here, they drift
 - Schools are never invoiced manually — everything is self-serve
 
 ---
@@ -183,6 +223,11 @@ Docendo is the closest functional analog — it is a schema builder used by folk
 5. EU-only data storage (OVHCloud, Scaleway)
 6. 14-day free trial with full access
 7. Serves all Danish school types — folkeskoler, friskoler, privatskoler, efterskoler — with no assumptions about municipal IT infrastructure
+8. One tool instead of many — schema, SFO, ugeplan, vikardækning, forældrekontakt, kontaktbog, ferieindmelding, fraværsregistrering, filarkiv, bestyrelse, and stå-mål-med-publicering all live in the same tenant, so a school is not stitching together a spreadsheet, a mail thread, and three separate logins to run its admin
+
+## Product positioning
+
+Skoleoverblikket is affordable school admin software that is dead simple to use. The premise: schools should spend less money and less time on admin, and more time on what staff actually went into education to do — not paperwork, not syncing data between tools that don't talk to each other. Every feature added must reduce total admin burden for the school, not just add a checkbox to a feature comparison table.
 
 ## Migration from competitors
 

@@ -1,3 +1,13 @@
+---
+title: 'Personas'
+description: >-
+  The four core users — Hanne (secretary), Thomas (teacher), Birgitte
+  (principal), Mikkel (substitute) — with goals, fears, and design
+  implications for each.
+status: 'Living'
+purpose: Reference for who every screen must work for; use to check any UI decision against a real user's goals and fears.
+---
+
 # PERSONAS.md — User Personas
 
 These personas represent the real people who use Skoleoverblikket. Every feature decision, every screen, every label must pass the question: **can this person use this without help?**

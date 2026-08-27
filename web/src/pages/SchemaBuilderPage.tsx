@@ -501,17 +501,9 @@ interface DroppableCellProps {
   isOver: boolean
   isEmpty: boolean
   isSidebarDrag?: boolean
-  onClick?: () => void
 }
 
-function DroppableCell({
-  dropId,
-  children,
-  isOver,
-  isEmpty,
-  isSidebarDrag,
-  onClick,
-}: DroppableCellProps) {
+function DroppableCell({ dropId, children, isOver, isEmpty, isSidebarDrag }: DroppableCellProps) {
   const { setNodeRef } = useDroppable({ id: dropId })
 
   const highlight =
@@ -524,14 +516,9 @@ function DroppableCell({
           : ''
 
   return (
-    <button
-      ref={setNodeRef}
-      type="button"
-      className={`h-full w-full text-left transition-all rounded-lg ${highlight}`}
-      onClick={onClick}
-    >
+    <div ref={setNodeRef} className={`h-full w-full transition-all rounded-lg ${highlight}`}>
       {children}
-    </button>
+    </div>
   )
 }
 
@@ -1311,18 +1298,12 @@ export default function SchemaBuilderPage() {
                                   ? decodeSidebarDragId(activeDragId) !== null
                                   : false
                                 return (
-                                  <div key={weekday} className="h-20">
+                                  <div key={weekday} className="h-20 overflow-hidden">
                                     <DroppableCell
                                       dropId={dropId}
                                       isOver={isOver}
                                       isEmpty={!slot}
                                       isSidebarDrag={isSidebarDrag}
-                                      onClick={
-                                        !slot
-                                          ? () =>
-                                              ts.id && setPanelCell({ timeSlotId: ts.id, weekday })
-                                          : undefined
-                                      }
                                     >
                                       {slot ? (
                                         <DraggableCell

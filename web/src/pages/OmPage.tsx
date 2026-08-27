@@ -1,11 +1,15 @@
 import Logo from '../components/Logo'
 import Footer from '../components/Footer'
-import { usePageTitle } from '../hooks/usePageTitle'
+import SeoMeta from '../components/SeoMeta'
 
 export default function OmPage() {
-  usePageTitle('Om Skoleoverblikket')
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
+      <SeoMeta
+        title="Om Skoleoverblikket"
+        description="Skoleoverblikket er bygget til friskoler, privatskoler og folkeskoler der vil have et enkelt skemaværktøj — uden kursus og uden IT-support."
+        path="/om"
+      />
       <PublicNav />
 
       <main className="flex-1 py-20 px-6">

@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
+using Skoleoverblikket.Api.Services;
 using Skoleoverblikket.Api.Storage;
+using System.ComponentModel.DataAnnotations;
 
 namespace Skoleoverblikket.Api.Controllers;
 
@@ -12,7 +14,17 @@ namespace Skoleoverblikket.Api.Controllers;
 [Authorize(Roles = Roles.Parent)]
 public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) : ControllerBase
 {
-	public record ParentMeDto(Guid Id, string Name, string? AvatarUrl, IReadOnlyList<ParentClassDto> Classes, IReadOnlyList<ParentStudentDto> Students);
+	public record ParentMeDto(
+		Guid Id,
+		string Name,
+		string? AvatarUrl,
+		string? Phone,
+		string? Address,
+		string? PostalCode,
+		string? City,
+		bool ShareContactInfo,
+		IReadOnlyList<ParentClassDto> Classes,
+		IReadOnlyList<ParentStudentDto> Students);
 	public record ParentClassDto(Guid ClassId, string ClassName);
 	public record ParentStudentDto(Guid StudentId, string StudentName, Guid ClassId);
 
@@ -45,7 +57,17 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 			.Select(s => new ParentStudentDto(s.Id, s.Name, s.ClassId))
 			.ToList();
 
-		return Ok(new ParentMeDto(parent.Id, parent.Name, parent.AvatarUrl, classes, students));
+		return Ok(new ParentMeDto(
+			parent.Id,
+			parent.Name,
+			parent.AvatarUrl,
+			parent.Phone,
+			parent.Address,
+			parent.PostalCode,
+			parent.City,
+			parent.ShareContactInfo,
+			classes,
+			students));
 	}
 
 	public record AvatarPresignRequest(string ContentType, long FileSizeBytes);
@@ -85,10 +107,11 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 	}
 
 	public record UpdateContactRequest(
-		string? Phone,
-		string? Address,
-		string? PostalCode,
-		string? City,
+		[Required, StringLength(200, MinimumLength = 1)] string Name,
+		[StringLength(50)] string? Phone,
+		[StringLength(500)] string? Address,
+		[StringLength(10)] string? PostalCode,
+		[StringLength(100)] string? City,
 		bool ShareContactInfo);
 
 	[HttpPatch("contact")]
@@ -105,9 +128,26 @@ public sealed class ParentMeController(AppDbContext db, IObjectStorage storage) 
 			return NotFound();
 		}
 
-		parent.Phone = req.Phone;
+		var trimmedName = req.Name.Trim();
+		if (trimmedName.Length == 0)
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["name"] = ["Navn er påkrævet."] } });
+		}
+
+		if (!ContactValidation.TryNormalizePhone(req.Phone, out var normalizedPhone))
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["phone"] = ["Telefonnummer skal være 8 cifre, evt. med +45 foran."] } });
+		}
+
+		if (!ContactValidation.TryNormalizePostalCode(req.PostalCode, out var normalizedPostalCode))
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["postalCode"] = ["Postnummer skal være 4 cifre."] } });
+		}
+
+		parent.Name = trimmedName;
+		parent.Phone = normalizedPhone;
 		parent.Address = req.Address;
-		parent.PostalCode = req.PostalCode;
+		parent.PostalCode = normalizedPostalCode;
 		parent.City = req.City;
 		parent.ShareContactInfo = req.ShareContactInfo;
 

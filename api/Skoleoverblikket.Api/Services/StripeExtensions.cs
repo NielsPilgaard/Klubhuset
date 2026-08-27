@@ -1,28 +1,35 @@
+using Microsoft.Extensions.Options;
 using Stripe;
 
 namespace Skoleoverblikket.Api.Services;
 
 public static class StripeExtensions
 {
-	public static IServiceCollection AddStripe(this IServiceCollection services, IConfiguration configuration)
+	public static IServiceCollection AddStripe(this IServiceCollection services)
 	{
 		services.AddOptions<StripeOptions>()
 			.BindConfiguration(StripeOptions.SectionName)
 			.ValidateDataAnnotations()
 			.ValidateOnStart();
+		services.AddSingleton<IValidateOptions<StripeOptions>, StripeOptionsValidator>();
 
-		// Register Stripe services
+		// Shared StripeClient — ApiBase can be overridden (local dev via Aspire, or tests) to
+		// point at a stripe-mock container instead of the real Stripe API. Individual *Service
+		// classes below resolve this client via DI rather than hitting Stripe's global
+		// StripeConfiguration.ApiKey.
+		services.AddSingleton<IStripeClient>(sp =>
+		{
+			var options = sp.GetRequiredService<IOptions<StripeOptions>>().Value;
+			return string.IsNullOrEmpty(options.ApiBase)
+				? new StripeClient(options.SecretKey)
+				: new StripeClient(apiKey: options.SecretKey, apiBase: options.ApiBase);
+		});
+
 		services.AddSingleton<CustomerService>();
 		services.AddSingleton<Stripe.Checkout.SessionService>();
 		services.AddSingleton<Stripe.BillingPortal.SessionService>();
 		services.AddSingleton<SubscriptionItemService>();
-
-		// Configure Stripe global API key from strongly-typed options
-		var stripeOptions = configuration.GetSection(StripeOptions.SectionName).Get<StripeOptions>();
-		if (!string.IsNullOrEmpty(stripeOptions?.SecretKey))
-		{
-			StripeConfiguration.ApiKey = stripeOptions.SecretKey;
-		}
+		services.AddSingleton<Stripe.SubscriptionService>();
 
 		return services;
 	}

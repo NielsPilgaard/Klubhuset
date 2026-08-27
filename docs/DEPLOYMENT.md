@@ -1,3 +1,13 @@
+---
+title: 'Deployment'
+description: >-
+  Every secret and environment variable the API needs to start in production,
+  which have hardcoded defaults that need overriding, and how to generate
+  required secrets.
+status: 'Living'
+purpose: Checklist for standing up or reconfiguring a production deployment.
+---
+
 # Production deployment — environment variables
 
 This document lists every secret and environment variable that must be set before the API can run in production. The API reads configuration via ASP.NET Core's standard provider chain: `appsettings.json` → `appsettings.Production.json` → **environment variables** (highest priority). Use environment variables for all secrets; never commit secret values to source control.

@@ -365,6 +365,25 @@
         "tags": [
           "Billing"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_CheckoutRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_CheckoutRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_CheckoutRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -385,6 +404,37 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/interval": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_SwitchIntervalRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_SwitchIntervalRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingController_SwitchIntervalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -1878,6 +1928,55 @@
         }
       }
     },
+    "/api/v1/contact-threads/staff-options/{studentId}": {
+      "get": {
+        "tags": [
+          "ContactThreads"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactThreadsController_NotifyStaffOptionDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactThreadsController_NotifyStaffOptionDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactThreadsController_NotifyStaffOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/contact-threads/{threadId}/read": {
       "post": {
         "tags": [
@@ -2806,6 +2905,55 @@
         }
       }
     },
+    "/api/v1/messages/{id}/thread": {
+      "get": {
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessagesController_ThreadMessageDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessagesController_ThreadMessageDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessagesController_ThreadMessageDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/messages": {
       "post": {
         "tags": [
@@ -3353,7 +3501,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ParentsController_ParentDto"
+                    "$ref": "#/components/schemas/ParentsController_ParentSummaryDto"
                   }
                 }
               },
@@ -3361,7 +3509,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ParentsController_ParentDto"
+                    "$ref": "#/components/schemas/ParentsController_ParentSummaryDto"
                   }
                 }
               },
@@ -3369,7 +3517,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ParentsController_ParentDto"
+                    "$ref": "#/components/schemas/ParentsController_ParentSummaryDto"
                   }
                 }
               }
@@ -3580,6 +3728,48 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ParentsController_AdresseBeskyttelseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/parents/{id}/contact": {
+      "patch": {
+        "tags": [
+          "Parents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_UpdateParentContactRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_UpdateParentContactRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentsController_UpdateParentContactRequest"
               }
             }
           }
@@ -6108,6 +6298,151 @@
         }
       }
     },
+    "/api/v1/staa-maal-med/snapshots": {
+      "post": {
+        "tags": [
+          "StaaMaalMed"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaaMaalMedController_CreateSnapshotRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaaMaalMedController_CreateSnapshotRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaaMaalMedController_CreateSnapshotRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaaMaalMedController_SnapshotSummaryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaaMaalMedController_SnapshotSummaryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaaMaalMedController_SnapshotSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "StaaMaalMed"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaaMaalMedController_SnapshotSummaryDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaaMaalMedController_SnapshotSummaryDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaaMaalMedController_SnapshotSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/staa-maal-med/snapshots/{id}": {
+      "get": {
+        "tags": [
+          "StaaMaalMed"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaaMaalMedController_SnapshotDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaaMaalMedController_SnapshotDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaaMaalMedController_SnapshotDetailDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "StaaMaalMed"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/modules": {
       "get": {
         "tags": [
@@ -6233,7 +6568,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "default": "Dit barns skema er blevet opdateret for uge 22."
+              "default": "Du har fået en ny besked i kontaktbogen."
             }
           }
         ],
@@ -7486,6 +7821,7 @@
           "createdAt",
           "date",
           "id",
+          "status",
           "studentId",
           "studentName"
         ],
@@ -7561,10 +7897,25 @@
         "type": "string"
       },
       "AdminController_ModuleOverrideRequest": {
+        "required": [
+          "module"
+        ],
         "type": "object",
         "properties": {
           "module": {
             "$ref": "#/components/schemas/SubscriptionModule"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BillingController_CheckoutRequest": {
+        "required": [
+          "interval"
+        ],
+        "type": "object",
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/BillingInterval"
           }
         },
         "additionalProperties": false
@@ -7582,6 +7933,9 @@
         "additionalProperties": false
       },
       "BillingController_ModuleRequest": {
+        "required": [
+          "module"
+        ],
         "type": "object",
         "properties": {
           "module": {
@@ -7593,8 +7947,10 @@
       "BillingController_SubscriptionDto": {
         "required": [
           "hasAccess",
+          "interval",
           "isActive",
           "isTrialing",
+          "status",
           "trialDaysLeft",
           "trialEnd"
         ],
@@ -7602,6 +7958,9 @@
         "properties": {
           "status": {
             "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/BillingInterval"
           },
           "trialEnd": {
             "type": "string",
@@ -7633,6 +7992,25 @@
           }
         },
         "additionalProperties": false
+      },
+      "BillingController_SwitchIntervalRequest": {
+        "required": [
+          "interval"
+        ],
+        "type": "object",
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/BillingInterval"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BillingInterval": {
+        "enum": [
+          "Monthly",
+          "Yearly"
+        ],
+        "type": "string"
       },
       "BoardFilesController_BoardFileDto": {
         "required": [
@@ -7900,7 +8278,8 @@
           "endDate",
           "id",
           "startDate",
-          "title"
+          "title",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -7942,7 +8321,8 @@
         "required": [
           "endDate",
           "startDate",
-          "title"
+          "title",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -7976,7 +8356,8 @@
         "required": [
           "endDate",
           "startDate",
-          "title"
+          "title",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -8001,7 +8382,8 @@
         "required": [
           "endDate",
           "startDate",
-          "title"
+          "title",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -8191,7 +8573,9 @@
           "slotBClassName",
           "slotBCourseName",
           "slotBId",
-          "startTime"
+          "startTime",
+          "type",
+          "weekday"
         ],
         "type": "object",
         "properties": {
@@ -8256,6 +8640,14 @@
         "properties": {
           "body": {
             "type": "string"
+          },
+          "notifyStaffIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -8266,6 +8658,7 @@
           "id",
           "senderId",
           "senderName",
+          "senderType",
           "sentAt"
         ],
         "type": "object",
@@ -8351,6 +8744,35 @@
           },
           "body": {
             "type": "string"
+          },
+          "notifyStaffIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContactThreadsController_NotifyStaffOptionDto": {
+        "required": [
+          "id",
+          "isRelevant",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isRelevant": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -9040,6 +9462,12 @@
             "items": {
               "$ref": "#/components/schemas/ImportsController_ImportWarning"
             }
+          },
+          "uninvitedParents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportsController_UninvitedParentDto"
+            }
           }
         },
         "additionalProperties": false
@@ -9056,6 +9484,27 @@
             "format": "int32"
           },
           "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportsController_UninvitedParentDto": {
+        "required": [
+          "email",
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
             "type": "string"
           }
         },
@@ -9091,6 +9540,10 @@
             "type": "string",
             "nullable": true
           },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
           "avatarUrl": {
             "type": "string",
             "nullable": true
@@ -9100,6 +9553,29 @@
             "items": {
               "type": "string"
             }
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KontaktController_KontaktStudentDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "KontaktController_KontaktStudentDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9210,8 +9686,10 @@
         "required": [
           "body",
           "id",
+          "isGroup",
           "senderId",
           "senderName",
+          "senderType",
           "sentAt",
           "subject"
         ],
@@ -9245,6 +9723,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isGroup": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -9252,7 +9738,8 @@
       "MessagesController_RecipientDto": {
         "required": [
           "id",
-          "name"
+          "name",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -9406,6 +9893,7 @@
         "required": [
           "body",
           "recipientId",
+          "recipientType",
           "subject"
         ],
         "type": "object",
@@ -9422,6 +9910,11 @@
           },
           "body": {
             "type": "string"
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9433,6 +9926,7 @@
           "isGroup",
           "recipientId",
           "recipientName",
+          "recipientType",
           "sentAt",
           "subject"
         ],
@@ -9478,13 +9972,76 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MessagesController_ThreadMessageDto": {
+        "required": [
+          "body",
+          "id",
+          "isOwn",
+          "recipientId",
+          "recipientName",
+          "recipientType",
+          "senderId",
+          "senderName",
+          "senderType",
+          "sentAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderType": {
+            "$ref": "#/components/schemas/RecipientType"
+          },
+          "senderName": {
+            "type": "string"
+          },
+          "recipientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recipientType": {
+            "$ref": "#/components/schemas/RecipientType"
+          },
+          "recipientName": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isOwn": {
+            "type": "boolean"
+          },
+          "inReplyToId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "ModuleItemDto": {
         "required": [
-          "isAdminOverride"
+          "isAdminOverride",
+          "module"
         ],
         "type": "object",
         "properties": {
@@ -9504,7 +10061,8 @@
       "NotificationPreferencesController_NotificationPreferenceDto": {
         "required": [
           "email",
-          "inApp"
+          "inApp",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -9523,7 +10081,8 @@
       "NotificationPreferencesController_UpsertPreferenceItem": {
         "required": [
           "email",
-          "inApp"
+          "inApp",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -9555,7 +10114,8 @@
         "required": [
           "body",
           "createdAt",
-          "id"
+          "id",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -9651,7 +10211,8 @@
       "ParentMeController_ParentMeDto": {
         "required": [
           "id",
-          "name"
+          "name",
+          "shareContactInfo"
         ],
         "type": "object",
         "properties": {
@@ -9665,6 +10226,25 @@
           "avatarUrl": {
             "type": "string",
             "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "shareContactInfo": {
+            "type": "boolean"
           },
           "classes": {
             "type": "array",
@@ -9705,10 +10285,14 @@
       },
       "ParentMeController_UpdateContactRequest": {
         "required": [
+          "name",
           "shareContactInfo"
         ],
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "phone": {
             "type": "string",
             "nullable": true
@@ -9739,6 +10323,23 @@
         "properties": {
           "adresseBeskyttet": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentsController_CoParentDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9791,6 +10392,73 @@
             "type": "string",
             "nullable": true
           },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParentsController_StudentRefDto"
+            }
+          },
+          "hasAccount": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "adresseBeskyttet": {
+            "type": "boolean"
+          },
+          "coParent": {
+            "$ref": "#/components/schemas/ParentsController_CoParentDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentsController_ParentSummaryDto": {
+        "required": [
+          "adresseBeskyttet",
+          "createdAt",
+          "hasAccount",
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
           "students": {
             "type": "array",
             "items": {
@@ -9832,6 +10500,34 @@
           },
           "className": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentsController_UpdateParentContactRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9898,7 +10594,8 @@
           "courseName",
           "endTime",
           "schemaId",
-          "startTime"
+          "startTime",
+          "weekday"
         ],
         "type": "object",
         "properties": {
@@ -10076,7 +10773,8 @@
           "id",
           "teacherId",
           "teacherName",
-          "timeSlotId"
+          "timeSlotId",
+          "weekday"
         ],
         "type": "object",
         "properties": {
@@ -10148,7 +10846,8 @@
         "required": [
           "courseId",
           "teacherId",
-          "timeSlotId"
+          "timeSlotId",
+          "weekday"
         ],
         "type": "object",
         "properties": {
@@ -10493,6 +11192,12 @@
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_SubjectCoverageDto"
             }
+          },
+          "unexpectedGradeCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false
@@ -10505,6 +11210,80 @@
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_ClassCoverageDto"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "StaaMaalMedController_CreateSnapshotRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StaaMaalMedController_SnapshotDetailDto": {
+        "required": [
+          "createdAt",
+          "createdByStaffName",
+          "id",
+          "schoolYear"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolYear": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdByStaffName": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/StaaMaalMedController_CoverageResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StaaMaalMedController_SnapshotSummaryDto": {
+        "required": [
+          "createdAt",
+          "createdByStaffName",
+          "id",
+          "schoolYear"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolYear": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdByStaffName": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -10561,7 +11340,8 @@
         "required": [
           "id",
           "isAdmin",
-          "name"
+          "name",
+          "role"
         ],
         "type": "object",
         "properties": {
@@ -10596,7 +11376,8 @@
       "StaffController_UpsertStaffRequest": {
         "required": [
           "isAdmin",
-          "name"
+          "name",
+          "role"
         ],
         "type": "object",
         "properties": {
@@ -10824,6 +11605,7 @@
       "StatsController_HoursPerStaff": {
         "required": [
           "hours",
+          "role",
           "staffId",
           "staffName"
         ],
@@ -11018,6 +11800,7 @@
           "createdAt",
           "id",
           "name",
+          "subscriptionStatus",
           "trialEnd"
         ],
         "type": "object",
@@ -11076,6 +11859,7 @@
           "createdAt",
           "id",
           "name",
+          "subscriptionStatus",
           "trialEnd"
         ],
         "type": "object",
@@ -11364,6 +12148,7 @@
         "required": [
           "careEndDate",
           "careStartDate",
+          "granularity",
           "isOpen",
           "registrationDeadline",
           "title"
@@ -11485,6 +12270,7 @@
         "required": [
           "careEndDate",
           "careStartDate",
+          "granularity",
           "isOpen",
           "registrationDeadline",
           "title"
@@ -11537,6 +12323,7 @@
           "careStartDate",
           "createdAt",
           "entryCount",
+          "granularity",
           "id",
           "isOpen",
           "registrationDeadline",
@@ -11606,7 +12393,8 @@
       "VikarController_AvailableStaffDto": {
         "required": [
           "id",
-          "name"
+          "name",
+          "role"
         ],
         "type": "object",
         "properties": {
@@ -11627,7 +12415,8 @@
         "required": [
           "conflictDescription",
           "id",
-          "name"
+          "name",
+          "role"
         ],
         "type": "object",
         "properties": {
@@ -11707,7 +12496,8 @@
       },
       "WeekPlanController_HolidayDayDto": {
         "required": [
-          "title"
+          "title",
+          "weekday"
         ],
         "type": "object",
         "properties": {
@@ -11820,6 +12610,7 @@
           "startTime",
           "timeSlotId",
           "timeSlotLabel",
+          "weekday",
           "weekPlanId"
         ],
         "type": "object",

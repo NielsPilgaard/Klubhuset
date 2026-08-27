@@ -20,15 +20,17 @@ public sealed class ParentsController(
 	KeycloakAdminService keycloak,
 	ILogger<ParentsController> logger) : ControllerBase
 {
-	public record ParentDto(Guid Id, string Name, string Email, string? Phone, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt, bool AdresseBeskyttet);
+	public record ParentSummaryDto(Guid Id, string Name, string? Phone, string? Address, string? PostalCode, string? City, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt, bool AdresseBeskyttet);
+	public record ParentDto(Guid Id, string Name, string Email, string? Phone, string? Address, string? PostalCode, string? City, IReadOnlyList<StudentRefDto> Students, bool HasAccount, DateTimeOffset CreatedAt, bool AdresseBeskyttet, CoParentDto? CoParent);
 	public record StudentRefDto(Guid Id, string Name, Guid ClassId, string ClassName);
+	public record CoParentDto(Guid Id, string Name);
 	public record InviteParentRequest(
 		[Required, StringLength(200, MinimumLength = 1)] string Name,
 		[Required, EmailAddress, StringLength(500)] string Email,
 		[Required] IReadOnlyList<Guid> StudentIds);
 
 	[HttpGet]
-	public async Task<ActionResult<List<ParentDto>>> GetAll(CancellationToken cancellationToken)
+	public async Task<ActionResult<List<ParentSummaryDto>>> GetAll(CancellationToken cancellationToken)
 	{
 		var parents = await db.Parents
 			.AsNoTracking()
@@ -36,7 +38,7 @@ public sealed class ParentsController(
 			.OrderBy(p => p.Name)
 			.ToListAsync(cancellationToken);
 
-		return Ok(parents.Select(ToDto).ToList());
+		return Ok(parents.Select(ToSummaryDto).ToList());
 	}
 
 	[HttpGet("{id:guid}")]
@@ -47,7 +49,20 @@ public sealed class ParentsController(
 			.Include(p => p.Students).ThenInclude(s => s.Class)
 			.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
-		return parent is null ? NotFound() : Ok(ToDto(parent));
+		if (parent is null)
+		{
+			return Problem(statusCode: StatusCodes.Status404NotFound);
+		}
+
+		var studentIds = parent.Students.Select(s => s.Id).ToList();
+		var coParent = await db.Parents
+			.AsNoTracking()
+			.Where(p => p.Id != id && p.Students.Any(s => studentIds.Contains(s.Id)))
+			.OrderBy(p => p.Name)
+			.Select(p => new CoParentDto(p.Id, p.Name))
+			.FirstOrDefaultAsync(cancellationToken);
+
+		return Ok(ToDto(parent, coParent));
 	}
 
 	[HttpPost("invite")]
@@ -98,7 +113,7 @@ public sealed class ParentsController(
 			.Include(p => p.Students).ThenInclude(s => s.Class)
 			.FirstAsync(p => p.Id == parent.Id, cancellationToken);
 
-		return CreatedAtAction(nameof(GetById), new { id = parent.Id }, ToDto(withStudents));
+		return CreatedAtAction(nameof(GetById), new { id = parent.Id }, ToDto(withStudents, coParent: null));
 	}
 
 	[HttpDelete("{id:guid}")]
@@ -188,13 +203,70 @@ public sealed class ParentsController(
 
 	public record AdresseBeskyttelseRequest(bool AdresseBeskyttet);
 
-	private static ParentDto ToDto(Parent p) => new(
+	public record UpdateParentContactRequest(
+		[Required, StringLength(200, MinimumLength = 1)] string Name,
+		[StringLength(50)] string? Phone,
+		[StringLength(500)] string? Address,
+		[StringLength(10)] string? PostalCode,
+		[StringLength(100)] string? City);
+
+	[HttpPatch("{id:guid}/contact")]
+	public async Task<ActionResult> UpdateContact(Guid id, [FromBody] UpdateParentContactRequest req, CancellationToken cancellationToken)
+	{
+		var parent = await db.Parents.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+		if (parent is null)
+		{
+			return NotFound();
+		}
+
+		var trimmedName = req.Name.Trim();
+		if (trimmedName.Length == 0)
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["name"] = ["Navn er påkrævet."] } });
+		}
+
+		if (!ContactValidation.TryNormalizePhone(req.Phone, out var normalizedPhone))
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["phone"] = ["Telefonnummer skal være 8 cifre, evt. med +45 foran."] } });
+		}
+
+		if (!ContactValidation.TryNormalizePostalCode(req.PostalCode, out var normalizedPostalCode))
+		{
+			return ValidationProblem(new ValidationProblemDetails { Errors = { ["postalCode"] = ["Postnummer skal være 4 cifre."] } });
+		}
+
+		parent.Name = trimmedName;
+		parent.Phone = normalizedPhone;
+		parent.Address = req.Address;
+		parent.PostalCode = normalizedPostalCode;
+		parent.City = req.City;
+		await db.SaveChangesAsync(cancellationToken);
+		return NoContent();
+	}
+
+	private static ParentSummaryDto ToSummaryDto(Parent p) => new(
 		p.Id,
 		p.Name,
-		p.Email,
 		p.Phone,
+		p.Address,
+		p.PostalCode,
+		p.City,
 		p.Students.Select(s => new StudentRefDto(s.Id, s.Name, s.ClassId, s.Class?.Name ?? string.Empty)).ToList(),
 		p.KeycloakSubject is not null,
 		p.CreatedAt,
 		p.AdresseBeskyttet);
+
+	private static ParentDto ToDto(Parent p, CoParentDto? coParent) => new(
+		p.Id,
+		p.Name,
+		p.Email,
+		p.Phone,
+		p.Address,
+		p.PostalCode,
+		p.City,
+		p.Students.Select(s => new StudentRefDto(s.Id, s.Name, s.ClassId, s.Class?.Name ?? string.Empty)).ToList(),
+		p.KeycloakSubject is not null,
+		p.CreatedAt,
+		p.AdresseBeskyttet,
+		coParent);
 }

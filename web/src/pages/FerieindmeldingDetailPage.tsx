@@ -157,8 +157,7 @@ export default function FerieindmeldingDetailPage() {
             <div>
               <h1 className="font-display text-xl font-semibold text-gray-900">{window_.title}</h1>
               <p className="text-sm text-gray-500 mt-1">
-                Plejeperiode: {formatDate(window_.careStartDate)} –{' '}
-                {formatDate(window_.careEndDate)}
+                Pasning: {formatDate(window_.careStartDate)} – {formatDate(window_.careEndDate)}
                 {' · '}Frist: {formatDate(window_.registrationDeadline)}
                 {' · '}
                 {window_.granularity === 'Days' ? 'Dage' : 'Uger'}
@@ -197,9 +196,7 @@ export default function FerieindmeldingDetailPage() {
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Plejeperiode start
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pasning start</label>
               <input
                 type="date"
                 required
@@ -209,9 +206,7 @@ export default function FerieindmeldingDetailPage() {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Plejeperiode slut
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pasning slut</label>
               <input
                 type="date"
                 required

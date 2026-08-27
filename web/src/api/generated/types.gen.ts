@@ -11,7 +11,7 @@ export type AbsenceControllerAbsenceReportDto = {
     date: string;
     endDate?: string | null;
     reason?: string | null;
-    status?: AbsenceStatus;
+    status: AbsenceStatus;
     createdAt: string;
 };
 
@@ -25,7 +25,11 @@ export type AbsenceControllerReportAbsenceRequest = {
 export type AbsenceStatus = 'Reported' | 'Confirmed' | 'Dismissed';
 
 export type AdminControllerModuleOverrideRequest = {
-    module?: SubscriptionModule;
+    module: SubscriptionModule;
+};
+
+export type BillingControllerCheckoutRequest = {
+    interval: BillingInterval;
 };
 
 export type BillingControllerCheckoutResponse = {
@@ -33,11 +37,12 @@ export type BillingControllerCheckoutResponse = {
 };
 
 export type BillingControllerModuleRequest = {
-    module?: SubscriptionModule;
+    module: SubscriptionModule;
 };
 
 export type BillingControllerSubscriptionDto = {
-    status?: SubscriptionStatus;
+    status: SubscriptionStatus;
+    interval: BillingInterval;
     trialEnd: string;
     currentPeriodEnd?: string | null;
     isTrialing: boolean;
@@ -46,6 +51,12 @@ export type BillingControllerSubscriptionDto = {
     trialDaysLeft: number;
     activeModules?: Array<string>;
 };
+
+export type BillingControllerSwitchIntervalRequest = {
+    interval: BillingInterval;
+};
+
+export type BillingInterval = 'Monthly' | 'Yearly';
 
 export type BoardFilesControllerBoardFileDto = {
     id: string;
@@ -122,7 +133,7 @@ export type BroadcastAudience = 'AllParents' | 'ClassParents' | 'SfoParents' | '
 
 export type CalendarControllerCalendarEntryDto = {
     id: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     title: string;
     startDate: string;
     endDate: string;
@@ -133,7 +144,7 @@ export type CalendarControllerCalendarEntryDto = {
 
 export type CalendarControllerCreateCalendarEntryRequest = {
     title: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     startDate: string;
     endDate: string;
     recurrenceRule?: string | null;
@@ -142,14 +153,14 @@ export type CalendarControllerCreateCalendarEntryRequest = {
 
 export type CalendarControllerDefaultHolidayDto = {
     title: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     startDate: string;
     endDate: string;
 };
 
 export type CalendarControllerUpdateCalendarEntryRequest = {
     title: string;
-    type?: CalendarEntryType;
+    type: CalendarEntryType;
     startDate: string;
     endDate: string;
     recurrenceRule?: string | null;
@@ -198,12 +209,12 @@ export type ClassesControllerYearRollRequest = {
 };
 
 export type ConflictInfo = {
-    type?: ConflictType;
+    type: ConflictType;
     slotAId: string;
     slotBId: string;
     resourceId: string;
     resourceName: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     startTime: string;
     endTime: string;
     slotACourseName: string;
@@ -216,11 +227,12 @@ export type ConflictType = 'TeacherDoubleBooked' | 'RoomDoubleBooked' | 'AideDou
 
 export type ContactThreadsControllerAddMessageRequest = {
     body: string;
+    notifyStaffIds?: Array<string> | null;
 };
 
 export type ContactThreadsControllerContactMessageDto = {
     id: string;
-    senderType?: SenderType;
+    senderType: SenderType;
     senderId: string;
     senderName: string;
     body: string;
@@ -241,6 +253,13 @@ export type ContactThreadsControllerContactThreadDto = {
 export type ContactThreadsControllerFindOrCreateThreadRequest = {
     studentId: string;
     body: string;
+    notifyStaffIds?: Array<string> | null;
+};
+
+export type ContactThreadsControllerNotifyStaffOptionDto = {
+    id: string;
+    name: string;
+    isRelevant: boolean;
 };
 
 export type ContactThreadsControllerPagedResult1 = {
@@ -432,11 +451,18 @@ export type ImportsControllerImportStudentsAndParentsResponse = {
     parentsUpdated: number;
     parentStudentLinksCreated: number;
     warnings?: Array<ImportsControllerImportWarning>;
+    uninvitedParents?: Array<ImportsControllerUninvitedParentDto>;
 };
 
 export type ImportsControllerImportWarning = {
     row: number;
     message: string;
+};
+
+export type ImportsControllerUninvitedParentDto = {
+    id: string;
+    name: string;
+    email: string;
 };
 
 export type KontaktControllerKontaktParentDto = {
@@ -446,8 +472,15 @@ export type KontaktControllerKontaktParentDto = {
     address?: string | null;
     postalCode?: string | null;
     city?: string | null;
+    email?: string | null;
     avatarUrl?: string | null;
     studentNames?: Array<string>;
+    students?: Array<KontaktControllerKontaktStudentDto>;
+};
+
+export type KontaktControllerKontaktStudentDto = {
+    id: string;
+    name: string;
 };
 
 export type MessagesControllerGroupPreviewDto = {
@@ -471,18 +504,20 @@ export type MessagesControllerGroupPreviewRequest = {
 export type MessagesControllerInboxMessageDto = {
     id: string;
     senderId: string;
-    senderType?: RecipientType;
+    senderType: RecipientType;
     senderName: string;
     subject: string;
     body: string;
     sentAt: string;
     readAt?: string | null;
+    inReplyToId?: string | null;
+    isGroup: boolean;
 };
 
 export type MessagesControllerRecipientDto = {
     id: string;
     name: string;
-    type?: RecipientType;
+    type: RecipientType;
     avatarUrl?: string | null;
 };
 
@@ -512,15 +547,16 @@ export type MessagesControllerSendGroupMessageRequest = {
 
 export type MessagesControllerSendMessageRequest = {
     recipientId: string;
-    recipientType?: RecipientType;
+    recipientType: RecipientType;
     subject: string;
     body: string;
+    inReplyToId?: string | null;
 };
 
 export type MessagesControllerSentMessageDto = {
     id: string;
     recipientId: string;
-    recipientType?: RecipientType;
+    recipientType: RecipientType;
     recipientName: string;
     subject: string;
     body: string;
@@ -529,22 +565,37 @@ export type MessagesControllerSentMessageDto = {
     isGroup: boolean;
     audienceLabel?: string | null;
     groupRecipientCount?: number | null;
+    inReplyToId?: string | null;
+};
+
+export type MessagesControllerThreadMessageDto = {
+    id: string;
+    senderId: string;
+    senderType: RecipientType;
+    senderName: string;
+    recipientId: string;
+    recipientType: RecipientType;
+    recipientName: string;
+    body: string;
+    sentAt: string;
+    isOwn: boolean;
+    inReplyToId?: string | null;
 };
 
 export type ModuleItemDto = {
-    module?: SubscriptionModule;
+    module: SubscriptionModule;
     isAdminOverride: boolean;
     stripeSubscriptionItemId?: string | null;
 };
 
 export type NotificationPreferencesControllerNotificationPreferenceDto = {
-    type?: NotificationType;
+    type: NotificationType;
     inApp: boolean;
     email: boolean;
 };
 
 export type NotificationPreferencesControllerUpsertPreferenceItem = {
-    type?: NotificationType;
+    type: NotificationType;
     inApp: boolean;
     email: boolean;
 };
@@ -553,7 +604,7 @@ export type NotificationType = 'NewMessage' | 'NewContactMessage' | 'WeekPlanCha
 
 export type NotificationsControllerNotificationDto = {
     id: string;
-    type?: NotificationType;
+    type: NotificationType;
     body: string;
     createdAt: string;
     readAt?: string | null;
@@ -583,6 +634,11 @@ export type ParentMeControllerParentMeDto = {
     id: string;
     name: string;
     avatarUrl?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    shareContactInfo: boolean;
     classes?: Array<ParentMeControllerParentClassDto>;
     students?: Array<ParentMeControllerParentStudentDto>;
 };
@@ -594,6 +650,7 @@ export type ParentMeControllerParentStudentDto = {
 };
 
 export type ParentMeControllerUpdateContactRequest = {
+    name: string;
     phone?: string | null;
     address?: string | null;
     postalCode?: string | null;
@@ -603,6 +660,11 @@ export type ParentMeControllerUpdateContactRequest = {
 
 export type ParentsControllerAdresseBeskyttelseRequest = {
     adresseBeskyttet: boolean;
+};
+
+export type ParentsControllerCoParentDto = {
+    id: string;
+    name: string;
 };
 
 export type ParentsControllerInviteParentRequest = {
@@ -616,6 +678,23 @@ export type ParentsControllerParentDto = {
     name: string;
     email: string;
     phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    students?: Array<ParentsControllerStudentRefDto>;
+    hasAccount: boolean;
+    createdAt: string;
+    adresseBeskyttet: boolean;
+    coParent?: ParentsControllerCoParentDto;
+};
+
+export type ParentsControllerParentSummaryDto = {
+    id: string;
+    name: string;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
     students?: Array<ParentsControllerStudentRefDto>;
     hasAccount: boolean;
     createdAt: string;
@@ -627,6 +706,14 @@ export type ParentsControllerStudentRefDto = {
     name: string;
     classId: string;
     className: string;
+};
+
+export type ParentsControllerUpdateParentContactRequest = {
+    name: string;
+    phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
 };
 
 export type RecipientType = 'Parent' | 'Staff' | 'Board';
@@ -645,7 +732,7 @@ export type RoomsControllerUpsertRoomRequest = {
 };
 
 export type SchedulesControllerScheduleSlotDto = {
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     startTime: string;
     endTime: string;
     courseName: string;
@@ -696,7 +783,7 @@ export type SchemasControllerSetDateRangeRequest = {
 export type SchemasControllerSlotDto = {
     id: string;
     timeSlotId: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     courseId: string;
     courseName: string;
     teacherId: string;
@@ -714,7 +801,7 @@ export type SchemasControllerSlotsAndConflictsDto = {
 
 export type SchemasControllerUpsertSlotRequest = {
     timeSlotId: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     courseId: string;
     teacherId: string;
     roomId?: string | null;
@@ -802,10 +889,32 @@ export type StaaMaalMedControllerClassCoverageDto = {
     className: string;
     gradeLevel: number;
     subjects?: Array<StaaMaalMedControllerSubjectCoverageDto>;
+    unexpectedGradeCategories?: Array<string>;
 };
 
 export type StaaMaalMedControllerCoverageResponseDto = {
     classes?: Array<StaaMaalMedControllerClassCoverageDto>;
+};
+
+export type StaaMaalMedControllerCreateSnapshotRequest = {
+    reason?: string | null;
+};
+
+export type StaaMaalMedControllerSnapshotDetailDto = {
+    id: string;
+    schoolYear: string;
+    createdAt: string;
+    createdByStaffName: string;
+    reason?: string | null;
+    data?: StaaMaalMedControllerCoverageResponseDto;
+};
+
+export type StaaMaalMedControllerSnapshotSummaryDto = {
+    id: string;
+    schoolYear: string;
+    createdAt: string;
+    createdByStaffName: string;
+    reason?: string | null;
 };
 
 export type StaaMaalMedControllerSubjectCoverageDto = {
@@ -826,7 +935,7 @@ export type StaffControllerStaffDto = {
     name: string;
     email?: string | null;
     phone?: string | null;
-    role?: StaffRole;
+    role: StaffRole;
     isAdmin: boolean;
     keycloakSubject?: string | null;
 };
@@ -835,7 +944,7 @@ export type StaffControllerUpsertStaffRequest = {
     name: string;
     email?: string | null;
     phone?: string | null;
-    role?: StaffRole;
+    role: StaffRole;
     isAdmin: boolean;
 };
 
@@ -894,7 +1003,7 @@ export type StatsControllerHoursPerCourse = {
 export type StatsControllerHoursPerStaff = {
     staffId: string;
     staffName: string;
-    role?: StaffRole;
+    role: StaffRole;
     hours: number;
 };
 
@@ -946,7 +1055,7 @@ export type TenantDetailDto = {
     contactEmail?: string | null;
     contactPhone?: string | null;
     createdAt: string;
-    subscriptionStatus?: SubscriptionStatus;
+    subscriptionStatus: SubscriptionStatus;
     stripeCustomerId?: string | null;
     stripeSubscriptionId?: string | null;
     trialEnd: string;
@@ -959,7 +1068,7 @@ export type TenantListItemDto = {
     name: string;
     contactEmail?: string | null;
     createdAt: string;
-    subscriptionStatus?: SubscriptionStatus;
+    subscriptionStatus: SubscriptionStatus;
     trialEnd: string;
     currentPeriodEnd?: string | null;
     activeModuleCount: number;
@@ -1033,7 +1142,7 @@ export type VacationRegistrationControllerCreateWindowRequest = {
     registrationDeadline: string;
     careStartDate: string;
     careEndDate: string;
-    granularity?: VacationRegistrationGranularity;
+    granularity: VacationRegistrationGranularity;
     isOpen: boolean;
 };
 
@@ -1063,7 +1172,7 @@ export type VacationRegistrationControllerUpdateWindowRequest = {
     registrationDeadline: string;
     careStartDate: string;
     careEndDate: string;
-    granularity?: VacationRegistrationGranularity;
+    granularity: VacationRegistrationGranularity;
     isOpen: boolean;
 };
 
@@ -1078,7 +1187,7 @@ export type VacationRegistrationControllerWindowDto = {
     registrationDeadline: string;
     careStartDate: string;
     careEndDate: string;
-    granularity?: VacationRegistrationGranularity;
+    granularity: VacationRegistrationGranularity;
     isOpen: boolean;
     entryCount: number;
     createdAt: string;
@@ -1094,13 +1203,13 @@ export type VikarControllerAssignSubstituteRequest = {
 export type VikarControllerAvailableStaffDto = {
     id: string;
     name: string;
-    role?: StaffRole;
+    role: StaffRole;
 };
 
 export type VikarControllerBusyStaffDto = {
     id: string;
     name: string;
-    role?: StaffRole;
+    role: StaffRole;
     conflictDescription: string;
 };
 
@@ -1121,7 +1230,7 @@ export type WeekPlanControllerBreakTimeSlotDto = {
 };
 
 export type WeekPlanControllerHolidayDayDto = {
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     title: string;
 };
 
@@ -1149,7 +1258,7 @@ export type WeekPlanControllerWeekPlanDto = {
 export type WeekPlanControllerWeekPlanSlotDto = {
     id: string;
     schemaSlotId: string;
-    weekday?: DayOfWeek;
+    weekday: DayOfWeek;
     timeSlotId: string;
     timeSlotLabel: string;
     startTime: string;
@@ -1353,7 +1462,7 @@ export type DeleteApiV1BillingModulesByModuleResponses = {
 };
 
 export type PostApiV1BillingCheckoutData = {
-    body?: never;
+    body?: BillingControllerCheckoutRequest;
     path?: never;
     query?: never;
     url: '/api/v1/billing/checkout';
@@ -1367,6 +1476,22 @@ export type PostApiV1BillingCheckoutResponses = {
 };
 
 export type PostApiV1BillingCheckoutResponse = PostApiV1BillingCheckoutResponses[keyof PostApiV1BillingCheckoutResponses];
+
+export type PostApiV1BillingIntervalData = {
+    body?: BillingControllerSwitchIntervalRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/billing/interval';
+};
+
+export type PostApiV1BillingIntervalResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type PostApiV1BillingIntervalResponse = PostApiV1BillingIntervalResponses[keyof PostApiV1BillingIntervalResponses];
 
 export type PostApiV1BillingPortalData = {
     body?: never;
@@ -2003,6 +2128,24 @@ export type PostApiV1ContactThreadsByThreadIdMessagesResponses = {
     200: unknown;
 };
 
+export type GetApiV1ContactThreadsStaffOptionsByStudentIdData = {
+    body?: never;
+    path: {
+        studentId: string;
+    };
+    query?: never;
+    url: '/api/v1/contact-threads/staff-options/{studentId}';
+};
+
+export type GetApiV1ContactThreadsStaffOptionsByStudentIdResponses = {
+    /**
+     * OK
+     */
+    200: Array<ContactThreadsControllerNotifyStaffOptionDto>;
+};
+
+export type GetApiV1ContactThreadsStaffOptionsByStudentIdResponse = GetApiV1ContactThreadsStaffOptionsByStudentIdResponses[keyof GetApiV1ContactThreadsStaffOptionsByStudentIdResponses];
+
 export type PostApiV1ContactThreadsByThreadIdReadData = {
     body?: never;
     path: {
@@ -2365,6 +2508,24 @@ export type GetApiV1MessagesSentResponses = {
 
 export type GetApiV1MessagesSentResponse = GetApiV1MessagesSentResponses[keyof GetApiV1MessagesSentResponses];
 
+export type GetApiV1MessagesByIdThreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/messages/{id}/thread';
+};
+
+export type GetApiV1MessagesByIdThreadResponses = {
+    /**
+     * OK
+     */
+    200: Array<MessagesControllerThreadMessageDto>;
+};
+
+export type GetApiV1MessagesByIdThreadResponse = GetApiV1MessagesByIdThreadResponses[keyof GetApiV1MessagesByIdThreadResponses];
+
 export type PostApiV1MessagesData = {
     body?: MessagesControllerSendMessageRequest;
     path?: never;
@@ -2638,7 +2799,7 @@ export type GetApiV1ParentsResponses = {
     /**
      * OK
      */
-    200: Array<ParentsControllerParentDto>;
+    200: Array<ParentsControllerParentSummaryDto>;
 };
 
 export type GetApiV1ParentsResponse = GetApiV1ParentsResponses[keyof GetApiV1ParentsResponses];
@@ -2737,6 +2898,22 @@ export type PatchApiV1ParentsByIdAdresseBeskyttelseData = {
 };
 
 export type PatchApiV1ParentsByIdAdresseBeskyttelseResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiV1ParentsByIdContactData = {
+    body?: ParentsControllerUpdateParentContactRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/parents/{id}/contact';
+};
+
+export type PatchApiV1ParentsByIdContactResponses = {
     /**
      * OK
      */
@@ -3760,6 +3937,72 @@ export type GetApiV1StaaMaalMedCoverageResponses = {
 };
 
 export type GetApiV1StaaMaalMedCoverageResponse = GetApiV1StaaMaalMedCoverageResponses[keyof GetApiV1StaaMaalMedCoverageResponses];
+
+export type GetApiV1StaaMaalMedSnapshotsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots';
+};
+
+export type GetApiV1StaaMaalMedSnapshotsResponses = {
+    /**
+     * OK
+     */
+    200: Array<StaaMaalMedControllerSnapshotSummaryDto>;
+};
+
+export type GetApiV1StaaMaalMedSnapshotsResponse = GetApiV1StaaMaalMedSnapshotsResponses[keyof GetApiV1StaaMaalMedSnapshotsResponses];
+
+export type PostApiV1StaaMaalMedSnapshotsData = {
+    body?: StaaMaalMedControllerCreateSnapshotRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots';
+};
+
+export type PostApiV1StaaMaalMedSnapshotsResponses = {
+    /**
+     * OK
+     */
+    200: StaaMaalMedControllerSnapshotSummaryDto;
+};
+
+export type PostApiV1StaaMaalMedSnapshotsResponse = PostApiV1StaaMaalMedSnapshotsResponses[keyof PostApiV1StaaMaalMedSnapshotsResponses];
+
+export type DeleteApiV1StaaMaalMedSnapshotsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots/{id}';
+};
+
+export type DeleteApiV1StaaMaalMedSnapshotsByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1StaaMaalMedSnapshotsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/staa-maal-med/snapshots/{id}';
+};
+
+export type GetApiV1StaaMaalMedSnapshotsByIdResponses = {
+    /**
+     * OK
+     */
+    200: StaaMaalMedControllerSnapshotDetailDto;
+};
+
+export type GetApiV1StaaMaalMedSnapshotsByIdResponse = GetApiV1StaaMaalMedSnapshotsByIdResponses[keyof GetApiV1StaaMaalMedSnapshotsByIdResponses];
 
 export type GetApiV1ModulesData = {
     body?: never;

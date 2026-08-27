@@ -4,14 +4,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1ParentsOptions,
   getApiV1ParentsQueryKey,
+  getApiV1ParentsByIdOptions,
   postApiV1ParentsInviteMutation,
   deleteApiV1ParentsByIdMutation,
   postApiV1ParentInvitationsByParentIdResendMutation,
+  patchApiV1ParentsByIdContactMutation,
   getApiV1StudentsOptions,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { ParentDto, StudentDto } from '../api/client'
+import type { ParentSummaryDto, StudentDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useSubscription } from '../hooks/useSubscription'
+import {
+  isValidPhone,
+  isValidPostalCode,
+  normalizePhone,
+  PHONE_ERROR_MESSAGE,
+  POSTAL_CODE_ERROR_MESSAGE,
+} from '../lib/validation'
 
 interface InviteModalProps {
   students: StudentDto[]
@@ -153,10 +162,237 @@ function InviteModal({ students, onClose }: InviteModalProps) {
   )
 }
 
+interface EditContactModalProps {
+  parent: ParentSummaryDto
+  onClose: () => void
+}
+
+function EditContactModal({ parent, onClose }: EditContactModalProps) {
+  const qc = useQueryClient()
+  const [name, setName] = useState(parent.name ?? '')
+  const [phone, setPhone] = useState(parent.phone ?? '')
+  const [address, setAddress] = useState(parent.address ?? '')
+  const [postalCode, setPostalCode] = useState(parent.postalCode ?? '')
+  const [city, setCity] = useState(parent.city ?? '')
+
+  const phoneValid = isValidPhone(phone)
+  const postalCodeValid = isValidPostalCode(postalCode)
+
+  const updateMutation = useMutation({
+    ...patchApiV1ParentsByIdContactMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: getApiV1ParentsQueryKey() })
+      onClose()
+    },
+  })
+
+  function handleSave() {
+    if (!name.trim() || !phoneValid || !postalCodeValid) return
+    updateMutation.mutate({
+      path: { id: parent.id! },
+      body: {
+        name: name.trim(),
+        phone: phone.trim() ? normalizePhone(phone.trim()) : null,
+        address: address.trim() || null,
+        postalCode: postalCode.trim() || null,
+        city: city.trim() || null,
+      },
+    })
+  }
+
+  return (
+    <Modal isOpen onClose={onClose} title="Rediger kontaktoplysninger">
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label
+            htmlFor="parent-edit-name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Navn *
+          </label>
+          <input
+            id="parent-edit-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="parent-edit-phone"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Telefon
+          </label>
+          <input
+            id="parent-edit-phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            type="tel"
+            placeholder="+45 12 34 56 78"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+          {phone.trim() !== '' && !phoneValid && (
+            <p className="text-xs text-red-600 mt-1">{PHONE_ERROR_MESSAGE}</p>
+          )}
+        </div>
+        <div>
+          <label
+            htmlFor="parent-edit-address"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Adresse
+          </label>
+          <input
+            id="parent-edit-address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Vejnavn og nummer"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex gap-3">
+          <div className="w-24">
+            <label
+              htmlFor="parent-edit-postal-code"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Postnr.
+            </label>
+            <input
+              id="parent-edit-postal-code"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              placeholder="0000"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+            {postalCode.trim() !== '' && !postalCodeValid && (
+              <p className="text-xs text-red-600 mt-1">{POSTAL_CODE_ERROR_MESSAGE}</p>
+            )}
+          </div>
+          <div className="flex-1">
+            <label
+              htmlFor="parent-edit-city"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              By
+            </label>
+            <input
+              id="parent-edit-city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="By"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        {updateMutation.isError && (
+          <p className="text-sm text-red-600">Der opstod en fejl. Prøv igen.</p>
+        )}
+      </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Annuller
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!name.trim() || !phoneValid || !postalCodeValid || updateMutation.isPending}
+          className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {updateMutation.isPending ? 'Gemmer...' : 'Gem'}
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
+interface DetailsModalProps {
+  parentId: string
+  parentName: string
+  onOpenCoParent: (id: string, name: string) => void
+  onClose: () => void
+}
+
+function DetailsModal({ parentId, parentName, onOpenCoParent, onClose }: DetailsModalProps) {
+  const {
+    data: detail,
+    isLoading,
+    isError,
+  } = useQuery(getApiV1ParentsByIdOptions({ path: { id: parentId } }))
+
+  return (
+    <Modal isOpen onClose={onClose} title={`Detaljer — ${parentName}`}>
+      <div className="px-6 py-5 space-y-4">
+        {isLoading && <p className="text-sm text-gray-400">Indlæser...</p>}
+        {isError && <p className="text-sm text-red-600">Kunne ikke hente detaljer.</p>}
+        {detail && (
+          <>
+            <div>
+              <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                Konto
+              </span>
+              {detail.hasAccount ? (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  Aktiv
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                  Afventer
+                </span>
+              )}
+            </div>
+            <div>
+              <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                E-mail
+              </span>
+              <a
+                href={`mailto:${detail.email}`}
+                className="text-sm text-brand-600 hover:underline break-all"
+              >
+                {detail.email}
+              </a>
+            </div>
+            {detail.coParent && (
+              <div>
+                <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  Meforælder
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onOpenCoParent(detail.coParent!.id!, detail.coParent!.name!)}
+                  className="text-sm text-brand-600 hover:underline"
+                >
+                  {detail.coParent.name}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          Luk
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
 export default function ParentsPage() {
   usePageTitle('Forældre')
   const qc = useQueryClient()
   const [showInvite, setShowInvite] = useState(false)
+  const [editingParent, setEditingParent] = useState<ParentSummaryDto | null>(null)
+  const [detailsTarget, setDetailsTarget] = useState<{ id: string; name: string } | null>(null)
   const { hasParentModule } = useSubscription()
 
   const { data: parents, isLoading, isError, refetch } = useQuery(getApiV1ParentsOptions())
@@ -172,7 +408,7 @@ export default function ParentsPage() {
   })
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-gray-900">Forældre</h1>
@@ -216,20 +452,17 @@ export default function ParentsPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[500px]">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Navn
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">
-                  E-mail
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">
+                  Telefon
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Elever
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">
-                  Konto
                 </th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Handlinger
@@ -243,21 +476,18 @@ export default function ParentsPage() {
                     <td className="px-5 py-3">
                       <div className="h-4 w-28 bg-gray-200 rounded" />
                     </td>
-                    <td className="px-5 py-3 hidden sm:table-cell">
-                      <div className="h-4 w-36 bg-gray-100 rounded" />
+                    <td className="px-5 py-3 hidden md:table-cell">
+                      <div className="h-4 w-24 bg-gray-100 rounded" />
                     </td>
                     <td className="px-5 py-3">
                       <div className="h-4 w-20 bg-gray-100 rounded" />
-                    </td>
-                    <td className="px-5 py-3 hidden lg:table-cell">
-                      <div className="h-5 w-16 bg-gray-100 rounded-full" />
                     </td>
                     <td className="px-5 py-3" />
                   </tr>
                 ))}
               {!isLoading && (parents ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center">
+                  <td colSpan={4} className="px-5 py-12 text-center">
                     <p className="text-gray-400 font-medium">Ingen forældre inviteret endnu</p>
                     <p className="text-gray-400 text-xs mt-1">
                       Inviter den første forældrene for at give adgang til klasseskemaet
@@ -265,10 +495,10 @@ export default function ParentsPage() {
                   </td>
                 </tr>
               )}
-              {(parents ?? []).map((p: ParentDto) => (
+              {(parents ?? []).map((p: ParentSummaryDto) => (
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3 font-medium text-gray-900">{p.name}</td>
-                  <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">{p.email ?? '—'}</td>
+                  <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{p.phone ?? '—'}</td>
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(p.students ?? []).map((s) => (
@@ -284,19 +514,26 @@ export default function ParentsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-5 py-3 hidden lg:table-cell">
-                    {p.hasAccount ? (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        Aktiv
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                        Afventer
-                      </span>
-                    )}
-                  </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setDetailsTarget({ id: p.id!, name: p.name })}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                        title="Detaljer"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="16" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                      </button>
                       {!p.hasAccount && (
                         <button
                           onClick={() => resendMutation.mutate({ path: { parentId: p.id! } })}
@@ -317,6 +554,23 @@ export default function ParentsPage() {
                           </svg>
                         </button>
                       )}
+                      <button
+                        onClick={() => setEditingParent(p)}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 rounded-md hover:bg-brand-50 transition-colors"
+                        title="Rediger kontaktoplysninger"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
                       <button
                         onClick={() => {
                           if (confirm(`Slet "${p.name}"? Adgangen fjernes.`))
@@ -350,6 +604,17 @@ export default function ParentsPage() {
 
       {showInvite && students && (
         <InviteModal students={students} onClose={() => setShowInvite(false)} />
+      )}
+      {editingParent && (
+        <EditContactModal parent={editingParent} onClose={() => setEditingParent(null)} />
+      )}
+      {detailsTarget && (
+        <DetailsModal
+          parentId={detailsTarget.id}
+          parentName={detailsTarget.name}
+          onOpenCoParent={(id, name) => setDetailsTarget({ id, name })}
+          onClose={() => setDetailsTarget(null)}
+        />
       )}
     </div>
   )

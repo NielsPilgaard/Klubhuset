@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getApiV1Notifications,
   postApiV1NotificationsByIdRead,
   postApiV1NotificationsReadAll,
 } from '../api/generated/sdk.gen'
 import type { NotificationType } from '../api/client'
+import { useAuth } from '../auth/useAuth'
 
 interface NotificationItem {
   id: string
@@ -42,10 +44,16 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(diff / 86400)} dage siden`
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  variant?: 'light' | 'dark'
+}
+
+export default function NotificationBell({ variant = 'light' }: NotificationBellProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { isAdmin, isParent } = useAuth()
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -91,6 +99,34 @@ export default function NotificationBell() {
     }
   }
 
+  function routeFor(n: NotificationItem): string {
+    switch (n.type) {
+      case 'NewContactMessage':
+        return isParent
+          ? `/foraeldrevisning/kontaktbog?threadId=${n.referenceId ?? ''}`
+          : `/kontaktbog?threadId=${n.referenceId ?? ''}`
+      case 'NewMessage':
+      case 'GroupMessage':
+        return '/beskeder'
+      case 'WeekPlanChanged':
+        return isParent ? '/foraeldrevisning/ugeplan' : '/mig/skema'
+      case 'AbsenceConfirmed':
+      case 'AbsenceDismissed':
+        return isParent ? '/foraeldrevisning/fravaer' : '/fravaer'
+      case 'VacationRegistrationOpened':
+        return '/foraeldrevisning/ferieindmelding'
+      default:
+        if (isAdmin) return '/dashboard'
+        return isParent ? '/foraeldrevisning/skema' : '/mig/skema'
+    }
+  }
+
+  function handleNotificationClick(n: NotificationItem) {
+    void markRead(n.id)
+    setOpen(false)
+    navigate(routeFor(n))
+  }
+
   async function markAllRead() {
     try {
       await postApiV1NotificationsReadAll({ throwOnError: false })
@@ -105,7 +141,11 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        className={`relative p-1.5 rounded transition-colors ${
+          variant === 'dark'
+            ? 'text-brand-100 hover:text-white hover:bg-brand-800'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+        }`}
         aria-label="Notifikationer"
         data-testid="notification-bell"
       >
@@ -130,7 +170,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 flex flex-col max-h-[80vh]">
+        <div className="absolute left-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50 flex flex-col max-h-[min(70vh,28rem)]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
             <h3 className="text-sm font-semibold text-gray-800">Notifikationer</h3>
@@ -153,7 +193,7 @@ export default function NotificationBell() {
               displayed.map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => void markRead(n.id)}
+                  onClick={() => handleNotificationClick(n)}
                   className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3 items-start ${
                     n.readAt === null ? 'bg-blue-50/60' : ''
                   }`}

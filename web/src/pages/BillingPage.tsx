@@ -7,12 +7,28 @@ import {
   postApiV1BillingCheckoutMutation,
   postApiV1BillingPortalMutation,
   postApiV1BillingModulesMutation,
+  postApiV1BillingIntervalMutation,
   deleteApiV1BillingModulesByModuleMutation,
 } from '../api/generated/@tanstack/react-query.gen'
-import type { SubscriptionDto } from '../api/client'
+import type { SubscriptionDto, BillingInterval } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { BILLING_INTERVAL_STORAGE_KEY, parseBillingInterval } from '../lib/billingInterval'
+
+function initialBillingInterval(): BillingInterval {
+  return parseBillingInterval(localStorage.getItem(BILLING_INTERVAL_STORAGE_KEY)) ?? 'Monthly'
+}
 
 const SELF_SERVE_ENABLED = true
+// Keep in sync with web/src/pages/LandingPage.tsx — same prices, must match Stripe Price IDs in StripeOptions.
+const MONTHLY_PRICE_KR = 300
+const YEARLY_PRICE_KR = 3000
+const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
+const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
+
+const PARENT_MODULE_MONTHLY_KR = 300
+const PARENT_MODULE_YEARLY_KR = 3000
+const BOARD_MODULE_MONTHLY_KR = 300
+const BOARD_MODULE_YEARLY_KR = 3000
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('da-DK', {
@@ -53,10 +69,12 @@ export default function BillingPage() {
   usePageTitle('Abonnement')
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useQuery(getApiV1BillingSubscriptionOptions())
+  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>(initialBillingInterval)
 
   const checkoutMutation = useMutation({
     ...postApiV1BillingCheckoutMutation(),
     onSuccess: (result) => {
+      localStorage.removeItem(BILLING_INTERVAL_STORAGE_KEY)
       if (result?.url) window.location.href = result.url
     },
     onError: (error) => {
@@ -76,6 +94,19 @@ export default function BillingPage() {
       const errorMessage =
         error instanceof Error ? error.message : 'Kunne ikke åbne administrationsportal'
       console.error('Portal error:', error)
+      alert(errorMessage)
+    },
+  })
+
+  const switchIntervalMutation = useMutation({
+    ...postApiV1BillingIntervalMutation(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(getApiV1BillingSubscriptionOptions())
+    },
+    onError: (error) => {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Kunne ikke skifte betalingsinterval'
+      console.error('Switch interval error:', error)
       alert(errorMessage)
     },
   })
@@ -108,6 +139,9 @@ export default function BillingPage() {
 
   const isRedirecting = checkoutMutation.isPending || portalMutation.isPending
   const activeModules = data?.activeModules ?? []
+  // Module pricing follows the subscription's committed interval once active (that's what
+  // AddModuleAsync actually charges); before activation, preview the interval being chosen.
+  const moduleIsYearly = (data?.isActive ? data.interval : selectedInterval) === 'Yearly'
 
   return (
     <div className="p-6 pb-12 lg:p-8 max-w-2xl mx-auto space-y-8">
@@ -135,9 +169,13 @@ export default function BillingPage() {
       ) : data ? (
         <StatusCard
           data={data}
-          onCheckout={() => checkoutMutation.mutate({})}
+          selectedInterval={selectedInterval}
+          activeModules={activeModules}
+          onCheckout={() => checkoutMutation.mutate({ body: { interval: selectedInterval } })}
           onPortal={() => portalMutation.mutate({})}
+          onSwitchInterval={(interval) => switchIntervalMutation.mutate({ body: { interval } })}
           isRedirecting={isRedirecting}
+          isSwitchingInterval={switchIntervalMutation.isPending}
         />
       ) : null}
 
@@ -146,7 +184,13 @@ export default function BillingPage() {
         isActive={data?.isActive ?? false}
         isTrialing={data?.isTrialing ?? false}
         trialEnd={data?.trialEnd}
-        onCheckout={() => checkoutMutation.mutate({})}
+        selectedInterval={data?.isActive ? (data.interval ?? selectedInterval) : selectedInterval}
+        onIntervalChange={setSelectedInterval}
+        onCheckout={() =>
+          checkoutMutation.mutate({
+            body: { interval: data?.isActive ? (data.interval ?? 'Monthly') : selectedInterval },
+          })
+        }
         isRedirecting={isRedirecting}
       />
 
@@ -156,7 +200,9 @@ export default function BillingPage() {
         <ModuleCard
           name="Forældremodul"
           description="Giv forældre adgang til at se klassernes skema, kalender og ugeplan. Inviter forældre via e-mail og knyt dem til deres barns klasse."
-          price="499 kr/md"
+          monthlyKr={PARENT_MODULE_MONTHLY_KR}
+          yearlyKr={PARENT_MODULE_YEARLY_KR}
+          isYearly={moduleIsYearly}
           isActive={activeModules.includes('ParentModule')}
           canToggle={data?.isActive ?? false}
           isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
@@ -166,9 +212,11 @@ export default function BillingPage() {
         />
         <div className="mt-3">
           <ModuleCard
-            name="Bestyrelsesmodul"
+            name="Bestyrelse og tilsyn"
             description="Giv bestyrelsesmedlemmer en dedikeret adgang med aggregerede statistikker og bestyrelsesdokumenter. Admin styrer adgangsniveau pr. bestyrelsesmedlem."
-            price="199 kr/md"
+            monthlyKr={BOARD_MODULE_MONTHLY_KR}
+            yearlyKr={BOARD_MODULE_YEARLY_KR}
+            isYearly={moduleIsYearly}
             isActive={activeModules.includes('BoardModule')}
             canToggle={data?.isActive ?? false}
             isPending={addModuleMutation.isPending || removeModuleMutation.isPending}
@@ -182,18 +230,143 @@ export default function BillingPage() {
   )
 }
 
+const MODULE_PRICING: Record<string, { monthly: number; yearly: number; label: string }> = {
+  ParentModule: {
+    label: 'Forældremodul',
+    monthly: PARENT_MODULE_MONTHLY_KR,
+    yearly: PARENT_MODULE_YEARLY_KR,
+  },
+  BoardModule: {
+    label: 'Bestyrelse og tilsyn',
+    monthly: BOARD_MODULE_MONTHLY_KR,
+    yearly: BOARD_MODULE_YEARLY_KR,
+  },
+}
+
+function intervalLabel(interval: BillingInterval): string {
+  return interval === 'Yearly' ? 'årlig' : 'månedlig'
+}
+
+function SwitchIntervalModal({
+  fromInterval,
+  toInterval,
+  activeModules,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  fromInterval: BillingInterval
+  toInterval: BillingInterval
+  activeModules: string[]
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  const toYearly = toInterval === 'Yearly'
+  const basisFrom =
+    fromInterval === 'Yearly' ? `${YEARLY_PRICE_KR} kr/år` : `${MONTHLY_PRICE_KR} kr/md`
+  const basisTo = toYearly ? `${YEARLY_PRICE_KR} kr/år` : `${MONTHLY_PRICE_KR} kr/md`
+
+  return (
+    <Modal isOpen onClose={onCancel} size="sm">
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-amber-600"
+            >
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <h2 className="text-base font-semibold text-gray-900">
+            Skift til {intervalLabel(toInterval)} betaling?
+          </h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-3">
+          Dette ændrer betalingsintervallet for hele abonnementet, inklusive tilkøbte moduler:
+        </p>
+        <div className="bg-gray-50 rounded-lg px-4 py-3 mb-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-gray-800">Basis</span>
+            <span className="text-gray-500 tabular-nums">
+              {basisFrom} <span aria-hidden="true">→</span>{' '}
+              <b className="text-gray-900">{basisTo}</b>
+            </span>
+          </div>
+          {activeModules.map((moduleKey) => {
+            const pricing = MODULE_PRICING[moduleKey]
+            if (!pricing) return null
+            const from =
+              fromInterval === 'Yearly' ? `${pricing.yearly} kr/år` : `${pricing.monthly} kr/md`
+            const to = toYearly ? `${pricing.yearly} kr/år` : `${pricing.monthly} kr/md`
+            return (
+              <div key={moduleKey} className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-800">{pricing.label}</span>
+                <span className="text-gray-500 tabular-nums">
+                  {from} <span aria-hidden="true">→</span> <b className="text-gray-900">{to}</b>
+                </span>
+              </div>
+            )
+          })}
+          <p className="pt-1 text-xs text-gray-500">
+            Du opkræves med det samme — beløbet modregnes for den ubrugte tid på dit nuværende{' '}
+            {fromInterval === 'Yearly' ? 'årlige' : 'månedlige'} abonnement.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isPending}
+            className="flex-1 px-4 py-2.5 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Annuller
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isPending}
+            className="flex-1 px-4 py-2.5 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isPending ? 'Skifter...' : 'Ja, skift'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function StatusCard({
   data,
+  selectedInterval,
+  activeModules,
   onCheckout,
   onPortal,
+  onSwitchInterval,
   isRedirecting,
+  isSwitchingInterval,
 }: {
   data: SubscriptionDto
+  selectedInterval: BillingInterval
+  activeModules: string[]
   onCheckout: () => void
   onPortal: () => void
+  onSwitchInterval: (interval: BillingInterval) => void
   isRedirecting: boolean
+  isSwitchingInterval: boolean
 }) {
+  const [showIntervalConfirm, setShowIntervalConfirm] = useState(false)
   if (data.isTrialing) {
+    const trialCadenceLabel =
+      selectedInterval === 'Yearly' ? `${YEARLY_PRICE_KR} kr/år` : `${MONTHLY_PRICE_KR} kr/md`
     return (
       <div className="bg-brand-50 border border-brand-200 rounded-xl p-6">
         <div className="flex items-start gap-3">
@@ -220,7 +393,7 @@ function StatusCard({
             </p>
             <p className="mt-0.5 text-sm text-brand-600">
               Du kan bruge alle funktioner gratis frem til den {formatDate(data.trialEnd ?? '')}.
-              Herefter koster det 499 kr/md.
+              Herefter koster det {trialCadenceLabel}.
             </p>
           </div>
         </div>
@@ -229,44 +402,86 @@ function StatusCard({
   }
 
   if (data.isActive) {
+    const targetInterval: BillingInterval = data.interval === 'Yearly' ? 'Monthly' : 'Yearly'
     return (
-      <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              className="text-green-600"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold text-green-900">
-              Aktivt abonnement — Basis (499 kr/md)
-            </h2>
-            {data.currentPeriodEnd && (
-              <p className="mt-1 text-sm text-green-700">
-                Næste betaling den {formatDate(data.currentPeriodEnd)}
+      <>
+        {showIntervalConfirm && (
+          <SwitchIntervalModal
+            fromInterval={data.interval ?? 'Monthly'}
+            toInterval={targetInterval}
+            activeModules={activeModules}
+            onConfirm={() => {
+              onSwitchInterval(targetInterval)
+              setShowIntervalConfirm(false)
+            }}
+            onCancel={() => setShowIntervalConfirm(false)}
+            isPending={isSwitchingInterval}
+          />
+        )}
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className="text-green-600"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-semibold text-green-900">
+                Aktivt abonnement — Basis (
+                {data.interval === 'Yearly'
+                  ? `${YEARLY_PRICE_KR} kr/år`
+                  : `${MONTHLY_PRICE_KR} kr/md`}
+                )
+              </h2>
+              {data.currentPeriodEnd && (
+                <p className="mt-1 text-sm text-green-700">
+                  Næste betaling den {formatDate(data.currentPeriodEnd)}
+                </p>
+              )}
+              {activeModules.length > 0 && (
+                <p className="mt-1 text-sm text-green-700">
+                  Tilkøb:{' '}
+                  {activeModules
+                    .map((moduleKey) => MODULE_PRICING[moduleKey]?.label ?? moduleKey)
+                    .join(', ')}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={onPortal}
+                  disabled={isRedirecting}
+                  className="px-4 py-2 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isRedirecting ? 'Vent...' : 'Administrer abonnement'}
+                </button>
+                <button
+                  onClick={() => setShowIntervalConfirm(true)}
+                  disabled={isSwitchingInterval}
+                  className="px-4 py-2 text-sm font-medium border border-green-300 text-green-800 rounded-lg hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSwitchingInterval
+                    ? 'Skifter...'
+                    : data.interval === 'Yearly'
+                      ? 'Skift til månedlig'
+                      : 'Skift til årlig'}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-green-600">
+                Du kan opsige abonnementet via administreringsportalen. Skift af betalingsinterval
+                sker her — modultilkøb følger automatisk med.
               </p>
-            )}
-            <button
-              onClick={onPortal}
-              disabled={isRedirecting}
-              className="mt-4 px-4 py-2 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isRedirecting ? 'Vent...' : 'Administrer abonnement'}
-            </button>
-            <p className="mt-2 text-xs text-green-600">
-              Du kan opsige eller ændre dit abonnement via administreringsportalen.
-            </p>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
@@ -390,8 +605,8 @@ function ActivateModuleModal({
             <span className="text-sm font-semibold text-gray-900 tabular-nums">+{price}</span>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Beløbet lægges til din næste faktura og fortsætter månedligt, indtil du deaktiverer
-            modulet.
+            Beløbet lægges til din næste faktura og fortsætter{' '}
+            {price.endsWith('kr/år') ? 'årligt' : 'månedligt'}, indtil du deaktiverer modulet.
           </p>
         </div>
         <div className="flex gap-3">
@@ -420,7 +635,9 @@ function ActivateModuleModal({
 function ModuleCard({
   name,
   description,
-  price,
+  monthlyKr,
+  yearlyKr,
+  isYearly,
   isActive,
   canToggle,
   isPending,
@@ -430,7 +647,9 @@ function ModuleCard({
 }: {
   name: string
   description: string
-  price: string
+  monthlyKr: number
+  yearlyKr: number
+  isYearly: boolean
   isActive: boolean
   canToggle: boolean
   isPending: boolean
@@ -439,6 +658,7 @@ function ModuleCard({
   blockedReason?: string
 }) {
   const [showConfirm, setShowConfirm] = useState(false)
+  const priceLabel = isYearly ? `${yearlyKr} kr/år` : `${monthlyKr} kr/md`
 
   function handleActivateClick() {
     setShowConfirm(true)
@@ -454,7 +674,7 @@ function ModuleCard({
       {showConfirm && (
         <ActivateModuleModal
           name={name}
-          price={price}
+          price={priceLabel}
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirm(false)}
           isPending={isPending}
@@ -468,7 +688,7 @@ function ModuleCard({
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-gray-700">{name}</h3>
               {isActive && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
                   Aktiv
                 </span>
               )}
@@ -476,7 +696,22 @@ function ModuleCard({
             <p className="mt-1 text-xs text-gray-500">{description}</p>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-lg font-semibold text-gray-900 tabular-nums">{price}</span>
+            {isYearly ? (
+              <>
+                <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                  {Math.round(yearlyKr / 12)}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+                <p className="text-xs text-gray-400 tabular-nums">{yearlyKr} kr/år</p>
+              </>
+            ) : (
+              <>
+                <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                  {monthlyKr}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+              </>
+            )}
           </div>
         </div>
         <div className="px-6 pb-5">
@@ -505,16 +740,49 @@ function ModuleCard({
   )
 }
 
+function IntervalToggle({
+  selected,
+  onChange,
+}: {
+  selected: BillingInterval
+  onChange: (interval: BillingInterval) => void
+}) {
+  return (
+    <fieldset className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1 m-0">
+      <legend className="sr-only">Betalingsinterval</legend>
+      {(['Monthly', 'Yearly'] as const).map((interval) => (
+        <button
+          key={interval}
+          type="button"
+          aria-pressed={selected === interval}
+          onClick={() => onChange(interval)}
+          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            selected === interval
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {interval === 'Monthly' ? 'Månedligt' : 'Årligt'}
+        </button>
+      ))}
+    </fieldset>
+  )
+}
+
 function PricingCard({
   isActive,
   isTrialing,
   trialEnd,
+  selectedInterval,
+  onIntervalChange,
   onCheckout,
   isRedirecting,
 }: {
   isActive?: boolean
   isTrialing?: boolean
   trialEnd?: string
+  selectedInterval: BillingInterval
+  onIntervalChange: (interval: BillingInterval) => void
   onCheckout: () => void
   isRedirecting: boolean
 }) {
@@ -525,32 +793,64 @@ function PricingCard({
     'Support via e-mail',
     'Ingen binding',
   ]
+  const isYearly = selectedInterval === 'Yearly'
 
   return (
     <div
       className={`bg-white rounded-xl border divide-y divide-gray-100 ${isActive || isTrialing ? 'border-brand-300 ring-1 ring-brand-200' : 'border-gray-200'}`}
     >
-      <div className="px-6 py-5 flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-gray-700">Basis</h2>
-            {isActive && (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                Aktiv
-              </span>
-            )}
-            {isTrialing && !isActive && (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
-                Prøveperiode
-              </span>
+      <div className="px-6 py-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-700">Basis</h2>
+              {isActive && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                  Aktiv
+                </span>
+              )}
+              {isTrialing && !isActive && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-700">
+                  Prøveperiode
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-xs text-gray-400">Alt hvad din skole behøver</p>
+          </div>
+          <div className="text-right shrink-0">
+            {isYearly ? (
+              <>
+                <span className="text-2xl font-semibold text-gray-900 tabular-nums">
+                  {YEARLY_EFFECTIVE_MONTHLY_KR}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+                <p className="text-xs text-gray-400 tabular-nums">{YEARLY_PRICE_KR} kr/år</p>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl font-semibold text-gray-900 tabular-nums">
+                  {MONTHLY_PRICE_KR}
+                </span>
+                <span className="text-sm text-gray-500"> kr/md</span>
+              </>
             )}
           </div>
-          <p className="mt-0.5 text-xs text-gray-400">Alt hvad din skole behøver</p>
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-2xl font-semibold text-gray-900 tabular-nums">499</span>
-          <span className="text-sm text-gray-500"> kr/md</span>
-        </div>
+        {!isActive && SELF_SERVE_ENABLED && (
+          <div className="mt-4 flex items-center gap-3">
+            <IntervalToggle selected={selectedInterval} onChange={onIntervalChange} />
+            {isYearly && (
+              <>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                  Spar {YEARLY_SAVINGS_KR} kr/år
+                </span>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                  Intropris
+                </span>
+              </>
+            )}
+          </div>
+        )}
       </div>
       <div className="px-6 py-5">
         <ul className="space-y-2.5">

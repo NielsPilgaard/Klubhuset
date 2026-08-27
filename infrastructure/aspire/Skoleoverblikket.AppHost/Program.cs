@@ -68,6 +68,23 @@ var api = builder.AddProject<Projects.Skoleoverblikket_Api>("api")
 				 url.DisplayText = "Swagger UI";
 			 });
 
+// Stripe CLI — forwards real Stripe test-mode webhook events to the local API automatically.
+// Uses the committed test-mode secret key (appsettings.Development.json Stripe:SecretKey) via
+// STRIPE_API_KEY, so no interactive `stripe login` is needed. The webhook signing secret is
+// deterministic for a given API key, and already matches Stripe:WebhookSecret in the committed
+// dev config — acts as if `stripe listen` were always running, no manual steps.
+var stripeTestKey = builder.AddParameter("stripe-secret-key", "sk_test_51TITT8RkFVB6gS8XwoPOFAkHF8okYmkdNtrfgrKz6tTlgthgs6oMrWuiEncXGYiOgDkVS02khiyLVVOUoaBuIXnY00aNUTerrR");
+
+builder.AddContainer("stripe-listen", "stripe/stripe-cli", "latest")
+	   .WithLifetime(ContainerLifetime.Persistent)
+	   .WithEnvironment("STRIPE_API_KEY", stripeTestKey)
+	   .WithArgs(
+		   "listen",
+		   "--forward-to", "http://host.docker.internal:5000/api/v1/stripe/webhook",
+		   "--skip-verify")
+	   .WithContainerRuntimeArgs("--label", $"com.docker.compose.project={label}")
+	   .WaitFor(api);
+
 // React + Vite frontend
 builder.AddViteApp("web", appDirectory: "../../../web", runScriptName: "dev")
 	   .WithEndpoint("http", e => e.Port = 5173)

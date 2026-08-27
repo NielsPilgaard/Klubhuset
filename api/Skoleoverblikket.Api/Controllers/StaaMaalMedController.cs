@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -5,20 +6,134 @@ using Skoleoverblikket.Api.Auth;
 using Skoleoverblikket.Api.Data;
 using Skoleoverblikket.Api.Models;
 using Skoleoverblikket.Api.Services;
+using Skoleoverblikket.Api.Tenancy;
 
 namespace Skoleoverblikket.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/staa-maal-med")]
 [Authorize(Roles = $"{Roles.Admin},{Roles.Board}")]
-public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable) : ControllerBase
+public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService timetable, ITenantContext tenant) : ControllerBase
 {
 	public record SubjectCoverageDto(string Category, double WeeklyHours, double VejledendeWeeklyHours, double AnnualHours, double VejledendeAnnualHours, string Status);
-	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects);
+	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects, List<string> UnexpectedGradeCategories);
 	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
+	public record CreateSnapshotRequest([property: System.ComponentModel.DataAnnotations.MaxLength(500)] string? Reason);
+	public record SnapshotSummaryDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason);
+	public record SnapshotDetailDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason, CoverageResponseDto Data);
+
+	private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+	// School year runs Aug 1 – Jul 31 in Danish local time. Using UTC directly would mislabel
+	// snapshots taken in the UTC-early-morning window around the Aug 1 boundary (CEST is UTC+2).
+	private static readonly TimeZoneInfo DanishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Copenhagen");
 
 	[HttpGet("coverage")]
 	public async Task<ActionResult<CoverageResponseDto>> GetCoverage(CancellationToken cancellationToken)
+	{
+		var coverage = await ComputeCoverageAsync(cancellationToken);
+		return Ok(coverage);
+	}
+
+	[HttpPost("snapshots")]
+	[Authorize(Roles = Roles.Admin)]
+	public async Task<ActionResult<SnapshotSummaryDto>> CreateSnapshot([FromBody] CreateSnapshotRequest req, CancellationToken cancellationToken)
+	{
+		if (req.Reason is not null && req.Reason.Length > 500)
+		{
+			return Problem(title: "Ugyldig begrundelse", detail: "Begrundelse må højst være 500 tegn.", statusCode: StatusCodes.Status400BadRequest);
+		}
+
+		var subject = User.GetKeycloakSubject();
+		var staff = await db.Staff.FirstOrDefaultAsync(s => s.KeycloakSubject == subject, cancellationToken);
+		if (staff is null)
+		{
+			return Forbid();
+		}
+
+		var coverage = await ComputeCoverageAsync(cancellationToken);
+
+		var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, DanishTimeZone);
+		var schoolYearStart = now.Month >= 8 ? now.Year : now.Year - 1;
+		var schoolYear = $"{schoolYearStart}-{schoolYearStart + 1}";
+
+		var snapshot = new StaaMaalMedSnapshot
+		{
+			Id = Guid.NewGuid(),
+			TenantId = tenant.TenantId,
+			SchoolYear = schoolYear,
+			CreatedByStaffId = staff.Id,
+			Reason = req.Reason,
+			DataVersion = 1,
+			Data = JsonSerializer.Serialize(coverage),
+		};
+
+		db.StaaMaalMedSnapshots.Add(snapshot);
+		await db.SaveChangesAsync(cancellationToken);
+
+		return CreatedAtAction(nameof(GetSnapshot), new { id = snapshot.Id },
+			new SnapshotSummaryDto(snapshot.Id, snapshot.SchoolYear, snapshot.CreatedAt, staff.Name, snapshot.Reason));
+	}
+
+	[HttpGet("snapshots")]
+	public async Task<ActionResult<List<SnapshotSummaryDto>>> GetSnapshots(CancellationToken cancellationToken)
+	{
+		var snapshots = await db.StaaMaalMedSnapshots
+			.AsNoTracking()
+			.OrderByDescending(s => s.CreatedAt)
+			.Select(s => new SnapshotSummaryDto(s.Id, s.SchoolYear, s.CreatedAt, s.CreatedByStaff.Name, s.Reason))
+			.ToListAsync(cancellationToken);
+
+		return Ok(snapshots);
+	}
+
+	[HttpGet("snapshots/{id:guid}")]
+	public async Task<ActionResult<SnapshotDetailDto>> GetSnapshot(Guid id, CancellationToken cancellationToken)
+	{
+		var snapshot = await db.StaaMaalMedSnapshots
+			.AsNoTracking()
+			.Include(s => s.CreatedByStaff)
+			.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+		if (snapshot is null)
+		{
+			return NotFound();
+		}
+
+		if (snapshot.DataVersion != 1)
+		{
+			// Not a server error: the snapshot itself is in an unsupported format (e.g. saved
+			// by a newer app version). A 500 here would be indistinguishable from a transient
+			// failure to the frontend, hiding a compliance record right when someone needs it.
+			return Problem(
+				title: "Snapshot-version understøttes ikke",
+				detail: $"Denne version blev gemt i et format, der ikke længere understøttes (version {snapshot.DataVersion}).",
+				statusCode: StatusCodes.Status409Conflict);
+		}
+
+		var data = JsonSerializer.Deserialize<CoverageResponseDto>(snapshot.Data, JsonOptions)
+			?? new CoverageResponseDto([]);
+
+		return Ok(new SnapshotDetailDto(snapshot.Id, snapshot.SchoolYear, snapshot.CreatedAt, snapshot.CreatedByStaff.Name, snapshot.Reason, data));
+	}
+
+	[HttpDelete("snapshots/{id:guid}")]
+	[Authorize(Roles = Roles.Admin)]
+	public async Task<IActionResult> DeleteSnapshot(Guid id, CancellationToken cancellationToken)
+	{
+		var snapshot = await db.StaaMaalMedSnapshots.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+		if (snapshot is null)
+		{
+			return NotFound();
+		}
+
+		db.StaaMaalMedSnapshots.Remove(snapshot);
+		await db.SaveChangesAsync(cancellationToken);
+
+		return NoContent();
+	}
+
+	private async Task<CoverageResponseDto> ComputeCoverageAsync(CancellationToken cancellationToken)
 	{
 		var timetal = timetable.Load();
 
@@ -75,11 +190,22 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 						status));
 				}
 
+				// Categories taught at this grade that UVM doesn't define for it at all
+				// (e.g. Tysk scheduled in 3. klasse — Tysk only starts 6. klasse).
+				var unexpectedGradeCategories = hoursPerCategory.Keys
+					.Where(category => !timetal.TryGetValue(category.ToString(), out var gradeMap)
+						|| !gradeMap.TryGetValue(gradeLevel, out var vejledende)
+						|| vejledende <= 0)
+					.Select(category => category.ToString())
+					.OrderBy(name => name)
+					.ToList();
+
 				return new ClassCoverageDto(
 					classGroup.Key.ClassId,
 					classGroup.Key.Name,
 					gradeLevel,
-					subjects.OrderBy(s => s.Category).ToList());
+					subjects.OrderBy(s => s.Category).ToList(),
+					unexpectedGradeCategories);
 			})
 			.ToList();
 
@@ -89,6 +215,11 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 			.AsNoTracking()
 			.Where(c => c.GradeLevel.HasValue && !classesWithSlots.Contains(c.Id))
 			.ToListAsync(cancellationToken);
+
+		// No schema means no StartDate/EndDate to compute real school weeks from — fall back to
+		// SchoolWeekCalculator's own null-input default so this stays a single source of truth
+		// instead of a second hardcoded week count that can drift from the real one.
+		var fallbackWeekCount = SchoolWeekCalculator.CountSchoolWeeks(null, null, holidays);
 
 		foreach (var cls in allGradedClasses)
 		{
@@ -101,12 +232,12 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 					continue;
 				}
 
-				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, Math.Round(vejledende * 40, 0), "missing"));
+				subjects.Add(new SubjectCoverageDto(categoryName, 0.0, Math.Round(vejledende, 2), 0.0, Math.Round(vejledende * fallbackWeekCount, 0), "missing"));
 			}
 
 			if (subjects.Count > 0)
 			{
-				classes.Add(new ClassCoverageDto(cls.Id, cls.Name, gradeLevel, subjects.OrderBy(s => s.Category).ToList()));
+				classes.Add(new ClassCoverageDto(cls.Id, cls.Name, gradeLevel, subjects.OrderBy(s => s.Category).ToList(), []));
 			}
 		}
 
@@ -116,6 +247,6 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 			return g != 0 ? g : string.Compare(a.ClassName, b.ClassName, StringComparison.Ordinal);
 		});
 
-		return Ok(new CoverageResponseDto(classes));
+		return new CoverageResponseDto(classes);
 	}
 }

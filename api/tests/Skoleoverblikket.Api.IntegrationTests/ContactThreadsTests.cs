@@ -274,4 +274,56 @@ public sealed class ContactThreadsTests(ApiFactory factory)
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
     }
+
+    // ── Notification failure resilience ─────────────────────────────────────
+
+    [Test]
+    public async Task AddMessage_NotificationDeliveryFails_RequestStillSucceedsWithOneMessage()
+    {
+        const string parentSubject = "ct-notifyfail-parent";
+        const string staffSubject = "ct-notifyfail-staff";
+        var (klass, _) = await TestDataBuilder.CreateClassWithSchemaAsync(
+            _factory.Services, _tenantId, "7.a");
+        var student = await CreateStudentAsync(klass.Id, "Freja Elev");
+        await CreateParentAsync(parentSubject, student.Id, "Thomas Forælder");
+        await TestDataBuilder.CreateStaffAsync(
+            _factory.Services, _tenantId,
+            name: "Nanna Lærer", isAdmin: true, keycloakSubject: staffSubject);
+
+        using var client = CreateParentClient(parentSubject);
+        var createResponse = await client.PostAsJsonAsync("/api/v1/contact-threads", new
+        {
+            studentId = student.Id,
+            body = "Første besked.",
+        });
+        await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<CreateThreadResponse>(JsonOpts);
+        var threadId = created!.ThreadId;
+
+        // Second message sent by staff so the recipient (the parent, via thread.StudentId's
+        // Parents) is guaranteed to exist without seeding a schema slot or ClassPermission —
+        // that's what actually drives INotificationService.CreateAsync being invoked below.
+        using var staffClient = CreateStaffClient(staffSubject, isAdmin: true);
+
+        NoOpNotificationService.ShouldThrow.Value = true;
+        try
+        {
+            var response = await staffClient.PostAsJsonAsync($"/api/v1/contact-threads/{threadId}/messages", new
+            {
+                body = "Besked hvor notifikation fejler.",
+            });
+
+            await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        }
+        finally
+        {
+            NoOpNotificationService.ShouldThrow.Value = false;
+        }
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var messageCount = await db.ContactMessages.IgnoreQueryFilters()
+            .CountAsync(m => m.ThreadId == threadId);
+        await Assert.That(messageCount).IsEqualTo(2);
+    }
 }

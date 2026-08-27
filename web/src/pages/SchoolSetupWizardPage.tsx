@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Helmet } from 'react-helmet-async'
 import { api, ApiError } from '../api/client'
 import type { StaffRole } from '../api/client'
 import { TimeInput } from '../components/TimeInput'
@@ -985,6 +986,9 @@ export default function SchoolSetupWizardPage() {
 
   return (
     <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg">
         {/* Header */}
         <div className="px-8 pt-8 pb-5 border-b border-gray-100">

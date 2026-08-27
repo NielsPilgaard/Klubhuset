@@ -48,6 +48,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
 	public DbSet<BoardMemberInvitation> BoardMemberInvitations => Set<BoardMemberInvitation>();
 	public DbSet<BoardFile> BoardFiles => Set<BoardFile>();
 	public DbSet<BoardFileFolder> BoardFileFolders => Set<BoardFileFolder>();
+	public DbSet<StaaMaalMedSnapshot> StaaMaalMedSnapshots => Set<StaaMaalMedSnapshot>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

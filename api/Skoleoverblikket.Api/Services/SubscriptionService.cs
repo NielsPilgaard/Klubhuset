@@ -9,6 +9,13 @@ using StripeSubscription = Stripe.Subscription;
 
 namespace Skoleoverblikket.Api.Services;
 
+/// <summary>
+/// Thrown when subscription/module operations fail due to missing or inconsistent
+/// server-side configuration or data (e.g. unconfigured Stripe prices, missing Stripe
+/// subscription items) rather than an invalid client request.
+/// </summary>
+public sealed class SubscriptionConfigurationException(string message) : Exception(message);
+
 public sealed class SubscriptionService(
 	AppDbContext db,
 	IOptions<StripeOptions> stripeOptions,
@@ -16,7 +23,8 @@ public sealed class SubscriptionService(
 	CustomerService customerService,
 	SessionService sessionService,
 	Stripe.BillingPortal.SessionService billingPortalSessionService,
-	SubscriptionItemService subscriptionItemService)
+	SubscriptionItemService subscriptionItemService,
+	Stripe.SubscriptionService stripeSubscriptionService)
 {
 	private const int TrialDays = 14;
 
@@ -67,6 +75,7 @@ public sealed class SubscriptionService(
 	/// </summary>
 	public async Task<string> CreateCheckoutSessionAsync(
 		Guid schoolId,
+		BillingInterval interval,
 		string successUrl,
 		string cancelUrl,
 		CancellationToken cancellationToken = default)
@@ -74,7 +83,17 @@ public sealed class SubscriptionService(
 		var sub = await GetOrCreateAsync(schoolId, cancellationToken);
 		var school = await db.Schools.IgnoreQueryFilters().FirstAsync(s => s.Id == schoolId, cancellationToken);
 
-		var priceId = stripeOptions.Value.BasePriceId;
+		var priceId = interval switch
+		{
+			BillingInterval.Monthly => stripeOptions.Value.BasePriceIdMonthly,
+			BillingInterval.Yearly => stripeOptions.Value.BasePriceIdYearly,
+			_ => throw new ArgumentOutOfRangeException(nameof(interval), interval, "Unsupported billing interval."),
+		};
+
+		// Interval is persisted only once checkout completes (HandleCheckoutCompletedAsync),
+		// verified against the actual Stripe subscription price rather than trusted from
+		// session metadata — writing it here would leave a stale Interval if the customer
+		// abandons checkout. Metadata still carries "interval" for dashboard debugging only.
 
 		// Ensure Stripe customer exists
 		var customerId = sub.StripeCustomerId;
@@ -105,7 +124,11 @@ public sealed class SubscriptionService(
 			],
 			SuccessUrl = successUrl,
 			CancelUrl = cancelUrl,
-			Metadata = new Dictionary<string, string> { ["school_id"] = schoolId.ToString() },
+			Metadata = new Dictionary<string, string>
+			{
+				["school_id"] = schoolId.ToString(),
+				["interval"] = interval.ToString(),
+			},
 			PaymentMethodCollection = "always",
 			SubscriptionData = sub.Status == SubscriptionStatus.Trialing && sub.TrialEnd > DateTimeOffset.UtcNow
 				? new SessionSubscriptionDataOptions
@@ -122,7 +145,106 @@ public sealed class SubscriptionService(
 	}
 
 	/// <summary>
-	/// Creates a Stripe billing portal session for the given school.
+	/// Switches a school's subscription (base plan + all active module items) to the target
+	/// billing interval in one Stripe update call. Replaces reliance on Stripe Portal's native
+	/// plan-switch UI, which only targets a single subscription item — with our base+module-items
+	/// model that would silently leave module items on the old interval (verified in task 42).
+	///
+	/// Stripe cannot change an item's recurring interval without resetting the billing cycle
+	/// anchor to now (confirmed against the real Stripe test API, see BillingProrationTests.cs —
+	/// the API rejects BillingCycleAnchor="unchanged" for an interval change), so this always
+	/// invoices the customer immediately for the new interval. ProrationBehavior="create_prorations"
+	/// (not "none") makes that immediate invoice fair: it credits the unused time already paid on
+	/// the old plan and only charges the difference — e.g. switching monthly->yearly on day 3 of
+	/// the month charges the yearly price minus a credit for the ~27 unused days on the old monthly
+	/// plan, not the full yearly amount. The renewal date still moves to "now + new interval";
+	/// callers must not assume it's preserved.
+	/// </summary>
+	public async Task SwitchIntervalAsync(Guid schoolId, BillingInterval targetInterval, CancellationToken cancellationToken = default)
+	{
+		await using var lockTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+		var sub = await LockSubscriptionForUpdateAsync(schoolId, cancellationToken)
+			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+		await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(cancellationToken);
+
+		if (sub.Status != SubscriptionStatus.Active)
+		{
+			throw new InvalidOperationException("School does not have an active paid subscription.");
+		}
+
+		if (sub.StripeSubscriptionId is null)
+		{
+			throw new InvalidOperationException("School does not have an active Stripe subscription.");
+		}
+
+		if (sub.Interval == targetInterval)
+		{
+			return;
+		}
+
+		var targetBasePriceId = targetInterval switch
+		{
+			BillingInterval.Monthly => stripeOptions.Value.BasePriceIdMonthly,
+			BillingInterval.Yearly => stripeOptions.Value.BasePriceIdYearly,
+			_ => throw new ArgumentOutOfRangeException(nameof(targetInterval), targetInterval, "Unsupported billing interval."),
+		};
+
+		var stripeSub = await stripeSubscriptionService.GetAsync(sub.StripeSubscriptionId, cancellationToken: cancellationToken);
+		var baseItem = stripeSub.Items?.Data?.FirstOrDefault(i =>
+			i.Price?.Id == stripeOptions.Value.BasePriceIdMonthly || i.Price?.Id == stripeOptions.Value.BasePriceIdYearly)
+			?? throw new SubscriptionConfigurationException($"No base-plan item found on Stripe subscription {sub.StripeSubscriptionId}.");
+
+		var items = new List<SubscriptionItemOptions>
+		{
+			new() { Id = baseItem.Id, Price = targetBasePriceId },
+		};
+
+		foreach (var moduleItem in sub.ActiveModules.Where(m => !m.IsAdminOverride))
+		{
+			var modulePriceId = ResolveModulePriceId(moduleItem.Module, targetInterval);
+
+			if (string.IsNullOrEmpty(moduleItem.StripeSubscriptionItemId))
+			{
+				throw new SubscriptionConfigurationException($"Module {moduleItem.Module} on subscription {sub.Id} has no Stripe subscription item ID — cannot switch interval.");
+			}
+
+			items.Add(new SubscriptionItemOptions { Id = moduleItem.StripeSubscriptionItemId, Price = modulePriceId });
+		}
+
+		// create_prorations (not "none"): switching interval always resets the billing cycle to
+		// now (Stripe has no way to change an item's recurring interval and keep the cycle
+		// unchanged), which would otherwise invoice the customer for the full new-interval price
+		// today with no credit for time already paid on the old plan. Prorating credits that
+		// unused time so the immediate invoice only charges the difference.
+		var updated = await stripeSubscriptionService.UpdateAsync(sub.StripeSubscriptionId, new SubscriptionUpdateOptions
+		{
+			Items = items,
+			ProrationBehavior = "create_prorations",
+		}, cancellationToken: cancellationToken);
+
+		ApplyIntervalFromBasePlan(sub, updated);
+		sub.UpdatedAt = DateTimeOffset.UtcNow;
+		await db.SaveChangesAsync(cancellationToken);
+		await lockTransaction.CommitAsync(cancellationToken);
+	}
+
+	// Postgres row lock (SELECT ... FOR UPDATE) on the single Subscription row, held for the
+	// duration of the caller's transaction. Serializes SwitchIntervalAsync against AddModuleAsync
+	// so a concurrent module add can't read a stale sub.Interval mid-switch and price the new
+	// Stripe item on the interval that's about to change out from under it.
+	private async Task<LocalSubscription?> LockSubscriptionForUpdateAsync(Guid schoolId, CancellationToken cancellationToken)
+	{
+		return await db.Subscriptions
+			.FromSqlInterpolated($"SELECT * FROM \"Subscriptions\" WHERE \"SchoolId\" = {schoolId} FOR UPDATE")
+			.FirstOrDefaultAsync(cancellationToken);
+	}
+
+	/// <summary>
+	/// Creates a Stripe billing portal session for the given school. Plan/interval switching
+	/// must stay disabled on the Portal configuration (Dashboard → Settings → Billing → Customer
+	/// portal) — see SwitchIntervalAsync for why, and use that endpoint for interval changes
+	/// instead. Portal here is for payment method updates and cancellation only.
 	/// </summary>
 	public async Task<string> CreateBillingPortalSessionAsync(
 		Guid schoolId,
@@ -176,10 +298,11 @@ public sealed class SubscriptionService(
 	/// </summary>
 	public async Task AddModuleAsync(Guid schoolId, SubscriptionModule module, CancellationToken cancellationToken = default)
 	{
-		var sub = await db.Subscriptions
-			.Include(s => s.ActiveModules)
-			.FirstOrDefaultAsync(s => s.SchoolId == schoolId, cancellationToken)
+		await using var lockTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+		var sub = await LockSubscriptionForUpdateAsync(schoolId, cancellationToken)
 			?? throw new InvalidOperationException($"Subscription not found for school {schoolId}.");
+		await db.Entry(sub).Collection(s => s.ActiveModules).LoadAsync(cancellationToken);
 
 		if (sub.Status != SubscriptionStatus.Active)
 		{
@@ -191,10 +314,7 @@ public sealed class SubscriptionService(
 			throw new InvalidOperationException("School does not have an active Stripe subscription.");
 		}
 
-		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var priceId) || string.IsNullOrEmpty(priceId))
-		{
-			throw new InvalidOperationException($"No Stripe price configured for module {module}.");
-		}
+		var priceId = ResolveModulePriceId(module, sub.Interval);
 
 		if (sub.ActiveModules.Any(m => m.Module == module))
 		{
@@ -219,11 +339,14 @@ public sealed class SubscriptionService(
 		try
 		{
 			await db.SaveChangesAsync(cancellationToken);
+			await lockTransaction.CommitAsync(cancellationToken);
 		}
-		catch (DbUpdateException ex)
+		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			// Compensate: remove the Stripe item so billing matches DB state.
-			logger.LogWarning(ex, "AddModuleAsync: DB save failed after Stripe item {ItemId} created for school {SchoolId}, module {Module}. Removing Stripe item.", item.Id, schoolId, module);
+			// Catches CommitAsync failures too, not just DbUpdateException from SaveChangesAsync —
+			// either leaves the Stripe item created with no matching DB row.
+			logger.LogWarning(ex, "AddModuleAsync: DB save/commit failed after Stripe item {ItemId} created for school {SchoolId}, module {Module}. Removing Stripe item.", item.Id, schoolId, module);
 			try
 			{
 				await subscriptionItemService.DeleteAsync(item.Id, new SubscriptionItemDeleteOptions(), cancellationToken: cancellationToken);
@@ -387,8 +510,51 @@ public sealed class SubscriptionService(
 		sub.StripeCustomerId ??= session.CustomerId;
 		sub.StripeSubscriptionId = session.SubscriptionId;
 		sub.Status = SubscriptionStatus.Active;
+
+		if (session.SubscriptionId is not null)
+		{
+			var stripeSub = await stripeSubscriptionService.GetAsync(session.SubscriptionId, cancellationToken: cancellationToken);
+			ApplyIntervalFromBasePlan(sub, stripeSub);
+		}
+
 		sub.UpdatedAt = DateTimeOffset.UtcNow;
 		await db.SaveChangesAsync(cancellationToken);
+	}
+
+	private string ResolveModulePriceId(SubscriptionModule module, BillingInterval interval)
+	{
+		if (!stripeOptions.Value.ModulePriceIds.TryGetValue(module.ToString(), out var intervalPrices)
+			|| !intervalPrices.TryGetValue(interval.ToString(), out var priceId)
+			|| string.IsNullOrEmpty(priceId))
+		{
+			throw new SubscriptionConfigurationException($"No Stripe price configured for module {module} ({interval}).");
+		}
+
+		return priceId;
+	}
+
+	// Detects billing cadence from the base-plan line item specifically (matched by price ID) —
+	// not "any recurring item" — since a module item could otherwise be mistaken for the base
+	// plan and make later AddModuleAsync calls buy the wrong-interval module Price.
+	private void ApplyIntervalFromBasePlan(LocalSubscription sub, StripeSubscription stripeSub)
+	{
+		var basePriceIds = stripeSub.Items?.Data?.Select(i => i.Price?.Id);
+		if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdYearly) == true)
+		{
+			sub.Interval = BillingInterval.Yearly;
+		}
+		else if (basePriceIds?.Contains(stripeOptions.Value.BasePriceIdMonthly) == true)
+		{
+			sub.Interval = BillingInterval.Monthly;
+		}
+		else
+		{
+			// Logged as an error, not a warning: this means BasePriceIdMonthly/BasePriceIdYearly in
+			// config no longer match any item on a real Stripe subscription — likely a price ID
+			// rotation that wasn't updated in config. Every call site (checkout, interval switch,
+			// webhook) hits this silently otherwise, freezing Interval as stale with no other signal.
+			logger.LogError("SubscriptionService.ApplyIntervalFromBasePlan: no base-plan price item found for StripeSubscriptionId {StripeSubscriptionId} — Interval left stale at {Interval}. Check Stripe:BasePriceIdMonthly/BasePriceIdYearly config against the actual Stripe subscription items.", stripeSub.Id, sub.Interval);
+		}
 	}
 
 	private async Task HandleSubscriptionChangedAsync(StripeSubscription stripeSub, CancellationToken cancellationToken)
@@ -420,6 +586,8 @@ public sealed class SubscriptionService(
 		}
 
 		sub.Status = newStatus;
+
+		ApplyIntervalFromBasePlan(sub, stripeSub);
 
 		// Stripe SDK returns DateTime.MinValue when unset — treat that as null
 		sub.CurrentPeriodEnd = stripeSub.CurrentPeriodEnd > DateTime.UnixEpoch

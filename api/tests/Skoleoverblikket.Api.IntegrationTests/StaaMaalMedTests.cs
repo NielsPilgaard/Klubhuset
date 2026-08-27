@@ -282,4 +282,30 @@ public sealed class StaaMaalMedTests(ApiFactory factory)
         await Assert.That(sortTestClasses.Count).IsGreaterThanOrEqualTo(2);
         await Assert.That(sortTestClasses[0].GradeLevel).IsLessThanOrEqualTo(sortTestClasses[1].GradeLevel);
     }
+
+    [Test]
+    public async Task GetCoverage_CategoryTaughtOutsideUvmGradeRange_FlaggedAsUnexpected()
+    {
+        // Tysk only starts 6. klasse per UVM timetal — scheduling it in 3. klasse
+        // should be flagged as an unexpected-grade category, not silently ignored.
+        var (klass, schema) = await CreateGradedClassWithActiveSchemaAsync(3, "3.tysk-test");
+        var tyskCourse = await CreateCourseWithCategoryAsync(SubjectCategory.Tysk, "Tysk for tidligt");
+        var staff = await TestDataBuilder.CreateStaffAsync(_factory.Services, _tenantId);
+        var timeSlot = await TestDataBuilder.CreateTimeSlotAsync(
+            _factory.Services, _tenantId,
+            new TimeOnly(8, 0), new TimeOnly(9, 0));
+        await TestDataBuilder.CreateSchemaSlotAsync(
+            _factory.Services, _tenantId,
+            schema.Id, timeSlot.Id, tyskCourse.Id, staff.Id);
+
+        var response = await _adminClient.GetAsync("/api/v1/staa-maal-med/coverage");
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<StaaMaalMedController.CoverageResponseDto>(JsonOpts);
+        await Assert.That(dto).IsNotNull();
+
+        var classDto = dto!.Classes.FirstOrDefault(c => c.ClassId == klass.Id);
+        await Assert.That(classDto).IsNotNull();
+        await Assert.That(classDto!.UnexpectedGradeCategories).Contains(SubjectCategory.Tysk.ToString());
+    }
 }

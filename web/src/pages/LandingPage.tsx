@@ -1,12 +1,55 @@
+import { useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import Logo from '../components/Logo'
 import Footer from '../components/Footer'
 import CookieBanner from '../components/CookieBanner'
-import { usePageTitle } from '../hooks/usePageTitle'
+import SeoMeta from '../components/SeoMeta'
+import type { BillingInterval } from '../api/client'
+
+// Keep in sync with web/src/pages/BillingPage.tsx — same prices, must match Stripe Price IDs in StripeOptions.
+const MONTHLY_PRICE_KR = 300
+const YEARLY_PRICE_KR = 3000
+const YEARLY_EFFECTIVE_MONTHLY_KR = Math.round(YEARLY_PRICE_KR / 12)
+const YEARLY_SAVINGS_KR = MONTHLY_PRICE_KR * 12 - YEARLY_PRICE_KR
+
+const PARENT_MODULE_MONTHLY_KR = 300
+const PARENT_MODULE_YEARLY_KR = 3000
+const BOARD_MODULE_MONTHLY_KR = 300
+const BOARD_MODULE_YEARLY_KR = 3000
+
+const ALL_MODULES_YEARLY_TOTAL_KR =
+  YEARLY_PRICE_KR + PARENT_MODULE_YEARLY_KR + BOARD_MODULE_YEARLY_KR
+
+const SOFTWARE_APPLICATION_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Skoleoverblikket',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  description:
+    'Billig og enkel skoleadministration. Skema, SFO, ugeplan, vikardækning og forældrekontakt samlet i ét system — i stedet for fem. Prøv gratis i 14 dage.',
+  offers: {
+    '@type': 'Offer',
+    price: String(MONTHLY_PRICE_KR),
+    priceCurrency: 'DKK',
+    priceValidUntil: '2026-12-31',
+    description: 'Basis-abonnement pr. måned, inkl. moms, pr. skole. Ingen bindingsperiode.',
+  },
+}
 
 export default function LandingPage() {
-  usePageTitle('')
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('Monthly')
+  const isYearly = billingInterval === 'Yearly'
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
+      <SeoMeta
+        title="Billig og enkel skoleadministration til friskoler og privatskoler"
+        description="Billig og enkel skoleadministration. Skema, SFO, ugeplan, vikardækning og forældrekontakt samlet i ét system — i stedet for fem. Prøv gratis i 14 dage."
+        path="/"
+      />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(SOFTWARE_APPLICATION_JSON_LD)}</script>
+      </Helmet>
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
@@ -191,9 +234,9 @@ export default function LandingPage() {
                   <line x1="10" y1="14" x2="14" y2="14" />
                 </svg>
               }
-              title="Bestyrelsesmodul"
+              title="Bestyrelse & Tilsyn"
               description={
-                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker, dokumentdeling og overblik over "stå mål med"-dækning.'
+                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker og dokumentdeling. Inkluderer "stå mål med"-dækning, undervisningsplaner og offentliggørelse af §1a-tilsynsgrundlag.'
               }
             />
             <FeatureCard
@@ -322,7 +365,10 @@ export default function LandingPage() {
       <section id="priser" className="py-20 px-6 bg-brand-900 text-white">
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="font-display text-3xl font-semibold mb-3">Enkel og gennemsigtig pris</h2>
-          <p className="text-brand-200 mb-12">Enkel pris — udvid efter behov.</p>
+          <p className="text-brand-200 mb-2">300 kr/md pr. modul — udvid efter behov.</p>
+          <p className="text-brand-300 text-sm mb-12">
+            Vælg alle tre årligt og betal {ALL_MODULES_YEARLY_TOTAL_KR} kr/år i alt
+          </p>
           {/* Layout: Basis left, modules stacked right */}
           <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto">
             {/* Basis card */}
@@ -330,10 +376,50 @@ export default function LandingPage() {
               <div className="px-8 pt-8 pb-6 bg-brand-50 border-b border-brand-100 rounded-t-2xl">
                 <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">Basis</p>
                 <div className="mt-2 flex items-end gap-1 justify-center">
-                  <span className="font-display text-5xl font-semibold text-brand-900">499</span>
+                  <span className="font-display text-5xl font-semibold text-brand-900">
+                    {isYearly ? YEARLY_EFFECTIVE_MONTHLY_KR : MONTHLY_PRICE_KR}
+                  </span>
                   <span className="text-lg text-gray-500 mb-2">kr/md</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {isYearly
+                    ? `${YEARLY_PRICE_KR} kr/år · inkl. moms · pr. skole`
+                    : 'inkl. moms · pr. skole'}
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <div
+                    className="inline-flex items-center rounded-lg border border-brand-200 bg-white p-1"
+                    role="tablist"
+                    aria-label="Betalingsinterval"
+                  >
+                    {(['Monthly', 'Yearly'] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        role="tab"
+                        aria-selected={billingInterval === opt}
+                        onClick={() => setBillingInterval(opt)}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                          billingInterval === opt
+                            ? 'bg-brand-600 text-white'
+                            : 'text-brand-700 hover:bg-brand-50'
+                        }`}
+                      >
+                        {opt === 'Monthly' ? 'Månedligt' : 'Årligt'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  {isYearly && (
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                      Spar {YEARLY_SAVINGS_KR} kr/år
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                    Intropris
+                  </span>
+                </div>
               </div>
               <div className="px-8 py-6 space-y-3 text-left">
                 {[
@@ -372,7 +458,7 @@ export default function LandingPage() {
                 </div>
                 <div className="pt-4">
                   <a
-                    href="/signup"
+                    href={`/signup?interval=${billingInterval}`}
                     className="block w-full text-center py-3 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
                   >
                     Start 14 dages gratis prøve
@@ -391,7 +477,9 @@ export default function LandingPage() {
               </div>
               <ModuleCard
                 title="Forældremodul"
-                price="499"
+                monthlyPrice={PARENT_MODULE_MONTHLY_KR}
+                yearlyPrice={PARENT_MODULE_YEARLY_KR}
+                isYearly={isYearly}
                 features={[
                   'Ugeplaner og kalenderadgang',
                   'Kontaktbog og beskeder',
@@ -400,9 +488,15 @@ export default function LandingPage() {
                 ]}
               />
               <ModuleCard
-                title="Bestyrelsesmodul"
-                price="199"
-                features={['Filhåndtering (100 GB)', 'Overblik over "stå mål med"-dækning']}
+                title="Bestyrelse & Tilsyn"
+                monthlyPrice={BOARD_MODULE_MONTHLY_KR}
+                yearlyPrice={BOARD_MODULE_YEARLY_KR}
+                isYearly={isYearly}
+                features={[
+                  'Filhåndtering (100 GB)',
+                  'Overblik over "stå mål med"-dækning',
+                  'Offentliggørelse af §1a-tilsynsgrundlag',
+                ]}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">
                 Kræver Basis · Samles på én faktura
@@ -444,7 +538,7 @@ export default function LandingPage() {
               </svg>
             }
             title="Gennemsigtige priser"
-            description="499 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
+            description="300 kr/md for Basis. Ingen bindingsperiode. Ingen skjulte gebyrer."
           />
           <TrustItem
             icon={
@@ -539,23 +633,43 @@ function AudienceItem({ title, description }: { title: string; description: stri
 
 function ModuleCard({
   title,
-  price,
+  monthlyPrice,
+  yearlyPrice,
+  isYearly,
   features,
 }: {
   title: string
-  price: string
+  monthlyPrice: number
+  yearlyPrice: number
+  isYearly: boolean
   features: string[]
 }) {
+  const effectiveMonthly = isYearly ? Math.round(yearlyPrice / 12) : monthlyPrice
+  const yearlySavings = monthlyPrice * 12 - yearlyPrice
   return (
     <div className="bg-white text-gray-900 rounded-2xl shadow-xl overflow-hidden">
       <div className="px-6 pt-6 pb-4 bg-brand-50 border-b border-brand-100 text-center">
         <p className="text-sm font-medium text-brand-600 uppercase tracking-wide">{title}</p>
         <div className="mt-2 flex items-end gap-1 justify-center">
           <span className="text-lg text-gray-500 mb-2">+</span>
-          <span className="font-display text-5xl font-semibold text-brand-900">{price}</span>
+          <span className="font-display text-5xl font-semibold text-brand-900">
+            {effectiveMonthly}
+          </span>
           <span className="text-lg text-gray-500 mb-2">kr/md</span>
         </div>
-        <p className="text-sm text-gray-500 mt-1">inkl. moms · pr. skole</p>
+        <p className="text-sm text-gray-500 mt-1">
+          {isYearly ? `${yearlyPrice} kr/år · inkl. moms · pr. skole` : 'inkl. moms · pr. skole'}
+        </p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          {isYearly && (
+            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+              Spar {yearlySavings} kr/år
+            </span>
+          )}
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+            Intropris
+          </span>
+        </div>
       </div>
       <div className="px-6 py-4 space-y-2">
         {features.map((f) => (
@@ -634,8 +748,7 @@ function RefundTooltip() {
         <path d="M7 11V7a5 5 0 0 1 9.9-1" />
       </svg>
       <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-64 rounded-lg bg-gray-900 px-3 py-2 text-xs text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-lg text-left">
-        Abonnementet kan opsiges til enhver tid. Der ydes ikke refusion for den igangværende måneds
-        betaling.
+        Abonnementet kan opsiges til enhver tid.
       </div>
     </div>
   )

@@ -28,6 +28,8 @@ public sealed class Subscription : IEntityTypeConfiguration<Subscription>
 
 	public SubscriptionStatus Status { get; set; }
 
+	public BillingInterval Interval { get; set; }
+
 	/// <summary>Stripe customer ID (cus_xxx)</summary>
 	public string? StripeCustomerId { get; set; }
 

@@ -31,7 +31,7 @@ builder.Services.AddKeycloakAdmin();
 builder.Services.AddOpenApi();
 builder.Services.AddEmail();
 builder.Services.AddObjectStorage();
-builder.Services.AddStripe(builder.Configuration);
+builder.Services.AddStripe();
 builder.Services.AddDomainServices();
 builder.Services.AddApiRateLimiting();
 

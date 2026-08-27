@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getApiV1MessagesInbox,
   getApiV1MessagesRecipients,
   getApiV1MessagesSent,
+  getApiV1MessagesByIdThread,
   postApiV1Messages,
   postApiV1MessagesByIdRead,
   postApiV1MessagesGroupPreview,
@@ -17,6 +18,7 @@ import type {
   BroadcastAudience,
   StaffRole,
   ClassesControllerClassDto,
+  MessagesControllerThreadMessageDto,
 } from '../api/generated/types.gen'
 import { Modal } from '../components/Modal'
 import { useAuth } from '../auth/useAuth'
@@ -33,6 +35,8 @@ interface InboxMessageDto {
   body: string
   sentAt: string
   readAt?: string
+  inReplyToId?: string
+  isGroup?: boolean
 }
 
 interface SentMessageDto {
@@ -47,7 +51,10 @@ interface SentMessageDto {
   isGroup?: boolean
   audienceLabel?: string
   groupRecipientCount?: number
+  inReplyToId?: string
 }
+
+type ThreadMessageDto = MessagesControllerThreadMessageDto
 
 interface RecipientDto {
   id: string
@@ -93,11 +100,77 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
+// Messages are only ever between Parent and Staff — the generated RecipientType also includes
+// Board (board members), which never participates in this messaging flow.
+function toMessageRecipientType(type: string | undefined): RecipientType {
+  return type === 'Staff' ? 'Staff' : 'Parent'
+}
+
 function truncate(text: string, max: number): string {
   if (text.length <= max) {
     return text
   }
   return `${text.slice(0, max)}…`
+}
+
+interface ThreadLinkable {
+  id: string
+  inReplyToId?: string
+  sentAt: string
+  isGroup?: boolean
+  readAt?: string
+}
+
+// InReplyToId only ever points at the previous message, and a reply to my
+// inbox message lands in my *sent* list (and vice versa) — so the chain must
+// be walked across inbox+sent combined, not per-tab, or it breaks as soon as
+// a thread crosses tabs. Returns id -> root id for every message.
+function buildThreadRoots(allMessages: ThreadLinkable[]): Map<string, string> {
+  const byId = new Map(allMessages.map((m) => [m.id, m]))
+  const roots = new Map<string, string>()
+
+  function rootIdOf(msg: ThreadLinkable): string {
+    const cached = roots.get(msg.id)
+    if (cached) return cached
+
+    let current = msg
+    const visited = new Set<string>()
+    while (current.inReplyToId && byId.has(current.inReplyToId) && !visited.has(current.id)) {
+      visited.add(current.id)
+      current = byId.get(current.inReplyToId)!
+    }
+    roots.set(msg.id, current.id)
+    return current.id
+  }
+
+  for (const msg of allMessages) rootIdOf(msg)
+  return roots
+}
+
+// Collapses a flat message list into one row per thread (latest message wins),
+// so replies don't show up as separate list entries. Unread state is OR'd across every
+// message in the thread, not just the retained latest one, so an unread earlier reply
+// still marks the collapsed row unread even if the newest message was already read.
+function groupByThread<T extends ThreadLinkable>(
+  messages: T[],
+  threadRoots: Map<string, string>
+): (T & { hasUnread: boolean })[] {
+  const latestByRoot = new Map<string, T>()
+  const unreadByRoot = new Map<string, boolean>()
+  for (const msg of messages) {
+    const rootId = msg.isGroup ? msg.id : (threadRoots.get(msg.id) ?? msg.id)
+    const existing = latestByRoot.get(rootId)
+    if (!existing || new Date(msg.sentAt).getTime() > new Date(existing.sentAt).getTime()) {
+      latestByRoot.set(rootId, msg)
+    }
+    if (!msg.readAt) {
+      unreadByRoot.set(rootId, true)
+    }
+  }
+
+  return [...latestByRoot.entries()]
+    .map(([rootId, msg]) => ({ ...msg, hasUnread: unreadByRoot.get(rootId) ?? false }))
+    .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
 }
 
 // ── GroupComposeModal ────────────────────────────────────────────────────────
@@ -504,6 +577,7 @@ export default function BeskederPage() {
   usePageTitle('Beskeder')
   const { isAdmin, isParent } = useAuth()
 
+  const qc = useQueryClient()
   const [tab, setTab] = useState<'inbox' | 'sent'>('inbox')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
@@ -529,6 +603,7 @@ export default function BeskederPage() {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [inReplyToId, setInReplyToId] = useState<string | null>(null)
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const directoryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -547,6 +622,24 @@ export default function BeskederPage() {
     classId: c.classId ?? '',
     className: c.className ?? '',
   }))
+
+  const threadQueryKey = [{ _id: 'getApiV1MessagesByIdThread', path: { id: selectedId } }] as const
+
+  const {
+    data: thread = [],
+    isLoading: threadLoading,
+    isError: threadError,
+  } = useQuery({
+    queryKey: threadQueryKey,
+    queryFn: async () => {
+      const { data } = await getApiV1MessagesByIdThread({
+        path: { id: selectedId! },
+        throwOnError: true,
+      })
+      return (data ?? []) as ThreadMessageDto[]
+    },
+    enabled: selectedId !== null,
+  })
 
   useEffect(() => {
     return () => {
@@ -611,13 +704,26 @@ export default function BeskederPage() {
   async function handleSelectInbox(id: string) {
     setSelectedId(id)
     setMobilePanel('detail')
-    const msg = inbox.find((m) => m.id === id)
-    if (msg && !msg.readAt) {
-      await postApiV1MessagesByIdRead({ path: { id }, throwOnError: false })
-      setInbox((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, readAt: new Date().toISOString() } : m))
-      )
+
+    // The clicked row is the latest message in its thread (per groupByThread), but earlier
+    // replies in the same thread can still be unread — mark every unread message sharing
+    // that thread root as read, not just the clicked one.
+    const rootId = threadRoots.get(id) ?? id
+    const unreadInThread = inbox.filter(
+      (m) => !m.readAt && (threadRoots.get(m.id) ?? m.id) === rootId
+    )
+    if (unreadInThread.length === 0) {
+      return
     }
+
+    await Promise.all(
+      unreadInThread.map((m) =>
+        postApiV1MessagesByIdRead({ path: { id: m.id }, throwOnError: false })
+      )
+    )
+    const now = new Date().toISOString()
+    const unreadIds = new Set(unreadInThread.map((m) => m.id))
+    setInbox((prev) => prev.map((m) => (unreadIds.has(m.id) ? { ...m, readAt: now } : m)))
   }
 
   function handleRecipientSearchChange(value: string) {
@@ -648,19 +754,61 @@ export default function BeskederPage() {
     setShowDropdown(false)
   }
 
-  function handleOpenCompose(prefilledRecipient?: RecipientDto) {
+  function handleOpenCompose(
+    prefilledRecipient?: RecipientDto,
+    prefilled?: { subject: string; body: string; inReplyToId: string }
+  ) {
     setSelectedRecipient(prefilledRecipient ?? null)
     setRecipientSearch('')
     setRecipientResults([])
     setShowDropdown(false)
-    setSubject('')
-    setBody('')
+    setSubject(prefilled?.subject ?? '')
+    setBody(prefilled?.body ?? '')
+    setInReplyToId(prefilled?.inReplyToId ?? null)
     setSendError(null)
     setComposeOpen(true)
   }
 
   function handleDirectoryContactClick(recipient: RecipientDto) {
     handleOpenCompose(recipient)
+  }
+
+  function handleReply() {
+    if (!selectedMsg || threadLoading) return
+
+    // Reply to the last message in the thread, so multi-hop conversations
+    // always append to the end regardless of which row was clicked.
+    const lastMsg = thread.length > 0 ? thread[thread.length - 1] : null
+
+    const recipient: RecipientDto = lastMsg
+      ? lastMsg.isOwn
+        ? {
+            id: lastMsg.recipientId,
+            name: lastMsg.recipientName,
+            type: toMessageRecipientType(lastMsg.recipientType),
+          }
+        : {
+            id: lastMsg.senderId,
+            name: lastMsg.senderName,
+            type: toMessageRecipientType(lastMsg.senderType),
+          }
+      : tab === 'inbox'
+        ? {
+            id: (selectedMsg as InboxMessageDto).senderId,
+            name: (selectedMsg as InboxMessageDto).senderName,
+            type: (selectedMsg as InboxMessageDto).senderType,
+          }
+        : {
+            id: (selectedMsg as SentMessageDto).recipientId,
+            name: (selectedMsg as SentMessageDto).recipientName,
+            type: (selectedMsg as SentMessageDto).recipientType,
+          }
+
+    handleOpenCompose(recipient, {
+      subject: selectedMsg.subject,
+      body: '',
+      inReplyToId: lastMsg?.id ?? selectedMsg.id,
+    })
   }
 
   async function handleSend() {
@@ -674,11 +822,18 @@ export default function BeskederPage() {
           recipientType: selectedRecipient.type,
           subject: subject.trim(),
           body: body.trim(),
+          inReplyToId: inReplyToId ?? undefined,
         },
         throwOnError: true,
       })
       setComposeOpen(false)
+      setInReplyToId(null)
       await fetchMessages()
+      if (selectedId !== null) {
+        await qc.invalidateQueries({
+          queryKey: [{ _id: 'getApiV1MessagesByIdThread', path: { id: selectedId } }],
+        })
+      }
     } catch {
       setSendError('Der opstod en fejl. Prøv igen.')
     } finally {
@@ -686,7 +841,10 @@ export default function BeskederPage() {
     }
   }
 
-  const currentMessages = tab === 'inbox' ? inbox : sent
+  const threadRoots = buildThreadRoots([...inbox, ...sent])
+  const groupedInbox = groupByThread(inbox, threadRoots)
+  const groupedSent = groupByThread(sent, threadRoots)
+  const currentMessages = tab === 'inbox' ? groupedInbox : groupedSent
   const selectedInboxMsg = tab === 'inbox' ? inbox.find((m) => m.id === selectedId) : null
   const selectedSentMsg = tab === 'sent' ? sent.find((m) => m.id === selectedId) : null
   const selectedMsg = selectedInboxMsg ?? selectedSentMsg
@@ -878,8 +1036,8 @@ export default function BeskederPage() {
             )}
             <div className="divide-y divide-gray-100">
               {tab === 'inbox' &&
-                inbox.map((msg) => {
-                  const isUnread = !msg.readAt
+                groupedInbox.map((msg) => {
+                  const isUnread = msg.hasUnread
                   return (
                     <button
                       type="button"
@@ -909,7 +1067,7 @@ export default function BeskederPage() {
                   )
                 })}
               {tab === 'sent' &&
-                sent.map((msg) => (
+                groupedSent.map((msg) => (
                   <button
                     type="button"
                     key={msg.id}
@@ -1000,63 +1158,159 @@ export default function BeskederPage() {
                   Tilbage
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-6 py-6">
-                <div className="max-w-2xl">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    {selectedMsg.subject}
-                  </h2>
-                  <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
-                    <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
-                      {tab === 'inbox'
-                        ? getInitials((selectedMsg as InboxMessageDto).senderName)
-                        : getInitials((selectedMsg as SentMessageDto).recipientName)}
-                    </div>
-                    <div className="min-w-0">
-                      {tab === 'inbox' ? (
+              {(() => {
+                const isGroup =
+                  (tab === 'sent' && (selectedMsg as SentMessageDto).isGroup) ||
+                  (tab === 'inbox' && (selectedMsg as InboxMessageDto).isGroup)
+
+                return (
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <div className="max-w-2xl">
+                      <div className="flex items-center justify-between gap-3 mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {selectedMsg.subject}
+                        </h2>
+                        {!isGroup && (
+                          <button
+                            type="button"
+                            onClick={handleReply}
+                            disabled={threadLoading}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="9 17 4 12 9 7" />
+                              <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                            </svg>
+                            Svar
+                          </button>
+                        )}
+                      </div>
+
+                      {isGroup ? (
                         <>
-                          <p className="text-sm font-medium text-gray-900">
-                            {(selectedMsg as InboxMessageDto).senderName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(selectedMsg as InboxMessageDto).senderType === 'Parent'
-                              ? 'Forælder'
-                              : 'Medarbejder'}
-                            {' · '}
-                            {formatRelativeTime(selectedMsg.sentAt)}
-                          </p>
+                          <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
+                            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
+                              {tab === 'inbox'
+                                ? getInitials((selectedMsg as InboxMessageDto).senderName)
+                                : getInitials((selectedMsg as SentMessageDto).recipientName)}
+                            </div>
+                            <div className="min-w-0">
+                              {tab === 'inbox' ? (
+                                <>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {(selectedMsg as InboxMessageDto).senderName}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {(selectedMsg as InboxMessageDto).senderType === 'Parent'
+                                      ? 'Forælder'
+                                      : 'Medarbejder'}
+                                    {' · '}
+                                    {formatRelativeTime(selectedMsg.sentAt)}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">
+                                      Gruppe
+                                    </span>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {(selectedMsg as SentMessageDto).audienceLabel}
+                                    </p>
+                                    {(selectedMsg as SentMessageDto).groupRecipientCount !=
+                                      null && (
+                                      <span className="text-xs text-gray-400">
+                                        ({(selectedMsg as SentMessageDto).groupRecipientCount}{' '}
+                                        modtagere)
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500">
+                                    {formatRelativeTime(selectedMsg.sentAt)}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                            {selectedMsg.body}
+                          </div>
                         </>
                       ) : (
-                        <>
-                          <div className="flex items-center gap-1.5">
-                            {(selectedMsg as SentMessageDto).isGroup && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-700">
-                                Gruppe
-                              </span>
-                            )}
-                            <p className="text-sm font-medium text-gray-900">
-                              {(selectedMsg as SentMessageDto).isGroup
-                                ? (selectedMsg as SentMessageDto).audienceLabel
-                                : `Til: ${(selectedMsg as SentMessageDto).recipientName}`}
+                        <div className="space-y-4">
+                          {threadLoading && (
+                            <p className="text-sm text-gray-400">Indlæser samtale…</p>
+                          )}
+                          {!threadLoading && threadError && (
+                            <p className="text-sm text-red-600">
+                              Kunne ikke hente samtalen. Prøv igen.
                             </p>
-                            {(selectedMsg as SentMessageDto).isGroup &&
-                              (selectedMsg as SentMessageDto).groupRecipientCount != null && (
-                                <span className="text-xs text-gray-400">
-                                  ({(selectedMsg as SentMessageDto).groupRecipientCount} modtagere)
-                                </span>
-                              )}
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {formatRelativeTime(selectedMsg.sentAt)}
-                          </p>
-                        </>
+                          )}
+                          {!threadLoading && !threadError && thread.length === 0 && (
+                            <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                              <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
+                                {tab === 'inbox'
+                                  ? getInitials((selectedMsg as InboxMessageDto).senderName)
+                                  : getInitials((selectedMsg as SentMessageDto).recipientName)}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {tab === 'inbox'
+                                    ? (selectedMsg as InboxMessageDto).senderName
+                                    : `Til: ${(selectedMsg as SentMessageDto).recipientName}`}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {formatRelativeTime(selectedMsg.sentAt)}
+                                </p>
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed mt-2">
+                                  {selectedMsg.body}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {[...thread].reverse().map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0 ${msg.isOwn ? 'flex-row-reverse text-right' : ''}`}
+                            >
+                              <div
+                                className={`flex items-center justify-center h-9 w-9 rounded-full text-sm font-semibold shrink-0 ${msg.isOwn ? 'bg-blue-100 text-blue-700' : 'bg-brand-100 text-brand-700'}`}
+                              >
+                                {getInitials(msg.senderName)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {msg.isOwn ? 'Dig' : msg.senderName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {msg.senderType === 'Parent' ? 'Forælder' : 'Medarbejder'}
+                                  {' · '}
+                                  {formatRelativeTime(msg.sentAt)}
+                                </p>
+                                <div
+                                  className={`inline-block mt-2 max-w-lg px-3 py-2 rounded-xl text-sm text-left whitespace-pre-wrap leading-relaxed ${msg.isOwn ? 'bg-blue-100 text-gray-900' : 'bg-white border border-gray-200 text-gray-900'}`}
+                                >
+                                  {msg.body}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {selectedMsg.body}
-                  </div>
-                </div>
-              </div>
+                )
+              })()}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
@@ -1086,16 +1340,24 @@ export default function BeskederPage() {
       {/* 1:1 compose modal */}
       <Modal
         isOpen={composeOpen}
-        onClose={() => setComposeOpen(false)}
+        onClose={() => {
+          setComposeOpen(false)
+          setInReplyToId(null)
+        }}
         size="lg"
         contentClassName="bg-white rounded-xl p-6 shadow-xl w-full max-w-lg"
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">Ny besked</h2>
+          <h2 className="text-base font-semibold text-gray-900">
+            {inReplyToId ? 'Svar' : 'Ny besked'}
+          </h2>
           <button
             type="button"
             aria-label="Luk"
-            onClick={() => setComposeOpen(false)}
+            onClick={() => {
+              setComposeOpen(false)
+              setInReplyToId(null)
+            }}
             className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg
@@ -1234,7 +1496,10 @@ export default function BeskederPage() {
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
-            onClick={() => setComposeOpen(false)}
+            onClick={() => {
+              setComposeOpen(false)
+              setInReplyToId(null)
+            }}
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
           >
             Annuller

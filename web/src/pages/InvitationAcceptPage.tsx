@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import keycloak from '../auth/keycloak'
 import CookieBanner from '../components/CookieBanner'
 import {
@@ -146,6 +147,7 @@ export default function InvitationAcceptPage() {
     try {
       await patchApiV1ParentsMeContact({
         body: {
+          name: preview!.name,
           phone: phone || null,
           address: address || null,
           postalCode: postalCode || null,
@@ -166,6 +168,9 @@ export default function InvitationAcceptPage() {
   if (state === 'loading' || state === 'accepting') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div
           className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center"
           role="status"
@@ -184,6 +189,9 @@ export default function InvitationAcceptPage() {
   if (state === 'invalid') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -225,6 +233,9 @@ export default function InvitationAcceptPage() {
 
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -260,6 +271,9 @@ export default function InvitationAcceptPage() {
   if (state === 'error') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
             <svg
@@ -285,6 +299,9 @@ export default function InvitationAcceptPage() {
   if (state === 'contact-info') {
     return (
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
           <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -308,11 +325,22 @@ export default function InvitationAcceptPage() {
             </p>
           </div>
 
-          <div className="px-8 py-6 space-y-4">
+          <form
+            className="px-8 py-6 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              submitContactInfo()
+            }}
+          >
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Telefon
+              </label>
               <input
+                id="phone"
+                name="tel"
                 type="tel"
+                autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Valgfrit"
@@ -320,9 +348,14 @@ export default function InvitationAcceptPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Adresse
+              </label>
               <input
+                id="address"
+                name="street-address"
                 type="text"
+                autoComplete="street-address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Valgfrit"
@@ -331,9 +364,17 @@ export default function InvitationAcceptPage() {
             </div>
             <div className="flex gap-3">
               <div className="w-28">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+                <label
+                  htmlFor="postalCode"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Postnummer
+                </label>
                 <input
+                  id="postalCode"
+                  name="postal-code"
                   type="text"
+                  autoComplete="postal-code"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   placeholder="Valgfrit"
@@ -342,9 +383,14 @@ export default function InvitationAcceptPage() {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">By</label>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                  By
+                </label>
                 <input
+                  id="city"
+                  name="address-level2"
                   type="text"
+                  autoComplete="address-level2"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Valgfrit"
@@ -354,6 +400,8 @@ export default function InvitationAcceptPage() {
             </div>
             <label className="flex items-start gap-3 cursor-pointer">
               <input
+                id="shareContactInfo"
+                name="shareContactInfo"
                 type="checkbox"
                 checked={shareContactInfo}
                 onChange={(e) => setShareContactInfo(e.target.checked)}
@@ -366,13 +414,14 @@ export default function InvitationAcceptPage() {
 
             {contactError && <p className="text-sm text-red-600">{contactError}</p>}
             <button
-              onClick={submitContactInfo}
+              type="submit"
               disabled={submittingContact}
               className="w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
             >
               {submittingContact ? 'Gemmer…' : 'Gem og fortsæt'}
             </button>
             <button
+              type="button"
               onClick={() => {
                 window.location.href = '/foraeldrevisning/skema'
               }}
@@ -380,7 +429,7 @@ export default function InvitationAcceptPage() {
             >
               Spring over
             </button>
-          </div>
+          </form>
         </div>
       </div>
     )
@@ -389,6 +438,9 @@ export default function InvitationAcceptPage() {
   // state === 'ready' — show invitation details and login button
   return (
     <>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
           <div className="px-8 pt-8 pb-6 border-b border-gray-100 text-center">

@@ -18,8 +18,12 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 		string? Address,
 		string? PostalCode,
 		string? City,
+		string? Email,
 		string? AvatarUrl,
-		IReadOnlyList<string> StudentNames);
+		IReadOnlyList<string> StudentNames,
+		IReadOnlyList<KontaktStudentDto> Students);
+
+	public record KontaktStudentDto(Guid Id, string Name);
 
 	[HttpGet]
 	public async Task<ActionResult<IReadOnlyList<KontaktParentDto>>> GetKontakt(CancellationToken cancellationToken)
@@ -36,6 +40,7 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 		var isStaff = !isAdmin && !isParent;
 
 		IQueryable<Models.Parent> query;
+		HashSet<Guid>? visibleStudentIds = null;
 
 		if (isAdmin)
 		{
@@ -56,6 +61,8 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 			var coClassStudentIds = db.Students
 				.Where(s => myClassIds.Contains(s.ClassId))
 				.Select(s => s.Id);
+
+			visibleStudentIds = await coClassStudentIds.ToHashSetAsync(cancellationToken);
 
 			query = db.Parents
 				.Include(p => p.Students)
@@ -82,6 +89,12 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 		var dtos = parents.Select(p =>
 		{
 			var hideDetails = p.AdresseBeskyttet && !isAdmin;
+			// For a parent caller, only surface each contact's students that are in a class
+			// shared with the caller — a co-class parent's other children (different, unrelated
+			// class) must not leak through here just because the parent row itself is visible.
+			var visibleStudents = visibleStudentIds is null
+				? p.Students
+				: p.Students.Where(s => visibleStudentIds.Contains(s.Id));
 			return new KontaktParentDto(
 				p.Id,
 				p.Name,
@@ -89,8 +102,10 @@ public sealed class KontaktController(AppDbContext db) : ControllerBase
 				hideDetails ? null : p.Address,
 				hideDetails ? null : p.PostalCode,
 				hideDetails ? null : p.City,
+				hideDetails ? null : p.Email,
 				p.AvatarUrl,
-				p.Students.Select(s => s.Name).OrderBy(n => n).ToList());
+				visibleStudents.Select(s => s.Name).OrderBy(n => n).ToList(),
+				visibleStudents.Select(s => new KontaktStudentDto(s.Id, s.Name)).OrderBy(s => s.Name).ToList());
 		}).ToList();
 
 		return Ok(dtos);
