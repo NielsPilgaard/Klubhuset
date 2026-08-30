@@ -383,7 +383,9 @@ export default function AarsrulPage() {
                 {' '}
                 og opretter{' '}
                 <span className="font-semibold">
-                  {newClasses.filter((nc) => nc.name.trim()).length} ny klasse(r)
+                  {newClasses.filter((nc) => nc.name.trim()).length === 1
+                    ? '1 ny klasse'
+                    : `${newClasses.filter((nc) => nc.name.trim()).length} nye klasser`}
                 </span>
               </>
             )}

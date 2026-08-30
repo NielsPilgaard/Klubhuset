@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PasteGrid, { type ColumnDef, type GridRow } from '../components/PasteGrid'
+import { pluralize } from '../lib/pluralize'
 import {
   getApiV1BoardMembers,
   getApiV1Staff,
@@ -414,16 +415,19 @@ function StudentsTab() {
             <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
             {result && (
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-                <li>{result.classesCreated} klasse(r) oprettet</li>
-                <li>{result.studentsCreated} elev(er) oprettet</li>
+                <li>{pluralize(result.classesCreated, 'klasse', 'klasser')} oprettet</li>
+                <li>{pluralize(result.studentsCreated, 'elev', 'elever')} oprettet</li>
                 {(result.studentsSkipped ?? 0) > 0 && (
-                  <li>{result.studentsSkipped} elev(er) sprunget over (fandtes allerede)</li>
+                  <li>
+                    {pluralize(result.studentsSkipped, 'elev', 'elever')} sprunget over (fandtes
+                    allerede)
+                  </li>
                 )}
-                <li>{result.parentsCreated} forælder(e) oprettet</li>
+                <li>{pluralize(result.parentsCreated, 'forælder', 'forældre')} oprettet</li>
                 {(result.parentsUpdated ?? 0) > 0 && (
-                  <li>{result.parentsUpdated} forælder(e) opdateret</li>
+                  <li>{pluralize(result.parentsUpdated, 'forælder', 'forældre')} opdateret</li>
                 )}
-                <li>{result.parentStudentLinksCreated} forælder-elev-forbindelser oprettet</li>
+                <li>{result.parentStudentLinksCreated} forældre knyttet til elever</li>
               </ul>
             )}
             {result && <WarningList warnings={result.warnings ?? []} />}
@@ -455,7 +459,7 @@ function StudentsTab() {
             <p className="text-sm text-gray-600">
               {validCount > 0 ? (
                 <span className="font-medium text-gray-900">
-                  {validCount} elev(er) klar til import
+                  {pluralize(validCount, 'elev', 'elever')} klar til import
                 </span>
               ) : (
                 'Ingen rækker klar — udfyld mindst klasse og elevnavn'
@@ -483,16 +487,19 @@ function StudentsTab() {
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-1">
               <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-                <li>{result.classesCreated} klasse(r) oprettet</li>
-                <li>{result.studentsCreated} elev(er) oprettet</li>
+                <li>{pluralize(result.classesCreated, 'klasse', 'klasser')} oprettet</li>
+                <li>{pluralize(result.studentsCreated, 'elev', 'elever')} oprettet</li>
                 {(result.studentsSkipped ?? 0) > 0 && (
-                  <li>{result.studentsSkipped} elev(er) sprunget over (fandtes allerede)</li>
+                  <li>
+                    {pluralize(result.studentsSkipped, 'elev', 'elever')} sprunget over (fandtes
+                    allerede)
+                  </li>
                 )}
-                <li>{result.parentsCreated} forælder(e) oprettet</li>
+                <li>{pluralize(result.parentsCreated, 'forælder', 'forældre')} oprettet</li>
                 {(result.parentsUpdated ?? 0) > 0 && (
-                  <li>{result.parentsUpdated} forælder(e) opdateret</li>
+                  <li>{pluralize(result.parentsUpdated, 'forælder', 'forældre')} opdateret</li>
                 )}
-                <li>{result.parentStudentLinksCreated} forælder-elev-forbindelser oprettet</li>
+                <li>{result.parentStudentLinksCreated} forældre knyttet til elever</li>
               </ul>
               <WarningList warnings={result.warnings ?? []} />
             </div>
@@ -573,12 +580,14 @@ function StaffTab() {
             <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
             {result && (
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-                <li>{result.staffCreated} medarbejder(e) oprettet</li>
+                <li>{pluralize(result.staffCreated, 'medarbejder', 'medarbejdere')} oprettet</li>
                 {(result.staffUpdated ?? 0) > 0 && (
-                  <li>{result.staffUpdated} medarbejder(e) opdateret</li>
+                  <li>{pluralize(result.staffUpdated, 'medarbejder', 'medarbejdere')} opdateret</li>
                 )}
                 {(result.staffSkipped ?? 0) > 0 && (
-                  <li>{result.staffSkipped} medarbejder(e) sprunget over</li>
+                  <li>
+                    {pluralize(result.staffSkipped, 'medarbejder', 'medarbejdere')} sprunget over
+                  </li>
                 )}
               </ul>
             )}
@@ -613,7 +622,7 @@ function StaffTab() {
             <p className="text-sm text-gray-600">
               {validCount > 0 ? (
                 <span className="font-medium text-gray-900">
-                  {validCount} medarbejder(e) klar til import
+                  {pluralize(validCount, 'medarbejder', 'medarbejdere')} klar til import
                 </span>
               ) : (
                 'Ingen rækker klar — udfyld mindst navn'
@@ -641,12 +650,14 @@ function StaffTab() {
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-1">
               <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-                <li>{result.staffCreated} medarbejder(e) oprettet</li>
+                <li>{pluralize(result.staffCreated, 'medarbejder', 'medarbejdere')} oprettet</li>
                 {(result.staffUpdated ?? 0) > 0 && (
-                  <li>{result.staffUpdated} medarbejder(e) opdateret</li>
+                  <li>{pluralize(result.staffUpdated, 'medarbejder', 'medarbejdere')} opdateret</li>
                 )}
                 {(result.staffSkipped ?? 0) > 0 && (
-                  <li>{result.staffSkipped} medarbejder(e) sprunget over</li>
+                  <li>
+                    {pluralize(result.staffSkipped, 'medarbejder', 'medarbejdere')} sprunget over
+                  </li>
                 )}
               </ul>
               <WarningList warnings={result.warnings ?? []} />
@@ -703,7 +714,7 @@ function ClassesTab() {
         <p className="text-sm text-gray-600">
           {validCount > 0 ? (
             <span className="font-medium text-gray-900">
-              {validCount} klasse(r) klar til import
+              {pluralize(validCount, 'klasse', 'klasser')} klar til import
             </span>
           ) : (
             'Ingen rækker klar — udfyld mindst klassenavn'
@@ -731,12 +742,12 @@ function ClassesTab() {
         <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-1">
           <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
           <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-            <li>{result.classesCreated} klasse(r) oprettet</li>
+            <li>{pluralize(result.classesCreated, 'klasse', 'klasser')} oprettet</li>
             {(result.classesUpdated ?? 0) > 0 && (
-              <li>{result.classesUpdated} klasse(r) opdateret</li>
+              <li>{pluralize(result.classesUpdated, 'klasse', 'klasser')} opdateret</li>
             )}
             {(result.classesSkipped ?? 0) > 0 && (
-              <li>{result.classesSkipped} klasse(r) sprunget over</li>
+              <li>{pluralize(result.classesSkipped, 'klasse', 'klasser')} sprunget over</li>
             )}
           </ul>
           <WarningList warnings={result.warnings ?? []} />
@@ -789,7 +800,7 @@ function RoomsTab() {
         <p className="text-sm text-gray-600">
           {validCount > 0 ? (
             <span className="font-medium text-gray-900">
-              {validCount} lokale(r) klar til import
+              {pluralize(validCount, 'lokale', 'lokaler')} klar til import
             </span>
           ) : (
             'Ingen rækker klar — udfyld mindst navn'
@@ -817,10 +828,12 @@ function RoomsTab() {
         <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-1">
           <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
           <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-            <li>{result.roomsCreated} lokale(r) oprettet</li>
-            {(result.roomsUpdated ?? 0) > 0 && <li>{result.roomsUpdated} lokale(r) opdateret</li>}
+            <li>{pluralize(result.roomsCreated, 'lokale', 'lokaler')} oprettet</li>
+            {(result.roomsUpdated ?? 0) > 0 && (
+              <li>{pluralize(result.roomsUpdated, 'lokale', 'lokaler')} opdateret</li>
+            )}
             {(result.roomsSkipped ?? 0) > 0 && (
-              <li>{result.roomsSkipped} lokale(r) sprunget over</li>
+              <li>{pluralize(result.roomsSkipped, 'lokale', 'lokaler')} sprunget over</li>
             )}
           </ul>
           <WarningList warnings={result.warnings ?? []} />
@@ -893,9 +906,23 @@ function BoardMembersTab() {
             <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
             {result && (
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-                <li>{result.boardMembersCreated} bestyrelsesmedlem(mer) oprettet</li>
+                <li>
+                  {pluralize(
+                    result.boardMembersCreated,
+                    'bestyrelsesmedlem',
+                    'bestyrelsesmedlemmer'
+                  )}{' '}
+                  oprettet
+                </li>
                 {(result.boardMembersUpdated ?? 0) > 0 && (
-                  <li>{result.boardMembersUpdated} bestyrelsesmedlem(mer) opdateret</li>
+                  <li>
+                    {pluralize(
+                      result.boardMembersUpdated,
+                      'bestyrelsesmedlem',
+                      'bestyrelsesmedlemmer'
+                    )}{' '}
+                    opdateret
+                  </li>
                 )}
                 {(result.boardMembersSkipped ?? 0) > 0 && (
                   <li>{result.boardMembersSkipped} rækker sprunget over</li>
@@ -935,7 +962,8 @@ function BoardMembersTab() {
             <p className="text-sm text-gray-600">
               {validCount > 0 ? (
                 <span className="font-medium text-gray-900">
-                  {validCount} bestyrelsesmedlem(mer) klar til import
+                  {pluralize(validCount, 'bestyrelsesmedlem', 'bestyrelsesmedlemmer')} klar til
+                  import
                 </span>
               ) : (
                 'Ingen rækker klar — udfyld mindst navn og e-mail'
@@ -963,9 +991,23 @@ function BoardMembersTab() {
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-1">
               <p className="font-semibold text-green-800 text-sm">Import fuldført</p>
               <ul className="text-sm text-green-800 list-disc list-inside space-y-0.5">
-                <li>{result.boardMembersCreated} bestyrelsesmedlem(mer) oprettet</li>
+                <li>
+                  {pluralize(
+                    result.boardMembersCreated,
+                    'bestyrelsesmedlem',
+                    'bestyrelsesmedlemmer'
+                  )}{' '}
+                  oprettet
+                </li>
                 {(result.boardMembersUpdated ?? 0) > 0 && (
-                  <li>{result.boardMembersUpdated} bestyrelsesmedlem(mer) opdateret</li>
+                  <li>
+                    {pluralize(
+                      result.boardMembersUpdated,
+                      'bestyrelsesmedlem',
+                      'bestyrelsesmedlemmer'
+                    )}{' '}
+                    opdateret
+                  </li>
                 )}
                 {(result.boardMembersSkipped ?? 0) > 0 && (
                   <li>{result.boardMembersSkipped} rækker sprunget over</li>

@@ -17,6 +17,12 @@ status: 'Ready'
 Fase 1+2 (structural subject-coverage view + UVM timetal comparison) are
 **built and live** — `StaaMaalMedController`. Fase 3 adds `TeachingPlan`,
 `TeachingGoal`, `CompliancePath` entities plus a public compliance page.
+
+**2026-08-30**: Landing page and billing copy previously promised Fase 3
+("undervisningsplaner", "offentliggørelse af §1a-tilsynsgrundlag"). Those
+claims were removed since Fase 3 is unbuilt — marketing now only mentions
+the Fase 1+2 coverage/timetal overview. Re-add the copy when this ships.
+
 Key decisions from scoping:
 
 - **Billing**: merged into `SubscriptionModule.BoardModule` (reframed as

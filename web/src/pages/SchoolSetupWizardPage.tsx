@@ -9,6 +9,7 @@ import { LessonDurationSlider } from '../components/LessonDurationSlider'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
 import { detectGradeLevel, GRADE_LEVEL_LABELS } from '../utils/gradeLevel'
+import { pluralize } from '../lib/pluralize'
 import {
   getApiV1SchoolsOnboardingStatusOptions,
   getApiV1SchoolsOnboardingStatusQueryKey,
@@ -717,7 +718,9 @@ function StepInviteStaff({ onNext, onSkip }: { onNext: () => void; onSkip: () =>
     return (
       <div className="space-y-5">
         <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-green-800">{succeeded} invitation(er) sendt</p>
+          <p className="text-sm font-medium text-green-800">
+            {pluralize(succeeded, 'invitation', 'invitationer')} sendt
+          </p>
           <ul className="mt-2 space-y-1">
             {results.map((r) => (
               <li key={r.email} className="flex items-center gap-2 text-sm">
