@@ -11203,6 +11203,10 @@
         "additionalProperties": false
       },
       "StaaMaalMedController_CoverageResponseDto": {
+        "required": [
+          "activeSchemaCount",
+          "classesMissingGradeLevel"
+        ],
         "type": "object",
         "properties": {
           "classes": {
@@ -11210,6 +11214,14 @@
             "items": {
               "$ref": "#/components/schemas/StaaMaalMedController_ClassCoverageDto"
             }
+          },
+          "classesMissingGradeLevel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeSchemaCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

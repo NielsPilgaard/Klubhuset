@@ -894,6 +894,8 @@ export type StaaMaalMedControllerClassCoverageDto = {
 
 export type StaaMaalMedControllerCoverageResponseDto = {
     classes?: Array<StaaMaalMedControllerClassCoverageDto>;
+    classesMissingGradeLevel: number;
+    activeSchemaCount: number;
 };
 
 export type StaaMaalMedControllerCreateSnapshotRequest = {

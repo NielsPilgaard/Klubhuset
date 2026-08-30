@@ -58,7 +58,7 @@ test.describe('ImportPage — spreadsheet paste import', () => {
     await page.getByRole('button', { name: 'Importér' }).click()
 
     await expect(page.getByText('Import fuldført')).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/klasse\(r\) oprettet/)).toBeVisible()
+    await expect(page.getByText(/klasser? oprettet/)).toBeVisible()
   })
 
   test('classes tab: required column missing shows inline error state', async ({ page }) => {
@@ -80,10 +80,10 @@ test.describe('ImportPage — spreadsheet paste import', () => {
     await page.getByTestId('paste-grid-0-className').fill(`E2E-${stamp}`)
     await page.getByTestId('paste-grid-0-studentName').fill(studentName)
 
-    await expect(page.getByText(/elev\(er\) klar til import/)).toBeVisible()
+    await expect(page.getByText(/elev(er)? klar til import/)).toBeVisible()
     await page.getByRole('button', { name: 'Importér' }).click()
 
     await expect(page.getByText('Import fuldført')).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/elev\(er\) oprettet/)).toBeVisible()
+    await expect(page.getByText(/elev(er)? oprettet/)).toBeVisible()
   })
 })
