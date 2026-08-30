@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useAuth } from '../auth/useAuth'
@@ -81,9 +82,36 @@ function CoverageTable({ data }: { data: StaaMaalMedControllerCoverageResponseDt
   ].sort()
 
   if ((data?.classes ?? []).length === 0) {
+    const missingGrade = data?.classesMissingGradeLevel ?? 0
+    const activeSchemas = data?.activeSchemaCount ?? 0
+
     return (
-      <div className="text-center py-12 text-gray-400">
-        <p>Ingen klasser med klassetrin og aktive skemaer fundet</p>
+      <div className="rounded-xl border border-gray-200 bg-gray-50 px-6 py-10 text-center">
+        <p className="text-sm font-medium text-gray-700">Ingen faglig dækning at vise endnu</p>
+        {missingGrade > 0 ? (
+          <p className="mt-2 text-sm text-gray-500">
+            {missingGrade === 1
+              ? '1 klasse mangler klassetrin'
+              : `${missingGrade} klasser mangler klassetrin`}
+            . Faglig dækning måles mod UVM's vejledende timetal pr. klassetrin, så en klasse uden
+            klassetrin kan ikke vises her.
+          </p>
+        ) : activeSchemas === 0 ? (
+          <p className="mt-2 text-sm text-gray-500">
+            Ingen skemaer er aktive i dag. Dækningen beregnes ud fra aktive skemaer — opret eller
+            aktivér et skema for at komme i gang.
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-gray-500">
+            Ingen klasser med klassetrin og aktive skemaer fundet.
+          </p>
+        )}
+        <Link
+          to="/klasser"
+          className="mt-4 inline-block text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors"
+        >
+          Gå til Klasser →
+        </Link>
       </div>
     )
   }

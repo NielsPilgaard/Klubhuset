@@ -17,7 +17,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 {
 	public record SubjectCoverageDto(string Category, double WeeklyHours, double VejledendeWeeklyHours, double AnnualHours, double VejledendeAnnualHours, string Status);
 	public record ClassCoverageDto(Guid ClassId, string ClassName, int GradeLevel, List<SubjectCoverageDto> Subjects, List<string> UnexpectedGradeCategories);
-	public record CoverageResponseDto(List<ClassCoverageDto> Classes);
+	public record CoverageResponseDto(List<ClassCoverageDto> Classes, int ClassesMissingGradeLevel, int ActiveSchemaCount);
 	public record CreateSnapshotRequest([property: System.ComponentModel.DataAnnotations.MaxLength(500)] string? Reason);
 	public record SnapshotSummaryDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason);
 	public record SnapshotDetailDto(Guid Id, string SchoolYear, DateTimeOffset CreatedAt, string CreatedByStaffName, string? Reason, CoverageResponseDto Data);
@@ -112,7 +112,7 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 		}
 
 		var data = JsonSerializer.Deserialize<CoverageResponseDto>(snapshot.Data, JsonOptions)
-			?? new CoverageResponseDto([]);
+			?? new CoverageResponseDto([], 0, 0);
 
 		return Ok(new SnapshotDetailDto(snapshot.Id, snapshot.SchoolYear, snapshot.CreatedAt, snapshot.CreatedByStaff.Name, snapshot.Reason, data));
 	}
@@ -247,6 +247,15 @@ public sealed class StaaMaalMedController(AppDbContext db, UvmTimetableService t
 			return g != 0 ? g : string.Compare(a.ClassName, b.ClassName, StringComparison.Ordinal);
 		});
 
-		return new CoverageResponseDto(classes);
+		// Diagnostics for the empty state: a class with no klassetrin can't be checked against
+		// UVM's fagrække, so it silently drops out above. Surface that so admins know to fix it.
+		var classesMissingGradeLevel = await db.Classes
+			.AsNoTracking()
+			.CountAsync(c => c.GradeLevel == null, cancellationToken);
+		var activeSchemaCount = await db.Schemas
+			.AsNoTracking()
+			.CountAsync(s => s.StartDate <= today && s.EndDate >= today, cancellationToken);
+
+		return new CoverageResponseDto(classes, classesMissingGradeLevel, activeSchemaCount);
 	}
 }
