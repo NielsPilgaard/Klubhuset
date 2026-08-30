@@ -89,7 +89,8 @@ export default function LandingPage() {
             Spar tid på det kedelige — brug den på børnene
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto">
-            Byg og udskriv ugeskemaer med automatisk konfliktkontrol. Ingen oplæring nødvendig.
+            Skema, SFO, ugeplan, vikardækning og forældrekontakt i ét system. Bygget til friskoler.
+            Ingen oplæring nødvendig.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
@@ -236,7 +237,7 @@ export default function LandingPage() {
               }
               title="Bestyrelse & Tilsyn"
               description={
-                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker og dokumentdeling. Inkluderer "stå mål med"-dækning, undervisningsplaner og offentliggørelse af §1a-tilsynsgrundlag.'
+                'Bestyrelsesmedlemmer får dedikeret adgang med statistikker og dokumentdeling. Inkluderer overblik over "stå mål med"-dækning pr. fag og klasse.'
               }
             />
             <FeatureCard
@@ -337,8 +338,8 @@ export default function LandingPage() {
             Hvem er Skoleoverblikket til?
           </h2>
           <p className="text-gray-600 mb-10 max-w-xl mx-auto">
-            Skoleoverblikket passer til alle skoler der vil have et enkelt, moderne skemaværktøj —
-            uanset udgangspunktet.
+            Skoleoverblikket passer til alle skoler der vil samle skema, SFO, ugeplan og
+            forældrekontakt i ét enkelt system — uanset udgangspunktet.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
             <AudienceItem
@@ -495,7 +496,7 @@ export default function LandingPage() {
                 features={[
                   'Filhåndtering (100 GB)',
                   'Overblik over "stå mål med"-dækning',
-                  'Offentliggørelse af §1a-tilsynsgrundlag',
+                  'UVM-timetal sammenligning pr. fag',
                 ]}
               />
               <p className="text-xs text-brand-200/70 text-center pt-1">
