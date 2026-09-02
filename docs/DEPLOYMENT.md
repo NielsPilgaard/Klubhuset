@@ -52,6 +52,8 @@ These have non-empty values in `appsettings.json` that are correct for productio
 | `Stripe__PriceId`           | _(set in appsettings)_      | Stripe price ID for the monthly subscription. Override to switch plans without redeploying. |
 | `App__BaseUrl`              | `https://skoleoverblikket.dk`    | Used to construct absolute URLs in emails and webhooks.                                     |
 | `Keycloak__MetadataAddress` | _(empty — auto-discovered)_ | Override only if your Keycloak OIDC discovery endpoint is at a non-standard path.           |
+| `ElmahIo__ApiKey`           | _(empty — disabled)_        | elmah.io API key. Error logging to elmah.io activates only when both this and `ElmahIo__LogId` are set. |
+| `ElmahIo__LogId`            | _(empty — disabled)_        | elmah.io log ID (GUID). Only errors (uncaught request exceptions and `LogLevel.Error`+) are sent. |
 
 ---
 
