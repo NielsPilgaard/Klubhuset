@@ -66,6 +66,8 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 
 	public record UpdateGenereltRequest([StringLength(8000)] string? Generelt);
 
+	public record GenereltDto(string? Generelt);
+
 	[HttpGet]
 	public async Task<ActionResult<WeekPlanDto>> GetWeekPlan(
 		Guid classId,
@@ -345,7 +347,7 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 	}
 
 	[HttpPut("generelt")]
-	public async Task<ActionResult<string?>> UpdateGenerelt(
+	public async Task<ActionResult<GenereltDto>> UpdateGenerelt(
 		Guid classId,
 		[FromQuery] int? isoYear,
 		[FromQuery] int? isoWeek,
@@ -388,12 +390,24 @@ public sealed class WeekPlanController(AppDbContext db, ITenantContext tenant, I
 				IsoWeek = isoWeek.Value,
 			};
 			db.WeekPlans.Add(weekPlan);
+
+			try
+			{
+				await db.SaveChangesAsync(cancellationToken);
+			}
+			catch (DbUpdateException)
+			{
+				// A concurrent request created the same class/week WeekPlan; reload and reuse it.
+				db.ChangeTracker.Clear();
+				weekPlan = await db.WeekPlans
+					.FirstAsync(w => w.ClassId == classId && w.IsoYear == isoYear.Value && w.IsoWeek == isoWeek.Value, cancellationToken);
+			}
 		}
 
 		weekPlan.Generelt = req.Generelt;
 		await db.SaveChangesAsync(cancellationToken);
 
-		return Ok(weekPlan.Generelt);
+		return Ok(new GenereltDto(weekPlan.Generelt));
 	}
 
 	[HttpPost("slots/{slotId:guid}/files")]

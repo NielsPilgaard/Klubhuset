@@ -99,6 +99,7 @@ function SfoGenereltEditor({
           onChange={(e) => setText(e.target.value)}
           onBlur={handleBlur}
           rows={2}
+          maxLength={8000}
           placeholder="Ture, huskeliste, kommende temaer…"
           className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none bg-white"
         />

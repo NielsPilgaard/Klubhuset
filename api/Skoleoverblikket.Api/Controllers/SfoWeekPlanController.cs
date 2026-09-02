@@ -44,6 +44,8 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		[Required] int IsoWeek,
 		[StringLength(8000)] string? Generelt);
 
+	public record GenereltDto(string? Generelt);
+
 	[HttpGet]
 	public async Task<ActionResult<SfoWeekPlanDto>> Get(
 		[FromQuery] int? isoYear,
@@ -93,7 +95,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 	}
 
 	[HttpPut("generelt")]
-	public async Task<ActionResult<string?>> UpdateGenerelt(
+	public async Task<ActionResult<GenereltDto>> UpdateGenerelt(
 		[FromBody] UpdateSfoGenereltRequest request,
 		CancellationToken cancellationToken)
 	{
@@ -112,7 +114,7 @@ public sealed class SfoWeekPlanController(AppDbContext db, ITenantContext tenant
 		weekPlan.Generelt = request.Generelt;
 		await db.SaveChangesAsync(cancellationToken);
 
-		return Ok(weekPlan.Generelt);
+		return Ok(new GenereltDto(weekPlan.Generelt));
 	}
 
 	[HttpPut("shifts")]
