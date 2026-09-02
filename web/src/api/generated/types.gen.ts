@@ -864,6 +864,7 @@ export type SfoWeekPlanControllerSfoWeekPlanDto = {
     isoYear: number;
     isoWeek: number;
     shifts?: Array<SfoWeekPlanControllerSfoWeekPlanShiftDto>;
+    generelt?: string | null;
 };
 
 export type SfoWeekPlanControllerSfoWeekPlanShiftDto = {
@@ -875,6 +876,12 @@ export type SfoWeekPlanControllerSfoWeekPlanShiftDto = {
     label?: string | null;
     staff?: Array<SfoWeekPlanControllerSfoStaffRefDto>;
     beskrivelse?: string | null;
+};
+
+export type SfoWeekPlanControllerUpdateSfoGenereltRequest = {
+    isoYear: number;
+    isoWeek: number;
+    generelt?: string | null;
 };
 
 export type SfoWeekPlanControllerUpsertSfoWeekPlanShiftRequest = {
@@ -1236,6 +1243,10 @@ export type WeekPlanControllerHolidayDayDto = {
     title: string;
 };
 
+export type WeekPlanControllerUpdateGenereltRequest = {
+    generelt?: string | null;
+};
+
 export type WeekPlanControllerUpsertWeekPlanSlotRequest = {
     schemaSlotId: string;
     beskrivelse?: string | null;
@@ -1255,6 +1266,7 @@ export type WeekPlanControllerWeekPlanDto = {
     holidayDays?: Array<WeekPlanControllerHolidayDayDto>;
     breakSlots?: Array<WeekPlanControllerBreakTimeSlotDto>;
     slots?: Array<WeekPlanControllerWeekPlanSlotDto>;
+    generelt?: string | null;
 };
 
 export type WeekPlanControllerWeekPlanSlotDto = {
@@ -3546,6 +3558,22 @@ export type GetApiV1SfoUgeplanResponses = {
 
 export type GetApiV1SfoUgeplanResponse = GetApiV1SfoUgeplanResponses[keyof GetApiV1SfoUgeplanResponses];
 
+export type PutApiV1SfoUgeplanGenereltData = {
+    body?: SfoWeekPlanControllerUpdateSfoGenereltRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/sfo/ugeplan/generelt';
+};
+
+export type PutApiV1SfoUgeplanGenereltResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type PutApiV1SfoUgeplanGenereltResponse = PutApiV1SfoUgeplanGenereltResponses[keyof PutApiV1SfoUgeplanGenereltResponses];
+
 export type PutApiV1SfoUgeplanShiftsData = {
     body?: SfoWeekPlanControllerUpsertSfoWeekPlanShiftRequest;
     path?: never;
@@ -4489,6 +4517,27 @@ export type PutApiV1ClassesByClassIdUgeplanSlotsResponses = {
 };
 
 export type PutApiV1ClassesByClassIdUgeplanSlotsResponse = PutApiV1ClassesByClassIdUgeplanSlotsResponses[keyof PutApiV1ClassesByClassIdUgeplanSlotsResponses];
+
+export type PutApiV1ClassesByClassIdUgeplanGenereltData = {
+    body?: WeekPlanControllerUpdateGenereltRequest;
+    path: {
+        classId: string;
+    };
+    query?: {
+        isoYear?: number;
+        isoWeek?: number;
+    };
+    url: '/api/v1/classes/{classId}/ugeplan/generelt';
+};
+
+export type PutApiV1ClassesByClassIdUgeplanGenereltResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type PutApiV1ClassesByClassIdUgeplanGenereltResponse = PutApiV1ClassesByClassIdUgeplanGenereltResponses[keyof PutApiV1ClassesByClassIdUgeplanGenereltResponses];
 
 export type PostApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesData = {
     body?: WeekPlanControllerAddFileToSlotRequest;
