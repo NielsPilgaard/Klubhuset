@@ -76,6 +76,7 @@ export default function UgeplanPrintPage() {
   }
 
   const slots = (weekPlan?.slots ?? []) as SlotRow[]
+  const generelt = (weekPlan as { generelt?: string | null } | undefined)?.generelt
 
   // Build time axis from unique startTime values
   const timeAxis = [
@@ -145,6 +146,7 @@ export default function UgeplanPrintPage() {
         .print-swap { font-size: 10px; color: #6b7280; font-style: italic; }
         .print-beskrivelse { font-size: 10px; color: #374151; white-space: pre-wrap; }
         .print-lektier { font-size: 10px; color: #2563eb; white-space: pre-wrap; }
+        .print-generelt { font-size: 11px; color: #374151; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; white-space: pre-wrap; }
         .print-empty { text-align: center; color: #9ca3af; margin-top: 32px; font-size: 13px; }
         .no-print-bar {
           position: fixed; top: 0; right: 0; left: 0;
@@ -179,6 +181,8 @@ export default function UgeplanPrintPage() {
           </div>
           <p className="print-date">Udskrevet {new Date().toLocaleDateString('da-DK')}</p>
         </div>
+
+        {generelt && <div className="print-generelt">{generelt}</div>}
 
         {slots.length === 0 ? (
           <p className="print-empty">

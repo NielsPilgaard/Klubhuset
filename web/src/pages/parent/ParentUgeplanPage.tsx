@@ -66,7 +66,12 @@ function ClassWeekPlan({
   if (isError) return <div className="text-sm text-red-500">Fejl ved hentning af ugeplan.</div>
 
   const plan = data as
-    | { isHolidayWeek?: boolean; holidayTitle?: string | null; slots?: Slot[] }
+    | {
+        isHolidayWeek?: boolean
+        holidayTitle?: string | null
+        slots?: Slot[]
+        generelt?: string | null
+      }
     | undefined
   if (!plan) return null
 
@@ -94,6 +99,13 @@ function ClassWeekPlan({
   return (
     <div>
       <h2 className="text-base font-semibold text-gray-900 mb-3">{className}</h2>
+      {plan.generelt && (
+        <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+          <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
+            {plan.generelt}
+          </ReactMarkdown>
+        </div>
+      )}
       <div className="space-y-3">
         {days.map((day) => {
           const daySlots = byDay[day] ?? []

@@ -17,6 +17,7 @@ import {
   getApiV1SfoUgeplanOptions,
   getApiV1SfoUgeplanQueryKey,
   putApiV1SfoUgeplanShiftsMutation,
+  putApiV1SfoUgeplanGenereltMutation,
 } from '../api/generated/@tanstack/react-query.gen'
 import type { SfoShiftDto, SfoWeekPlanShiftDto } from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -55,6 +56,58 @@ const emptyForm = (): ShiftForm => ({
   endTime: '08:00',
   label: '',
 })
+
+function SfoGenereltEditor({
+  isoYear,
+  isoWeek,
+  value,
+}: {
+  isoYear: number
+  isoWeek: number
+  value: string | null | undefined
+}) {
+  const qc = useQueryClient()
+  const [text, setText] = useState(value ?? '')
+
+  useEffect(() => {
+    setText(value ?? '')
+  }, [value])
+
+  const mutation = useMutation({
+    ...putApiV1SfoUgeplanGenereltMutation(),
+    onSuccess: () => {
+      void qc.invalidateQueries({
+        queryKey: getApiV1SfoUgeplanQueryKey({ query: { isoYear, isoWeek } }),
+      })
+    },
+  })
+
+  function handleBlur() {
+    const normalized = text || null
+    if (normalized === (value ?? null)) return
+    mutation.mutate({ body: { isoYear, isoWeek, generelt: normalized } })
+  }
+
+  return (
+    <div className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+      <div className="max-w-5xl mx-auto p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
+        <label className="block text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">
+          Generelt for ugen
+        </label>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={handleBlur}
+          rows={2}
+          placeholder="Ture, huskeliste, kommende temaer…"
+          className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none bg-white"
+        />
+        {mutation.isPending && <p className="text-xs text-amber-600 mt-1">Gemmer...</p>}
+        {mutation.isError && <p className="text-xs text-red-600 mt-1">Kunne ikke gemme.</p>}
+      </div>
+    </div>
+  )
+}
 
 export default function SfoPage() {
   usePageTitle('SFO vagtplan')
@@ -361,6 +414,8 @@ export default function SfoPage() {
           </button>
         </div>
       </div>
+
+      <SfoGenereltEditor isoYear={isoYear} isoWeek={isoWeek} value={weekPlan?.generelt} />
 
       {/* Grid area */}
       <div className="p-4 sm:p-6 lg:p-8">

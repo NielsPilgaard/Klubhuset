@@ -41,6 +41,7 @@ export default function SfoPrintPage() {
   )
 
   const shifts: SfoWeekPlanShiftDto[] = (weekPlan?.shifts ?? []) as SfoWeekPlanShiftDto[]
+  const generelt = (weekPlan as { generelt?: string | null } | undefined)?.generelt
 
   useEffect(() => {
     if (!isLoading) {
@@ -125,6 +126,7 @@ export default function SfoPrintPage() {
       .print-beskrivelse { font-size: 10px; color: #374151; font-style: italic; white-space: pre-wrap; }
       .print-info { font-size: 10px; color: #6b7280; }
       .print-empty { text-align: center; color: #9ca3af; margin-top: 32px; font-size: 13px; }
+      .print-generelt { font-size: 11px; color: #374151; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; white-space: pre-wrap; }
     `}</style>
       <div className="print-page">
         <div className="print-header">
@@ -136,6 +138,8 @@ export default function SfoPrintPage() {
           </div>
           <p className="print-date">Udskrevet {new Date().toLocaleDateString('da-DK')}</p>
         </div>
+
+        {generelt && <div className="print-generelt">{generelt}</div>}
 
         <table className="print-table">
           <thead>

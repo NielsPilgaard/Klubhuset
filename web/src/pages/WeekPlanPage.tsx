@@ -7,6 +7,7 @@ import {
   getApiV1ClassesByClassIdUgeplanOptions,
   getApiV1ClassesByClassIdUgeplanQueryKey,
   putApiV1ClassesByClassIdUgeplanSlotsMutation,
+  putApiV1ClassesByClassIdUgeplanGenereltMutation,
   postApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesMutation,
   deleteApiV1ClassesByClassIdUgeplanSlotsBySlotIdFilesByFileIdMutation,
   getApiV1CoursesOptions,
@@ -73,6 +74,7 @@ interface WeekPlanDto {
   holidayDays: HolidayDayDto[]
   breakSlots: BreakTimeSlotDto[]
   slots: WeekPlanSlotDto[]
+  generelt: string | null
 }
 
 interface CourseDto {
@@ -444,6 +446,71 @@ function EditSlotModal({
   )
 }
 
+// ─── Generelt block ───────────────────────────────────────────────────────────
+
+function GenereltEditor({
+  classId,
+  isoYear,
+  isoWeek,
+  schemaId,
+  value,
+}: {
+  classId: string
+  isoYear: number
+  isoWeek: number
+  schemaId: string | null
+  value: string | null
+}) {
+  const qc = useQueryClient()
+  const [text, setText] = useState(value ?? '')
+
+  useEffect(() => {
+    setText(value ?? '')
+  }, [value])
+
+  const ugeplanQueryKey = getApiV1ClassesByClassIdUgeplanQueryKey({
+    path: { classId },
+    query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) },
+  })
+
+  const mutation = useMutation({
+    ...putApiV1ClassesByClassIdUgeplanGenereltMutation(),
+    onSuccess: (generelt) => {
+      qc.setQueryData(ugeplanQueryKey, (old: WeekPlanDto | undefined) =>
+        old ? { ...old, generelt: generelt as string | null } : old
+      )
+    },
+  })
+
+  function handleBlur() {
+    const normalized = text || null
+    if (normalized === (value ?? null)) return
+    mutation.mutate({
+      path: { classId },
+      query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) },
+      body: { generelt: normalized },
+    })
+  }
+
+  return (
+    <div className="shrink-0 px-4 lg:px-6 py-3 bg-amber-50/60 border-b border-amber-100">
+      <label className="block text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">
+        Generelt for ugen
+      </label>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={handleBlur}
+        rows={2}
+        placeholder="Ture, huskeliste, kommende temaer…"
+        className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none bg-white"
+      />
+      {mutation.isPending && <p className="text-xs text-amber-600 mt-1">Gemmer...</p>}
+      {mutation.isError && <p className="text-xs text-red-600 mt-1">Kunne ikke gemme.</p>}
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function WeekPlanPage() {
@@ -641,6 +708,17 @@ export default function WeekPlanPage() {
           </button>
         </div>
       </div>
+
+      {/* Generelt for ugen */}
+      {classId && (
+        <GenereltEditor
+          classId={classId}
+          isoYear={isoYear}
+          isoWeek={isoWeek}
+          schemaId={schemaId}
+          value={weekPlanData?.generelt ?? null}
+        />
+      )}
 
       {/* Holiday banner */}
       {weekPlanData?.isHolidayWeek && (
