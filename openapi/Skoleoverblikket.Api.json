@@ -5387,17 +5387,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/SfoWeekPlanController_GenereltDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/SfoWeekPlanController_GenereltDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/SfoWeekPlanController_GenereltDto"
                 }
               }
             }
@@ -7809,17 +7809,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/WeekPlanController_GenereltDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/WeekPlanController_GenereltDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/WeekPlanController_GenereltDto"
                 }
               }
             }
@@ -11173,6 +11173,16 @@
         },
         "additionalProperties": false
       },
+      "SfoWeekPlanController_GenereltDto": {
+        "type": "object",
+        "properties": {
+          "generelt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SfoWeekPlanController_SfoStaffRefDto": {
         "required": [
           "id",
@@ -12651,6 +12661,16 @@
           "endTime": {
             "type": "string",
             "format": "time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WeekPlanController_GenereltDto": {
+        "type": "object",
+        "properties": {
+          "generelt": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

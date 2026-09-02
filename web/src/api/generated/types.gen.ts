@@ -854,6 +854,10 @@ export type SfoControllerUpsertSfoShiftRequest = {
     label?: string | null;
 };
 
+export type SfoWeekPlanControllerGenereltDto = {
+    generelt?: string | null;
+};
+
 export type SfoWeekPlanControllerSfoStaffRefDto = {
     id: string;
     name: string;
@@ -1236,6 +1240,10 @@ export type WeekPlanControllerBreakTimeSlotDto = {
     timeSlotLabel: string;
     startTime: string;
     endTime: string;
+};
+
+export type WeekPlanControllerGenereltDto = {
+    generelt?: string | null;
 };
 
 export type WeekPlanControllerHolidayDayDto = {
@@ -3569,7 +3577,7 @@ export type PutApiV1SfoUgeplanGenereltResponses = {
     /**
      * OK
      */
-    200: string;
+    200: SfoWeekPlanControllerGenereltDto;
 };
 
 export type PutApiV1SfoUgeplanGenereltResponse = PutApiV1SfoUgeplanGenereltResponses[keyof PutApiV1SfoUgeplanGenereltResponses];
@@ -4534,7 +4542,7 @@ export type PutApiV1ClassesByClassIdUgeplanGenereltResponses = {
     /**
      * OK
      */
-    200: string;
+    200: WeekPlanControllerGenereltDto;
 };
 
 export type PutApiV1ClassesByClassIdUgeplanGenereltResponse = PutApiV1ClassesByClassIdUgeplanGenereltResponses[keyof PutApiV1ClassesByClassIdUgeplanGenereltResponses];
