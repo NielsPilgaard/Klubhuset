@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-
-const MD_ALLOWED: string[] = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br']
+import { Markdown } from '../../components/markdown/Markdown'
 import { useQuery } from '@tanstack/react-query'
 import { getApiV1ClassesByClassIdUgeplanOptions } from '../../api/generated/@tanstack/react-query.gen'
 import { getApiV1ParentsMe } from '../../api/generated/sdk.gen'
@@ -79,6 +77,11 @@ function ClassWeekPlan({
     return (
       <div>
         <h2 className="text-base font-semibold text-gray-900 mb-2">{className}</h2>
+        {plan.generelt && (
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+            <Markdown>{plan.generelt}</Markdown>
+          </div>
+        )}
         <div className="p-3 bg-blue-50 text-blue-700 text-sm rounded-lg">
           {plan.holidayTitle ?? 'Ferie'}
         </div>
@@ -101,9 +104,7 @@ function ClassWeekPlan({
       <h2 className="text-base font-semibold text-gray-900 mb-3">{className}</h2>
       {plan.generelt && (
         <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
-          <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
-            {plan.generelt}
-          </ReactMarkdown>
+          <Markdown>{plan.generelt}</Markdown>
         </div>
       )}
       <div className="space-y-3">
@@ -124,17 +125,13 @@ function ClassWeekPlan({
                     </div>
                     {s.beskrivelse && (
                       <div className="mt-1 text-xs text-gray-600 ml-18 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
-                        <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
-                          {s.beskrivelse}
-                        </ReactMarkdown>
+                        <Markdown>{s.beskrivelse}</Markdown>
                       </div>
                     )}
                     {s.lektier && (
                       <div className="mt-1 text-xs text-amber-700 ml-18 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
                         <span className="font-medium">Lektier: </span>
-                        <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
-                          {s.lektier}
-                        </ReactMarkdown>
+                        <Markdown>{s.lektier}</Markdown>
                       </div>
                     )}
                   </div>

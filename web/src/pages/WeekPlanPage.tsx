@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
 import { Modal } from '../components/Modal'
+import { MarkdownTextarea, type SaveStatus } from '../components/markdown/MarkdownTextarea'
+import { Markdown } from '../components/markdown/Markdown'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -167,7 +168,6 @@ interface EditSlotModalProps {
 }
 
 const AUTOSAVE_PREFIX = 'ugeplan_draft_'
-const MD_ALLOWED: string[] = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br']
 
 function autosaveKey(schemaSlotId: string) {
   return `${AUTOSAVE_PREFIX}${schemaSlotId}`
@@ -330,24 +330,28 @@ function EditSlotModal({
       <div className="px-6 py-5 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivelse</label>
-          <textarea
+          <MarkdownTextarea
             autoFocus
             rows={5}
             value={beskrivelse}
-            onChange={(e) => setBeskrivelse(e.target.value)}
+            onChange={setBeskrivelse}
             placeholder="Hvad skal der ske i denne lektion?"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+            maxLength={8000}
+            aria-label="Beskrivelse"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-blue-700 mb-1">Lektier</label>
-          <textarea
+          <MarkdownTextarea
             rows={4}
             value={lektier}
-            onChange={(e) => setLektier(e.target.value)}
+            onChange={setLektier}
             placeholder="Opgaver til næste gang..."
-            className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-blue-50/40"
+            maxLength={8000}
+            aria-label="Lektier"
+            className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-blue-50/40"
           />
         </div>
 
@@ -463,28 +467,64 @@ function GenereltEditor({
 }) {
   const qc = useQueryClient()
   const [text, setText] = useState(value ?? '')
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+
+  // A save that resolves after the user has kept typing must not have its
+  // (older) result pushed back into the textarea. While a save is in flight we
+  // stop syncing the incoming `value`, and once it resolves we only adopt a
+  // server value that isn't just the stale echo of what we already saved.
+  const pendingSaveRef = useRef(false)
+  const lastSavedRef = useRef(value ?? '')
 
   useEffect(() => {
-    setText(value ?? '')
-  }, [value])
+    if (pendingSaveRef.current) return
+    const incoming = value ?? ''
+    if (incoming === lastSavedRef.current && text !== incoming) return
+    lastSavedRef.current = incoming
+    setText(incoming)
+  }, [value, text])
 
   const ugeplanQueryKey = getApiV1ClassesByClassIdUgeplanQueryKey({
     path: { classId },
     query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) },
   })
 
+  // Was the value this save submitted still the current editor text when it
+  // resolved? If the user has since typed on, an earlier save landing must not
+  // overwrite the newer local edit or stamp its outcome onto it.
+  const isCurrentEdit = (submitted: string | null | undefined) => (submitted ?? '') === (text || '')
+
   const mutation = useMutation({
     ...putApiV1ClassesByClassIdUgeplanGenereltMutation(),
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
+      pendingSaveRef.current = false
+      if (!isCurrentEdit(variables.body?.generelt)) {
+        return
+      }
       qc.setQueryData(ugeplanQueryKey, (old: WeekPlanDto | undefined) =>
         old ? { ...old, generelt: result.generelt ?? null } : old
       )
+      setSaveStatus('saved')
+    },
+    onError: (_err, variables) => {
+      pendingSaveRef.current = false
+      if (isCurrentEdit(variables.body?.generelt)) {
+        setSaveStatus('error')
+      }
     },
   })
 
+  function handleChange(next: string) {
+    setText(next)
+    setSaveStatus('idle')
+  }
+
   function handleBlur() {
     const normalized = text || null
-    if (normalized === (value ?? null)) return
+    if (normalized === (lastSavedRef.current || null)) return
+    pendingSaveRef.current = true
+    lastSavedRef.current = text
+    setSaveStatus('saving')
     mutation.mutate({
       path: { classId },
       query: { isoYear, isoWeek, ...(schemaId ? { schemaId } : {}) },
@@ -493,21 +533,20 @@ function GenereltEditor({
   }
 
   return (
-    <div className="shrink-0 px-4 lg:px-6 py-3 bg-amber-50/60 border-b border-amber-100">
-      <label className="block text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">
-        Generelt for ugen
-      </label>
-      <textarea
+    <div className="shrink-0 px-4 lg:px-6 py-3 border-b border-gray-200">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Generelt for ugen</label>
+      <MarkdownTextarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={handleChange}
         onBlur={handleBlur}
-        rows={2}
+        rows={5}
         maxLength={8000}
         placeholder="Ture, huskeliste, kommende temaer…"
-        className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none bg-white"
+        aria-label="Generelt for ugen"
+        data-testid="generelt-editor"
+        saveStatus={saveStatus}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
       />
-      {mutation.isPending && <p className="text-xs text-amber-600 mt-1">Gemmer...</p>}
-      {mutation.isError && <p className="text-xs text-red-600 mt-1">Kunne ikke gemme.</p>}
     </div>
   )
 }
@@ -840,9 +879,7 @@ export default function WeekPlanPage() {
                         {/* Beskrivelse */}
                         {slot.beskrivelse && (
                           <div className="text-xs text-gray-700 line-clamp-3 mt-1 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
-                            <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
-                              {slot.beskrivelse}
-                            </ReactMarkdown>
+                            <Markdown>{slot.beskrivelse}</Markdown>
                           </div>
                         )}
 
@@ -862,9 +899,7 @@ export default function WeekPlanPage() {
                               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                             </svg>
                             <div className="text-xs text-blue-700 line-clamp-2 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
-                              <ReactMarkdown allowedElements={MD_ALLOWED} unwrapDisallowed>
-                                {slot.lektier!}
-                              </ReactMarkdown>
+                              <Markdown>{slot.lektier}</Markdown>
                             </div>
                           </div>
                         )}
