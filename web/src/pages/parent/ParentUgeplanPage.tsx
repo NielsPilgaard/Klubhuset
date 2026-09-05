@@ -78,7 +78,7 @@ function ClassWeekPlan({
       <div>
         <h2 className="text-base font-semibold text-gray-900 mb-2">{className}</h2>
         {plan.generelt && (
-          <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
             <Markdown>{plan.generelt}</Markdown>
           </div>
         )}
@@ -103,7 +103,7 @@ function ClassWeekPlan({
     <div>
       <h2 className="text-base font-semibold text-gray-900 mb-3">{className}</h2>
       {plan.generelt && (
-        <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-700 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
           <Markdown>{plan.generelt}</Markdown>
         </div>
       )}
@@ -129,7 +129,7 @@ function ClassWeekPlan({
                       </div>
                     )}
                     {s.lektier && (
-                      <div className="mt-1 text-xs text-amber-700 ml-18 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
+                      <div className="mt-1 text-xs text-blue-700 ml-18 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:my-0.5 [&_li]:my-0">
                         <span className="font-medium">Lektier: </span>
                         <Markdown>{s.lektier}</Markdown>
                       </div>
