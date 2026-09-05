@@ -7,6 +7,7 @@ import {
   getApiV1ClassesOptions,
 } from '../api/generated/@tanstack/react-query.gen'
 import { getISOWeek, getISOWeekYear } from '../utils/isoWeek'
+import { Markdown } from '../components/markdown/Markdown'
 
 const WEEKDAYS = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag']
 const WEEKDAY_KEYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -76,6 +77,7 @@ export default function UgeplanPrintPage() {
   }
 
   const slots = (weekPlan?.slots ?? []) as SlotRow[]
+  const generelt = (weekPlan as { generelt?: string | null } | undefined)?.generelt
 
   // Build time axis from unique startTime values
   const timeAxis = [
@@ -118,6 +120,12 @@ export default function UgeplanPrintPage() {
           padding-bottom: 8px;
           border-bottom: 2px solid #2563eb;
         }
+        .print-header-repeat {
+          margin-bottom: 8px;
+          padding-bottom: 5px;
+          border-bottom: 1px solid #d1d5db;
+        }
+        .print-header-repeat .print-title { font-size: 13px; }
         .print-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
         .print-subtitle { font-size: 11px; color: #6b7280; margin: 1px 0 0; }
         .print-date { font-size: 11px; color: #9ca3af; margin: 0; }
@@ -143,8 +151,16 @@ export default function UgeplanPrintPage() {
         .print-cell { display: flex; flex-direction: column; gap: 1px; }
         .print-course { font-weight: 600; color: #111827; font-size: 11px; }
         .print-swap { font-size: 10px; color: #6b7280; font-style: italic; }
-        .print-beskrivelse { font-size: 10px; color: #374151; white-space: pre-wrap; }
-        .print-lektier { font-size: 10px; color: #2563eb; white-space: pre-wrap; }
+        .print-beskrivelse { font-size: 10px; color: #374151; }
+        .print-lektier { font-size: 10px; color: #2563eb; }
+        .print-generelt { font-size: 11px; color: #374151; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
+        .print-generelt p { margin: 0 0 4px; }
+        .print-generelt p:last-child { margin-bottom: 0; }
+        .print-generelt ul, .print-generelt ol { margin: 2px 0; padding-left: 18px; }
+        .print-beskrivelse p, .print-lektier p { margin: 0; }
+        .print-beskrivelse ul, .print-beskrivelse ol,
+        .print-lektier ul, .print-lektier ol { margin: 1px 0; padding-left: 14px; }
+        .print-generelt-page { break-after: page; page-break-after: always; }
         .print-empty { text-align: center; color: #9ca3af; margin-top: 32px; font-size: 13px; }
         .no-print-bar {
           position: fixed; top: 0; right: 0; left: 0;
@@ -178,6 +194,23 @@ export default function UgeplanPrintPage() {
             </p>
           </div>
           <p className="print-date">Udskrevet {new Date().toLocaleDateString('da-DK')}</p>
+        </div>
+
+        {generelt && (
+          <div className="print-generelt print-generelt-page">
+            <Markdown>{generelt}</Markdown>
+          </div>
+        )}
+
+        {/* Compact header repeated above the table — lands on page 2 when
+            Generelt forced a page break, harmless single line otherwise. */}
+        <div className="print-header print-header-repeat">
+          <div>
+            <h1 className="print-title">{className ? `${className} – Ugeplan` : 'Ugeplan'}</h1>
+            <p className="print-subtitle">
+              Uge {isoWeek}, {isoYear}
+            </p>
+          </div>
         </div>
 
         {slots.length === 0 ? (
@@ -218,10 +251,15 @@ export default function UgeplanPrintPage() {
                                   <span className="print-swap">↔ {slot.originalCourseName}</span>
                                 )}
                               {slot.beskrivelse && (
-                                <span className="print-beskrivelse">{slot.beskrivelse}</span>
+                                <div className="print-beskrivelse">
+                                  <Markdown>{slot.beskrivelse}</Markdown>
+                                </div>
                               )}
                               {slot.lektier && (
-                                <span className="print-lektier">Lektier: {slot.lektier}</span>
+                                <div className="print-lektier">
+                                  <strong>Lektier:</strong>
+                                  <Markdown>{slot.lektier}</Markdown>
+                                </div>
                               )}
                             </div>
                           ))}
